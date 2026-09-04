@@ -18,6 +18,7 @@ app.get('/api/health', (_req, res) => {
 })
 
 app.use('/api/auth', authRoutes)
+app.use('/api/pacientes', pacientesRoutes)
 
 app.use((_req, res) => {
   res.status(404).json({ message: 'Ruta no encontrada' })
