@@ -1,6 +1,7 @@
 const cors = require('cors')
 const express = require('express')
 const authRoutes = require('./routes/auth.routes')
+const pacientesRoutes = require('./routes/pacientes.routes')
 
 const app = express()
 
