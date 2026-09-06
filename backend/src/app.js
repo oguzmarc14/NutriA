@@ -2,7 +2,7 @@ const cors = require('cors')
 const express = require('express')
 const authRoutes = require('./routes/auth.routes')
 const pacientesRoutes = require('./routes/pacientes.routes')
-
+const expedienteClinicoRoutes = require('./routes/expedienteClinico.routes')
 const app = express()
 
 app.disable('x-powered-by')
@@ -20,6 +20,7 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/auth', authRoutes)
 app.use('/api/pacientes', pacientesRoutes)
+app.use('/api/expedientes', expedienteClinicoRoutes)
 
 app.use((_req, res) => {
   res.status(404).json({ message: 'Ruta no encontrada' })
