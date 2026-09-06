@@ -48,7 +48,68 @@ async function obtenerPacientes(req, res, next) {
   }
 }
 
+async function obtenerPacientePorId(req, res, next) {
+  try {
+    const paciente = await Pacientes.findOne({
+      _id: req.params.id,
+      nutritionist: req.user.id,
+      active: true,
+    })
+
+    if (!paciente) {
+      return res.status(404).json({
+        message: 'Paciente no encontrado',
+      })
+    }
+
+    return res.json({ paciente })
+  } catch (error) {
+    return next(error)
+  }
+}
+
+async function actualizarPaciente(req, res, next) {
+  try {
+    const parsed = crearPacienteSchema.safeParse(req.body)
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        message: 'Datos del paciente inválidos',
+        errors: parsed.error.flatten(),
+      })
+    }
+
+    const paciente = await Pacientes.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        nutritionist: req.user.id,
+        active: true,
+      },
+      parsed.data,
+      {
+        new: true,
+        runValidators: true,
+      },
+    )
+
+    if (!paciente) {
+      return res.status(404).json({
+        message: 'Paciente no encontrado',
+      })
+    }
+
+    return res.json({
+      message: 'Paciente actualizado correctamente',
+      paciente,
+    })
+  } catch (error) {
+    return next(error)
+  }
+}
+
 module.exports = {
   crearPaciente,
   obtenerPacientes,
+  obtenerPacientePorId,
+  actualizarPaciente,
 }
