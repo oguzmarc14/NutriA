@@ -1,20 +1,29 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+
 import ProtectedRoute from './components/ProtectedRoute'
 import DashboardLayout from './layouts/DashboardLayout'
+
 import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import PacientesPage from './pages/PacientesPage'
 import ExpedientePage from './pages/ExpedientePage'
 import MedicionesPage from './pages/MedicionesPage'
+import PlanesAlimenticiosPage from './pages/PlanesAlimenticiosPage'
 
 function App() {
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/login"
+        element={<LoginPage />}
+      />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
-          <Route index element={<DashboardPage />} />
+          <Route
+            index
+            element={<DashboardPage />}
+          />
 
           <Route
             path="pacientes"
@@ -29,6 +38,11 @@ function App() {
           <Route
             path="mediciones"
             element={<MedicionesPage />}
+          />
+
+          <Route
+            path="planes"
+            element={<PlanesAlimenticiosPage />}
           />
         </Route>
       </Route>
