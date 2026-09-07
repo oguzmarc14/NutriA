@@ -5,6 +5,7 @@ import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import PacientesPage from './pages/PacientesPage'
 import ExpedientePage from './pages/ExpedientePage'
+import MedicionesPage from './pages/MedicionesPage'
 
 function App() {
   return (
@@ -23,6 +24,11 @@ function App() {
           <Route
             path="pacientes/:pacienteId/expediente"
             element={<ExpedientePage />}
+          />
+
+          <Route
+            path="mediciones"
+            element={<MedicionesPage />}
           />
         </Route>
       </Route>
