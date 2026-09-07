@@ -4,6 +4,7 @@ const authRoutes = require('./routes/auth.routes')
 const pacientesRoutes = require('./routes/pacientes.routes')
 const expedienteClinicoRoutes = require('./routes/expedienteClinico.routes')
 const medicionesRoutes = require('./routes/mediciones.routes')
+const planAlimenticioRoutes = require('./routes/planAlimenticio.routes')
 
 const app = express()
 
@@ -24,6 +25,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/pacientes', pacientesRoutes)
 app.use('/api/expedientes', expedienteClinicoRoutes)
 app.use('/api/mediciones', medicionesRoutes)
+app.use('/api/planes', planAlimenticioRoutes)
 
 app.use((_req, res) => {
   res.status(404).json({ message: 'Ruta no encontrada' })
