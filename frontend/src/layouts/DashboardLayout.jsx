@@ -6,37 +6,42 @@ import {
   UserCog,
   Users,
 } from 'lucide-react'
+
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/auth'
-
-const navigation = [
-  {
-    icon: LayoutDashboard,
-    label: 'Resumen',
-    to: '/',
-  },
-  {
-    icon: Users,
-    label: 'Pacientes',
-    to: '/pacientes',
-  },
-  {
-    icon: Ruler,
-    label: 'Mediciones',
-    to: '/mediciones',
-  },
-  {
-    icon: Apple,
-    label: 'Planes alimenticios',
-    to: '/planes',
-  },
-]
 
 function DashboardLayout() {
   const { logout, user } = useAuth()
 
   const navigationVisible = [
-    ...navigation,
+    {
+      icon: LayoutDashboard,
+      label: 'Resumen',
+      to: '/',
+    },
+
+    // Módulos exclusivos del nutriólogo
+    ...(user.role === 'nutritionist'
+      ? [
+          {
+            icon: Users,
+            label: 'Pacientes',
+            to: '/pacientes',
+          },
+          {
+            icon: Ruler,
+            label: 'Mediciones',
+            to: '/mediciones',
+          },
+          {
+            icon: Apple,
+            label: 'Planes alimenticios',
+            to: '/planes',
+          },
+        ]
+      : []),
+
+    // Módulo exclusivo del administrador
     ...(user.role === 'admin'
       ? [
           {
@@ -47,6 +52,13 @@ function DashboardLayout() {
         ]
       : []),
   ]
+
+  const roleLabel =
+    user.role === 'admin'
+      ? 'Administrador'
+      : user.role === 'nutritionist'
+        ? 'Nutriólogo'
+        : 'Paciente'
 
   return (
     <div className="min-h-screen bg-[#f6f8f6] md:grid md:grid-cols-[260px_1fr]">
@@ -94,8 +106,8 @@ function DashboardLayout() {
             {user.name}
           </p>
 
-          <p className="mb-3 text-xs capitalize text-slate-500">
-            {user.role}
+          <p className="mb-3 text-xs text-slate-500">
+            {roleLabel}
           </p>
 
           <button

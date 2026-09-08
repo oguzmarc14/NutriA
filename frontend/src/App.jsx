@@ -26,30 +26,34 @@ function App() {
             element={<DashboardPage />}
           />
 
-          <Route
-            path="pacientes"
-            element={<PacientesPage />}
-          />
+          <Route element={<ProtectedRoute roles={['nutritionist']} />}>
+            <Route
+              path="pacientes"
+              element={<PacientesPage />}
+            />
 
-          <Route
-            path="pacientes/:pacienteId/expediente"
-            element={<ExpedientePage />}
-          />
+            <Route
+              path="pacientes/:pacienteId/expediente"
+              element={<ExpedientePage />}
+            />
 
-          <Route
-            path="mediciones"
-            element={<MedicionesPage />}
-          />
+            <Route
+              path="mediciones"
+              element={<MedicionesPage />}
+            />
 
-          <Route
-            path="planes"
-            element={<PlanesAlimenticiosPage />}
-          />
+            <Route
+              path="planes"
+              element={<PlanesAlimenticiosPage />}
+            />
+          </Route>
 
-          <Route
-            path="usuarios"
-            element={<UsuariosPage />}
-          />
+          <Route element={<ProtectedRoute roles={['admin']} />}>
+            <Route
+              path="usuarios"
+              element={<UsuariosPage />}
+            />
+          </Route>
         </Route>
       </Route>
 

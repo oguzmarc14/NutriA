@@ -1,9 +1,9 @@
 const express = require('express')
 
 const {
-  actualizarEstadoNutriologo,
-  crearNutriologo,
-  obtenerNutriologos,
+  obtenerUsuarios,
+  crearUsuario,
+  actualizarEstadoUsuario,
 } = require('../controllers/usuarios.controller')
 
 const {
@@ -13,16 +13,64 @@ const {
 
 const router = express.Router()
 
+/*
+ * Todas las rutas de gestión de usuarios
+ * requieren sesión iniciada.
+ */
 router.use(requireAuth)
+
+/*
+ * Solo los administradores pueden:
+ *
+ * - consultar usuarios
+ * - autorizar administradores
+ * - autorizar nutriólogos
+ * - activar/desactivar accesos
+ */
 router.use(allowRoles('admin'))
 
-router.get('/nutriologos', obtenerNutriologos)
+/*
+ * GET /api/usuarios
+ *
+ * Devuelve:
+ * {
+ *   administradores: [],
+ *   nutriologos: []
+ * }
+ */
+router.get('/', obtenerUsuarios)
 
-router.post('/nutriologos', crearNutriologo)
+/*
+ * POST /api/usuarios
+ *
+ * Body:
+ * {
+ *   name: "Ana López",
+ *   email: "ana@gmail.com",
+ *   role: "admin"
+ * }
+ *
+ * o:
+ *
+ * {
+ *   name: "Ricardo",
+ *   email: "ricardo@gmail.com",
+ *   role: "nutritionist"
+ * }
+ */
+router.post('/', crearUsuario)
 
+/*
+ * PATCH /api/usuarios/:id/estado
+ *
+ * Body:
+ * {
+ *   active: false
+ * }
+ */
 router.patch(
-  '/nutriologos/:id/estado',
-  actualizarEstadoNutriologo,
+  '/:id/estado',
+  actualizarEstadoUsuario,
 )
 
 module.exports = router
