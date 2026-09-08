@@ -1,11 +1,14 @@
 const express = require('express')
+
 const {
-  obtenerUsuarios,
-  actualizarRol,
+  actualizarEstadoNutriologo,
+  crearNutriologo,
+  obtenerNutriologos,
 } = require('../controllers/usuarios.controller')
+
 const {
-  requireAuth,
   allowRoles,
+  requireAuth,
 } = require('../middleware/auth.middleware')
 
 const router = express.Router()
@@ -13,7 +16,13 @@ const router = express.Router()
 router.use(requireAuth)
 router.use(allowRoles('admin'))
 
-router.get('/', obtenerUsuarios)
-router.put('/:id/rol', actualizarRol)
+router.get('/nutriologos', obtenerNutriologos)
+
+router.post('/nutriologos', crearNutriologo)
+
+router.patch(
+  '/nutriologos/:id/estado',
+  actualizarEstadoNutriologo,
+)
 
 module.exports = router
