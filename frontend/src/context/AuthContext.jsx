@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import client from '../api/client'
 import { AuthContext } from './auth'
 
@@ -20,6 +20,7 @@ export function AuthProvider({ children }) {
         setUser(data.user)
       } catch {
         localStorage.removeItem('nutria_token')
+        setUser(null)
       } finally {
         setLoading(false)
       }
@@ -28,22 +29,45 @@ export function AuthProvider({ children }) {
     restoreSession()
   }, [])
 
-  async function login(credentials) {
-    const { data } = await client.post('/auth/login', credentials)
+  const loginGoogle = useCallback(async (credential) => {
+    const { data } = await client.post('/auth/google', {
+      credential,
+    })
+
     localStorage.setItem('nutria_token', data.token)
     setUser(data.user)
-    return data.user
-  }
 
-  function logout() {
+    return data.user
+  }, [])
+
+  const loginPaciente = useCallback(async (credentials) => {
+    const { data } = await client.post('/auth/paciente/login', credentials)
+
+    localStorage.setItem('nutria_token', data.token)
+    setUser(data.user)
+
+    return data.user
+  }, [])
+
+  const logout = useCallback(() => {
     localStorage.removeItem('nutria_token')
     setUser(null)
-  }
+  }, [])
 
   const value = useMemo(
-    () => ({ loading, login, logout, user }),
-    [loading, user],
+    () => ({
+      loading,
+      loginGoogle,
+      loginPaciente,
+      logout,
+      user,
+    }),
+    [loading, loginGoogle, loginPaciente, logout, user],
   )
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  )
 }
