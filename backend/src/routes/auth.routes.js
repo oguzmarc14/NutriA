@@ -1,10 +1,24 @@
 const express = require('express')
-const { getCurrentUser, login } = require('../controllers/auth.controller')
-const { requireAuth } = require('../middleware/auth.middleware')
+
+const {
+  getCurrentUser,
+  loginGoogle,
+  loginPaciente,
+} = require('../controllers/auth.controller')
+
+const {
+  requireAuth,
+} = require('../middleware/auth.middleware')
 
 const router = express.Router()
 
-router.post('/login', login)
+// Administradores y nutriólogos
+router.post('/google', loginGoogle)
+
+// Pacientes
+router.post('/paciente/login', loginPaciente)
+
+// Usuario autenticado actual
 router.get('/me', requireAuth, getCurrentUser)
 
 module.exports = router

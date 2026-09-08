@@ -1,9 +1,9 @@
 import {
   Apple,
-  ClipboardPlus,
   LayoutDashboard,
   LogOut,
   Ruler,
+  UserCog,
   Users,
 } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router-dom'
@@ -21,11 +21,6 @@ const navigation = [
     to: '/pacientes',
   },
   {
-    icon: ClipboardPlus,
-    label: 'Expedientes',
-    to: '/expedientes',
-  },
-  {
     icon: Ruler,
     label: 'Mediciones',
     to: '/mediciones',
@@ -40,6 +35,19 @@ const navigation = [
 function DashboardLayout() {
   const { logout, user } = useAuth()
 
+  const navigationVisible = [
+    ...navigation,
+    ...(user.role === 'admin'
+      ? [
+          {
+            icon: UserCog,
+            label: 'Usuarios',
+            to: '/usuarios',
+          },
+        ]
+      : []),
+  ]
+
   return (
     <div className="min-h-screen bg-[#f6f8f6] md:grid md:grid-cols-[260px_1fr]">
       <aside className="hidden min-h-screen border-r border-[#dfe8e3] bg-white p-5 md:flex md:flex-col">
@@ -52,6 +60,7 @@ function DashboardLayout() {
             <p className="text-xl font-extrabold tracking-tight text-[#173f34]">
               NutriA
             </p>
+
             <p className="text-xs text-slate-500">
               Gestión nutricional
             </p>
@@ -59,23 +68,25 @@ function DashboardLayout() {
         </div>
 
         <nav className="space-y-2">
-          {navigation.map(({ icon: Icon, label, to }) => (
-            <NavLink
-              key={label}
-              to={to}
-              end={to === '/'}
-              className={({ isActive }) =>
-                `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition ${
-                  isActive
-                    ? 'bg-[#e8f3ee] text-[#246b55]'
-                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                }`
-              }
-            >
-              <Icon size={19} />
-              {label}
-            </NavLink>
-          ))}
+          {navigationVisible.map(
+            ({ icon: Icon, label, to }) => (
+              <NavLink
+                key={label}
+                to={to}
+                end={to === '/'}
+                className={({ isActive }) =>
+                  `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition ${
+                    isActive
+                      ? 'bg-[#e8f3ee] text-[#246b55]'
+                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                  }`
+                }
+              >
+                <Icon size={19} />
+                {label}
+              </NavLink>
+            ),
+          )}
         </nav>
 
         <div className="mt-auto rounded-2xl bg-[#f8f5eb] p-4">

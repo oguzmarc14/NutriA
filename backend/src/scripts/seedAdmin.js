@@ -7,32 +7,46 @@ const User = require('../models/User')
 async function seedAdmin() {
   const name = process.env.ADMIN_NAME || 'Administrador NutriA'
   const email = process.env.ADMIN_EMAIL?.trim().toLowerCase()
-  const password = process.env.ADMIN_PASSWORD
 
-  if (!email || !password || password.length < 8) {
-    throw new Error('Configura ADMIN_EMAIL y ADMIN_PASSWORD (mínimo 8 caracteres)')
+  if (!email) {
+    throw new Error('Configura ADMIN_EMAIL')
   }
 
-  let user = await User.findOne({ email }).select('+password')
+  let user = await User.findOne({ email })
 
   if (!user) {
-    user = new User({ name, email, password, role: 'admin' })
+    user = new User({
+      name,
+      email,
+      role: 'admin',
+      authProvider: 'google',
+      active: true,
+      accountStatus: 'active',
+    })
   } else {
     user.name = name
-    user.password = password
     user.role = 'admin'
+    user.authProvider = 'google'
     user.active = true
+    user.accountStatus = 'active'
+
+    // Ya no utilizamos contraseña local para administradores.
+    user.password = undefined
   }
 
   await user.save()
-  console.log(`Administrador disponible: ${email}`)
+
+  console.log(`Administrador autorizado para Google: ${email}`)
 }
 
 connectDatabase()
   .then(seedAdmin)
   .then(() => mongoose.disconnect())
   .catch(async (error) => {
-    console.error(`No fue posible crear el administrador: ${error.message}`)
+    console.error(
+      `No fue posible crear el administrador: ${error.message}`,
+    )
+
     await mongoose.disconnect()
     process.exit(1)
   })

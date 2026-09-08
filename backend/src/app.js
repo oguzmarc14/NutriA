@@ -7,6 +7,7 @@ const medicionesRoutes = require('./routes/mediciones.routes')
 const planAlimenticioRoutes = require('./routes/planAlimenticio.routes')
 const usuariosRoutes = require('./routes/usuarios.routes')
 
+
 const app = express()
 
 app.disable('x-powered-by')

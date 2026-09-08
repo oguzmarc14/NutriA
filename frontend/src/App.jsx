@@ -9,6 +9,7 @@ import PacientesPage from './pages/PacientesPage'
 import ExpedientePage from './pages/ExpedientePage'
 import MedicionesPage from './pages/MedicionesPage'
 import PlanesAlimenticiosPage from './pages/PlanesAlimenticiosPage'
+import UsuariosPage from './pages/UsuariosPage'
 
 function App() {
   return (
@@ -43,6 +44,11 @@ function App() {
           <Route
             path="planes"
             element={<PlanesAlimenticiosPage />}
+          />
+
+          <Route
+            path="usuarios"
+            element={<UsuariosPage />}
           />
         </Route>
       </Route>
