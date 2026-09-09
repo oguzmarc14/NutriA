@@ -1,33 +1,181 @@
 const { z } = require('zod')
+
 const Pacientes = require('../models/Pacientes')
+const Medicion = require('../models/Medicion')
 
 const crearPacienteSchema = z.object({
-  name: z.string().trim().min(2, 'El nombre es obligatorio'),
-  email: z.string().trim().email().optional().or(z.literal('')),
-  phone: z.string().trim().optional(),
-  birthDate: z.coerce.date().optional(),
-  sex: z.enum(['male', 'female', 'other', 'unspecified']).optional(),
-  notes: z.string().trim().optional(),
+  name: z
+    .string()
+    .trim()
+    .min(
+      2,
+      'El nombre es obligatorio',
+    ),
+
+  email: z
+    .string()
+    .trim()
+    .email()
+    .optional()
+    .or(z.literal('')),
+
+  phone: z
+    .string()
+    .trim()
+    .optional(),
+
+  birthDate: z.coerce
+    .date()
+    .optional(),
+
+  sex: z
+    .enum([
+      'male',
+      'female',
+      'other',
+      'unspecified',
+    ])
+    .optional(),
+
+  notes: z
+    .string()
+    .trim()
+    .optional(),
 })
 
-async function crearPaciente(req, res, next) {
+async function crearPaciente(
+  req,
+  res,
+  next,
+) {
   try {
-    const parsed = crearPacienteSchema.safeParse(req.body)
+    const parsed =
+      crearPacienteSchema.safeParse(
+        req.body,
+      )
 
     if (!parsed.success) {
-      return res.status(400).json({
-        message: 'Datos del paciente inválidos',
-        errors: parsed.error.flatten(),
-      })
+      return res
+        .status(400)
+        .json({
+          message:
+            'Datos del paciente inválidos',
+
+          errors:
+            parsed.error.flatten(),
+        })
     }
 
-    const paciente = await Pacientes.create({
-      ...parsed.data,
-      nutritionist: req.user.id,
-    })
+    const paciente =
+      await Pacientes.create({
+        ...parsed.data,
+        nutritionist:
+          req.user.id,
+      })
 
-    return res.status(201).json({
-      message: 'Paciente registrado correctamente',
+    return res
+      .status(201)
+      .json({
+        message:
+          'Paciente registrado correctamente',
+
+        paciente,
+      })
+  } catch (error) {
+    return next(error)
+  }
+}
+
+async function obtenerPacientes(
+  req,
+  res,
+  next,
+) {
+  try {
+    const pacientes =
+      await Pacientes.find({
+        nutritionist:
+          req.user.id,
+
+        active: true,
+      })
+        .sort({
+          createdAt: -1,
+        })
+        .lean()
+
+    /*
+     * Para cada paciente buscamos
+     * solamente su medición más reciente.
+     */
+
+    const pacientesConMedicion =
+      await Promise.all(
+        pacientes.map(
+          async (paciente) => {
+            const ultimaMedicion =
+              await Medicion.findOne({
+                paciente:
+                  paciente._id,
+
+                nutritionist:
+                  req.user.id,
+              })
+                .sort({
+                  fecha: -1,
+                  createdAt: -1,
+                })
+                .select(
+                  'peso estatura imc fecha',
+                )
+                .lean()
+
+            return {
+              ...paciente,
+
+              ultimaMedicion:
+                ultimaMedicion ||
+                null,
+            }
+          },
+        ),
+      )
+
+    return res.json({
+      pacientes:
+        pacientesConMedicion,
+    })
+  } catch (error) {
+    return next(error)
+  }
+}
+
+async function obtenerPacientePorId(
+  req,
+  res,
+  next,
+) {
+  try {
+    const paciente =
+      await Pacientes.findOne({
+        _id: req.params.id,
+
+        nutritionist:
+          req.user.id,
+
+        active: true,
+      })
+
+    if (!paciente) {
+      return res
+        .status(404)
+        .json({
+          message:
+            'Paciente no encontrado',
+        })
+    }
+
+    return res.json({
       paciente,
     })
   } catch (error) {
@@ -35,71 +183,61 @@ async function crearPaciente(req, res, next) {
   }
 }
 
-async function obtenerPacientes(req, res, next) {
+async function actualizarPaciente(
+  req,
+  res,
+  next,
+) {
   try {
-    const pacientes = await Pacientes.find({
-      nutritionist: req.user.id,
-      active: true,
-    }).sort({ createdAt: -1 })
-
-    return res.json({ pacientes })
-  } catch (error) {
-    return next(error)
-  }
-}
-
-async function obtenerPacientePorId(req, res, next) {
-  try {
-    const paciente = await Pacientes.findOne({
-      _id: req.params.id,
-      nutritionist: req.user.id,
-      active: true,
-    })
-
-    if (!paciente) {
-      return res.status(404).json({
-        message: 'Paciente no encontrado',
-      })
-    }
-
-    return res.json({ paciente })
-  } catch (error) {
-    return next(error)
-  }
-}
-
-async function actualizarPaciente(req, res, next) {
-  try {
-    const parsed = crearPacienteSchema.safeParse(req.body)
+    const parsed =
+      crearPacienteSchema.safeParse(
+        req.body,
+      )
 
     if (!parsed.success) {
-      return res.status(400).json({
-        message: 'Datos del paciente inválidos',
-        errors: parsed.error.flatten(),
-      })
+      return res
+        .status(400)
+        .json({
+          message:
+            'Datos del paciente inválidos',
+
+          errors:
+            parsed.error.flatten(),
+        })
     }
 
-    const paciente = await Pacientes.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        nutritionist: req.user.id,
-        active: true,
-      },
-      parsed.data,
-      {
-        new: true,
-        runValidators: true,
-      },
-    )
+    const paciente =
+      await Pacientes.findOneAndUpdate(
+        {
+          _id: req.params.id,
+
+          nutritionist:
+            req.user.id,
+
+          active: true,
+        },
+
+        parsed.data,
+
+        {
+          new: true,
+          runValidators: true,
+        },
+      )
 
     if (!paciente) {
-      return res.status(404).json({
-        message: 'Paciente no encontrado',
-      })
+      return res
+        .status(404)
+        .json({
+          message:
+            'Paciente no encontrado',
+        })
     }
 
     return res.json({
-      message: 'Paciente actualizado correctamente',
+      message:
+        'Paciente actualizado correctamente',
+
       paciente,
     })
   } catch (error) {
