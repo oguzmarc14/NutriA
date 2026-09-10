@@ -1,5 +1,7 @@
 require('dotenv').config()
 
+const fs = require('fs')
+const path = require('path')
 const mongoose = require('mongoose')
 
 const {
@@ -8,942 +10,215 @@ const {
 
 const Alimento = require('../models/Alimento')
 
-const alimentos = [
-  {
-    nombre: 'Tortilla de maíz',
-    grupo: 'Cereales y tubérculos',
-    subgrupo: 'Sin grasa',
-
-    porcion: {
-      cantidad: 1,
-      unidad: 'pieza',
-      gramos: 30,
-      descripcion: '1 pieza',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 64,
-      proteina: 1.4,
-      carbohidratos: 13.6,
-      grasas: 0.8,
-      fibra: 1.5,
-      sodio: null,
-    },
-
-    tags: [
-      'tortilla',
-      'maiz',
-      'mexico',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-
-  {
-    nombre: 'Arroz blanco cocido',
-    grupo: 'Cereales y tubérculos',
-    subgrupo: 'Sin grasa',
-
-    porcion: {
-      cantidad: 0.5,
-      unidad: 'taza',
-      gramos: 80,
-      descripcion: '1/2 taza',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 103,
-      proteina: 2.1,
-      carbohidratos: 22.3,
-      grasas: 0.2,
-      fibra: 0.3,
-      sodio: null,
-    },
-
-    tags: [
-      'arroz',
-      'cereal',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-
-  {
-    nombre: 'Avena cocida',
-    grupo: 'Cereales y tubérculos',
-    subgrupo: 'Sin grasa',
-
-    porcion: {
-      cantidad: 0.75,
-      unidad: 'taza',
-      gramos: 180,
-      descripcion: '3/4 taza',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 120,
-      proteina: 4.3,
-      carbohidratos: 21,
-      grasas: 2.2,
-      fibra: 3,
-      sodio: null,
-    },
-
-    tags: [
-      'avena',
-      'cereal',
-      'desayuno',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-
-  {
-    nombre: 'Pan integral',
-    grupo: 'Cereales y tubérculos',
-    subgrupo: 'Sin grasa',
-
-    porcion: {
-      cantidad: 1,
-      unidad: 'rebanada',
-      gramos: 30,
-      descripcion: '1 rebanada',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 74,
-      proteina: 3,
-      carbohidratos: 13,
-      grasas: 1,
-      fibra: 2,
-      sodio: null,
-    },
-
-    tags: [
-      'pan',
-      'integral',
-      'cereal',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-
-  {
-    nombre: 'Frijoles de la olla',
-    grupo: 'Leguminosas',
-    subgrupo: '',
-
-    porcion: {
-      cantidad: 0.5,
-      unidad: 'taza',
-      gramos: 90,
-      descripcion: '1/2 taza',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 114,
-      proteina: 7.5,
-      carbohidratos: 20,
-      grasas: 0.5,
-      fibra: 7,
-      sodio: null,
-    },
-
-    tags: [
-      'frijol',
-      'frijoles',
-      'leguminosa',
-      'mexico',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-
-  {
-    nombre: 'Pechuga de pollo cocida',
-    grupo: 'Alimentos de origen animal',
-    subgrupo: 'Muy bajo aporte de grasa',
-
-    porcion: {
-      cantidad: 1,
-      unidad: 'porción',
-      gramos: 30,
-      descripcion: '30 g',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 50,
-      proteina: 9,
-      carbohidratos: 0,
-      grasas: 1.1,
-      fibra: 0,
-      sodio: null,
-    },
-
-    tags: [
-      'pollo',
-      'pechuga',
-      'proteina',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-
-  {
-    nombre: 'Huevo entero',
-    grupo: 'Alimentos de origen animal',
-    subgrupo: 'Moderado aporte de grasa',
-
-    porcion: {
-      cantidad: 1,
-      unidad: 'pieza',
-      gramos: 50,
-      descripcion: '1 pieza',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 72,
-      proteina: 6.3,
-      carbohidratos: 0.4,
-      grasas: 4.8,
-      fibra: 0,
-      sodio: null,
-    },
-
-    tags: [
-      'huevo',
-      'proteina',
-      'desayuno',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-
-  {
-    nombre: 'Clara de huevo',
-    grupo: 'Alimentos de origen animal',
-    subgrupo: 'Muy bajo aporte de grasa',
-
-    porcion: {
-      cantidad: 2,
-      unidad: 'piezas',
-      gramos: 66,
-      descripcion: '2 claras',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 34,
-      proteina: 7.2,
-      carbohidratos: 0.5,
-      grasas: 0.1,
-      fibra: 0,
-      sodio: null,
-    },
-
-    tags: [
-      'clara',
-      'huevo',
-      'proteina',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-
-  {
-    nombre: 'Queso panela',
-    grupo: 'Alimentos de origen animal',
-    subgrupo: 'Moderado aporte de grasa',
-
-    porcion: {
-      cantidad: 1,
-      unidad: 'porción',
-      gramos: 40,
-      descripcion: '40 g',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 80,
-      proteina: 7,
-      carbohidratos: 1,
-      grasas: 5,
-      fibra: 0,
-      sodio: null,
-    },
-
-    tags: [
-      'queso',
-      'panela',
-      'lacteo',
-      'mexico',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-
-  {
-    nombre: 'Leche descremada',
-    grupo: 'Leche',
-    subgrupo: 'Descremada',
-
-    porcion: {
-      cantidad: 1,
-      unidad: 'taza',
-      gramos: 240,
-      descripcion: '1 taza',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 85,
-      proteina: 8,
-      carbohidratos: 12,
-      grasas: 0.5,
-      fibra: 0,
-      sodio: null,
-    },
-
-    tags: [
-      'leche',
-      'descremada',
-      'lacteo',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-
-  {
-    nombre: 'Aguacate',
-    grupo: 'Aceites y grasas',
-    subgrupo: 'Sin proteína',
-
-    porcion: {
-      cantidad: 0.33,
-      unidad: 'pieza',
-      gramos: 50,
-      descripcion: 'Aproximadamente 1/3 de pieza',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 80,
-      proteina: 1,
-      carbohidratos: 4,
-      grasas: 7.4,
-      fibra: 3.4,
-      sodio: null,
-    },
-
-    tags: [
-      'aguacate',
-      'grasa',
-      'mexico',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-
-  {
-    nombre: 'Aceite de oliva',
-    grupo: 'Aceites y grasas',
-    subgrupo: 'Sin proteína',
-
-    porcion: {
-      cantidad: 1,
-      unidad: 'cucharadita',
-      gramos: 5,
-      descripcion: '1 cucharadita',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 45,
-      proteina: 0,
-      carbohidratos: 0,
-      grasas: 5,
-      fibra: 0,
-      sodio: 0,
-    },
-
-    tags: [
-      'aceite',
-      'oliva',
-      'grasa',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-
-  {
-    nombre: 'Plátano',
-    grupo: 'Frutas',
-    subgrupo: '',
-
-    porcion: {
-      cantidad: 0.5,
-      unidad: 'pieza',
-      gramos: 80,
-      descripcion: '1/2 pieza',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 71,
-      proteina: 0.9,
-      carbohidratos: 18.3,
-      grasas: 0.2,
-      fibra: 2.1,
-      sodio: null,
-    },
-
-    tags: [
-      'platano',
-      'banana',
-      'fruta',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-
-  {
-    nombre: 'Manzana',
-    grupo: 'Frutas',
-    subgrupo: '',
-
-    porcion: {
-      cantidad: 1,
-      unidad: 'pieza',
-      gramos: 130,
-      descripcion: '1 pieza pequeña',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 68,
-      proteina: 0.3,
-      carbohidratos: 18,
-      grasas: 0.2,
-      fibra: 3,
-      sodio: null,
-    },
-
-    tags: [
-      'manzana',
-      'fruta',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-
-  {
-    nombre: 'Naranja',
-    grupo: 'Frutas',
-    subgrupo: '',
-
-    porcion: {
-      cantidad: 1,
-      unidad: 'pieza',
-      gramos: 140,
-      descripcion: '1 pieza',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 66,
-      proteina: 1.3,
-      carbohidratos: 16,
-      grasas: 0.2,
-      fibra: 3.4,
-      sodio: null,
-    },
-
-    tags: [
-      'naranja',
-      'fruta',
-      'citricos',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-
-  {
-    nombre: 'Papaya',
-    grupo: 'Frutas',
-    subgrupo: '',
-
-    porcion: {
-      cantidad: 1,
-      unidad: 'taza',
-      gramos: 140,
-      descripcion: '1 taza en cubos',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 60,
-      proteina: 0.7,
-      carbohidratos: 15,
-      grasas: 0.4,
-      fibra: 2.4,
-      sodio: null,
-    },
-
-    tags: [
-      'papaya',
-      'fruta',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-
-  {
-    nombre: 'Jitomate',
-    grupo: 'Verduras',
-    subgrupo: '',
-
-    porcion: {
-      cantidad: 1,
-      unidad: 'pieza',
-      gramos: 120,
-      descripcion: '1 pieza mediana',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 22,
-      proteina: 1.1,
-      carbohidratos: 4.8,
-      grasas: 0.2,
-      fibra: 1.5,
-      sodio: null,
-    },
-
-    tags: [
-      'jitomate',
-      'tomate',
-      'verdura',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-
-  {
-    nombre: 'Nopal cocido',
-    grupo: 'Verduras',
-    subgrupo: '',
-
-    porcion: {
-      cantidad: 1,
-      unidad: 'taza',
-      gramos: 150,
-      descripcion: '1 taza',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 24,
-      proteina: 1.6,
-      carbohidratos: 5,
-      grasas: 0.2,
-      fibra: 3,
-      sodio: null,
-    },
-
-    tags: [
-      'nopal',
-      'nopales',
-      'verdura',
-      'mexico',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-
-  {
-    nombre: 'Zanahoria',
-    grupo: 'Verduras',
-    subgrupo: '',
-
-    porcion: {
-      cantidad: 1,
-      unidad: 'pieza',
-      gramos: 60,
-      descripcion: '1 pieza mediana',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 25,
-      proteina: 0.6,
-      carbohidratos: 5.8,
-      grasas: 0.1,
-      fibra: 1.7,
-      sodio: null,
-    },
-
-    tags: [
-      'zanahoria',
-      'verdura',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-
-  {
-    nombre: 'Brócoli cocido',
-    grupo: 'Verduras',
-    subgrupo: '',
-
-    porcion: {
-      cantidad: 0.5,
-      unidad: 'taza',
-      gramos: 78,
-      descripcion: '1/2 taza',
-    },
-
-    equivalentes: 1,
-
-    nutrimentos: {
-      kcal: 27,
-      proteina: 1.9,
-      carbohidratos: 5.6,
-      grasas: 0.3,
-      fibra: 2.6,
-      sodio: null,
-    },
-
-    tags: [
-      'brocoli',
-      'verdura',
-    ],
-
-    fuentes: [
-      {
-        nombre: 'NutriA',
-        edicion: 'Dataset inicial',
-        referencia: 'Pendiente de validación nutricional',
-      },
-    ],
-
-    origen: 'manual',
-    revisado: false,
-    activo: true,
-  },
-]
-
-function normalizarNombre(nombre) {
-  return nombre
+const DIRECTORIO_ALIMENTOS = path.join(
+  __dirname,
+  '..',
+  'data',
+  'alimentos',
+)
+
+function normalizarTexto(texto = '') {
+  return texto
     .trim()
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
 }
 
+function obtenerArchivosJson() {
+  if (!fs.existsSync(DIRECTORIO_ALIMENTOS)) {
+    throw new Error(
+      `No existe el directorio de alimentos: ${DIRECTORIO_ALIMENTOS}`,
+    )
+  }
+
+  return fs
+    .readdirSync(DIRECTORIO_ALIMENTOS)
+    .filter((archivo) => archivo.endsWith('.json'))
+    .sort()
+}
+
+function cargarAlimentosDesdeArchivo(nombreArchivo) {
+  const rutaArchivo = path.join(
+    DIRECTORIO_ALIMENTOS,
+    nombreArchivo,
+  )
+
+  const contenido = fs.readFileSync(
+    rutaArchivo,
+    'utf-8',
+  )
+
+  let datos
+
+  try {
+    datos = JSON.parse(contenido)
+  } catch (error) {
+    throw new Error(
+      `JSON inválido en ${nombreArchivo}: ${error.message}`,
+    )
+  }
+
+  if (!Array.isArray(datos)) {
+    throw new Error(
+      `${nombreArchivo} debe contener un arreglo JSON`,
+    )
+  }
+
+  return datos.map((alimento) => ({
+    ...alimento,
+    __archivoOrigen: nombreArchivo,
+  }))
+}
+
+function cargarCatalogo() {
+  const archivos = obtenerArchivosJson()
+  const alimentos = []
+
+  for (const archivo of archivos) {
+    const registros = cargarAlimentosDesdeArchivo(
+      archivo,
+    )
+
+    console.log(
+      `📄 ${archivo}: ${registros.length} alimentos`,
+    )
+
+    alimentos.push(...registros)
+  }
+
+  return {
+    archivos,
+    alimentos,
+  }
+}
+
+function validarAlimento(alimento) {
+  const errores = []
+
+  if (!alimento.nombre?.trim()) {
+    errores.push('nombre')
+  }
+
+  if (!alimento.grupo?.trim()) {
+    errores.push('grupo')
+  }
+
+  if (errores.length > 0) {
+    throw new Error(
+      `Registro inválido en ${alimento.__archivoOrigen}: faltan ${errores.join(', ')}`,
+    )
+  }
+}
+
+async function guardarAlimento(alimento) {
+  validarAlimento(alimento)
+
+  const {
+    __archivoOrigen,
+    ...datosAlimento
+  } = alimento
+
+  const nombreNormalizado = normalizarTexto(
+    datosAlimento.nombre,
+  )
+
+  const resultado = await Alimento.updateOne(
+    {
+      nombreNormalizado,
+    },
+    {
+      $set: {
+        ...datosAlimento,
+        nombreNormalizado,
+      },
+    },
+    {
+      upsert: true,
+      runValidators: true,
+    },
+  )
+
+  return {
+    creado: resultado.upsertedCount > 0,
+    actualizado:
+      resultado.matchedCount > 0 &&
+      resultado.modifiedCount > 0,
+    sinCambios:
+      resultado.matchedCount > 0 &&
+      resultado.modifiedCount === 0,
+    archivo: __archivoOrigen,
+    nombre: datosAlimento.nombre,
+  }
+}
+
 async function ejecutarSeed() {
   try {
-    await connectDatabase()
+    console.log('🥗 Iniciando importación del catálogo de alimentos...')
 
-    console.log('')
-    console.log('Cargando catálogo inicial de alimentos...')
-    console.log('')
+    const {
+      archivos,
+      alimentos,
+    } = cargarCatalogo()
+
+    console.log(
+      `📚 Archivos encontrados: ${archivos.length}`,
+    )
+    console.log(
+      `🍎 Registros encontrados: ${alimentos.length}`,
+    )
+
+    if (alimentos.length === 0) {
+      console.log(
+        'ℹ️ Los archivos JSON todavía están vacíos. No hay alimentos que importar.',
+      )
+      return
+    }
+
+    await connectDatabase()
 
     let creados = 0
     let actualizados = 0
+    let sinCambios = 0
 
     for (const alimento of alimentos) {
-      const nombreNormalizado =
-        normalizarNombre(
-          alimento.nombre,
-        )
-
-      const existente =
-        await Alimento.findOne({
-          nombreNormalizado,
-        })
-
-      if (existente) {
-        await Alimento.updateOne(
-          {
-            _id: existente._id,
-          },
-          {
-            $set: {
-              ...alimento,
-              nombreNormalizado,
-            },
-          },
-        )
-
-        actualizados += 1
-
-        console.log(
-          `Actualizado: ${alimento.nombre}`,
-        )
-
-        continue
-      }
-
-      await Alimento.create({
-        ...alimento,
-        nombreNormalizado,
-      })
-
-      creados += 1
-
-      console.log(
-        `Creado: ${alimento.nombre}`,
+      const resultado = await guardarAlimento(
+        alimento,
       )
+
+      if (resultado.creado) {
+        creados += 1
+        console.log(
+          `✅ Creado: ${resultado.nombre}`,
+        )
+      } else if (resultado.actualizado) {
+        actualizados += 1
+        console.log(
+          `🔄 Actualizado: ${resultado.nombre}`,
+        )
+      } else {
+        sinCambios += 1
+        console.log(
+          `➖ Sin cambios: ${resultado.nombre}`,
+        )
+      }
     }
 
-    console.log('')
-    console.log('------------------------------')
-    console.log('Seed de alimentos terminado')
-    console.log('------------------------------')
-    console.log(`Creados: ${creados}`)
-    console.log(
-      `Actualizados: ${actualizados}`,
-    )
-    console.log(
-      `Total: ${alimentos.length}`,
-    )
-    console.log('')
+    console.log('\n✅ Importación finalizada')
+    console.log(`   Creados: ${creados}`)
+    console.log(`   Actualizados: ${actualizados}`)
+    console.log(`   Sin cambios: ${sinCambios}`)
+    console.log(`   Total procesados: ${alimentos.length}`)
   } catch (error) {
-    console.error('')
     console.error(
-      'Error ejecutando seed de alimentos:',
+      '❌ Error al importar alimentos:',
+      error.message,
     )
-    console.error(error)
 
     process.exitCode = 1
   } finally {
-    try {
+    if (mongoose.connection.readyState !== 0) {
       await mongoose.connection.close()
-
-      console.log(
-        'Conexión a MongoDB cerrada',
-      )
-    } catch (error) {
-      console.error(
-        'Error cerrando MongoDB:',
-        error,
-      )
     }
   }
 }
