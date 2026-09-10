@@ -4,10 +4,7 @@ const fs = require('fs')
 const path = require('path')
 const mongoose = require('mongoose')
 
-const {
-  connectDatabase,
-} = require('../config/database')
-
+const { connectDatabase } = require('../config/database')
 const Alimento = require('../models/Alimento')
 
 const DIRECTORIO_ALIMENTOS = path.join(
@@ -38,6 +35,31 @@ function obtenerArchivosJson() {
     .sort()
 }
 
+function combinarRegistro(metadata, alimento) {
+  return {
+    ...metadata,
+    ...alimento,
+    porcion: {
+      ...(metadata.porcion || {}),
+      ...(alimento.porcion || {}),
+    },
+    nutrimentos: {
+      ...(metadata.nutrimentos || {}),
+      ...(alimento.nutrimentos || {}),
+    },
+    fuentes:
+      alimento.fuentes ||
+      metadata.fuentes ||
+      [],
+    tags: [
+      ...new Set([
+        ...(metadata.tags || []),
+        ...(alimento.tags || []),
+      ]),
+    ],
+  }
+}
+
 function cargarAlimentosDesdeArchivo(nombreArchivo) {
   const rutaArchivo = path.join(
     DIRECTORIO_ALIMENTOS,
@@ -59,14 +81,29 @@ function cargarAlimentosDesdeArchivo(nombreArchivo) {
     )
   }
 
-  if (!Array.isArray(datos)) {
+  // Compatibilidad con el formato anterior: []
+  if (Array.isArray(datos)) {
+    return datos.map((alimento) => ({
+      ...alimento,
+      __archivoOrigen: nombreArchivo,
+    }))
+  }
+
+  // Nuevo formato: { metadata, alimentos }
+  if (
+    !datos ||
+    typeof datos !== 'object' ||
+    !Array.isArray(datos.alimentos)
+  ) {
     throw new Error(
-      `${nombreArchivo} debe contener un arreglo JSON`,
+      `${nombreArchivo} debe contener un arreglo JSON o un objeto con metadata y alimentos`,
     )
   }
 
-  return datos.map((alimento) => ({
-    ...alimento,
+  const metadata = datos.metadata || {}
+
+  return datos.alimentos.map((alimento) => ({
+    ...combinarRegistro(metadata, alimento),
     __archivoOrigen: nombreArchivo,
   }))
 }
