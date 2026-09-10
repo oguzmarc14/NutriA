@@ -1,4 +1,8 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import {
+  Navigate,
+  Route,
+  Routes,
+} from 'react-router-dom'
 
 import ProtectedRoute from './components/ProtectedRoute'
 import DashboardLayout from './layouts/DashboardLayout'
@@ -14,52 +18,109 @@ import UsuariosPage from './pages/UsuariosPage'
 function App() {
   return (
     <Routes>
+      {/* LOGIN */}
+
       <Route
         path="/login"
         element={<LoginPage />}
       />
 
-      <Route element={<ProtectedRoute />}>
-        <Route element={<DashboardLayout />}>
+      {/* RUTAS PROTEGIDAS */}
+
+      <Route
+        element={
+          <ProtectedRoute />
+        }
+      >
+        <Route
+          element={
+            <DashboardLayout />
+          }
+        >
+          {/* RESUMEN GENERAL */}
+
           <Route
             index
-            element={<DashboardPage />}
+            element={
+              <DashboardPage />
+            }
           />
 
-          <Route element={<ProtectedRoute roles={['nutritionist']} />}>
+          {/* ============================================
+              NUTRIÓLOGO
+          ============================================ */}
+
+          <Route
+            element={
+              <ProtectedRoute
+                roles={[
+                  'nutritionist',
+                ]}
+              />
+            }
+          >
             <Route
               path="pacientes"
-              element={<PacientesPage />}
+              element={
+                <PacientesPage />
+              }
             />
 
             <Route
               path="pacientes/:pacienteId/expediente"
-              element={<ExpedientePage />}
+              element={
+                <ExpedientePage />
+              }
             />
 
             <Route
               path="mediciones"
-              element={<MedicionesPage />}
+              element={
+                <MedicionesPage />
+              }
             />
 
             <Route
               path="planes"
-              element={<PlanesAlimenticiosPage />}
+              element={
+                <PlanesAlimenticiosPage />
+              }
             />
           </Route>
 
-          <Route element={<ProtectedRoute roles={['admin']} />}>
+          {/* ============================================
+              ADMINISTRADOR
+          ============================================ */}
+
+          <Route
+            element={
+              <ProtectedRoute
+                roles={[
+                  'admin',
+                ]}
+              />
+            }
+          >
             <Route
               path="usuarios"
-              element={<UsuariosPage />}
+              element={
+                <UsuariosPage />
+              }
             />
           </Route>
         </Route>
       </Route>
 
+      {/* RUTA NO ENCONTRADA */}
+
       <Route
         path="*"
-        element={<Navigate to="/" replace />}
+        element={
+          <Navigate
+            to="/"
+            replace
+          />
+        }
       />
     </Routes>
   )
