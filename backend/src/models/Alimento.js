@@ -1,5 +1,11 @@
 const mongoose = require('mongoose')
 
+/*
+ * ----------------------------------------------------
+ * FUENTE DE INFORMACIÓN
+ * ----------------------------------------------------
+ */
+
 const fuenteSchema = new mongoose.Schema(
   {
     nombre: {
@@ -25,30 +31,59 @@ const fuenteSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+
+    identificador: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+
+    tipoDato: {
+      type: String,
+      enum: [
+        'equivalencia',
+        'composicion',
+        'complementaria',
+        'general',
+      ],
+      default: 'general',
+    },
   },
   {
     _id: false,
   },
 )
 
+/*
+ * ----------------------------------------------------
+ * PORCIÓN / EQUIVALENTE
+ * ----------------------------------------------------
+ */
+
 const porcionSchema = new mongoose.Schema(
   {
     cantidad: {
       type: Number,
-      min: 0,
       default: 1,
+      min: 0,
     },
 
     unidad: {
       type: String,
       trim: true,
-      default: '',
+      default: 'porción',
     },
 
     gramos: {
       type: Number,
-      min: 0,
       default: null,
+      min: 0,
+    },
+
+    mililitros: {
+      type: Number,
+      default: null,
+      min: 0,
     },
 
     descripcion: {
@@ -62,78 +97,233 @@ const porcionSchema = new mongoose.Schema(
   },
 )
 
+/*
+ * ----------------------------------------------------
+ * NUTRIMENTOS
+ * ----------------------------------------------------
+ *
+ * null = dato todavía no disponible/verificado
+ * 0    = valor conocido igual a cero
+ */
+
 const nutrimentosSchema = new mongoose.Schema(
   {
+    /*
+     * Energía y macronutrimentos
+     */
+
     kcal: {
       type: Number,
+      default: null,
       min: 0,
-      default: 0,
     },
 
     proteina: {
       type: Number,
+      default: null,
       min: 0,
-      default: 0,
     },
 
     carbohidratos: {
       type: Number,
+      default: null,
       min: 0,
-      default: 0,
     },
 
     grasas: {
       type: Number,
+      default: null,
       min: 0,
-      default: 0,
     },
 
     fibra: {
       type: Number,
-      min: 0,
       default: null,
-    },
-
-    sodio: {
-      type: Number,
       min: 0,
-      default: null,
-    },
-
-    calcio: {
-      type: Number,
-      min: 0,
-      default: null,
-    },
-
-    hierro: {
-      type: Number,
-      min: 0,
-      default: null,
-    },
-
-    potasio: {
-      type: Number,
-      min: 0,
-      default: null,
-    },
-
-    colesterol: {
-      type: Number,
-      min: 0,
-      default: null,
     },
 
     azucares: {
       type: Number,
-      min: 0,
       default: null,
+      min: 0,
     },
+
+    azucaresAgregados: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    /*
+     * Perfil de grasas
+     */
 
     grasasSaturadas: {
       type: Number,
-      min: 0,
       default: null,
+      min: 0,
+    },
+
+    grasasMonoinsaturadas: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    grasasPoliinsaturadas: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    grasasTrans: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    colesterol: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    /*
+     * Minerales
+     */
+
+    sodio: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    potasio: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    calcio: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    hierro: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    magnesio: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    fosforo: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    zinc: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    selenio: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    /*
+     * Vitaminas
+     */
+
+    vitaminaA: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    vitaminaC: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    vitaminaD: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    vitaminaE: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    vitaminaK: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    vitaminaB1: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    vitaminaB2: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    vitaminaB3: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    vitaminaB6: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    vitaminaB9: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    vitaminaB12: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    /*
+     * Otros
+     */
+
+    alcohol: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    agua: {
+      type: Number,
+      default: null,
+      min: 0,
     },
   },
   {
@@ -141,14 +331,17 @@ const nutrimentosSchema = new mongoose.Schema(
   },
 )
 
+/*
+ * ----------------------------------------------------
+ * ALIMENTO
+ * ----------------------------------------------------
+ */
+
 const alimentoSchema = new mongoose.Schema(
   {
     nombre: {
       type: String,
-      required: [
-        true,
-        'El nombre del alimento es obligatorio',
-      ],
+      required: true,
       trim: true,
       index: true,
     },
@@ -158,15 +351,15 @@ const alimentoSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
       index: true,
-      default: '',
     },
+
+    /*
+     * Clasificación SMAE / NutriA
+     */
 
     grupo: {
       type: String,
-      required: [
-        true,
-        'El grupo del alimento es obligatorio',
-      ],
+      required: true,
       trim: true,
       index: true,
     },
@@ -175,23 +368,37 @@ const alimentoSchema = new mongoose.Schema(
       type: String,
       trim: true,
       default: '',
+      index: true,
     },
+
+    /*
+     * Porción utilizada como referencia
+     */
 
     porcion: {
       type: porcionSchema,
       default: () => ({}),
     },
 
+    /*
+     * Número de equivalentes SMAE que representa
+     * la porción registrada.
+     */
+
     equivalentes: {
       type: Number,
-      min: 0,
       default: 1,
+      min: 0,
     },
 
     nutrimentos: {
       type: nutrimentosSchema,
       default: () => ({}),
     },
+
+    /*
+     * Información adicional
+     */
 
     preparacion: {
       type: String,
@@ -212,27 +419,54 @@ const alimentoSchema = new mongoose.Schema(
     },
 
     tags: {
-      type: [String],
+      type: [
+        String,
+      ],
       default: [],
-      set: (tags) => {
-        if (!Array.isArray(tags)) {
-          return []
-        }
-
-        return tags
-          .map((tag) =>
-            String(tag)
-              .trim()
-              .toLowerCase(),
-          )
-          .filter(Boolean)
-      },
     },
+
+    /*
+     * Procedencia
+     */
 
     fuentes: {
-      type: [fuenteSchema],
+      type: [
+        fuenteSchema,
+      ],
       default: [],
     },
+
+    origen: {
+      type: String,
+      enum: [
+        'manual',
+        'importado',
+        'smae_referencia',
+        'incmnsz',
+        'imss',
+        'usda',
+        'mixto',
+        'otra_fuente',
+      ],
+      default: 'manual',
+      index: true,
+    },
+
+    /*
+     * Si utilizamos FoodData Central,
+     * conservamos el identificador original.
+     */
+
+    fdcId: {
+      type: String,
+      trim: true,
+      default: '',
+      index: true,
+    },
+
+    /*
+     * Control de calidad
+     */
 
     activo: {
       type: Boolean,
@@ -246,16 +480,15 @@ const alimentoSchema = new mongoose.Schema(
       index: true,
     },
 
-    origen: {
+    fechaRevision: {
+      type: Date,
+      default: null,
+    },
+
+    notasRevision: {
       type: String,
-      enum: [
-        'manual',
-        'importado',
-        'smae_referencia',
-        'usda',
-        'otra_fuente',
-      ],
-      default: 'manual',
+      trim: true,
+      default: '',
     },
   },
   {
@@ -263,30 +496,64 @@ const alimentoSchema = new mongoose.Schema(
   },
 )
 
+/*
+ * ----------------------------------------------------
+ * ÍNDICE DE BÚSQUEDA
+ * ----------------------------------------------------
+ */
+
 alimentoSchema.index({
   nombre: 'text',
+  nombreNormalizado: 'text',
   grupo: 'text',
   subgrupo: 'text',
   tags: 'text',
 })
 
+/*
+ * ----------------------------------------------------
+ * NORMALIZACIÓN
+ * ----------------------------------------------------
+ */
+
 alimentoSchema.pre(
   'save',
-  function normalizarNombre() {
-    if (!this.nombre) {
-      return
+  function normalizarAlimento() {
+    if (this.nombre) {
+      this.nombreNormalizado =
+        this.nombre
+          .trim()
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(
+            /[\u0300-\u036f]/g,
+            '',
+          )
     }
 
-    this.nombreNormalizado =
-      this.nombre
-        .trim()
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
+    if (
+      Array.isArray(
+        this.tags,
+      )
+    ) {
+      this.tags = [
+        ...new Set(
+          this.tags
+            .filter(Boolean)
+            .map(
+              (tag) =>
+                tag
+                  .trim()
+                  .toLowerCase(),
+            ),
+        ),
+      ]
+    }
   },
 )
 
-module.exports = mongoose.model(
-  'Alimento',
-  alimentoSchema,
-)
+module.exports =
+  mongoose.model(
+    'Alimento',
+    alimentoSchema,
+  )
