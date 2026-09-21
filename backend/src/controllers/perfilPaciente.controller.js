@@ -20,7 +20,9 @@ async function obtenerMiPerfil(req, res, next) {
     const paciente = await Paciente.findOne({
       _id: pacienteId,
       active: true,
-    }).lean()
+    })
+      .populate('nutritionist', 'name email')
+      .lean()
 
     if (!paciente) {
       return res.status(404).json({

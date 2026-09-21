@@ -9,6 +9,7 @@ import {
 
 import { useNavigate } from 'react-router-dom'
 import CardModuloDashboard from '../components/dashboard/CardModuloDashboard'
+import DashboardPaciente from '../components/dashboard/DashboardPaciente'
 import { useAuth } from '../context/auth'
 
 const nutritionistModules = [
@@ -55,27 +56,6 @@ const adminModules = [
   },
 ]
 
-const patientModules = [
-  {
-    description: 'Consulta tus antecedentes y la informacion registrada por tu nutriologo.',
-    icon: ClipboardPlus,
-    name: 'Mi expediente',
-    to: '/mi-expediente',
-  },
-  {
-    description: 'Revisa tu historial de peso, estatura, IMC y medidas corporales.',
-    icon: Ruler,
-    name: 'Mis mediciones',
-    to: '/mis-mediciones',
-  },
-  {
-    description: 'Consulta tus comidas e indicaciones nutricionales actuales.',
-    icon: Apple,
-    name: 'Mi plan alimenticio',
-    to: '/mi-plan',
-  },
-]
-
 function DashboardPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -83,7 +63,11 @@ function DashboardPage() {
   const isAdmin = user.role === 'admin'
   const isPatient = user.role === 'patient'
 
-  const modules = isAdmin ? adminModules : isPatient ? patientModules : nutritionistModules
+  if (isPatient) {
+    return <DashboardPaciente nombre={user.name.split(' ')[0]} />
+  }
+
+  const modules = isAdmin ? adminModules : nutritionistModules
 
   return (
     <section className="mx-auto max-w-6xl p-5 md:p-8">
@@ -99,9 +83,7 @@ function DashboardPage() {
         <p className="mt-2 text-slate-500">
           {isAdmin
             ? 'Administra los usuarios y accesos del sistema NutriA.'
-            : isPatient
-              ? 'Consulta tu informacion nutricional y el seguimiento preparado para ti.'
-              : 'Administra el seguimiento nutricional de tus pacientes desde un solo lugar.'}
+            : 'Administra el seguimiento nutricional de tus pacientes desde un solo lugar.'}
         </p>
       </div>
 
