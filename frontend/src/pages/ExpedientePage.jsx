@@ -80,6 +80,7 @@ const expedienteInicial = {
     bebidasAzucaradasSemana: '',
     intoleranciasAlimentarias: '',
     objetivoPrincipal: '',
+    objetivos: [],
     objetivoOtro: '',
   },
 
@@ -257,6 +258,13 @@ function ExpedientePage() {
               objetivoPrincipal:
                 data.expediente.nutricion
                   ?.objetivoPrincipal || '',
+
+              objetivos:
+                data.expediente.nutricion?.objetivos?.length
+                  ? data.expediente.nutricion.objetivos
+                  : data.expediente.nutricion?.objetivoPrincipal
+                    ? [data.expediente.nutricion.objetivoPrincipal]
+                    : [],
 
               objetivoOtro:
                 data.expediente.nutricion
@@ -1125,7 +1133,7 @@ function ExpedientePage() {
 
             <div className="mt-7">
               <p className="mb-3 text-sm font-bold text-[#173f34]">
-                Objetivo principal
+                Objetivos de la dieta
               </p>
 
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -1156,16 +1164,15 @@ function ExpedientePage() {
                   <button
                     key={valor}
                     type="button"
-                    onClick={() =>
-                      manejarGrupo(
-                        'nutricion',
-                        'objetivoPrincipal',
-                        valor,
-                      )
-                    }
+                    onClick={() => manejarGrupo(
+                      'nutricion',
+                      'objetivos',
+                      expediente.nutricion.objetivos.includes(valor)
+                        ? expediente.nutricion.objetivos.filter((objetivo) => objetivo !== valor)
+                        : [...expediente.nutricion.objetivos, valor],
+                    )}
                     className={`rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${
-                      expediente.nutricion
-                        .objetivoPrincipal === valor
+                      expediente.nutricion.objetivos.includes(valor)
                         ? 'border-[#4d816f] bg-[#dceee4] text-[#173f34] shadow-sm'
                         : 'border-[#e3d9c4] bg-white/60 text-slate-600 hover:bg-white'
                     }`}
@@ -1175,8 +1182,7 @@ function ExpedientePage() {
                 ))}
               </div>
 
-              {expediente.nutricion.objetivoPrincipal ===
-                'otro' && (
+              {expediente.nutricion.objetivos.includes('otro') && (
                 <div className="mt-4">
                   <CampoInput
                     label="Describe el objetivo"

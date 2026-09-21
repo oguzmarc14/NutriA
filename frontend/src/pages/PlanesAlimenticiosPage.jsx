@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import {
   Apple,
@@ -104,6 +105,7 @@ const coloresPaciente = [
  */
 
 function PlanesAlimenticiosPage() {
+  const [searchParams] = useSearchParams()
   /*
    * PACIENTES
    */
@@ -112,7 +114,7 @@ function PlanesAlimenticiosPage() {
     useState([])
 
   const [pacienteId, setPacienteId] =
-    useState('')
+    useState(searchParams.get('paciente') || '')
 
   const [planes, setPlanes] =
     useState([])

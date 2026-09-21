@@ -171,6 +171,18 @@ const expedienteSchema = z.object({
         ])
         .optional(),
 
+      objetivos: z
+        .array(z.enum([
+          'perdida_peso',
+          'incremento_masa',
+          'imagen_personal',
+          'salud',
+          'rendimiento_deportivo',
+          'control_enfermedades',
+          'otro',
+        ]))
+        .optional(),
+
       objetivoOtro:
         stringOptional,
     })

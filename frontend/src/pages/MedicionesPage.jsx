@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Activity,
   ArrowLeft,
@@ -19,6 +19,7 @@ import {
 
 import CardPacienteMediciones from '../components/mediciones/CardPacienteMediciones'
 import CampoAntropometrico from '../components/mediciones/CampoAntropometrico'
+import ModalMedicionGuardada from '../components/mediciones/ModalMedicionGuardada'
 import client from '../api/client'
 
 const nivelesActividad = [
@@ -85,6 +86,7 @@ const coloresPaciente = [
 ]
 
 function MedicionesPage() {
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [pacientes, setPacientes] = useState([])
   const [pacienteId, setPacienteId] = useState(searchParams.get('paciente') || '')
@@ -627,9 +629,11 @@ function MedicionesPage() {
             )}
 
             {mensaje && (
-              <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
-                {mensaje}
-              </div>
+              <ModalMedicionGuardada
+                mensaje={mensaje}
+                onCerrar={() => setMensaje('')}
+                onContinuar={() => navigate(`/planes?paciente=${pacienteId}`)}
+              />
             )}
 
             {/* FORMULARIO */}

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import CardPaciente from '../components/pacientes/CardPaciente'
 import CampoPaciente from '../components/pacientes/CampoPaciente'
 import ModalEliminarPaciente from '../components/pacientes/ModalEliminarPaciente'
+import ModalPacienteCreado from '../components/pacientes/ModalPacienteCreado'
 import client from '../api/client'
 
 const formularioInicial = {
@@ -24,6 +25,7 @@ function PacientesPage() {
   const [reenviandoId, setReenviandoId] = useState(null)
   const [pacienteAEliminar, setPacienteAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
+  const [pacienteCreado, setPacienteCreado] = useState(null)
 
   const [error, setError] = useState('')
   const [mensaje, setMensaje] = useState('')
@@ -182,7 +184,9 @@ function PacientesPage() {
           ...actuales,
         ])
 
-        navigate(`/pacientes/${data.paciente._id}/expediente`)
+        setFormulario(formularioInicial)
+        setMostrarFormulario(false)
+        setPacienteCreado(data.paciente)
         return
       }
 
@@ -304,6 +308,10 @@ function PacientesPage() {
 
   return (
     <section className="min-h-screen bg-transparent px-4 py-6 sm:px-5 md:px-8 md:py-8">
+      <ModalPacienteCreado
+        paciente={pacienteCreado}
+        onAceptar={() => navigate(`/pacientes/${pacienteCreado._id}/expediente`)}
+      />
       <div className="mx-auto w-full max-w-6xl">
         {/* ============================================
             HEADER

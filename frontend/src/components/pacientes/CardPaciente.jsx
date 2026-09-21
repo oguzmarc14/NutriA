@@ -1,4 +1,4 @@
-import { CalendarDays, ClipboardPlus, Mail, Pencil, Phone, RefreshCw, Trash2 } from 'lucide-react'
+import { CalendarDays, CheckCircle2, ClipboardPlus, Mail, Pencil, Phone, RefreshCw, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 function DatoPaciente({ icon: Icon, label, value }) {
@@ -46,6 +46,13 @@ function CardPaciente({ paciente, onEditar, onEliminar, obtenerSexo, calcularEda
             <RefreshCw size={13} className={reenviando ? 'animate-spin' : ''} />
             {reenviando ? 'Enviando...' : 'Reenviar invitación'}
           </button>
+        </div>
+      )}
+
+      {paciente.accountStatus === 'active' && (
+        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+          <p className="flex items-center gap-1.5 text-xs font-bold text-emerald-800"><CheckCircle2 size={14} />Cliente registrado</p>
+          <p className="mt-1 text-xs text-emerald-700">Ya puede iniciar sesion con su correo.</p>
         </div>
       )}
 

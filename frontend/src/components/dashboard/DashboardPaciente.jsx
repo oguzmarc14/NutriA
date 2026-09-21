@@ -10,7 +10,11 @@ import GraficaProgresoPeso from './GraficaProgresoPeso'
 
 function textoObjetivo(expediente, plan) {
   if (plan?.objetivo) return plan.objetivo
-  const objetivo = expediente?.nutricion?.objetivoPrincipal
+  const objetivos = expediente?.nutricion?.objetivos?.length
+    ? expediente.nutricion.objetivos
+    : expediente?.nutricion?.objetivoPrincipal
+      ? [expediente.nutricion.objetivoPrincipal]
+      : []
   const nombres = {
     perdida_peso: 'Perdida de peso',
     incremento_masa: 'Incremento de masa',
@@ -20,7 +24,9 @@ function textoObjetivo(expediente, plan) {
     control_enfermedades: 'Control de enfermedades',
     otro: expediente?.nutricion?.objetivoOtro || 'Objetivo personalizado',
   }
-  return nombres[objetivo] || 'Sin objetivo registrado'
+  return objetivos.length
+    ? objetivos.map((objetivo) => nombres[objetivo] || objetivo).join(', ')
+    : 'Sin objetivo registrado'
 }
 
 function DashboardPaciente({ nombre }) {
