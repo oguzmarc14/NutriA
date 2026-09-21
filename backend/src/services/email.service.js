@@ -47,6 +47,9 @@ function createTransporter() {
     port,
     secure: port === 465,
     requireTLS: port === 587,
+    // En Render, la resolución IPv6 de Gmail puede agotar el tiempo de conexión.
+    // guardIAn conecta correctamente por IPv4 con la misma cuenta y puerto.
+    family: 4,
     connectionTimeout: 10000,
     greetingTimeout: 10000,
     socketTimeout: 15000,
