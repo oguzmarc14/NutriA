@@ -127,8 +127,9 @@ app.use(
   ) => {
     console.error(error)
 
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       message:
+        error.publicMessage ||
         'Ocurrió un error interno',
     })
   },
