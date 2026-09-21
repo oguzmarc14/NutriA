@@ -25,7 +25,7 @@ import {
   UserRound,
 } from 'lucide-react'
 
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import AvisoExpedienteGuardado from '../components/expediente/AvisoExpedienteGuardado'
 import client from '../api/client'
 
@@ -96,6 +96,7 @@ const expedienteInicial = {
 
 function ExpedientePage() {
   const { pacienteId } = useParams()
+  const navigate = useNavigate()
 
   const [paciente, setPaciente] = useState(null)
   const [ultimaMedicion, setUltimaMedicion] = useState(null)
@@ -534,7 +535,11 @@ function ExpedientePage() {
         )}
 
         {mensaje && (
-          <AvisoExpedienteGuardado mensaje={mensaje} pacienteId={pacienteId} />
+          <AvisoExpedienteGuardado
+            mensaje={mensaje}
+            onCerrar={() => setMensaje('')}
+            onContinuar={() => navigate(`/mediciones?paciente=${pacienteId}`)}
+          />
         )}
 
         {/* ============================================
