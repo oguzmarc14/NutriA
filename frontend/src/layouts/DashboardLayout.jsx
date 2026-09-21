@@ -5,6 +5,7 @@ import {
   LogOut,
   Ruler,
   UserCog,
+  UserRound,
   Users,
 } from 'lucide-react'
 
@@ -72,6 +73,29 @@ function DashboardLayout() {
           },
         ]
       : []),
+
+    ...(user.role === 'patient'
+      ? [
+          {
+            icon: UserRound,
+            label: 'Mi expediente',
+            shortLabel: 'Expediente',
+            to: '/mi-expediente',
+          },
+          {
+            icon: Ruler,
+            label: 'Mis mediciones',
+            shortLabel: 'Medidas',
+            to: '/mis-mediciones',
+          },
+          {
+            icon: Apple,
+            label: 'Mi plan alimenticio',
+            shortLabel: 'Mi plan',
+            to: '/mi-plan',
+          },
+        ]
+      : []),
   ]
 
   /*
@@ -102,6 +126,9 @@ function DashboardLayout() {
     '/mediciones',
     '/planes',
     '/usuarios',
+    '/mi-expediente',
+    '/mis-mediciones',
+    '/mi-plan',
   ]
 
   const mostrarAtras =

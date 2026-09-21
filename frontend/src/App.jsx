@@ -15,6 +15,9 @@ import MedicionesPage from './pages/MedicionesPage'
 import PlanesAlimenticiosPage from './pages/PlanesAlimenticiosPage'
 import UsuariosPage from './pages/UsuariosPage'
 import ActivarCuentaPage from './pages/ActivarCuentaPage'
+import MiExpedientePage from './pages/MiExpedientePage'
+import MisMedicionesPage from './pages/MisMedicionesPage'
+import MiPlanPage from './pages/MiPlanPage'
 
 function App() {
   return (
@@ -91,6 +94,31 @@ function App() {
               element={
                 <PlanesAlimenticiosPage />
               }
+            />
+          </Route>
+
+          <Route
+            element={
+              <ProtectedRoute
+                roles={[
+                  'patient',
+                ]}
+              />
+            }
+          >
+            <Route
+              path="mi-expediente"
+              element={<MiExpedientePage />}
+            />
+
+            <Route
+              path="mis-mediciones"
+              element={<MisMedicionesPage />}
+            />
+
+            <Route
+              path="mi-plan"
+              element={<MiPlanPage />}
             />
           </Route>
 

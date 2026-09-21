@@ -8,8 +8,6 @@ import {
 import {
   Apple,
   ArrowLeft,
-  ArrowRight,
-  CalendarDays,
   ChevronDown,
   ChevronUp,
   CirclePlus,

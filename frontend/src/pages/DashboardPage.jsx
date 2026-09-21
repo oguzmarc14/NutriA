@@ -1,6 +1,5 @@
 import {
   Apple,
-  ArrowRight,
   ClipboardPlus,
   Ruler,
   ShieldCheck,
@@ -9,6 +8,7 @@ import {
 } from 'lucide-react'
 
 import { useNavigate } from 'react-router-dom'
+import CardModuloDashboard from '../components/dashboard/CardModuloDashboard'
 import { useAuth } from '../context/auth'
 
 const nutritionistModules = [
@@ -55,15 +55,35 @@ const adminModules = [
   },
 ]
 
+const patientModules = [
+  {
+    description: 'Consulta tus antecedentes y la informacion registrada por tu nutriologo.',
+    icon: ClipboardPlus,
+    name: 'Mi expediente',
+    to: '/mi-expediente',
+  },
+  {
+    description: 'Revisa tu historial de peso, estatura, IMC y medidas corporales.',
+    icon: Ruler,
+    name: 'Mis mediciones',
+    to: '/mis-mediciones',
+  },
+  {
+    description: 'Consulta tus comidas e indicaciones nutricionales actuales.',
+    icon: Apple,
+    name: 'Mi plan alimenticio',
+    to: '/mi-plan',
+  },
+]
+
 function DashboardPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
 
   const isAdmin = user.role === 'admin'
+  const isPatient = user.role === 'patient'
 
-  const modules = isAdmin
-    ? adminModules
-    : nutritionistModules
+  const modules = isAdmin ? adminModules : isPatient ? patientModules : nutritionistModules
 
   return (
     <section className="mx-auto max-w-6xl p-5 md:p-8">
@@ -79,38 +99,22 @@ function DashboardPage() {
         <p className="mt-2 text-slate-500">
           {isAdmin
             ? 'Administra los usuarios y accesos del sistema NutriA.'
-            : 'Administra el seguimiento nutricional de tus pacientes desde un solo lugar.'}
+            : isPatient
+              ? 'Consulta tu informacion nutricional y el seguimiento preparado para ti.'
+              : 'Administra el seguimiento nutricional de tus pacientes desde un solo lugar.'}
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         {modules.map(
           ({ description, icon: Icon, name, to }) => (
-            <button
+            <CardModuloDashboard
               key={name}
-              type="button"
               onClick={() => navigate(to)}
-              className="group rounded-2xl border border-[#e1e9e5] bg-white p-5 text-left shadow-[0_8px_30px_rgba(32,78,64,0.05)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_35px_rgba(32,78,64,0.09)]"
-            >
-              <div className="mb-5 flex items-start justify-between">
-                <div className="grid h-11 w-11 place-items-center rounded-xl bg-[#e8f3ee] text-[#246b55]">
-                  <Icon size={21} />
-                </div>
-
-                <ArrowRight
-                  className="text-slate-300 transition group-hover:translate-x-1 group-hover:text-[#246b55]"
-                  size={19}
-                />
-              </div>
-
-              <h2 className="font-bold text-[#173f34]">
-                {name}
-              </h2>
-
-              <p className="mt-1 text-sm leading-6 text-slate-500">
-                {description}
-              </p>
-            </button>
+              descripcion={description}
+              icono={Icon}
+              nombre={name}
+            />
           ),
         )}
       </div>
