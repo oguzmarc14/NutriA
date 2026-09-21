@@ -1,4 +1,4 @@
-import { CalendarDays, ClipboardPlus, Mail, Pencil, Phone, RefreshCw } from 'lucide-react'
+import { CalendarDays, ClipboardPlus, Mail, Pencil, Phone, RefreshCw, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 function DatoPaciente({ icon: Icon, label, value }) {
@@ -13,7 +13,7 @@ function DatoPaciente({ icon: Icon, label, value }) {
   )
 }
 
-function CardPaciente({ paciente, onEditar, obtenerSexo, calcularEdad, obtenerInicial, onReenviar, reenviando }) {
+function CardPaciente({ paciente, onEditar, onEliminar, obtenerSexo, calcularEdad, obtenerInicial, onReenviar, reenviando, eliminando }) {
   const edad = calcularEdad(paciente.birthDate)
 
   return (
@@ -27,7 +27,10 @@ function CardPaciente({ paciente, onEditar, obtenerSexo, calcularEdad, obtenerIn
             <span>{obtenerSexo(paciente.sex)}</span>
           </div>
         </div>
-        <button type="button" onClick={onEditar} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#edf5f1] text-[#246b55] transition hover:bg-[#dcece5]" aria-label={`Editar ${paciente.name}`}><Pencil size={16} /></button>
+        <div className="flex shrink-0 gap-2">
+          <button type="button" onClick={onEditar} disabled={eliminando} className="grid h-9 w-9 place-items-center rounded-xl bg-[#edf5f1] text-[#246b55] transition hover:bg-[#dcece5] disabled:opacity-50" aria-label={`Editar ${paciente.name}`}><Pencil size={16} /></button>
+          <button type="button" onClick={onEliminar} disabled={eliminando} className="grid h-9 w-9 place-items-center rounded-xl bg-red-50 text-red-500 transition hover:bg-red-100 hover:text-red-700 disabled:opacity-50" aria-label={`Eliminar ${paciente.name}`}><Trash2 size={16} /></button>
+        </div>
       </div>
 
       <div className="mt-5 space-y-3 border-y border-[#edf2ef] py-4">
