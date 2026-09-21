@@ -3,6 +3,7 @@ import { Plus, RefreshCw, UserRound, X } from 'lucide-react'
 
 import CardPaciente from '../components/pacientes/CardPaciente'
 import CampoPaciente from '../components/pacientes/CampoPaciente'
+import ModalEliminarPaciente from '../components/pacientes/ModalEliminarPaciente'
 import client from '../api/client'
 
 const formularioInicial = {
@@ -19,8 +20,11 @@ function PacientesPage() {
   const [loading, setLoading] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [reenviandoId, setReenviandoId] = useState(null)
+  const [pacienteAEliminar, setPacienteAEliminar] = useState(null)
+  const [eliminando, setEliminando] = useState(false)
 
   const [error, setError] = useState('')
+  const [mensaje, setMensaje] = useState('')
 
   const [mostrarFormulario, setMostrarFormulario] =
     useState(false)
@@ -136,6 +140,7 @@ function PacientesPage() {
     try {
       setGuardando(true)
       setError('')
+      setMensaje('')
 
       const payload = {
         ...formulario,
@@ -200,6 +205,28 @@ function PacientesPage() {
       setError(err.response?.data?.message || 'No fue posible reenviar la invitación')
     } finally {
       setReenviandoId(null)
+    }
+  }
+
+  async function eliminarPaciente() {
+    if (!pacienteAEliminar) return
+
+    try {
+      setEliminando(true)
+      setError('')
+      setMensaje('')
+
+      const { data } = await client.delete(`/pacientes/${pacienteAEliminar._id}`)
+
+      setPacientes((actuales) =>
+        actuales.filter((paciente) => paciente._id !== pacienteAEliminar._id),
+      )
+      setMensaje(data.message || 'Paciente eliminado correctamente')
+      setPacienteAEliminar(null)
+    } catch (err) {
+      setError(err.response?.data?.message || 'No fue posible eliminar al paciente')
+    } finally {
+      setEliminando(false)
     }
   }
 
@@ -519,6 +546,12 @@ function PacientesPage() {
           </div>
         )}
 
+        {mensaje && (
+          <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-700">
+            {mensaje}
+          </div>
+        )}
+
         {/* ============================================
             ESTADOS
         ============================================ */}
@@ -580,6 +613,11 @@ function PacientesPage() {
                       paciente,
                     )
                   }
+                  onEliminar={() => {
+                    setError('')
+                    setMensaje('')
+                    setPacienteAEliminar(paciente)
+                  }}
                   obtenerSexo={
                     obtenerSexo
                   }
@@ -591,12 +629,20 @@ function PacientesPage() {
                   }
                   onReenviar={() => reenviarInvitacion(paciente)}
                   reenviando={reenviandoId === paciente._id}
+                  eliminando={eliminando && pacienteAEliminar?._id === paciente._id}
                 />
               ),
             )}
           </div>
         )}
       </div>
+
+      <ModalEliminarPaciente
+        paciente={pacienteAEliminar}
+        eliminando={eliminando}
+        onCancelar={() => !eliminando && setPacienteAEliminar(null)}
+        onConfirmar={eliminarPaciente}
+      />
     </section>
   )
 }
