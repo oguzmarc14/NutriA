@@ -40,18 +40,17 @@ La aplicación se abrirá por defecto en `http://localhost:5173`.
 
 ### Invitaciones de pacientes por Gmail
 
-El backend envía las invitaciones mediante SMTP. Si utilizas una cuenta de Gmail, configura en `backend/.env`:
+El backend envía las invitaciones mediante Gmail API por HTTPS. Configura en `backend/.env`:
 
 ```env
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=tu-cuenta@gmail.com
-SMTP_PASS=tu-contraseña-de-aplicación
-EMAIL_FROM=tu-cuenta@gmail.com
+GMAIL_CLIENT_ID=cliente-oauth-de-google
+GMAIL_CLIENT_SECRET=secreto-oauth-de-google
+GMAIL_REFRESH_TOKEN=token-de-actualización
+GMAIL_SENDER=tu-cuenta@gmail.com
 CLIENT_URL=http://localhost:5173
 ```
 
-`SMTP_PASS` debe ser una contraseña de aplicación de Google, no la contraseña normal de la cuenta. Puede pegarse con o sin los espacios que Google muestra cada cuatro caracteres; NutriA los elimina antes de conectarse. En producción, `CLIENT_URL` debe apuntar al dominio publicado del frontend para que el enlace de activación abra la aplicación correcta.
+La cuenta de `GMAIL_SENDER` debe ser la misma que autorizó el alcance `gmail.send` al generar `GMAIL_REFRESH_TOKEN`. En producción, `CLIENT_URL` debe apuntar al dominio publicado del frontend.
 
 ## Primer incremento del MVP
 
