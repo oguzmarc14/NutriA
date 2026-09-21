@@ -23,7 +23,7 @@ NutriA/
 1. Entra a `backend/`.
 2. Ejecuta `npm install`.
 3. Copia `.env.example` como `.env`.
-4. Configura `MONGODB_URI`, `JWT_SECRET` y las credenciales iniciales del administrador.
+4. Configura `MONGODB_URI`, `JWT_SECRET`, Google y las credenciales SMTP del correo que enviará las invitaciones.
 5. Ejecuta `npm run seed:admin` una vez.
 6. Inicia la API con `npm run dev`.
 
@@ -37,6 +37,21 @@ La API se ejecutará por defecto en `http://localhost:4000` y su endpoint de est
 4. Ejecuta `npm run dev`.
 
 La aplicación se abrirá por defecto en `http://localhost:5173`.
+
+### Invitaciones de pacientes por Gmail
+
+El backend envía las invitaciones mediante SMTP. Si utilizas una cuenta de Gmail, configura en `backend/.env`:
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=tu-cuenta@gmail.com
+SMTP_PASS=tu-contraseña-de-aplicación
+EMAIL_FROM=tu-cuenta@gmail.com
+CLIENT_URL=http://localhost:5173
+```
+
+`SMTP_PASS` debe ser una contraseña de aplicación de Google, no la contraseña normal de la cuenta. En producción, `CLIENT_URL` debe apuntar al dominio publicado del frontend.
 
 ## Primer incremento del MVP
 

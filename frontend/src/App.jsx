@@ -14,6 +14,7 @@ import ExpedientePage from './pages/ExpedientePage'
 import MedicionesPage from './pages/MedicionesPage'
 import PlanesAlimenticiosPage from './pages/PlanesAlimenticiosPage'
 import UsuariosPage from './pages/UsuariosPage'
+import ActivarCuentaPage from './pages/ActivarCuentaPage'
 
 function App() {
   return (
@@ -23,6 +24,11 @@ function App() {
       <Route
         path="/login"
         element={<LoginPage />}
+      />
+
+      <Route
+        path="/activar-cuenta"
+        element={<ActivarCuentaPage />}
       />
 
       {/* RUTAS PROTEGIDAS */}

@@ -27,6 +27,7 @@ function PacientesPage() {
   const [pacientes, setPacientes] = useState([])
   const [loading, setLoading] = useState(true)
   const [guardando, setGuardando] = useState(false)
+  const [reenviandoId, setReenviandoId] = useState(null)
 
   const [error, setError] = useState('')
 
@@ -196,6 +197,18 @@ function PacientesPage() {
       )
     } finally {
       setGuardando(false)
+    }
+  }
+
+  async function reenviarInvitacion(paciente) {
+    try {
+      setReenviandoId(paciente._id)
+      setError('')
+      await client.post(`/pacientes/${paciente._id}/reenviar-invitacion`)
+    } catch (err) {
+      setError(err.response?.data?.message || 'No fue posible reenviar la invitación')
+    } finally {
+      setReenviandoId(null)
     }
   }
 
@@ -374,7 +387,7 @@ function PacientesPage() {
 
               {/* CORREO */}
 
-              <CampoFormulario label="Correo">
+              <CampoFormulario label="Correo" required={!pacienteEditando}>
                 <input
                   type="email"
                   name="email"
@@ -384,6 +397,7 @@ function PacientesPage() {
                   onChange={
                     manejarCambio
                   }
+                  required={!pacienteEditando}
                   className={inputClass}
                   placeholder="correo@ejemplo.com"
                 />
@@ -584,6 +598,8 @@ function PacientesPage() {
                   obtenerInicial={
                     obtenerInicial
                   }
+                  onReenviar={() => reenviarInvitacion(paciente)}
+                  reenviando={reenviandoId === paciente._id}
                 />
               ),
             )}
@@ -643,6 +659,8 @@ function PacienteCard({
   obtenerSexo,
   calcularEdad,
   obtenerInicial,
+  onReenviar,
+  reenviando,
 }) {
   const edad =
     calcularEdad(
@@ -742,6 +760,16 @@ function PacienteCard({
           />
         )}
       </div>
+
+      {paciente.accountStatus === 'pending' && (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
+          <p className="text-xs font-bold text-amber-800">Invitación pendiente</p>
+          <button type="button" onClick={onReenviar} disabled={reenviando} className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-[#246b55] disabled:opacity-50">
+            <RefreshCw size={13} className={reenviando ? 'animate-spin' : ''} />
+            {reenviando ? 'Enviando...' : 'Reenviar invitación'}
+          </button>
+        </div>
+      )}
 
       {/* NOTAS */}
 

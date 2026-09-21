@@ -5,6 +5,7 @@ const {
   obtenerPacientes,
   obtenerPacientePorId,
   actualizarPaciente,
+  reenviarInvitacion,
 } = require('../controllers/pacientes.controller')
 
 const {
@@ -18,6 +19,7 @@ router.use(requireAuth)
 router.use(allowRoles('nutritionist'))
 
 router.post('/', crearPaciente)
+router.post('/:id/reenviar-invitacion', reenviarInvitacion)
 router.get('/', obtenerPacientes)
 
 router.get('/:id', obtenerPacientePorId)

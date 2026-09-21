@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken')
+const crypto = require('crypto')
 const { OAuth2Client } = require('google-auth-library')
 const { z } = require('zod')
 
@@ -15,6 +16,11 @@ const loginPacienteSchema = z.object({
 
 const loginGoogleSchema = z.object({
   credential: z.string().min(1),
+})
+
+const activarCuentaSchema = z.object({
+  token: z.string().min(1),
+  password: z.string().min(8),
 })
 
 function publicUser(user) {
@@ -211,6 +217,50 @@ async function loginGoogle(req, res, next) {
   }
 }
 
+async function activarCuentaPaciente(req, res, next) {
+  try {
+    const parsed = activarCuentaSchema.safeParse(req.body)
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        message: 'El enlace o la contraseña no son válidos',
+      })
+    }
+
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(parsed.data.token)
+      .digest('hex')
+
+    const user = await User.findOne({
+      activationToken: tokenHash,
+      activationTokenExpiresAt: { $gt: new Date() },
+      role: 'patient',
+      authProvider: 'password',
+      accountStatus: 'pending',
+      active: true,
+    }).select('+activationToken +activationTokenExpiresAt +password')
+
+    if (!user) {
+      return res.status(400).json({
+        message: 'La invitación no es válida, ya fue utilizada o expiró',
+      })
+    }
+
+    user.password = parsed.data.password
+    user.accountStatus = 'active'
+    user.activationToken = null
+    user.activationTokenExpiresAt = null
+    await user.save()
+
+    return res.json({
+      message: 'Tu cuenta fue activada correctamente',
+    })
+  } catch (error) {
+    return next(error)
+  }
+}
+
 function getCurrentUser(req, res) {
   return res.json({
     user: publicUser(req.user),
@@ -221,4 +271,5 @@ module.exports = {
   getCurrentUser,
   loginPaciente,
   loginGoogle,
+  activarCuentaPaciente,
 }

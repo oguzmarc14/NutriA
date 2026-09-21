@@ -1,7 +1,10 @@
 const { z } = require('zod')
+const crypto = require('crypto')
 
 const Pacientes = require('../models/Pacientes')
 const Medicion = require('../models/Medicion')
+const User = require('../models/User')
+const { enviarInvitacionPaciente } = require('../services/email.service')
 
 const crearPacienteSchema = z.object({
   name: z
@@ -43,6 +46,17 @@ const crearPacienteSchema = z.object({
     .optional(),
 })
 
+const nuevoPacienteSchema = crearPacienteSchema.extend({
+  email: z.string().trim().email('Ingresa un correo válido'),
+})
+
+function crearTokenActivacion() {
+  const token = crypto.randomBytes(32).toString('hex')
+  const hash = crypto.createHash('sha256').update(token).digest('hex')
+
+  return { token, hash }
+}
+
 async function crearPaciente(
   req,
   res,
@@ -50,7 +64,7 @@ async function crearPaciente(
 ) {
   try {
     const parsed =
-      crearPacienteSchema.safeParse(
+      nuevoPacienteSchema.safeParse(
         req.body,
       )
 
@@ -66,20 +80,73 @@ async function crearPaciente(
         })
     }
 
-    const paciente =
-      await Pacientes.create({
-        ...parsed.data,
-        nutritionist:
-          req.user.id,
+    const normalizedEmail = parsed.data.email.toLowerCase()
+
+    const usuarioExistente = await User.exists({ email: normalizedEmail })
+
+    if (usuarioExistente) {
+      return res.status(409).json({
+        message: 'Ya existe una cuenta registrada con este correo',
       })
+    }
+
+    let paciente
+    let usuario
+
+    try {
+      paciente = await Pacientes.create({
+        ...parsed.data,
+        email: normalizedEmail,
+        nutritionist: req.user.id,
+      })
+
+      const { token, hash } = crearTokenActivacion()
+
+      usuario = await User.create({
+        name: paciente.name,
+        email: normalizedEmail,
+        role: 'patient',
+        authProvider: 'password',
+        patient: paciente._id,
+        accountStatus: 'pending',
+        activationToken: hash,
+        activationTokenExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      })
+
+      await enviarInvitacionPaciente({
+        email: normalizedEmail,
+        name: paciente.name,
+        nutritionistName: req.user.name,
+        activationToken: token,
+      })
+    } catch (error) {
+      if (usuario?._id) {
+        await User.findByIdAndDelete(usuario._id)
+      }
+
+      if (paciente?._id) {
+        await Pacientes.findByIdAndDelete(paciente._id)
+      }
+
+      if (error?.code === 11000) {
+        return res.status(409).json({
+          message: 'Ya existe una cuenta registrada con este correo',
+        })
+      }
+
+      throw error
+    }
 
     return res
       .status(201)
       .json({
         message:
-          'Paciente registrado correctamente',
+          'Paciente registrado. La invitación fue enviada a su correo.',
 
-        paciente,
+        paciente: {
+          ...paciente.toObject(),
+          accountStatus: 'pending',
+        },
       })
   } catch (error) {
     return next(error)
@@ -109,6 +176,18 @@ async function obtenerPacientes(
      * solamente su medición más reciente.
      */
 
+    const usuariosPaciente = await User.find({
+      patient: { $in: pacientes.map((paciente) => paciente._id) },
+      role: 'patient',
+    }).select('patient accountStatus').lean()
+
+    const estadosPorPaciente = new Map(
+      usuariosPaciente.map((usuario) => [
+        usuario.patient.toString(),
+        usuario.accountStatus,
+      ]),
+    )
+
     const pacientesConMedicion =
       await Promise.all(
         pacientes.map(
@@ -133,6 +212,9 @@ async function obtenerPacientes(
             return {
               ...paciente,
 
+              accountStatus:
+                estadosPorPaciente.get(paciente._id.toString()) || null,
+
               ultimaMedicion:
                 ultimaMedicion ||
                 null,
@@ -145,6 +227,58 @@ async function obtenerPacientes(
       pacientes:
         pacientesConMedicion,
     })
+  } catch (error) {
+    return next(error)
+  }
+}
+
+async function reenviarInvitacion(req, res, next) {
+  try {
+    const paciente = await Pacientes.findOne({
+      _id: req.params.id,
+      nutritionist: req.user.id,
+      active: true,
+    })
+
+    if (!paciente) {
+      return res.status(404).json({ message: 'Paciente no encontrado' })
+    }
+
+    const usuario = await User.findOne({
+      patient: paciente._id,
+      role: 'patient',
+      accountStatus: 'pending',
+      active: true,
+    }).select('+activationToken +activationTokenExpiresAt')
+
+    if (!usuario) {
+      return res.status(409).json({
+        message: 'La cuenta ya está activa o no tiene una invitación pendiente',
+      })
+    }
+
+    const previousToken = usuario.activationToken
+    const previousExpiration = usuario.activationTokenExpiresAt
+    const { token, hash } = crearTokenActivacion()
+    usuario.activationToken = hash
+    usuario.activationTokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    await usuario.save()
+
+    try {
+      await enviarInvitacionPaciente({
+        email: usuario.email,
+        name: usuario.name,
+        nutritionistName: req.user.name,
+        activationToken: token,
+      })
+    } catch (error) {
+      usuario.activationToken = previousToken
+      usuario.activationTokenExpiresAt = previousExpiration
+      await usuario.save()
+      throw error
+    }
+
+    return res.json({ message: 'Invitación reenviada correctamente' })
   } catch (error) {
     return next(error)
   }
@@ -250,4 +384,5 @@ module.exports = {
   obtenerPacientes,
   obtenerPacientePorId,
   actualizarPaciente,
+  reenviarInvitacion,
 }
