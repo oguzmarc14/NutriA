@@ -3,6 +3,8 @@ const crypto = require('crypto')
 
 const Pacientes = require('../models/Pacientes')
 const Medicion = require('../models/Medicion')
+const ExpedienteClinico = require('../models/ExpedienteClinico')
+const PlanAlimenticio = require('../models/PlanAlimenticio')
 const User = require('../models/User')
 const { enviarInvitacionPaciente } = require('../services/email.service')
 
@@ -379,10 +381,38 @@ async function actualizarPaciente(
   }
 }
 
+async function eliminarPaciente(req, res, next) {
+  try {
+    const paciente = await Pacientes.findOne({
+      _id: req.params.id,
+      nutritionist: req.user.id,
+      active: true,
+    })
+
+    if (!paciente) {
+      return res.status(404).json({ message: 'Paciente no encontrado' })
+    }
+
+    await Promise.all([
+      Medicion.deleteMany({ paciente: paciente._id }),
+      ExpedienteClinico.deleteMany({ paciente: paciente._id }),
+      PlanAlimenticio.deleteMany({ paciente: paciente._id }),
+      User.deleteMany({ patient: paciente._id, role: 'patient' }),
+    ])
+
+    await paciente.deleteOne()
+
+    return res.json({ message: 'Paciente eliminado correctamente' })
+  } catch (error) {
+    return next(error)
+  }
+}
+
 module.exports = {
   crearPaciente,
   obtenerPacientes,
   obtenerPacientePorId,
   actualizarPaciente,
+  eliminarPaciente,
   reenviarInvitacion,
 }
