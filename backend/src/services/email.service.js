@@ -46,11 +46,27 @@ function createTransporter() {
     host,
     port,
     secure: port === 465,
+    requireTLS: port === 587,
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
     auth: {
       user,
       pass,
     },
   })
+}
+
+function obtenerMensajeErrorCorreo(error) {
+  if (error?.code === 'EAUTH') {
+    return 'Gmail rechazó el acceso. Revisa el correo y la contraseña de aplicación.'
+  }
+
+  if (['ETIMEDOUT', 'ECONNECTION', 'ESOCKET'].includes(error?.code)) {
+    return 'No fue posible conectarse con Gmail. Verifica SMTP_HOST y SMTP_PORT e inténtalo nuevamente.'
+  }
+
+  return 'No fue posible enviar la invitación. Revisa la configuración de Gmail e inténtalo de nuevo.'
 }
 
 function escapeHtml(value) {
@@ -111,7 +127,7 @@ async function enviarInvitacionPaciente({
     })
   } catch (error) {
     throw new EmailServiceError(
-      'No fue posible enviar la invitación. Revisa la configuración de Gmail e inténtalo de nuevo.',
+      obtenerMensajeErrorCorreo(error),
       error,
     )
   }
@@ -124,7 +140,7 @@ async function verificarConexionCorreo() {
     await transporter.verify()
   } catch (error) {
     throw new EmailServiceError(
-      'Gmail rechazó la conexión. Revisa el correo y la contraseña de aplicación.',
+      obtenerMensajeErrorCorreo(error),
       error,
     )
   }
