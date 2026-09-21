@@ -5,6 +5,7 @@ const {
   obtenerPacientes,
   obtenerPacientePorId,
   actualizarPaciente,
+  eliminarPaciente,
   reenviarInvitacion,
 } = require('../controllers/pacientes.controller')
 
@@ -24,5 +25,6 @@ router.get('/', obtenerPacientes)
 
 router.get('/:id', obtenerPacientePorId)
 router.put('/:id', actualizarPaciente)
+router.delete('/:id', eliminarPaciente)
 
 module.exports = router
