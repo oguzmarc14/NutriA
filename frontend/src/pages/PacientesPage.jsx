@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Plus, RefreshCw, UserRound, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 import CardPaciente from '../components/pacientes/CardPaciente'
 import CampoPaciente from '../components/pacientes/CampoPaciente'
@@ -16,6 +17,7 @@ const formularioInicial = {
 }
 
 function PacientesPage() {
+  const navigate = useNavigate()
   const [pacientes, setPacientes] = useState([])
   const [loading, setLoading] = useState(true)
   const [guardando, setGuardando] = useState(false)
@@ -179,6 +181,9 @@ function PacientesPage() {
           data.paciente,
           ...actuales,
         ])
+
+        navigate(`/pacientes/${data.paciente._id}/expediente`)
+        return
       }
 
       setFormulario(formularioInicial)

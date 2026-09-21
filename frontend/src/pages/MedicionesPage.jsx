@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   Activity,
   ArrowLeft,
@@ -84,8 +85,9 @@ const coloresPaciente = [
 ]
 
 function MedicionesPage() {
+  const [searchParams] = useSearchParams()
   const [pacientes, setPacientes] = useState([])
-  const [pacienteId, setPacienteId] = useState('')
+  const [pacienteId, setPacienteId] = useState(searchParams.get('paciente') || '')
   const [mediciones, setMediciones] = useState([])
 
   const [busqueda, setBusqueda] = useState('')

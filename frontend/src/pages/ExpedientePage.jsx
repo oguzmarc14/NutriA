@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 
 import { Link, useParams } from 'react-router-dom'
+import AvisoExpedienteGuardado from '../components/expediente/AvisoExpedienteGuardado'
 import client from '../api/client'
 
 const expedienteInicial = {
@@ -533,9 +534,7 @@ function ExpedientePage() {
         )}
 
         {mensaje && (
-          <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
-            {mensaje}
-          </div>
+          <AvisoExpedienteGuardado mensaje={mensaje} pacienteId={pacienteId} />
         )}
 
         {/* ============================================
