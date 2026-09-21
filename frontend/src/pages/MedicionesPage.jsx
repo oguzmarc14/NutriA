@@ -2,10 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   Activity,
   ArrowLeft,
-  ArrowRight,
   Bone,
   Calculator,
-  CalendarDays,
   CircleGauge,
   Dumbbell,
   History,
@@ -16,9 +14,10 @@ import {
   Search,
   Sparkles,
   UserRound,
-  Weight,
 } from 'lucide-react'
 
+import CardPacienteMediciones from '../components/mediciones/CardPacienteMediciones'
+import CampoAntropometrico from '../components/mediciones/CampoAntropometrico'
 import client from '../api/client'
 
 const nivelesActividad = [
@@ -553,7 +552,7 @@ function MedicionesPage() {
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {pacientesFiltrados.map(
                   (paciente, index) => (
-                    <PacienteCard
+                    <CardPacienteMediciones
                       key={paciente._id}
                       paciente={paciente}
                       color={
@@ -1171,215 +1170,6 @@ function MedicionesPage() {
         )}
       </div>
     </section>
-  )
-}
-
-/*
- * ----------------------------------------------------
- * CARD DEL PACIENTE
- * ----------------------------------------------------
- */
-
-function PacienteCard({
-  paciente,
-  color,
-  onClick,
-  calcularEdad,
-  obtenerInicial,
-  obtenerSexo,
-  formatearFecha,
-}) {
-  const edad =
-    calcularEdad(
-      paciente.birthDate,
-    )
-
-  const ultimaMedicion =
-    paciente.ultimaMedicion
-
-  return (
-    <article
-      className={`group rounded-3xl border border-white/80 bg-white/85 p-5 shadow-[0_12px_35px_rgba(36,107,85,0.08)] backdrop-blur transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(36,107,85,0.14)] ${color.borde}`}
-    >
-      {/* HEADER */}
-
-      <div className="flex items-start gap-4">
-        {/* AVATAR TEMPORAL */}
-
-        <div
-          className={`grid h-14 w-14 shrink-0 place-items-center rounded-full text-xl font-black ${color.avatar}`}
-        >
-          {obtenerInicial(
-            paciente.name,
-          )}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate text-lg font-extrabold text-[#173f34]">
-            {paciente.name}
-          </h2>
-
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-            <span className="flex items-center gap-1">
-              <UserRound size={13} />
-
-              {edad !== null
-                ? `${edad} años`
-                : 'Edad no registrada'}
-            </span>
-
-            <span>
-              {obtenerSexo(
-                paciente.sex,
-              )}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* DATOS DE ÚLTIMA MEDICIÓN */}
-
-      <div className="mt-5 grid grid-cols-3 gap-3 border-y border-[#edf2ef] py-4">
-        {/* PESO */}
-
-        <div>
-          <div className="mb-1 flex items-center gap-1.5 text-[#4d816f]">
-            <Weight size={16} />
-
-            <span className="text-xs text-slate-400">
-              Peso
-            </span>
-          </div>
-
-          <p className="text-sm font-extrabold text-[#173f34]">
-            {ultimaMedicion?.peso
-              ? `${ultimaMedicion.peso} kg`
-              : '—'}
-          </p>
-        </div>
-
-        {/* ESTATURA */}
-
-        <div>
-          <div className="mb-1 flex items-center gap-1.5 text-[#4d816f]">
-            <Ruler size={16} />
-
-            <span className="text-xs text-slate-400">
-              Estatura
-            </span>
-          </div>
-
-          <p className="text-sm font-extrabold text-[#173f34]">
-            {ultimaMedicion?.estatura
-              ? `${ultimaMedicion.estatura} m`
-              : '—'}
-          </p>
-        </div>
-
-        {/* IMC */}
-
-        <div>
-          <div className="mb-1 flex items-center gap-1.5 text-[#4d816f]">
-            <Activity size={16} />
-
-            <span className="text-xs text-slate-400">
-              IMC
-            </span>
-          </div>
-
-          <p className="text-sm font-extrabold text-[#173f34]">
-            {ultimaMedicion?.imc ??
-              '—'}
-          </p>
-        </div>
-      </div>
-
-      {/* FOOTER */}
-
-      <div className="mt-4 flex items-center justify-between gap-3">
-        <div className="flex items-start gap-2">
-          <CalendarDays
-            size={16}
-            className="mt-0.5 text-[#4d816f]"
-          />
-
-          <div>
-            <p className="text-[11px] text-slate-400">
-              Última medición
-            </p>
-
-            <p className="text-xs font-bold text-[#48685c]">
-              {ultimaMedicion?.fecha
-                ? formatearFecha(
-                    ultimaMedicion.fecha,
-                  )
-                : 'Sin mediciones'}
-            </p>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={onClick}
-          className="flex items-center gap-2 rounded-xl bg-[#e5f2eb] px-4 py-2.5 text-sm font-extrabold text-[#246b55] transition group-hover:bg-[#246b55] group-hover:text-white"
-        >
-          Ver mediciones
-
-          <ArrowRight size={16} />
-        </button>
-      </div>
-    </article>
-  )
-}
-
-/*
- * ----------------------------------------------------
- * CAMPO ANTROPOMÉTRICO
- * ----------------------------------------------------
- */
-
-function CampoAntropometrico({
-  icon: Icon,
-  label,
-  unidad,
-  value,
-  onChange,
-}) {
-  return (
-    <label className="block">
-      <span className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#715b50]">
-        <Icon
-          size={16}
-          className="text-[#a87552]"
-        />
-
-        {label}
-
-        <span className="ml-auto text-xs font-normal text-[#b29a8c]">
-          Opcional
-        </span>
-      </span>
-
-      <div className="relative">
-        <input
-          type="number"
-          step="0.1"
-          min="0"
-          value={value}
-          onChange={(event) =>
-            onChange(
-              event.target.value,
-            )
-          }
-          className="w-full rounded-xl border border-[#dfd1c8] bg-white/80 px-4 py-3 pr-16 outline-none transition focus:border-[#a87552]"
-          placeholder="—"
-        />
-
-        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#aa9689]">
-          {unidad}
-        </span>
-      </div>
-    </label>
   )
 }
 

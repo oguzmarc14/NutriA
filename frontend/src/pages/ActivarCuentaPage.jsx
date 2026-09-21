@@ -1,8 +1,9 @@
-import { Eye, EyeOff, Leaf, LoaderCircle } from 'lucide-react'
+import { Leaf, LoaderCircle } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import client from '../api/client'
+import CampoContrasena from '../components/auth/CampoContrasena'
 
 function ActivarCuentaPage() {
   const [searchParams] = useSearchParams()
@@ -73,8 +74,8 @@ function ActivarCuentaPage() {
             </div>
 
             <form onSubmit={activarCuenta} className="mt-6 space-y-4">
-              <PasswordField id="password" label="Nueva contraseña" value={password} onChange={setPassword} visible={showPassword} onToggle={() => setShowPassword((current) => !current)} />
-              <PasswordField id="confirmation" label="Confirmar contraseña" value={confirmation} onChange={setConfirmation} visible={showPassword} onToggle={() => setShowPassword((current) => !current)} />
+              <CampoContrasena id="password" label="Nueva contraseña" value={password} onChange={setPassword} visible={showPassword} onToggle={() => setShowPassword((current) => !current)} />
+              <CampoContrasena id="confirmation" label="Confirmar contraseña" value={confirmation} onChange={setConfirmation} visible={showPassword} onToggle={() => setShowPassword((current) => !current)} />
 
               {error && <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-center text-xs font-semibold text-red-700">{error}</div>}
 
@@ -87,20 +88,6 @@ function ActivarCuentaPage() {
         )}
       </section>
     </main>
-  )
-}
-
-function PasswordField({ id, label, value, onChange, visible, onToggle }) {
-  return (
-    <label className="block space-y-2">
-      <span className="text-sm font-semibold text-slate-700">{label}</span>
-      <span className="relative block">
-        <input id={id} type={visible ? 'text' : 'password'} value={value} onChange={(event) => onChange(event.target.value)} minLength={8} required autoComplete="new-password" placeholder="Mínimo 8 caracteres" className="w-full rounded-xl border border-[#d5e1db] bg-white px-4 py-3 pr-11 text-sm text-[#173f34] outline-none focus:border-[#4d816f] focus:ring-4 focus:ring-[#dbe9e1]" />
-        <button type="button" onClick={onToggle} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
-          {visible ? <EyeOff size={18} /> : <Eye size={18} />}
-        </button>
-      </span>
-    </label>
   )
 }
 
