@@ -51,7 +51,7 @@ EMAIL_FROM=tu-cuenta@gmail.com
 CLIENT_URL=http://localhost:5173
 ```
 
-`SMTP_PASS` debe ser una contraseña de aplicación de Google, no la contraseña normal de la cuenta. En producción, `CLIENT_URL` debe apuntar al dominio publicado del frontend.
+`SMTP_PASS` debe ser una contraseña de aplicación de Google, no la contraseña normal de la cuenta. Puede pegarse con o sin los espacios que Google muestra cada cuatro caracteres; NutriA los elimina antes de conectarse. En producción, `CLIENT_URL` debe apuntar al dominio publicado del frontend para que el enlace de activación abra la aplicación correcta.
 
 ## Primer incremento del MVP
 
