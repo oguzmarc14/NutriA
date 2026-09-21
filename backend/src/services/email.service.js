@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer')
+const dns = require('node:dns').promises
 
 class EmailServiceError extends Error {
   constructor(message, cause) {
@@ -39,17 +40,22 @@ function obtenerConfiguracionCorreo() {
   return { host, user, pass, port }
 }
 
-function createTransporter() {
+async function createTransporter() {
   const { host, user, pass, port } = obtenerConfiguracionCorreo()
+  const addresses = await dns.resolve4(host)
+
+  if (addresses.length === 0) {
+    throw new EmailServiceError('No fue posible resolver la dirección IPv4 de Gmail')
+  }
 
   return nodemailer.createTransport({
-    host,
+    host: addresses[0],
     port,
     secure: port === 465,
     requireTLS: port === 587,
-    // En Render, la resolución IPv6 de Gmail puede agotar el tiempo de conexión.
-    // guardIAn conecta correctamente por IPv4 con la misma cuenta y puerto.
-    family: 4,
+    tls: {
+      servername: host,
+    },
     connectionTimeout: 10000,
     greetingTimeout: 10000,
     socketTimeout: 15000,
@@ -94,12 +100,13 @@ async function enviarInvitacionPaciente({
 
   activationUrl.searchParams.set('token', activationToken)
 
-  const transporter = createTransporter()
   const from = process.env.EMAIL_FROM || process.env.SMTP_USER
   const safeName = escapeHtml(name)
   const safeNutritionistName = escapeHtml(nutritionistName)
 
   try {
+    const transporter = await createTransporter()
+
     await transporter.sendMail({
       from: `NutriA <${from}>`,
       to: email,
@@ -137,9 +144,8 @@ async function enviarInvitacionPaciente({
 }
 
 async function verificarConexionCorreo() {
-  const transporter = createTransporter()
-
   try {
+    const transporter = await createTransporter()
     await transporter.verify()
   } catch (error) {
     throw new EmailServiceError(
