@@ -1,22 +1,54 @@
 const nodemailer = require('nodemailer')
 
-function createTransporter() {
-  const requiredVariables = ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASS']
-  const missingVariables = requiredVariables.filter((name) => !process.env[name])
+class EmailServiceError extends Error {
+  constructor(message, cause) {
+    super(message, { cause })
+    this.name = 'EmailServiceError'
+    this.statusCode = 503
+    this.publicMessage = message
+  }
+}
+
+function obtenerConfiguracionCorreo() {
+  const host = process.env.SMTP_HOST?.trim()
+  const user = process.env.SMTP_USER?.trim()
+
+  // Google muestra la contraseña de aplicación separada en grupos de cuatro.
+  // Aceptamos ambas formas para evitar errores al copiarla al proveedor.
+  const pass = process.env.SMTP_PASS?.replace(/\s/g, '')
+  const port = Number(process.env.SMTP_PORT?.trim() || 587)
+
+  const missingVariables = [
+    ['SMTP_HOST', host],
+    ['SMTP_USER', user],
+    ['SMTP_PASS', pass],
+  ]
+    .filter(([, value]) => !value)
+    .map(([name]) => name)
 
   if (missingVariables.length > 0) {
-    throw new Error(`Falta configurar el correo: ${missingVariables.join(', ')}`)
+    throw new EmailServiceError(
+      `Falta configurar el correo: ${missingVariables.join(', ')}`,
+    )
   }
 
-  const port = Number(process.env.SMTP_PORT) || 587
+  if (!Number.isInteger(port) || port <= 0) {
+    throw new EmailServiceError('SMTP_PORT no es válido')
+  }
+
+  return { host, user, pass, port }
+}
+
+function createTransporter() {
+  const { host, user, pass, port } = obtenerConfiguracionCorreo()
 
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
+    host,
     port,
     secure: port === 465,
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      user,
+      pass,
     },
   })
 }
@@ -48,20 +80,21 @@ async function enviarInvitacionPaciente({
   const safeName = escapeHtml(name)
   const safeNutritionistName = escapeHtml(nutritionistName)
 
-  await transporter.sendMail({
-    from: `NutriA <${from}>`,
-    to: email,
-    subject: 'Activa tu cuenta de paciente en NutriA',
-    text: [
-      `Hola ${name},`,
-      '',
-      `${nutritionistName} te ha invitado a NutriA.`,
-      'Crea tu contraseña usando el siguiente enlace:',
-      activationUrl.toString(),
-      '',
-      'Este enlace vence en 24 horas y solo puede utilizarse una vez.',
-    ].join('\n'),
-    html: `
+  try {
+    await transporter.sendMail({
+      from: `NutriA <${from}>`,
+      to: email,
+      subject: 'Activa tu cuenta de paciente en NutriA',
+      text: [
+        `Hola ${name},`,
+        '',
+        `${nutritionistName} te ha invitado a NutriA.`,
+        'Crea tu contraseña usando el siguiente enlace:',
+        activationUrl.toString(),
+        '',
+        'Este enlace vence en 24 horas y solo puede utilizarse una vez.',
+      ].join('\n'),
+      html: `
       <div style="background:#edf2e7;padding:32px 16px;font-family:Arial,sans-serif;color:#173f34">
         <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:24px;padding:32px;border:1px solid #d5e1db">
           <p style="margin:0 0 8px;color:#718557;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase">NutriA</p>
@@ -75,7 +108,29 @@ async function enviarInvitacionPaciente({
         </div>
       </div>
     `,
-  })
+    })
+  } catch (error) {
+    throw new EmailServiceError(
+      'No fue posible enviar la invitación. Revisa la configuración de Gmail e inténtalo de nuevo.',
+      error,
+    )
+  }
 }
 
-module.exports = { enviarInvitacionPaciente }
+async function verificarConexionCorreo() {
+  const transporter = createTransporter()
+
+  try {
+    await transporter.verify()
+  } catch (error) {
+    throw new EmailServiceError(
+      'Gmail rechazó la conexión. Revisa el correo y la contraseña de aplicación.',
+      error,
+    )
+  }
+}
+
+module.exports = {
+  enviarInvitacionPaciente,
+  verificarConexionCorreo,
+}
