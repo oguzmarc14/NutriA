@@ -1,0 +1,38 @@
+{
+  "metadata": {
+    "grupo": "Verduras",
+    "subgrupo": "",
+    "equivalentes": 1,
+    "nutrimentos": {
+      "kcal": 25,
+      "proteina": 2,
+      "carbohidratos": 4,
+      "grasas": 0
+    },
+    "fuentes": [
+      {
+        "nombre": "Sistema Digital de Alimentos y Equivalentes",
+        "edicion": "Consulta 2026",
+        "referencia": "Grupo verduras, equivalencias basadas en SMAE y USDA",
+        "url": "https://www.sistemadigitaldealimentos.org/equivalentes/grupo/verduras",
+        "tipoDato": "equivalencia"
+      }
+    ],
+    "origen": "smae_referencia",
+    "activo": true,
+    "revisado": true,
+    "fechaRevision": "2026-09-22T00:00:00.000Z",
+    "notasRevision": "Porción y peso consultados en el Sistema Digital de Alimentos y Equivalentes."
+  },
+  "alimentos": [
+    {
+      "nombre": "Cilantro",
+      "porcion": {
+        "cantidad": 2,
+        "unidad": "tazas",
+        "gramos": 120,
+        "descripcion": "2 tazas"
+      }
+    }
+  ]
+}

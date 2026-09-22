@@ -1,0 +1,99 @@
+{
+  "metadata": {
+    "grupo": "Aceites y grasas",
+    "subgrupo": "Sin proteína",
+    "equivalentes": 1,
+    "nutrimentos": {
+      "kcal": 45,
+      "proteina": 0,
+      "carbohidratos": 0,
+      "grasas": 5
+    },
+    "fuentes": [
+      {
+        "nombre": "Sistema Digital de Alimentos y Equivalentes",
+        "edicion": "Consulta 2026",
+        "referencia": "Grupo grasas, equivalencias basadas en SMAE y USDA",
+        "url": "https://www.sistemadigitaldealimentos.org/equivalentes/grupo/grasas",
+        "tipoDato": "equivalencia"
+      }
+    ],
+    "origen": "smae_referencia",
+    "activo": true,
+    "revisado": true,
+    "fechaRevision": "2026-09-22T00:00:00.000Z",
+    "notasRevision": "Medidas y pesos tomados del grupo de grasas del Sistema Digital de Alimentos y Equivalentes."
+  },
+  "alimentos": [
+    {
+      "nombre": "Mayonesa",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "cucharadita",
+        "gramos": 6,
+        "descripcion": "1 cucharadita"
+      }
+    },
+    {
+      "nombre": "Mantequilla",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "rebanada",
+        "gramos": 6,
+        "descripcion": "1 rebanada"
+      }
+    },
+    {
+      "nombre": "Mantequilla light",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "cucharada",
+        "gramos": 10,
+        "descripcion": "1 cucharada"
+      }
+    },
+    {
+      "nombre": "Margarina 70% de grasa",
+      "porcion": {
+        "cantidad": 0.5,
+        "unidad": "cucharada",
+        "gramos": 7,
+        "descripcion": "1/2 cucharada"
+      }
+    },
+    {
+      "nombre": "Margarina light",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "cucharada",
+        "gramos": 10,
+        "descripcion": "1 cucharada"
+      }
+    },
+    {
+      "nombre": "Crema agria reducida en grasa",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "cucharada",
+        "mililitros": 14,
+        "descripcion": "1 cucharada"
+      }
+    },
+    {
+      "nombre": "Mantequilla de maní light",
+      "subgrupo": "Con proteína",
+      "nutrimentos": {
+        "kcal": 70,
+        "proteina": 3,
+        "carbohidratos": 3,
+        "grasas": 5
+      },
+      "porcion": {
+        "cantidad": 2,
+        "unidad": "cucharaditas",
+        "gramos": 14,
+        "descripcion": "2 cucharaditas"
+      }
+    }
+  ]
+}

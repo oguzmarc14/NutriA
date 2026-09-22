@@ -1,0 +1,61 @@
+{
+  "metadata": {
+    "grupo": "Azúcares",
+    "subgrupo": "Con grasa",
+    "equivalentes": 1,
+    "nutrimentos": {
+      "kcal": 85,
+      "proteina": 0,
+      "carbohidratos": 10,
+      "grasas": 5
+    },
+    "fuentes": [
+      {
+        "nombre": "IMSS",
+        "edicion": "Guía de Alimentos para la Población Mexicana",
+        "referencia": "Grupo azúcares con grasa",
+        "url": "https://www.imss.gob.mx/sites/all/statics/salud/guia-alimentos.pdf",
+        "tipoDato": "equivalencia"
+      }
+    ],
+    "origen": "imss",
+    "activo": true,
+    "revisado": true,
+    "fechaRevision": "2026-09-22T00:00:00.000Z",
+    "notasRevision": "Porción y aporte promedio del grupo verificados en la guía institucional del IMSS."
+  },
+  "alimentos": [
+    {
+      "nombre": "Mayonesa baja en calorías",
+      "porcion": {
+        "cantidad": 2,
+        "unidad": "cucharadas",
+        "descripcion": "2 cucharadas"
+      }
+    },
+    {
+      "nombre": "Aderezo bajo en calorías",
+      "porcion": {
+        "cantidad": 3,
+        "unidad": "cucharadas",
+        "descripcion": "3 cucharadas"
+      }
+    },
+    {
+      "nombre": "Mole poblano",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "cucharada",
+        "descripcion": "1 cucharada"
+      }
+    },
+    {
+      "nombre": "Pipián",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "cucharada",
+        "descripcion": "1 cucharada"
+      }
+    }
+  ]
+}

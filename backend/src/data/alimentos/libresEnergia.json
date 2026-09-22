@@ -1,0 +1,173 @@
+{
+  "metadata": {
+    "grupo": "Alimentos libres de energía",
+    "subgrupo": "Condimentos y bebidas",
+    "equivalentes": 1,
+    "nutrimentos": {
+      "kcal": 0,
+      "proteina": 0,
+      "carbohidratos": 0,
+      "grasas": 0
+    },
+    "fuentes": [
+      {
+        "nombre": "IMSS",
+        "edicion": "Guía de Alimentos para la Población Mexicana",
+        "referencia": "Alimentos libres de energía, medida casera indicada",
+        "url": "https://www.imss.gob.mx/sites/all/statics/salud/guia-alimentos.pdf",
+        "tipoDato": "equivalencia"
+      }
+    ],
+    "origen": "imss",
+    "activo": true,
+    "revisado": true,
+    "fechaRevision": "2026-09-22T00:00:00.000Z",
+    "notasRevision": "Solo se consideran libres de energía en la medida casera indicada. Sal, sal de ajo, salsa de soya, caldo y consomé pueden tener alto contenido de sodio."
+  },
+  "alimentos": [
+    {
+      "nombre": "Limón",
+      "porcion": {
+        "cantidad": 0.5,
+        "unidad": "pieza",
+        "descripcion": "1/2 pieza"
+      }
+    },
+    {
+      "nombre": "Mostaza",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "cucharadita",
+        "descripcion": "1 cucharadita"
+      }
+    },
+    {
+      "nombre": "Pimienta",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "cucharadita",
+        "descripcion": "1 cucharadita"
+      }
+    },
+    {
+      "nombre": "Sal",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "cucharadita",
+        "descripcion": "1 cucharadita"
+      }
+    },
+    {
+      "nombre": "Sal de ajo",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "cucharadita",
+        "descripcion": "1 cucharadita"
+      }
+    },
+    {
+      "nombre": "Salsa de soya",
+      "porcion": {
+        "cantidad": 0.5,
+        "unidad": "cucharadita",
+        "descripcion": "1/2 cucharadita"
+      }
+    },
+    {
+      "nombre": "Salsa inglesa",
+      "porcion": {
+        "cantidad": 0.5,
+        "unidad": "cucharadita",
+        "descripcion": "1/2 cucharadita"
+      }
+    },
+    {
+      "nombre": "Salsa Tabasco",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "cucharadita",
+        "descripcion": "1 cucharadita"
+      }
+    },
+    {
+      "nombre": "Salsa barbecue",
+      "porcion": {
+        "cantidad": 0.5,
+        "unidad": "cucharadita",
+        "descripcion": "1/2 cucharadita"
+      }
+    },
+    {
+      "nombre": "Salsa teriyaki",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "cucharadita",
+        "descripcion": "1 cucharadita"
+      }
+    },
+    {
+      "nombre": "Vinagre",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "cucharadita",
+        "descripcion": "1 cucharadita"
+      }
+    },
+    {
+      "nombre": "Caldo de pollo o res desgrasado",
+      "porcion": {
+        "cantidad": 0.5,
+        "unidad": "taza",
+        "descripcion": "1/2 taza"
+      }
+    },
+    {
+      "nombre": "Consomé en polvo",
+      "porcion": {
+        "cantidad": 0.2,
+        "unidad": "cucharadita",
+        "descripcion": "1/5 cucharadita"
+      }
+    },
+    {
+      "nombre": "Café americano descafeinado",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "taza",
+        "descripcion": "1 taza"
+      }
+    },
+    {
+      "nombre": "Canela en polvo",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "cucharadita",
+        "descripcion": "1 cucharadita"
+      }
+    },
+    {
+      "nombre": "Orégano",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "cucharadita",
+        "descripcion": "1 cucharadita"
+      }
+    },
+    {
+      "nombre": "Hierbas de olor",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "cucharadita",
+        "descripcion": "1 cucharadita"
+      }
+    },
+    {
+      "nombre": "Vainilla",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "cucharadita",
+        "descripcion": "1 cucharadita"
+      }
+    }
+  ]
+}

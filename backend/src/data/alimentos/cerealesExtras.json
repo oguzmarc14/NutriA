@@ -1,0 +1,78 @@
+{
+  "metadata": {
+    "grupo": "Cereales y tubérculos",
+    "subgrupo": "Sin grasa",
+    "equivalentes": 1,
+    "nutrimentos": {
+      "kcal": 70,
+      "proteina": 2,
+      "carbohidratos": 15,
+      "grasas": 0
+    },
+    "fuentes": [
+      {
+        "nombre": "IMSS",
+        "edicion": "Guía de Alimentos para la Población Mexicana",
+        "referencia": "Grupo cereales y tubérculos sin grasa",
+        "url": "https://www.imss.gob.mx/sites/all/statics/salud/guia-alimentos.pdf",
+        "tipoDato": "equivalencia"
+      }
+    ],
+    "origen": "imss",
+    "activo": true,
+    "revisado": true,
+    "fechaRevision": "2026-09-22T00:00:00.000Z",
+    "notasRevision": "Porciones y aporte promedio del grupo verificados en la guía institucional del IMSS."
+  },
+  "alimentos": [
+    {
+      "nombre": "Galletas saladas",
+      "porcion": {
+        "cantidad": 4,
+        "unidad": "piezas",
+        "descripcion": "4 piezas"
+      }
+    },
+    {
+      "nombre": "Avena en hojuelas",
+      "porcion": {
+        "cantidad": 0.333,
+        "unidad": "taza",
+        "descripcion": "1/3 taza"
+      }
+    },
+    {
+      "nombre": "Harina de maíz para atole",
+      "porcion": {
+        "cantidad": 2,
+        "unidad": "cucharadas",
+        "descripcion": "2 cucharadas"
+      }
+    },
+    {
+      "nombre": "Masa de maíz",
+      "porcion": {
+        "cantidad": 1,
+        "unidad": "porción",
+        "gramos": 50,
+        "descripcion": "50 g"
+      }
+    },
+    {
+      "nombre": "Pan árabe",
+      "porcion": {
+        "cantidad": 0.5,
+        "unidad": "pieza",
+        "descripcion": "1/2 pieza"
+      }
+    },
+    {
+      "nombre": "Pan para hot dog",
+      "porcion": {
+        "cantidad": 0.5,
+        "unidad": "pieza",
+        "descripcion": "1/2 pieza"
+      }
+    }
+  ]
+}
