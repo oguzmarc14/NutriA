@@ -29,6 +29,7 @@ import {
 import client from '../api/client'
 import CardPacientePlanes from '../components/planes/CardPacientePlanes'
 import CardPlanRegistrado from '../components/planes/CardPlanRegistrado'
+import ModalPlanGuardado from '../components/planes/ModalPlanGuardado'
 import TarjetaSelectorComida from '../components/planes/TarjetaSelectorComida'
 
 /*
@@ -267,6 +268,9 @@ function PlanesAlimenticiosPage() {
 
   const [mensaje, setMensaje] =
     useState('')
+
+  const [avisoPlanGuardado, setAvisoPlanGuardado] =
+    useState(null)
 
   /*
    * ----------------------------------------------------
@@ -1212,6 +1216,8 @@ function PlanesAlimenticiosPage() {
     }
 
     try {
+      const tipoGuardado = planEditandoId ? 'editado' : 'creado'
+
       setGuardando(true)
       setError('')
       setMensaje('')
@@ -1336,7 +1342,12 @@ function PlanesAlimenticiosPage() {
         {},
       )
 
-      setMensaje(data.message || 'Plan alimenticio guardado correctamente.')
+      setAvisoPlanGuardado({
+        tipo: tipoGuardado,
+        mensaje: tipoGuardado === 'editado'
+          ? 'Los cambios del plan alimenticio fueron guardados correctamente.'
+          : 'El nuevo plan alimenticio fue registrado correctamente para el paciente.',
+      })
     } catch (err) {
       console.error(
         'Error guardando plan:',
@@ -1530,6 +1541,7 @@ function PlanesAlimenticiosPage() {
     setPacienteId(id)
     setError('')
     setMensaje('')
+    setAvisoPlanGuardado(null)
   }
 
   function regresarPacientes() {
@@ -1563,6 +1575,7 @@ function PlanesAlimenticiosPage() {
 
     setError('')
     setMensaje('')
+    setAvisoPlanGuardado(null)
   }
 
   /*
@@ -1573,6 +1586,14 @@ function PlanesAlimenticiosPage() {
 
   return (
     <section className="min-h-screen overflow-x-hidden bg-transparent px-4 py-6 sm:px-5 md:px-8 md:py-9">
+      {avisoPlanGuardado && (
+        <ModalPlanGuardado
+          tipo={avisoPlanGuardado.tipo}
+          mensaje={avisoPlanGuardado.mensaje}
+          onCerrar={() => setAvisoPlanGuardado(null)}
+        />
+      )}
+
       <div className="mx-auto max-w-7xl">
         {/* ============================================
             SELECCIÓN DE PACIENTE
