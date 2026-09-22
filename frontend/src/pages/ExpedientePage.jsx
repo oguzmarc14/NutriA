@@ -105,18 +105,6 @@ function ExpedientePage() {
   const [expediente, setExpediente] =
     useState(expedienteInicial)
 
-  const [antecedentesActivos, setAntecedentesActivos] =
-    useState({
-      antecedentesPersonales: false,
-      antecedentesFamiliares: false,
-      alergias: false,
-      enfermedades: false,
-      medicamentos: false,
-      cirugias: false,
-      lesionesActuales: false,
-      padecimientos: false,
-    })
-
   const [loading, setLoading] = useState(true)
   const [guardando, setGuardando] = useState(false)
 
@@ -344,20 +332,6 @@ function ExpedientePage() {
         [campo]: valor,
       },
     }))
-  }
-
-  function manejarAntecedente(campo, activo) {
-    setAntecedentesActivos((actual) => ({
-      ...actual,
-      [campo]: activo,
-    }))
-
-    if (activo) {
-      setExpediente((actual) => ({
-        ...actual,
-        [campo]: '',
-      }))
-    }
   }
 
   /*
@@ -745,94 +719,95 @@ function ExpedientePage() {
               color="terracota"
             />
 
-            <div className="grid items-start gap-5 md:grid-cols-2">
-              <CampoCondicional
-                icon={BriefcaseMedical}
-                titulo="Antecedentes personales"
-                activo={antecedentesActivos.antecedentesPersonales}
-                onActivo={(valor) =>
-                  manejarAntecedente('antecedentesPersonales', valor)
+            <div className="grid gap-5 md:grid-cols-2">
+              <CampoTexto
+                label="Antecedentes personales"
+                value={expediente.antecedentesPersonales}
+                onChange={(valor) =>
+                  manejarCampo(
+                    'antecedentesPersonales',
+                    valor,
+                  )
                 }
-                valor={expediente.antecedentesPersonales}
-                onValor={(valor) =>
-                  manejarCampo('antecedentesPersonales', valor)
+                placeholder="Enfermedades previas, diagnósticos importantes..."
+              />
+
+              <CampoTexto
+                label="Antecedentes familiares"
+                value={expediente.antecedentesFamiliares}
+                onChange={(valor) =>
+                  manejarCampo(
+                    'antecedentesFamiliares',
+                    valor,
+                  )
                 }
-                placeholder="¿Tiene enfermedades o diagnósticos previos?"
+                placeholder="Diabetes, hipertensión, enfermedades familiares..."
               />
 
-
-              <CampoCondicional
-                icon={UserRound}
-                titulo="Antecedentes familiares"
-                activo={antecedentesActivos.antecedentesFamiliares}
-                onActivo={(valor) =>
-                  manejarAntecedente('antecedentesFamiliares', valor)
+              <CampoTexto
+                label="Alergias"
+                value={expediente.alergias}
+                onChange={(valor) =>
+                  manejarCampo('alergias', valor)
                 }
-                valor={expediente.antecedentesFamiliares}
-                onValor={(valor) =>
-                  manejarCampo('antecedentesFamiliares', valor)
+                placeholder="Alergias conocidas..."
+              />
+
+              <CampoTexto
+                label="Enfermedades actuales"
+                value={expediente.enfermedades}
+                onChange={(valor) =>
+                  manejarCampo(
+                    'enfermedades',
+                    valor,
+                  )
                 }
-                placeholder="¿Tiene antecedentes familiares importantes?"
+                placeholder="Enfermedades diagnosticadas actualmente..."
               />
 
-              <CampoCondicional
-                icon={ShieldAlert}
-                titulo="Alergias"
-                activo={antecedentesActivos.alergias}
-                onActivo={(valor) => manejarAntecedente('alergias', valor)}
-                valor={expediente.alergias}
-                onValor={(valor) => manejarCampo('alergias', valor)}
-                placeholder="¿A qué sustancias o alimentos es alérgico?"
+              <CampoTexto
+                label="Medicamentos"
+                value={expediente.medicamentos}
+                onChange={(valor) =>
+                  manejarCampo(
+                    'medicamentos',
+                    valor,
+                  )
+                }
+                placeholder="Medicamentos actuales..."
               />
 
-              <CampoCondicional
-                icon={HeartPulse}
-                titulo="Enfermedades actuales"
-                activo={antecedentesActivos.enfermedades}
-                onActivo={(valor) => manejarAntecedente('enfermedades', valor)}
-                valor={expediente.enfermedades}
-                onValor={(valor) => manejarCampo('enfermedades', valor)}
-                placeholder="¿Qué enfermedad presenta actualmente?"
+              <CampoTexto
+                label="Cirugías"
+                value={expediente.cirugias}
+                onChange={(valor) =>
+                  manejarCampo('cirugias', valor)
+                }
+                placeholder="Cirugías previas..."
               />
 
-              <CampoCondicional
-                icon={Pill}
-                titulo="Medicamentos"
-                activo={antecedentesActivos.medicamentos}
-                onActivo={(valor) => manejarAntecedente('medicamentos', valor)}
-                valor={expediente.medicamentos}
-                onValor={(valor) => manejarCampo('medicamentos', valor)}
-                placeholder="¿Qué medicamentos utiliza actualmente?"
+              <CampoTexto
+                label="Lesiones actuales"
+                value={expediente.lesionesActuales}
+                onChange={(valor) =>
+                  manejarCampo(
+                    'lesionesActuales',
+                    valor,
+                  )
+                }
+                placeholder="Lesiones o limitaciones físicas..."
               />
 
-              <CampoCondicional
-                icon={ClipboardPlus}
-                titulo="Cirugías"
-                activo={antecedentesActivos.cirugias}
-                onActivo={(valor) => manejarAntecedente('cirugias', valor)}
-                valor={expediente.cirugias}
-                onValor={(valor) => manejarCampo('cirugias', valor)}
-                placeholder="¿Qué cirugías le han realizado?"
-              />
-
-              <CampoCondicional
-                icon={Activity}
-                titulo="Lesiones actuales"
-                activo={antecedentesActivos.lesionesActuales}
-                onActivo={(valor) => manejarAntecedente('lesionesActuales', valor)}
-                valor={expediente.lesionesActuales}
-                onValor={(valor) => manejarCampo('lesionesActuales', valor)}
-                placeholder="¿Tiene alguna lesión o limitación física?"
-              />
-
-              <CampoCondicional
-                icon={BriefcaseMedical}
-                titulo="Otros padecimientos"
-                activo={antecedentesActivos.padecimientos}
-                onActivo={(valor) => manejarAntecedente('padecimientos', valor)}
-                valor={expediente.padecimientos}
-                onValor={(valor) => manejarCampo('padecimientos', valor)}
-                placeholder="¿Tiene algún otro padecimiento relevante?"
+              <CampoTexto
+                label="Otros padecimientos"
+                value={expediente.padecimientos}
+                onChange={(valor) =>
+                  manejarCampo(
+                    'padecimientos',
+                    valor,
+                  )
+                }
+                placeholder="Otros padecimientos relevantes..."
               />
             </div>
           </article>
@@ -1584,7 +1559,7 @@ function CampoInput({
   icon: Icon,
 }) {
   return (
-    <label className="space-y-2">
+    <label className="block min-w-0 max-w-full space-y-2 overflow-hidden">
       <span className="flex items-center gap-2 text-sm font-semibold text-slate-700">
         {Icon && <Icon size={16} />}
 
@@ -1603,7 +1578,7 @@ function CampoInput({
         onChange={(event) =>
           onChange(event.target.value)
         }
-        className="w-full rounded-xl border border-[#d4ddd8] bg-white/80 px-4 py-3 outline-none transition focus:border-[#4d816f] focus:bg-white"
+        className="block min-w-0 max-w-full w-full rounded-xl border border-[#d4ddd8] bg-white/80 px-4 py-3 outline-none transition focus:border-[#4d816f] focus:bg-white"
         placeholder={placeholder}
       />
     </label>
@@ -1634,7 +1609,6 @@ function CampoCondicional({
           <button
             type="button"
             onClick={() => onActivo(false)}
-            aria-pressed={!activo}
             className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
               !activo
                 ? 'bg-white text-[#173f34] shadow-sm'
@@ -1647,7 +1621,6 @@ function CampoCondicional({
           <button
             type="button"
             onClick={() => onActivo(true)}
-            aria-pressed={activo}
             className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
               activo
                 ? 'bg-[#246b55] text-white shadow-sm'

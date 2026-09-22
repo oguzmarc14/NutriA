@@ -2022,7 +2022,7 @@ function PlanesAlimenticiosPage() {
                           <div className="space-y-5 p-4 sm:p-5">
                             {/* DATOS COMIDA */}
 
-                            <div className="grid gap-3 md:grid-cols-[0.7fr_1.3fr_170px]">
+                            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)_minmax(0,170px)]">
                               <CampoTexto
                                 label="Tiempo de comida *"
                                 value={
@@ -2048,13 +2048,13 @@ function PlanesAlimenticiosPage() {
                                 required
                               />
 
-                              <label>
+                              <label className="block min-w-0 max-w-full overflow-hidden">
                                 <span className="mb-1.5 block text-sm font-semibold text-slate-700">Hora</span>
                                 <input
                                   type="time"
                                   value={comida.hora || ''}
                                   onChange={(event) => cambiarComida(comida.id, 'hora', event.target.value)}
-                                  className="w-full rounded-xl border border-[#d3dfd9] bg-white px-3 py-2.5 text-sm font-bold text-[#173f34] outline-none transition focus:border-[#4d816f]"
+                                  className="block min-w-0 max-w-full w-full rounded-xl border border-[#d3dfd9] bg-white px-3 py-2.5 text-sm font-bold text-[#173f34] outline-none transition focus:border-[#4d816f]"
                                 />
                               </label>
                             </div>
