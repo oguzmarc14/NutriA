@@ -9,7 +9,6 @@ import { useSearchParams } from 'react-router-dom'
 import {
   Apple,
   ArrowLeft,
-  Clock3,
   ChevronDown,
   ChevronUp,
   CirclePlus,
@@ -29,6 +28,7 @@ import {
 import client from '../api/client'
 import CardPacientePlanes from '../components/planes/CardPacientePlanes'
 import CardPlanRegistrado from '../components/planes/CardPlanRegistrado'
+import TarjetaSelectorComida from '../components/planes/TarjetaSelectorComida'
 
 /*
  * ----------------------------------------------------
@@ -183,6 +183,9 @@ function PlanesAlimenticiosPage() {
 
   const [mostrarMenuComidas, setMostrarMenuComidas] =
     useState(false)
+
+  const [comidaArrastradaId, setComidaArrastradaId] =
+    useState('')
 
   const comidaActiva =
     comidas.find((comida) => comida.id === comidaActivaId) ||
@@ -440,6 +443,42 @@ function PlanesAlimenticiosPage() {
               : comida,
         ),
     )
+  }
+
+  function iniciarArrastreComida(event, comidaId) {
+    setComidaArrastradaId(comidaId)
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', comidaId)
+  }
+
+  function soltarComida(event, destinoId) {
+    event.preventDefault()
+
+    const origenId =
+      event.dataTransfer.getData('text/plain') || comidaArrastradaId
+
+    if (!origenId || origenId === destinoId) {
+      setComidaArrastradaId('')
+      return
+    }
+
+    const limites = event.currentTarget.getBoundingClientRect()
+    const colocarDespues = event.clientX > limites.left + limites.width / 2
+
+    setComidas((actuales) => {
+      const origen = actuales.findIndex((comida) => comida.id === origenId)
+      const destinoOriginal = actuales.findIndex((comida) => comida.id === destinoId)
+
+      if (origen < 0 || destinoOriginal < 0) return actuales
+
+      const reordenadas = [...actuales]
+      const [movida] = reordenadas.splice(origen, 1)
+      const destino = reordenadas.findIndex((comida) => comida.id === destinoId)
+      reordenadas.splice(destino + (colocarDespues ? 1 : 0), 0, movida)
+      return reordenadas
+    })
+
+    setComidaArrastradaId('')
   }
 
   /*
@@ -1724,28 +1763,26 @@ function PlanesAlimenticiosPage() {
                   <div className="flex snap-x gap-2 overflow-x-auto pb-2 [scrollbar-width:thin]">
                     {comidas.map((comida) => {
                       const activa = comida.id === comidaActiva?.id
+                      const kcalComida = numero(
+                        calcularTotales(comida.alimentos).kcal,
+                        0,
+                      )
 
                       return (
-                        <button
+                        <TarjetaSelectorComida
                           key={comida.id}
-                          type="button"
-                          onClick={() => setComidaActivaId(comida.id)}
-                          className={`min-w-[132px] snap-start rounded-2xl border px-3 py-2.5 text-left transition ${
-                            activa
-                              ? 'border-[#4d816f] bg-[#e6f2eb] shadow-[0_5px_16px_rgba(36,107,85,0.12)]'
-                              : 'border-[#d8e4de] bg-white/80 hover:border-[#9ebbad] hover:bg-white'
-                          }`}
-                          aria-pressed={activa}
-                        >
-                          <span className={`flex items-center gap-2 text-sm font-extrabold ${activa ? 'text-[#246b55]' : 'text-[#173f34]'}`}>
-                            <IconoComida nombre={comida.nombre} size={16} />
-                            <span className="truncate">{comida.nombre || 'Sin nombre'}</span>
-                          </span>
-                          <span className="mt-1 flex items-center gap-1 text-xs font-semibold text-slate-500">
-                            <Clock3 size={12} />
-                            {formatearHora(comida.hora)}
-                          </span>
-                        </button>
+                          comida={comida}
+                          activa={activa}
+                          kcal={kcalComida}
+                          icono={<IconoComida nombre={comida.nombre} size={16} />}
+                          formatearHora={formatearHora}
+                          onSeleccionar={setComidaActivaId}
+                          onDragStart={iniciarArrastreComida}
+                          onDragEnd={() => setComidaArrastradaId('')}
+                          onDragOver={(event) => event.preventDefault()}
+                          onDrop={soltarComida}
+                          arrastrando={comidaArrastradaId === comida.id}
+                        />
                       )
                     })}
 
