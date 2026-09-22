@@ -496,6 +496,20 @@ function PlanesAlimenticiosPage() {
     setComidaArrastradaId('')
   }
 
+  function moverComida(comidaId, direccion) {
+    setComidas((actuales) => {
+      const origen = actuales.findIndex((comida) => comida.id === comidaId)
+      const destino = origen + direccion
+
+      if (origen < 0 || destino < 0 || destino >= actuales.length) return actuales
+
+      const reordenadas = [...actuales]
+      const [movida] = reordenadas.splice(origen, 1)
+      reordenadas.splice(destino, 0, movida)
+      return reordenadas
+    })
+  }
+
   /*
    * ----------------------------------------------------
    * BUSCAR ALIMENTOS
@@ -1864,7 +1878,7 @@ function PlanesAlimenticiosPage() {
 
                 <div className="relative mb-4">
                   <div className="flex snap-x gap-2 overflow-x-auto pb-2 [scrollbar-width:thin]">
-                    {comidas.map((comida) => {
+                    {comidas.map((comida, indiceComida) => {
                       const activa = comida.id === comidaActiva?.id
                       const kcalComida = numero(
                         calcularTotales(comida.alimentos).kcal,
@@ -1890,6 +1904,9 @@ function PlanesAlimenticiosPage() {
                           onDragOver={(event) => event.preventDefault()}
                           onDrop={soltarComida}
                           arrastrando={comidaArrastradaId === comida.id}
+                          puedeMoverAntes={indiceComida > 0}
+                          puedeMoverDespues={indiceComida < comidas.length - 1}
+                          onMover={moverComida}
                         />
                       )
                     })}

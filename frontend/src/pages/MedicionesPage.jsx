@@ -492,8 +492,8 @@ function MedicionesPage() {
    */
 
   return (
-    <section className="min-h-screen bg-transparent px-5 py-7 md:px-8 md:py-9">
-      <div className="mx-auto max-w-7xl">
+    <section className="min-h-screen min-w-0 overflow-x-hidden bg-transparent px-4 py-7 sm:px-5 md:px-8 md:py-9">
+      <div className="mx-auto min-w-0 max-w-7xl">
         {/* ============================================
             VISTA PRINCIPAL DE PACIENTES
         ============================================ */}
@@ -570,7 +570,7 @@ function MedicionesPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {pacientesFiltrados.map(
                   (paciente, index) => (
                     <CardPacienteMediciones

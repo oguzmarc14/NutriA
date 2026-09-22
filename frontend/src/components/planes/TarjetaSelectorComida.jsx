@@ -1,4 +1,4 @@
-import { Clock3, GripVertical } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Clock3, GripVertical } from 'lucide-react'
 
 function TarjetaSelectorComida({
   comida,
@@ -13,6 +13,9 @@ function TarjetaSelectorComida({
   onDragOver,
   onDrop,
   arrastrando,
+  puedeMoverAntes,
+  puedeMoverDespues,
+  onMover,
 }) {
   return (
     <div
@@ -26,7 +29,7 @@ function TarjetaSelectorComida({
       <button
         type="button"
         onClick={() => onSeleccionar(comida.id)}
-        className={`w-full rounded-2xl border px-3 py-2.5 pr-8 text-left transition ${
+        className={`w-full rounded-2xl border px-3 pb-10 pt-2.5 pr-8 text-left transition md:py-2.5 ${
           activa
             ? 'border-[#4d816f] bg-[#e6f2eb] shadow-[0_5px_16px_rgba(36,107,85,0.12)]'
             : 'border-[#d8e4de] bg-white/80 hover:border-[#9ebbad] hover:bg-white'
@@ -56,6 +59,33 @@ function TarjetaSelectorComida({
       >
         <GripVertical size={16} />
       </span>
+
+      <div className="absolute bottom-2 right-2 flex gap-1 md:hidden">
+        <button
+          type="button"
+          disabled={!puedeMoverAntes}
+          onClick={(event) => {
+            event.stopPropagation()
+            onMover(comida.id, -1)
+          }}
+          className="grid h-7 w-7 place-items-center rounded-lg border border-[#cfe0d7] bg-white/95 text-[#246b55] shadow-sm disabled:cursor-not-allowed disabled:opacity-30"
+          aria-label={`Mover ${comida.nombre || 'comida'} hacia la izquierda`}
+        >
+          <ChevronLeft size={15} />
+        </button>
+        <button
+          type="button"
+          disabled={!puedeMoverDespues}
+          onClick={(event) => {
+            event.stopPropagation()
+            onMover(comida.id, 1)
+          }}
+          className="grid h-7 w-7 place-items-center rounded-lg border border-[#cfe0d7] bg-white/95 text-[#246b55] shadow-sm disabled:cursor-not-allowed disabled:opacity-30"
+          aria-label={`Mover ${comida.nombre || 'comida'} hacia la derecha`}
+        >
+          <ChevronRight size={15} />
+        </button>
+      </div>
     </div>
   )
 }
