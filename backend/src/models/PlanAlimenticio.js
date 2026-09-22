@@ -198,6 +198,13 @@ const comidaSchema =
         default: '',
       },
 
+      hora: {
+        type: String,
+        trim: true,
+        default: '',
+        match: /^([01]\d|2[0-3]):[0-5]\d$/,
+      },
+
       alimentos: {
         type: [
           alimentoPlanSchema,

@@ -9,6 +9,7 @@ import { useSearchParams } from 'react-router-dom'
 import {
   Apple,
   ArrowLeft,
+  Clock3,
   ChevronDown,
   ChevronUp,
   CirclePlus,
@@ -17,6 +18,8 @@ import {
   Search,
   Save,
   Sparkles,
+  Sun,
+  Moon,
   Trash2,
   UserRound,
   Utensils,
@@ -33,14 +36,54 @@ import CardPlanRegistrado from '../components/planes/CardPlanRegistrado'
  * ----------------------------------------------------
  */
 
-function crearComidaInicial() {
+function crearComidaInicial(
+  nombre = '',
+  hora = '',
+) {
   return {
     id: `${Date.now()}-${Math.random()}`,
-    nombre: '',
+    nombre,
+    hora,
     descripcion: '',
     alimentos: [],
   }
 }
+
+function crearComidasIniciales() {
+  return [
+    crearComidaInicial('Desayuno', '08:00'),
+    crearComidaInicial('Comida', '14:30'),
+    crearComidaInicial('Cena', '20:30'),
+  ]
+}
+
+function formatearHora(hora) {
+  if (!hora) return 'Sin hora'
+
+  const [horas, minutos] = hora.split(':').map(Number)
+  const periodo = horas >= 12 ? 'pm' : 'am'
+  const horas12 = horas % 12 || 12
+
+  return `${horas12}:${String(minutos).padStart(2, '0')} ${periodo}`
+}
+
+function IconoComida({ nombre = '', size = 18 }) {
+  const texto = nombre.toLowerCase()
+
+  if (texto.includes('desayuno')) return <Sun size={size} />
+  if (texto.includes('cena')) return <Moon size={size} />
+  if (texto.includes('colación') || texto.includes('snack')) return <Apple size={size} />
+
+  return <Utensils size={size} />
+}
+
+const opcionesComida = [
+  'Colación',
+  'Snack',
+  'Pre-entreno',
+  'Post-entreno',
+  'Otra / personalizada',
+]
 
 function crearFormularioPersonalizado() {
   return {
@@ -133,9 +176,17 @@ function PlanesAlimenticiosPage() {
     useState('')
 
   const [comidas, setComidas] =
-    useState([
-      crearComidaInicial(),
-    ])
+    useState(crearComidasIniciales)
+
+  const [comidaActivaId, setComidaActivaId] =
+    useState('')
+
+  const [mostrarMenuComidas, setMostrarMenuComidas] =
+    useState(false)
+
+  const comidaActiva =
+    comidas.find((comida) => comida.id === comidaActivaId) ||
+    comidas[0]
 
   /*
    * CATÁLOGO DE ALIMENTOS
@@ -314,25 +365,35 @@ function PlanesAlimenticiosPage() {
    * ----------------------------------------------------
    */
 
-  function agregarComida() {
-    setComidas(
-      (actuales) => [
-        ...actuales,
-        crearComidaInicial(),
-      ],
+  function agregarComida(tipo = 'Colación') {
+    const personalizada = tipo === 'Otra / personalizada'
+    const nueva = crearComidaInicial(
+      personalizada ? 'Nueva comida' : tipo,
+      '',
     )
+
+    setComidas((actuales) => [...actuales, nueva])
+    setComidaActivaId(nueva.id)
+    setMostrarMenuComidas(false)
   }
 
   function eliminarComida(
     comidaId,
   ) {
     setComidas(
-      (actuales) =>
-        actuales.filter(
+      (actuales) => {
+        const restantes = actuales.filter(
           (comida) =>
             comida.id !==
             comidaId,
-        ),
+        )
+
+        if (comidaActivaId === comidaId) {
+          setComidaActivaId(restantes[0]?.id || '')
+        }
+
+        return restantes
+      },
     )
 
     setBusquedasAlimentos(
@@ -1076,6 +1137,9 @@ function PlanesAlimenticiosPage() {
             nombre:
               comida.nombre.trim(),
 
+            hora:
+              comida.hora || '',
+
             descripcion:
               comida.descripcion.trim(),
 
@@ -1166,9 +1230,9 @@ function PlanesAlimenticiosPage() {
       setNombre('')
       setObjetivo('')
 
-      setComidas([
-        crearComidaInicial(),
-      ])
+      const comidasNuevas = crearComidasIniciales()
+      setComidas(comidasNuevas)
+      setComidaActivaId(comidasNuevas[0].id)
 
       setBusquedasAlimentos(
         {},
@@ -1637,7 +1701,7 @@ function PlanesAlimenticiosPage() {
               {/* COMIDAS */}
 
               <div className="mt-7">
-                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-4">
                   <div>
                     <h3 className="font-extrabold text-[#173f34]">
                       Comidas
@@ -1654,23 +1718,68 @@ function PlanesAlimenticiosPage() {
                     </p>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={
-                      agregarComida
-                    }
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#dceee4] px-4 py-2.5 text-sm font-bold text-[#246b55] transition hover:bg-[#cfe5d8] sm:w-auto"
-                  >
-                    <Plus
-                      size={17}
-                    />
+                </div>
 
-                    Agregar comida
-                  </button>
+                <div className="relative mb-4">
+                  <div className="flex snap-x gap-2 overflow-x-auto pb-2 [scrollbar-width:thin]">
+                    {comidas.map((comida) => {
+                      const activa = comida.id === comidaActiva?.id
+
+                      return (
+                        <button
+                          key={comida.id}
+                          type="button"
+                          onClick={() => setComidaActivaId(comida.id)}
+                          className={`min-w-[132px] snap-start rounded-2xl border px-3 py-2.5 text-left transition ${
+                            activa
+                              ? 'border-[#4d816f] bg-[#e6f2eb] shadow-[0_5px_16px_rgba(36,107,85,0.12)]'
+                              : 'border-[#d8e4de] bg-white/80 hover:border-[#9ebbad] hover:bg-white'
+                          }`}
+                          aria-pressed={activa}
+                        >
+                          <span className={`flex items-center gap-2 text-sm font-extrabold ${activa ? 'text-[#246b55]' : 'text-[#173f34]'}`}>
+                            <IconoComida nombre={comida.nombre} size={16} />
+                            <span className="truncate">{comida.nombre || 'Sin nombre'}</span>
+                          </span>
+                          <span className="mt-1 flex items-center gap-1 text-xs font-semibold text-slate-500">
+                            <Clock3 size={12} />
+                            {formatearHora(comida.hora)}
+                          </span>
+                        </button>
+                      )
+                    })}
+
+                    <button
+                      type="button"
+                      onClick={() => setMostrarMenuComidas((visible) => !visible)}
+                      className="min-w-[142px] snap-start rounded-2xl border border-dashed border-[#9ebbad] bg-[#f6faf7] px-3 py-2.5 text-sm font-extrabold text-[#246b55] transition hover:bg-[#eaf4ee]"
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        <Plus size={16} /> Agregar comida
+                      </span>
+                      <span className="mt-1 block text-center text-xs font-medium text-[#6e9484]">Personalizable</span>
+                    </button>
+                  </div>
+
+                  {mostrarMenuComidas && (
+                    <div className="absolute right-0 z-30 mt-1 w-56 overflow-hidden rounded-2xl border border-[#d4e3db] bg-white p-2 shadow-[0_16px_40px_rgba(32,78,64,0.16)]">
+                      {opcionesComida.map((opcion) => (
+                        <button
+                          key={opcion}
+                          type="button"
+                          onClick={() => agregarComida(opcion)}
+                          className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-[#173f34] transition hover:bg-[#eef6f1]"
+                        >
+                          <IconoComida nombre={opcion} size={16} />
+                          {opcion}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-5">
-                  {comidas.map(
+                  {comidas.filter((item) => item.id === comidaActiva?.id).map(
                     (
                       comida,
                       index,
@@ -1704,11 +1813,7 @@ function PlanesAlimenticiosPage() {
                             <div className="flex items-center justify-between gap-3">
                               <div className="flex min-w-0 items-center gap-3">
                                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#dceee4] text-[#246b55]">
-                                  <Utensils
-                                    size={
-                                      18
-                                    }
-                                  />
+                                  <IconoComida nombre={comida.nombre} size={18} />
                                 </div>
 
                                 <div className="min-w-0">
@@ -1751,7 +1856,7 @@ function PlanesAlimenticiosPage() {
                           <div className="space-y-5 p-4 sm:p-5">
                             {/* DATOS COMIDA */}
 
-                            <div className="grid gap-4 md:grid-cols-2">
+                            <div className="grid gap-3 md:grid-cols-[1fr_170px]">
                               <CampoTexto
                                 label="Nombre de la comida *"
                                 value={
@@ -1769,23 +1874,23 @@ function PlanesAlimenticiosPage() {
                                 placeholder="Desayuno"
                               />
 
-                              <CampoTexto
-                                label="Indicaciones"
-                                value={
-                                  comida.descripcion
-                                }
-                                onChange={(
-                                  valor,
-                                ) =>
-                                  cambiarComida(
-                                    comida.id,
-                                    'descripcion',
-                                    valor,
-                                  )
-                                }
-                                placeholder="Ej. consumir entre 8:00 y 9:00 am"
-                              />
+                              <label>
+                                <span className="mb-1.5 block text-sm font-semibold text-slate-700">Hora</span>
+                                <input
+                                  type="time"
+                                  value={comida.hora || ''}
+                                  onChange={(event) => cambiarComida(comida.id, 'hora', event.target.value)}
+                                  className="w-full rounded-xl border border-[#d3dfd9] bg-white px-3 py-2.5 text-sm font-bold text-[#173f34] outline-none transition focus:border-[#4d816f]"
+                                />
+                              </label>
                             </div>
+
+                            <CampoTexto
+                              label="Indicaciones (opcional)"
+                              value={comida.descripcion}
+                              onChange={(valor) => cambiarComida(comida.id, 'descripcion', valor)}
+                              placeholder="Ej. consumir antes del entrenamiento..."
+                            />
 
                             {/* BUSCADOR */}
 
@@ -1845,7 +1950,7 @@ function PlanesAlimenticiosPage() {
                                       )
                                     }
                                   }}
-                                  placeholder="Ej. tortilla, pollo, aguacate..."
+                                  placeholder="Buscar alimento: tortilla, pollo, aguacate..."
                                   className="w-full rounded-2xl border border-[#cbdcd3] bg-white py-3.5 pl-11 pr-12 text-sm text-[#173f34] outline-none transition focus:border-[#4d816f] focus:ring-4 focus:ring-[#dbe9e1]"
                                 />
 
@@ -2152,6 +2257,7 @@ function PlanesAlimenticiosPage() {
                                 numero={
                                   numero
                                 }
+                                compacto
                               />
                             )}
                           </div>
@@ -2405,6 +2511,38 @@ function AlimentoAgregado({
   onNotas,
   onEliminar,
 }) {
+  const [desplazamiento, setDesplazamiento] = useState(0)
+  const gesto = useRef({ activo: false, inicioX: 0 })
+
+  function iniciarArrastre(event) {
+    if (event.target.closest('input, button')) return
+
+    gesto.current = {
+      activo: true,
+      inicioX: event.clientX,
+    }
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  function moverArrastre(event) {
+    if (!gesto.current.activo) return
+
+    const distancia = Math.min(0, event.clientX - gesto.current.inicioX)
+    setDesplazamiento(Math.max(-130, distancia))
+  }
+
+  function terminarArrastre() {
+    if (!gesto.current.activo) return
+    gesto.current.activo = false
+
+    if (desplazamiento <= -105) {
+      onEliminar()
+      return
+    }
+
+    setDesplazamiento(desplazamiento < -45 ? -72 : 0)
+  }
+
   const cantidad =
     Number(
       alimento.cantidad,
@@ -2439,7 +2577,25 @@ function AlimentoAgregado({
     cantidad
 
   return (
-    <div className="rounded-2xl border border-[#dde8e2] bg-white p-4">
+    <div className="relative overflow-hidden rounded-2xl border border-[#dde8e2] bg-red-50">
+      <button
+        type="button"
+        onClick={onEliminar}
+        className="absolute inset-y-0 right-0 flex w-[72px] flex-col items-center justify-center gap-1 bg-red-500 text-xs font-bold text-white"
+        aria-label={`Eliminar ${alimento.nombre}`}
+      >
+        <Trash2 size={18} />
+        Eliminar
+      </button>
+
+      <div
+        className="relative bg-white p-3 transition-transform duration-200 ease-out touch-pan-y sm:p-4"
+        style={{ transform: `translateX(${desplazamiento}px)` }}
+        onPointerDown={iniciarArrastre}
+        onPointerMove={moverArrastre}
+        onPointerUp={terminarArrastre}
+        onPointerCancel={terminarArrastre}
+      >
       <div className="flex items-start gap-3">
         <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#e5f2eb] text-[#246b55]">
           <Apple
@@ -2497,10 +2653,10 @@ function AlimentoAgregado({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-[140px_1fr]">
+      <div className="mt-3 grid gap-3 sm:grid-cols-[110px_180px_1fr]">
         <label>
           <span className="mb-1.5 block text-xs font-semibold text-slate-600">
-            Porciones
+            Cantidad
           </span>
 
           <input
@@ -2521,6 +2677,16 @@ function AlimentoAgregado({
             }
             className="w-full rounded-xl border border-[#d3dfd9] bg-white px-3 py-2.5 text-sm font-bold text-[#173f34] outline-none transition focus:border-[#4d816f]"
           />
+        </label>
+
+        <label>
+          <span className="mb-1.5 block text-xs font-semibold text-slate-600">
+            Unidad / porción
+          </span>
+
+          <div className="truncate rounded-xl border border-[#d3dfd9] bg-[#f7faf8] px-3 py-2.5 text-sm font-semibold text-[#4d816f]">
+            {obtenerTextoPorcion(alimento.porcion)}
+          </div>
         </label>
 
         <label>
@@ -2548,7 +2714,7 @@ function AlimentoAgregado({
         </label>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
         <MiniNutrimento
           label="Energía"
           value={`${numero(
@@ -2577,6 +2743,10 @@ function AlimentoAgregado({
             grasas,
           )} g`}
         />
+      </div>
+      <p className="mt-2 text-[11px] font-medium text-slate-400 sm:hidden">
+        Desliza a la izquierda para eliminar
+      </p>
       </div>
     </div>
   )
@@ -2896,7 +3066,21 @@ function ResumenNutricional({
   totales,
   numero,
   className = '',
+  compacto = false,
 }) {
+  if (compacto) {
+    return (
+      <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-[#cfe0d6] bg-[#edf6f1] px-4 py-3 text-xs font-bold text-[#246b55] ${className}`}>
+        <span className="mr-1 text-[#173f34]">{titulo}</span>
+        <span>{numero(totales.kcal, 0)} kcal</span>
+        <span>{numero(totales.proteina)} g proteína</span>
+        <span>{numero(totales.carbohidratos)} g carbohidratos</span>
+        <span>{numero(totales.grasas)} g grasas</span>
+        <span>{numero(totales.fibra)} g fibra</span>
+      </div>
+    )
+  }
+
   return (
     <div
       className={`rounded-2xl border border-[#cfe0d6] bg-gradient-to-r from-[#e8f3ee] to-[#f6faf8] p-4 ${className}`}

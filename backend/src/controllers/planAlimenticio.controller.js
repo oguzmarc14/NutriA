@@ -196,6 +196,12 @@ const comidaSchema =
         .trim()
         .optional(),
 
+    hora:
+      z.string()
+        .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+        .or(z.literal(''))
+        .optional(),
+
     alimentos:
       z.array(
         alimentoPlanSchema,
@@ -471,6 +477,9 @@ async function prepararComidas(
     comidasPreparadas.push({
       nombre:
         comida.nombre,
+
+      hora:
+        comida.hora || '',
 
       descripcion:
         comida.descripcion ||
