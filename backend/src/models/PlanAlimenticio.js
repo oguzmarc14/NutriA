@@ -185,6 +185,12 @@ const comidaSchema =
         trim: true,
       },
 
+      platillo: {
+        type: String,
+        trim: true,
+        default: '',
+      },
+
       /*
        * La dejamos para comentarios generales:
        *

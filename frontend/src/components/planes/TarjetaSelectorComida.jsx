@@ -4,6 +4,7 @@ function TarjetaSelectorComida({
   comida,
   activa,
   kcal,
+  gramos,
   icono,
   formatearHora,
   onSeleccionar,
@@ -20,7 +21,7 @@ function TarjetaSelectorComida({
       onDragEnd={onDragEnd}
       onDragOver={onDragOver}
       onDrop={(event) => onDrop(event, comida.id)}
-      className={`group relative min-w-[148px] snap-start transition ${arrastrando ? 'opacity-45' : 'opacity-100'}`}
+      className={`group relative min-w-[164px] snap-start transition ${arrastrando ? 'opacity-45' : 'opacity-100'}`}
     >
       <button
         type="button"
@@ -36,12 +37,15 @@ function TarjetaSelectorComida({
           {icono}
           <span className="truncate">{comida.nombre || 'Sin nombre'}</span>
         </span>
+        <span className="mt-1 block truncate text-xs font-bold text-[#48685c]">
+          {comida.platillo || 'Platillo sin nombre'}
+        </span>
         <span className="mt-1 flex items-center gap-1 text-xs font-semibold text-slate-500">
           <Clock3 size={12} />
           {formatearHora(comida.hora)}
         </span>
         <span className="mt-1 block text-xs font-black text-[#8a6840]">
-          {kcal} kcal
+          {kcal} kcal · {gramos} g
         </span>
       </button>
 

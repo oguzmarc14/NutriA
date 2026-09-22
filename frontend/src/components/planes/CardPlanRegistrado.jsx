@@ -29,6 +29,7 @@ function CardPlanRegistrado({ plan, formatearFecha, numero, calcularTotales, onE
 
       {todosAlimentos.length > 0 && <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
         <MiniNutrimento label="Energía" value={`${numero(totales.kcal, 0)} kcal`} />
+        <MiniNutrimento label="Peso conocido" value={`${numero(totales.gramos, 0)} g`} />
         <MiniNutrimento label="Proteína" value={`${numero(totales.proteina)} g`} />
         <MiniNutrimento label="Carbohidratos" value={`${numero(totales.carbohidratos)} g`} />
         <MiniNutrimento label="Grasas" value={`${numero(totales.grasas)} g`} />
@@ -37,7 +38,8 @@ function CardPlanRegistrado({ plan, formatearFecha, numero, calcularTotales, onE
       {abierto && <div className="mt-4 space-y-3 border-t border-[#efe5d2] pt-4">
         {plan.comidas?.length > 0 ? plan.comidas.map((comida, index) => (
           <div key={comida._id || `${plan._id}-${index}`} className="rounded-xl bg-[#f7f2e7] p-3">
-            <p className="font-bold text-[#173f34]">{comida.nombre}</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-[#8a6840]">{comida.nombre}</p>
+            <p className="mt-0.5 font-bold text-[#173f34]">{comida.platillo || 'Platillo sin nombre'}</p>
             {comida.alimentos?.length > 0 ? <div className="mt-3 space-y-2">{comida.alimentos.map((alimento, alimentoIndex) => {
               const cantidad = Number(alimento.cantidad) || 1
               const kcal = (Number(alimento.nutrimentos?.kcal) || 0) * cantidad

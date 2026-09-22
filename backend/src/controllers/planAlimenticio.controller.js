@@ -191,6 +191,11 @@ const comidaSchema =
         .trim()
         .min(2),
 
+    platillo:
+      z.string()
+        .trim()
+        .optional(),
+
     descripcion:
       z.string()
         .trim()
@@ -476,6 +481,9 @@ async function prepararComidas(
     comidasPreparadas.push({
       nombre:
         comida.nombre,
+
+      platillo:
+        comida.platillo || '',
 
       hora:
         comida.hora || '',

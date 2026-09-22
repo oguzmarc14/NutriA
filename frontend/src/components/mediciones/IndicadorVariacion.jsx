@@ -12,7 +12,7 @@ function IndicadorVariacion({ actual, anterior, unidad = '', mostrarPorcentaje =
   const signo = variacion.diferencia > 0 ? '+' : ''
 
   return (
-    <span className="inline-flex items-center gap-1 text-xs font-bold text-[#61776f]">
+    <span className="inline-flex max-w-full flex-wrap items-center gap-1 break-words text-xs font-bold text-[#61776f]">
       <Icono size={13} />
       {signo}{formatearNumero(variacion.diferencia)}{unidad}
       {mostrarPorcentaje && variacion.porcentaje !== null && (

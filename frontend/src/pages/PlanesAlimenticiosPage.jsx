@@ -44,6 +44,7 @@ function crearComidaInicial(
   return {
     id: `${Date.now()}-${Math.random()}`,
     nombre,
+    platillo: '',
     hora,
     alimentos: [],
   }
@@ -1087,6 +1088,11 @@ function PlanesAlimenticiosPage() {
             cantidad
         }
 
+        const gramosPorPorcion = Number(alimento.porcion?.gramos)
+        if (Number.isFinite(gramosPorPorcion) && gramosPorPorcion > 0) {
+          total.gramos += gramosPorPorcion * cantidad
+        }
+
         return total
       },
       {
@@ -1095,6 +1101,7 @@ function PlanesAlimenticiosPage() {
         carbohidratos: 0,
         grasas: 0,
         fibra: 0,
+        gramos: 0,
       },
     )
   }
@@ -1123,6 +1130,9 @@ function PlanesAlimenticiosPage() {
           total.fibra +=
             subtotal.fibra
 
+          total.gramos +=
+            subtotal.gramos
+
           return total
         },
         {
@@ -1131,6 +1141,7 @@ function PlanesAlimenticiosPage() {
           carbohidratos: 0,
           grasas: 0,
           fibra: 0,
+          gramos: 0,
         },
       )
     }, [comidas])
@@ -1170,6 +1181,8 @@ function PlanesAlimenticiosPage() {
         (comida) =>
           comida.nombre
             .trim() &&
+          comida.platillo
+            .trim() &&
           comida.alimentos
             .length > 0,
       )
@@ -1179,7 +1192,7 @@ function PlanesAlimenticiosPage() {
       0
     ) {
       setError(
-        'Agrega por lo menos una comida con un alimento.',
+        'Agrega el nombre del platillo y por lo menos un alimento.',
       )
       return
     }
@@ -1194,6 +1207,9 @@ function PlanesAlimenticiosPage() {
           (comida) => ({
             nombre:
               comida.nombre.trim(),
+
+            platillo:
+              comida.platillo?.trim() || '',
 
             hora:
               comida.hora || '',
@@ -1327,6 +1343,7 @@ function PlanesAlimenticiosPage() {
     const comidasEditables = (plan.comidas || []).map((comida) => ({
       id: comida._id || `${Date.now()}-${Math.random()}`,
       nombre: comida.nombre || '',
+      platillo: comida.platillo || '',
       hora: comida.hora || '',
       alimentos: (comida.alimentos || []).map((alimento) => ({
         ...alimento,
@@ -1853,6 +1870,10 @@ function PlanesAlimenticiosPage() {
                         calcularTotales(comida.alimentos).kcal,
                         0,
                       )
+                      const gramosComida = numero(
+                        calcularTotales(comida.alimentos).gramos,
+                        0,
+                      )
 
                       return (
                         <TarjetaSelectorComida
@@ -1860,6 +1881,7 @@ function PlanesAlimenticiosPage() {
                           comida={comida}
                           activa={activa}
                           kcal={kcalComida}
+                          gramos={gramosComida}
                           icono={<IconoComida nombre={comida.nombre} size={16} />}
                           formatearHora={formatearHora}
                           onSeleccionar={setComidaActivaId}
@@ -1951,6 +1973,10 @@ function PlanesAlimenticiosPage() {
                                       .nombre ||
                                       'Sin nombre'}
                                   </p>
+
+                                  <p className="truncate text-xs font-semibold text-slate-500">
+                                    {comida.platillo || 'Platillo sin nombre'}
+                                  </p>
                                 </div>
                               </div>
 
@@ -1979,9 +2005,9 @@ function PlanesAlimenticiosPage() {
                           <div className="space-y-5 p-4 sm:p-5">
                             {/* DATOS COMIDA */}
 
-                            <div className="grid gap-3 md:grid-cols-[1fr_170px]">
+                            <div className="grid gap-3 md:grid-cols-[0.7fr_1.3fr_170px]">
                               <CampoTexto
-                                label="Nombre de la comida *"
+                                label="Tiempo de comida *"
                                 value={
                                   comida.nombre
                                 }
@@ -1995,6 +2021,14 @@ function PlanesAlimenticiosPage() {
                                   )
                                 }
                                 placeholder="Desayuno"
+                              />
+
+                              <CampoTexto
+                                label="Nombre del platillo *"
+                                value={comida.platillo}
+                                onChange={(valor) => cambiarComida(comida.id, 'platillo', valor)}
+                                placeholder="Ej. ensalada de pollo"
+                                required
                               />
 
                               <label>
@@ -2361,7 +2395,7 @@ function PlanesAlimenticiosPage() {
                               0 && (
                               <ResumenNutricional
                                 titulo={`Total de ${
-                                  comida.nombre ||
+                                  comida.platillo || comida.nombre ||
                                   `comida ${
                                     index +
                                     1
@@ -2398,6 +2432,7 @@ function PlanesAlimenticiosPage() {
                       0,
                     )}{' '}
                     kcal ·{' '}
+                    {numero(totalesPlan.gramos, 0)} g ·{' '}
                     {numero(
                       totalesPlan.proteina,
                     )}{' '}
@@ -3194,6 +3229,7 @@ function ResumenNutricional({
       <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-[#cfe0d6] bg-[#edf6f1] px-4 py-3 text-xs font-bold text-[#246b55] ${className}`}>
         <span className="mr-1 text-[#173f34]">{titulo}</span>
         <span>{numero(totales.kcal, 0)} kcal</span>
+        <span>{numero(totales.gramos, 0)} g totales</span>
         <span>{numero(totales.proteina)} g proteína</span>
         <span>{numero(totales.carbohidratos)} g carbohidratos</span>
         <span>{numero(totales.grasas)} g grasas</span>
@@ -3217,13 +3253,21 @@ function ResumenNutricional({
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         <DatoResumen
           label="Energía"
           value={`${numero(
             totales.kcal,
             0,
           )} kcal`}
+        />
+
+        <DatoResumen
+          label="Peso conocido"
+          value={`${numero(
+            totales.gramos,
+            0,
+          )} g`}
         />
 
         <DatoResumen
