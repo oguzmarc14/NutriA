@@ -18,6 +18,7 @@ import ActivarCuentaPage from './pages/ActivarCuentaPage'
 import MiExpedientePage from './pages/MiExpedientePage'
 import MisMedicionesPage from './pages/MisMedicionesPage'
 import MiPlanPage from './pages/MiPlanPage'
+import CompararMedicionesPage from './pages/CompararMedicionesPage'
 
 function App() {
   return (
@@ -87,6 +88,11 @@ function App() {
               element={
                 <MedicionesPage />
               }
+            />
+
+            <Route
+              path="mediciones/comparar"
+              element={<CompararMedicionesPage />}
             />
 
             <Route

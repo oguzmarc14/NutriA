@@ -7,8 +7,8 @@ import {
   Calculator,
   CircleGauge,
   Dumbbell,
-  History,
   Info,
+  Plus,
   Ruler,
   Save,
   Scale,
@@ -20,6 +20,9 @@ import {
 import CardPacienteMediciones from '../components/mediciones/CardPacienteMediciones'
 import CampoAntropometrico from '../components/mediciones/CampoAntropometrico'
 import ModalMedicionGuardada from '../components/mediciones/ModalMedicionGuardada'
+import HistorialMediciones from '../components/mediciones/HistorialMediciones'
+import ModalDetalleMedicion from '../components/mediciones/ModalDetalleMedicion'
+import ResumenProgresoMediciones from '../components/mediciones/ResumenProgresoMediciones'
 import client from '../api/client'
 
 const nivelesActividad = [
@@ -112,6 +115,8 @@ function MedicionesPage() {
 
   const [error, setError] = useState('')
   const [mensaje, setMensaje] = useState('')
+  const [mostrarFormulario, setMostrarFormulario] = useState(false)
+  const [medicionSeleccionada, setMedicionSeleccionada] = useState(null)
 
   /*
    * ----------------------------------------------------
@@ -332,6 +337,7 @@ function MedicionesPage() {
         data.message ||
           'Medición registrada correctamente',
       )
+      setMostrarFormulario(false)
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -448,6 +454,7 @@ function MedicionesPage() {
     setPacienteId(id)
     setError('')
     setMensaje('')
+    setMostrarFormulario(false)
   }
 
   function regresarPacientes() {
@@ -466,6 +473,8 @@ function MedicionesPage() {
 
     setError('')
     setMensaje('')
+    setMostrarFormulario(false)
+    setMedicionSeleccionada(null)
   }
 
   /*
@@ -606,20 +615,20 @@ function MedicionesPage() {
               Volver a pacientes
             </button>
 
-            <div className="mb-8">
-              <p className="mb-2 text-sm font-bold uppercase tracking-[0.16em] text-[#4d816f]">
-                Mediciones
-              </p>
-
-              <h1 className="text-3xl font-extrabold tracking-tight text-[#173f34] md:text-4xl">
-                {pacienteSeleccionado?.name ||
-                  'Seguimiento de mediciones'}
-              </h1>
-
-              <p className="mt-2 max-w-2xl text-slate-500">
-                Registra la evolución corporal del
-                paciente y consulta su historial.
-              </p>
+            <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="mb-2 text-sm font-bold uppercase tracking-[0.16em] text-[#4d816f]">Mediciones</p>
+                <h1 className="text-3xl font-extrabold tracking-tight text-[#173f34] md:text-4xl">{pacienteSeleccionado?.name || 'Seguimiento de mediciones'}</h1>
+                <p className="mt-2 max-w-2xl text-slate-500">Consulta el historial de mediciones, visualiza el progreso y registra nuevas mediciones.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMostrarFormulario((actual) => !actual)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#246b55] px-5 py-3 text-sm font-bold text-white shadow-[0_8px_20px_rgba(36,107,85,0.2)] transition hover:bg-[#1d5947]"
+              >
+                <Plus size={18} />
+                {mostrarFormulario ? 'Cerrar formulario' : 'Nueva medición'}
+              </button>
             </div>
 
             {error && (
@@ -636,9 +645,20 @@ function MedicionesPage() {
               />
             )}
 
+            {medicionSeleccionada && (
+              <ModalDetalleMedicion medicion={medicionSeleccionada} onCerrar={() => setMedicionSeleccionada(null)} />
+            )}
+
+            {!cargandoHistorial && mediciones.length > 0 && !mostrarFormulario && (
+              <ResumenProgresoMediciones
+                mediciones={mediciones}
+                onComparar={() => navigate(`/mediciones/comparar?paciente=${pacienteId}`)}
+              />
+            )}
+
             {/* FORMULARIO */}
 
-            <form
+            {mostrarFormulario && <form
               onSubmit={registrarMedicion}
               className="mb-6"
             >
@@ -1045,133 +1065,17 @@ function MedicionesPage() {
                       : 'Guardar medición'}
                 </button>
               </div>
-            </form>
+            </form>}
 
             {/* HISTORIAL */}
-
-            <div className="rounded-3xl border border-[#d5e1e3] bg-gradient-to-br from-[#f7fbfb] to-[#edf4f4] p-5 shadow-[0_14px_40px_rgba(40,76,80,0.06)] md:p-6">
-              <div className="mb-6 flex items-center gap-3">
-                <div className="grid h-10 w-10 place-items-center rounded-xl bg-[#dcebed] text-[#3e6e73]">
-                  <History size={19} />
-                </div>
-
-                <div>
-                  <h2 className="text-xl font-extrabold text-[#173f34]">
-                    Historial de mediciones
-                  </h2>
-
-                  <p className="text-sm text-slate-500">
-                    Evolución registrada del paciente.
-                  </p>
-                </div>
-              </div>
-
-              {cargandoHistorial ? (
-                <p className="text-sm text-slate-500">
-                  Cargando historial...
-                </p>
-              ) : mediciones.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-[#cfdcd6] bg-white/50 p-8 text-center">
-                  <Calculator
-                    className="mx-auto mb-3 text-[#4d816f]"
-                    size={30}
-                  />
-
-                  <p className="font-bold text-[#173f34]">
-                    Sin mediciones
-                  </p>
-
-                  <p className="mt-1 text-sm text-slate-500">
-                    Esta será la primera medición.
-                  </p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[850px] text-left">
-                    <thead>
-                      <tr className="border-b border-[#dbe6e8] text-sm text-slate-500">
-                        <th className="px-3 py-3 font-semibold">
-                          Fecha
-                        </th>
-
-                        <th className="px-3 py-3 font-semibold">
-                          Edad
-                        </th>
-
-                        <th className="px-3 py-3 font-semibold">
-                          Peso
-                        </th>
-
-                        <th className="px-3 py-3 font-semibold">
-                          Estatura
-                        </th>
-
-                        <th className="px-3 py-3 font-semibold">
-                          IMC
-                        </th>
-
-                        <th className="px-3 py-3 font-semibold">
-                          Actividad
-                        </th>
-
-                        <th className="px-3 py-3 font-semibold">
-                          Tipo
-                        </th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {mediciones.map(
-                        (medicion) => (
-                          <tr
-                            key={medicion._id}
-                            className="border-b border-[#e4ecee] text-sm text-slate-700 last:border-0"
-                          >
-                            <td className="px-3 py-4">
-                              {formatearFecha(
-                                medicion.fecha,
-                              )}
-                            </td>
-
-                            <td className="px-3 py-4">
-                              {medicion.edad
-                                ? `${medicion.edad} años`
-                                : '—'}
-                            </td>
-
-                            <td className="px-3 py-4 font-semibold">
-                              {medicion.peso} kg
-                            </td>
-
-                            <td className="px-3 py-4">
-                              {medicion.estatura} m
-                            </td>
-
-                            <td className="px-3 py-4">
-                              <span className="rounded-lg bg-[#dcebed] px-3 py-1.5 font-bold text-[#3e6e73]">
-                                {medicion.imc}
-                              </span>
-                            </td>
-
-                            <td className="px-3 py-4">
-                              {medicion.nivelActividadFisica
-                                ? `Nivel ${medicion.nivelActividadFisica}`
-                                : '—'}
-                            </td>
-
-                            <td className="px-3 py-4">
-                              {medicion.esPrimeraMedicion
-                                ? 'Primera'
-                                : 'Seguimiento'}
-                            </td>
-                          </tr>
-                        ),
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+            {!mostrarFormulario && (
+              <HistorialMediciones
+                mediciones={mediciones}
+                cargando={cargandoHistorial}
+                onVer={setMedicionSeleccionada}
+                onRegistrar={() => setMostrarFormulario(true)}
+              />
+            )}
           </>
         )}
       </div>
