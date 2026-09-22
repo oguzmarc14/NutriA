@@ -4,6 +4,7 @@ import {
   Activity,
   ArrowLeft,
   Bone,
+  CalendarDays,
   Calculator,
   CircleGauge,
   Dumbbell,
@@ -100,6 +101,7 @@ function MedicionesPage() {
   const [edad, setEdad] = useState('')
   const [peso, setPeso] = useState('')
   const [estatura, setEstatura] = useState('')
+  const [fechaRegistro, setFechaRegistro] = useState('')
 
   const [nivelActividadFisica, setNivelActividadFisica] =
     useState(3)
@@ -295,6 +297,10 @@ function MedicionesPage() {
 
           proteina:
             antropometricas.proteina,
+
+          fecha: fechaRegistro
+            ? `${fechaRegistro}T12:00:00.000Z`
+            : undefined,
         },
       )
 
@@ -327,6 +333,7 @@ function MedicionesPage() {
 
       setPeso('')
       setEstatura('')
+      setFechaRegistro('')
       setNivelActividadFisica(3)
 
       setAntropometricas(
@@ -463,6 +470,7 @@ function MedicionesPage() {
 
     setPeso('')
     setEstatura('')
+    setFechaRegistro('')
     setEdad('')
 
     setNivelActividadFisica(3)
@@ -744,6 +752,23 @@ function MedicionesPage() {
                           )}
                         </div>
                       </div>
+
+                      <label className="space-y-2 md:col-span-2">
+                        <span className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                          <CalendarDays size={16} />
+                          Fecha de la medición
+                          <span className="font-normal text-slate-400">(opcional)</span>
+                        </span>
+                        <input
+                          type="date"
+                          value={fechaRegistro}
+                          onChange={(event) => setFechaRegistro(event.target.value)}
+                          className="min-w-0 w-full rounded-xl border border-[#c9d9d1] bg-white/80 px-4 py-3 text-[#173f34] outline-none transition focus:border-[#4d816f]"
+                        />
+                        <span className="block text-xs text-slate-500">
+                          Si no seleccionas una fecha, se registrará automáticamente con la fecha y hora actuales.
+                        </span>
+                      </label>
                     </div>
 
                     {/* ACTIVIDAD */}
