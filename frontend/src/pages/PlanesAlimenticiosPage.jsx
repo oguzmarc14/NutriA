@@ -9,6 +9,7 @@ import { useSearchParams } from 'react-router-dom'
 import {
   Apple,
   ArrowLeft,
+  CalendarDays,
   ChevronDown,
   ChevronUp,
   CirclePlus,
@@ -44,7 +45,6 @@ function crearComidaInicial(
     id: `${Date.now()}-${Math.random()}`,
     nombre,
     hora,
-    descripcion: '',
     alimentos: [],
   }
 }
@@ -55,6 +55,12 @@ function crearComidasIniciales() {
     crearComidaInicial('Comida', '14:30'),
     crearComidaInicial('Cena', '20:30'),
   ]
+}
+
+function obtenerFechaActual() {
+  const hoy = new Date()
+  const desplazamiento = hoy.getTimezoneOffset() * 60000
+  return new Date(hoy - desplazamiento).toISOString().slice(0, 10)
 }
 
 function formatearHora(hora) {
@@ -174,6 +180,14 @@ function PlanesAlimenticiosPage() {
 
   const [objetivo, setObjetivo] =
     useState('')
+
+  const [fechaPlan, setFechaPlan] =
+    useState(obtenerFechaActual)
+
+  const [planEditandoId, setPlanEditandoId] =
+    useState('')
+
+  const formularioPlanRef = useRef(null)
 
   const [comidas, setComidas] =
     useState(crearComidasIniciales)
@@ -1146,6 +1160,11 @@ function PlanesAlimenticiosPage() {
       return
     }
 
+    if (!fechaPlan) {
+      setError('Selecciona la fecha del menú.')
+      return
+    }
+
     const comidasValidas =
       comidas.filter(
         (comida) =>
@@ -1178,9 +1197,6 @@ function PlanesAlimenticiosPage() {
 
             hora:
               comida.hora || '',
-
-            descripcion:
-              comida.descripcion.trim(),
 
             alimentos:
               comida.alimentos.map(
@@ -1244,30 +1260,27 @@ function PlanesAlimenticiosPage() {
           }),
         )
 
-      const { data } =
-        await client.post(
-          `/planes/${pacienteId}`,
-          {
-            nombre:
-              nombre.trim(),
+      const payload = {
+        nombre: nombre.trim(),
+        objetivo: objetivo.trim(),
+        fechaInicio: `${fechaPlan}T12:00:00.000Z`,
+        comidas: comidasPayload,
+      }
 
-            objetivo:
-              objetivo.trim(),
+      const { data } = planEditandoId
+        ? await client.put(`/planes/${pacienteId}/${planEditandoId}`, payload)
+        : await client.post(`/planes/${pacienteId}`, payload)
 
-            comidas:
-              comidasPayload,
-          },
-        )
-
-      setPlanes(
-        (actuales) => [
-          data.plan,
-          ...actuales,
-        ],
+      setPlanes((actuales) =>
+        planEditandoId
+          ? actuales.map((plan) => plan._id === planEditandoId ? data.plan : plan)
+          : [data.plan, ...actuales],
       )
 
       setNombre('')
       setObjetivo('')
+      setFechaPlan(obtenerFechaActual())
+      setPlanEditandoId('')
 
       const comidasNuevas = crearComidasIniciales()
       setComidas(comidasNuevas)
@@ -1293,9 +1306,7 @@ function PlanesAlimenticiosPage() {
         {},
       )
 
-      setMensaje(
-        'Plan alimenticio creado correctamente.',
-      )
+      setMensaje(data.message || 'Plan alimenticio guardado correctamente.')
     } catch (err) {
       console.error(
         'Error guardando plan:',
@@ -1305,10 +1316,69 @@ function PlanesAlimenticiosPage() {
       setError(
         err.response?.data
           ?.message ||
-          'No fue posible crear el plan alimenticio.',
+          'No fue posible guardar el plan alimenticio.',
       )
     } finally {
       setGuardando(false)
+    }
+  }
+
+  function editarPlan(plan) {
+    const comidasEditables = (plan.comidas || []).map((comida) => ({
+      id: comida._id || `${Date.now()}-${Math.random()}`,
+      nombre: comida.nombre || '',
+      hora: comida.hora || '',
+      alimentos: (comida.alimentos || []).map((alimento) => ({
+        ...alimento,
+        id: alimento._id || `${Date.now()}-${Math.random()}`,
+        alimentoId:
+          typeof alimento.alimento === 'object'
+            ? alimento.alimento?._id
+            : alimento.alimento,
+      })),
+    }))
+
+    setPlanEditandoId(plan._id)
+    setNombre(plan.nombre || '')
+    setObjetivo(plan.objetivo || '')
+    setFechaPlan((plan.fechaInicio || plan.createdAt || '').slice(0, 10))
+    setComidas(comidasEditables.length > 0 ? comidasEditables : crearComidasIniciales())
+    setComidaActivaId(comidasEditables[0]?.id || '')
+    setBusquedasAlimentos({})
+    setResultadosAlimentos({})
+    setMostrarResultados({})
+    setError('')
+    setMensaje('Editando plan alimenticio.')
+    formularioPlanRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  function cancelarEdicion() {
+    const nuevas = crearComidasIniciales()
+    setPlanEditandoId('')
+    setNombre('')
+    setObjetivo('')
+    setFechaPlan(obtenerFechaActual())
+    setComidas(nuevas)
+    setComidaActivaId(nuevas[0].id)
+    setError('')
+    setMensaje('')
+  }
+
+  async function eliminarPlan(plan) {
+    const confirmado = window.confirm(
+      `¿Eliminar definitivamente el plan "${plan.nombre}"?`,
+    )
+
+    if (!confirmado) return
+
+    try {
+      setError('')
+      const { data } = await client.delete(`/planes/${pacienteId}/${plan._id}`)
+      setPlanes((actuales) => actuales.filter((item) => item._id !== plan._id))
+      if (planEditandoId === plan._id) cancelarEdicion()
+      setMensaje(data.message || 'Plan alimenticio eliminado correctamente.')
+    } catch (err) {
+      setError(err.response?.data?.message || 'No fue posible eliminar el plan alimenticio.')
     }
   }
 
@@ -1437,6 +1507,8 @@ function PlanesAlimenticiosPage() {
 
     setNombre('')
     setObjetivo('')
+    setFechaPlan(obtenerFechaActual())
+    setPlanEditandoId('')
 
     setComidas([
       crearComidaInicial(),
@@ -1670,6 +1742,7 @@ function PlanesAlimenticiosPage() {
             ============================================ */}
 
             <form
+              ref={formularioPlanRef}
               onSubmit={
                 guardarPlan
               }
@@ -1684,7 +1757,7 @@ function PlanesAlimenticiosPage() {
 
                 <div>
                   <h2 className="text-xl font-extrabold text-[#173f34]">
-                    Nuevo plan
+                    {planEditandoId ? 'Editar plan' : 'Nuevo plan'}
                   </h2>
 
                   <p className="mt-1 text-sm text-slate-500">
@@ -1699,7 +1772,7 @@ function PlanesAlimenticiosPage() {
                 </div>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-3">
                 <CampoTexto
                   label="Nombre del plan *"
                   value={
@@ -1722,6 +1795,19 @@ function PlanesAlimenticiosPage() {
                   }
                   placeholder="Mejorar hábitos alimenticios"
                 />
+
+                <label>
+                  <span className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-slate-700">
+                    <CalendarDays size={16} /> Fecha del menú *
+                  </span>
+                  <input
+                    type="date"
+                    required
+                    value={fechaPlan}
+                    onChange={(event) => setFechaPlan(event.target.value)}
+                    className="w-full rounded-xl border border-[#d3dfd9] bg-white px-3 py-2.5 text-sm font-bold text-[#173f34] outline-none transition focus:border-[#4d816f]"
+                  />
+                </label>
               </div>
 
               {/* RESUMEN GENERAL */}
@@ -1819,8 +1905,8 @@ function PlanesAlimenticiosPage() {
                   {comidas.filter((item) => item.id === comidaActiva?.id).map(
                     (
                       comida,
-                      index,
                     ) => {
+                      const index = comidas.findIndex((item) => item.id === comida.id)
                       const subtotal =
                         calcularTotales(
                           comida.alimentos,
@@ -1921,13 +2007,6 @@ function PlanesAlimenticiosPage() {
                                 />
                               </label>
                             </div>
-
-                            <CampoTexto
-                              label="Indicaciones (opcional)"
-                              value={comida.descripcion}
-                              onChange={(valor) => cambiarComida(comida.id, 'descripcion', valor)}
-                              placeholder="Ej. consumir antes del entrenamiento..."
-                            />
 
                             {/* BUSCADOR */}
 
@@ -2326,13 +2405,17 @@ function PlanesAlimenticiosPage() {
                   </p>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={
-                    guardando
-                  }
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#246b55] px-6 py-3 text-sm font-bold text-white shadow-[0_8px_20px_rgba(36,107,85,0.2)] transition hover:bg-[#1d5947] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                >
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                  {planEditandoId && (
+                    <button type="button" onClick={cancelarEdicion} className="rounded-xl border border-[#b9cec4] bg-white px-5 py-3 text-sm font-bold text-[#48685c]">
+                      Cancelar edición
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={guardando}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-[#246b55] px-6 py-3 text-sm font-bold text-white shadow-[0_8px_20px_rgba(36,107,85,0.2)] transition hover:bg-[#1d5947] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
                   {guardando ? (
                     <LoaderCircle
                       size={17}
@@ -2344,10 +2427,9 @@ function PlanesAlimenticiosPage() {
                     />
                   )}
 
-                  {guardando
-                    ? 'Guardando...'
-                    : 'Guardar plan'}
-                </button>
+                    {guardando ? 'Guardando...' : planEditandoId ? 'Guardar cambios' : 'Guardar plan'}
+                  </button>
+                </div>
               </div>
             </form>
 
@@ -2429,6 +2511,8 @@ function PlanesAlimenticiosPage() {
                         calcularTotales={
                           calcularTotales
                         }
+                        onEditar={editarPlan}
+                        onEliminar={eliminarPlan}
                       />
                     ),
                   )}

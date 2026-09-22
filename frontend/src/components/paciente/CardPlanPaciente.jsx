@@ -17,7 +17,6 @@ function CardPlanPaciente({ plan }) {
         {plan.comidas?.length > 0 ? plan.comidas.map((comida, index) => (
           <section key={comida._id || index} className="rounded-2xl bg-[#f7f2e7] p-4">
             <div className="flex items-center gap-2"><Utensils size={17} className="text-[#8a6840]" /><h3 className="font-extrabold text-[#173f34]">{comida.nombre || `Comida ${index + 1}`}</h3></div>
-            {comida.descripcion && <p className="mt-1 text-sm text-slate-500">{comida.descripcion}</p>}
             <div className="mt-3 space-y-2">
               {comida.alimentos?.length > 0 ? comida.alimentos.map((alimento, alimentoIndex) => (
                 <div key={alimento._id || alimentoIndex} className="flex items-start justify-between gap-3 rounded-xl bg-white/80 px-3 py-2.5">

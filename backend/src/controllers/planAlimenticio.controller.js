@@ -238,8 +238,7 @@ const planSchema =
 
     fechaInicio:
       z.coerce
-        .date()
-        .optional(),
+        .date(),
   })
 
 /*
@@ -655,6 +654,7 @@ async function obtenerPlanesAlimenticios(
         },
       )
         .sort({
+          fechaInicio: -1,
           createdAt: -1,
         })
         .lean()
@@ -668,7 +668,77 @@ async function obtenerPlanesAlimenticios(
   }
 }
 
+async function actualizarPlanAlimenticio(req, res, next) {
+  try {
+    const parsed = planSchema.safeParse(req.body)
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        message: 'Datos del plan alimenticio inválidos',
+        errors: parsed.error.flatten(),
+      })
+    }
+
+    const paciente = await Pacientes.findOne({
+      _id: req.params.pacienteId,
+      nutritionist: req.user.id,
+      active: true,
+    })
+
+    if (!paciente) {
+      return res.status(404).json({ message: 'Paciente no encontrado' })
+    }
+
+    const comidas = await prepararComidas(parsed.data.comidas || [])
+    const plan = await PlanAlimenticio.findOneAndUpdate(
+      {
+        _id: req.params.planId,
+        paciente: paciente._id,
+        nutritionist: req.user.id,
+      },
+      {
+        nombre: parsed.data.nombre,
+        objetivo: parsed.data.objetivo || '',
+        comidas,
+        fechaInicio: parsed.data.fechaInicio,
+      },
+      { new: true, runValidators: true },
+    )
+
+    if (!plan) {
+      return res.status(404).json({ message: 'Plan alimenticio no encontrado' })
+    }
+
+    return res.json({ message: 'Plan alimenticio actualizado correctamente', plan })
+  } catch (error) {
+    if (error.status) {
+      return res.status(error.status).json({ message: error.message })
+    }
+    return next(error)
+  }
+}
+
+async function eliminarPlanAlimenticio(req, res, next) {
+  try {
+    const plan = await PlanAlimenticio.findOneAndDelete({
+      _id: req.params.planId,
+      paciente: req.params.pacienteId,
+      nutritionist: req.user.id,
+    })
+
+    if (!plan) {
+      return res.status(404).json({ message: 'Plan alimenticio no encontrado' })
+    }
+
+    return res.json({ message: 'Plan alimenticio eliminado correctamente' })
+  } catch (error) {
+    return next(error)
+  }
+}
+
 module.exports = {
   crearPlanAlimenticio,
   obtenerPlanesAlimenticios,
+  actualizarPlanAlimenticio,
+  eliminarPlanAlimenticio,
 }
