@@ -1848,7 +1848,7 @@ function PlanesAlimenticiosPage() {
                   placeholder="Mejorar hábitos alimenticios"
                 />
 
-                <label>
+                <label className="block min-w-0 max-w-full overflow-hidden">
                   <span className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-slate-700">
                     <CalendarDays size={16} /> Fecha del menú *
                   </span>
@@ -1857,7 +1857,7 @@ function PlanesAlimenticiosPage() {
                     required
                     value={fechaPlan}
                     onChange={(event) => setFechaPlan(event.target.value)}
-                    className="w-full rounded-xl border border-[#d3dfd9] bg-white px-3 py-2.5 text-sm font-bold text-[#173f34] outline-none transition focus:border-[#4d816f]"
+                    className="block min-w-0 max-w-full w-full rounded-xl border border-[#d3dfd9] bg-white px-3 py-2.5 text-sm font-bold text-[#173f34] outline-none transition focus:border-[#4d816f]"
                   />
                 </label>
               </div>

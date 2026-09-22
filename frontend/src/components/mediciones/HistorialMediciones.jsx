@@ -2,7 +2,7 @@ import { Calculator, History, Plus } from 'lucide-react'
 import { ordenarMediciones } from '../../utils/mediciones'
 import CardHistorialMedicion from './CardHistorialMedicion'
 
-function HistorialMediciones({ mediciones, cargando = false, onVer, onRegistrar, soloLectura = false }) {
+function HistorialMediciones({ mediciones, cargando = false, onVer, onEditar, onRegistrar, soloLectura = false }) {
   const ordenadas = ordenarMediciones(mediciones)
 
   return (
@@ -22,7 +22,7 @@ function HistorialMediciones({ mediciones, cargando = false, onVer, onRegistrar,
       ) : (
         <div className="space-y-4">
           {ordenadas.map((medicion, indice) => (
-            <CardHistorialMedicion key={medicion._id} medicion={medicion} anterior={ordenadas[indice + 1]} esUltima={indice === 0} onVer={onVer} soloLectura={soloLectura} />
+            <CardHistorialMedicion key={medicion._id} medicion={medicion} anterior={ordenadas[indice + 1]} esUltima={indice === 0} onVer={onVer} onEditar={onEditar} soloLectura={soloLectura} />
           ))}
         </div>
       )}

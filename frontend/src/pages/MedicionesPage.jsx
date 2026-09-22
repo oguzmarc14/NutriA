@@ -119,6 +119,8 @@ function MedicionesPage() {
   const [mensaje, setMensaje] = useState('')
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [medicionSeleccionada, setMedicionSeleccionada] = useState(null)
+  const [medicionEditandoId, setMedicionEditandoId] = useState('')
+  const [confirmacionEditada, setConfirmacionEditada] = useState(false)
 
   /*
    * ----------------------------------------------------
@@ -271,60 +273,74 @@ function MedicionesPage() {
     }
 
     try {
+      const editando = Boolean(medicionEditandoId)
+
       setGuardando(true)
       setError('')
       setMensaje('')
 
-      const { data } = await client.post(
-        `/mediciones/${pacienteId}`,
+      const ruta = editando
+        ? `/mediciones/${pacienteId}/${medicionEditandoId}`
+        : `/mediciones/${pacienteId}`
+
+      const { data } = await client.request(
         {
-          edad,
-          nivelActividadFisica,
-          peso,
-          estatura,
+          method: editando ? 'put' : 'post',
+          url: ruta,
+          data: {
+            edad,
+            nivelActividadFisica,
+            peso,
+            estatura,
 
-          grasaCorporal:
-            antropometricas.grasaCorporal,
+            grasaCorporal:
+              antropometricas.grasaCorporal,
 
-          grasaVisceral:
-            antropometricas.grasaVisceral,
+            grasaVisceral:
+              antropometricas.grasaVisceral,
 
-          masaMuscular:
-            antropometricas.masaMuscular,
+            masaMuscular:
+              antropometricas.masaMuscular,
 
-          masaOsea:
-            antropometricas.masaOsea,
+            masaOsea:
+              antropometricas.masaOsea,
 
-          proteina:
-            antropometricas.proteina,
+            proteina:
+              antropometricas.proteina,
 
-          fecha: fechaRegistro
-            ? `${fechaRegistro}T12:00:00.000Z`
-            : undefined,
+            fecha: fechaRegistro
+              ? `${fechaRegistro}T12:00:00.000Z`
+              : undefined,
+          },
         },
       )
 
-      setMediciones((actuales) => [
-        data.medicion,
-        ...actuales,
-      ])
+      const medicionesActualizadas = (
+        editando
+          ? mediciones.map((medicion) =>
+              medicion._id === medicionEditandoId ? data.medicion : medicion)
+          : [data.medicion, ...mediciones]
+      ).sort((a, b) => new Date(b.fecha || b.createdAt) - new Date(a.fecha || a.createdAt))
+
+      setMediciones(medicionesActualizadas)
 
       /*
        * Actualizamos también la card del paciente
        * para que la última medición cambie sin
        * tener que recargar toda la página.
        */
+      const ultimaMedicion = medicionesActualizadas[0]
+
       setPacientes((actuales) =>
         actuales.map((paciente) =>
           paciente._id === pacienteId
             ? {
                 ...paciente,
                 ultimaMedicion: {
-                  peso: data.medicion.peso,
-                  estatura:
-                    data.medicion.estatura,
-                  imc: data.medicion.imc,
-                  fecha: data.medicion.fecha,
+                  peso: ultimaMedicion.peso,
+                  estatura: ultimaMedicion.estatura,
+                  imc: ultimaMedicion.imc,
+                  fecha: ultimaMedicion.fecha,
                 },
               }
             : paciente,
@@ -335,6 +351,7 @@ function MedicionesPage() {
       setEstatura('')
       setFechaRegistro('')
       setNivelActividadFisica(3)
+      setMedicionEditandoId('')
 
       setAntropometricas(
         estadoInicialAntropometricas,
@@ -342,8 +359,11 @@ function MedicionesPage() {
 
       setMensaje(
         data.message ||
-          'Medición registrada correctamente',
+          (editando
+            ? 'Medición actualizada correctamente'
+            : 'Medición registrada correctamente'),
       )
+      setConfirmacionEditada(editando)
       setMostrarFormulario(false)
     } catch (err) {
       setError(
@@ -353,6 +373,49 @@ function MedicionesPage() {
     } finally {
       setGuardando(false)
     }
+  }
+
+  function editarMedicion(medicion) {
+    const fecha = medicion.fecha || medicion.createdAt
+
+    setMedicionEditandoId(medicion._id)
+    setEdad(String(medicion.edad ?? ''))
+    setPeso(String(medicion.peso ?? ''))
+    setEstatura(String(medicion.estatura ?? ''))
+    setFechaRegistro(fecha ? new Date(fecha).toISOString().slice(0, 10) : '')
+    setNivelActividadFisica(medicion.nivelActividadFisica || 3)
+    setAntropometricas({
+      grasaCorporal: String(medicion.grasaCorporal ?? ''),
+      grasaVisceral: String(medicion.grasaVisceral ?? ''),
+      masaMuscular: String(medicion.masaMuscular ?? ''),
+      masaOsea: String(medicion.masaOsea ?? ''),
+      proteina: String(medicion.proteina ?? ''),
+    })
+    setError('')
+    setMensaje('')
+    setMedicionSeleccionada(null)
+    setMostrarFormulario(true)
+
+    requestAnimationFrame(() => {
+      document.getElementById('formulario-medicion')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    })
+  }
+
+  function cerrarFormularioMedicion() {
+    const edadPaciente = calcularEdad(pacienteSeleccionado?.birthDate)
+
+    setEdad(edadPaciente === null ? '' : String(edadPaciente))
+    setPeso('')
+    setEstatura('')
+    setFechaRegistro('')
+    setNivelActividadFisica(3)
+    setAntropometricas(estadoInicialAntropometricas)
+    setMedicionEditandoId('')
+    setError('')
+    setMostrarFormulario(false)
   }
 
   /*
@@ -462,6 +525,8 @@ function MedicionesPage() {
     setError('')
     setMensaje('')
     setMostrarFormulario(false)
+    setMedicionEditandoId('')
+    setConfirmacionEditada(false)
   }
 
   function regresarPacientes() {
@@ -483,6 +548,8 @@ function MedicionesPage() {
     setMensaje('')
     setMostrarFormulario(false)
     setMedicionSeleccionada(null)
+    setMedicionEditandoId('')
+    setConfirmacionEditada(false)
   }
 
   /*
@@ -631,11 +698,19 @@ function MedicionesPage() {
               </div>
               <button
                 type="button"
-                onClick={() => setMostrarFormulario((actual) => !actual)}
+                onClick={() => {
+                  if (mostrarFormulario) {
+                    cerrarFormularioMedicion()
+                  } else {
+                    setMostrarFormulario(true)
+                  }
+                }}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#246b55] px-5 py-3 text-sm font-bold text-white shadow-[0_8px_20px_rgba(36,107,85,0.2)] transition hover:bg-[#1d5947]"
               >
                 <Plus size={18} />
-                {mostrarFormulario ? 'Cerrar formulario' : 'Nueva medición'}
+                {mostrarFormulario
+                  ? (medicionEditandoId ? 'Cancelar edición' : 'Cerrar formulario')
+                  : 'Nueva medición'}
               </button>
             </div>
 
@@ -648,7 +723,11 @@ function MedicionesPage() {
             {mensaje && (
               <ModalMedicionGuardada
                 mensaje={mensaje}
-                onCerrar={() => setMensaje('')}
+                editada={confirmacionEditada}
+                onCerrar={() => {
+                  setMensaje('')
+                  setConfirmacionEditada(false)
+                }}
                 onContinuar={() => navigate(`/planes?paciente=${pacienteId}`)}
               />
             )}
@@ -667,16 +746,17 @@ function MedicionesPage() {
             {/* FORMULARIO */}
 
             {mostrarFormulario && <form
+              id="formulario-medicion"
               onSubmit={registrarMedicion}
               className="mb-6"
             >
-              <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
                 {/* COLUMNA IZQUIERDA */}
 
-                <div className="space-y-6">
+                <div className="min-w-0 space-y-6">
                   {/* INFORMACIÓN GENERAL */}
 
-                  <article className="rounded-3xl border border-[#cfe0d6] bg-gradient-to-br from-[#f4faf6] to-[#eaf4ed] p-5 shadow-[0_14px_40px_rgba(32,78,64,0.08)] md:p-6">
+                  <article className="min-w-0 overflow-hidden rounded-3xl border border-[#cfe0d6] bg-gradient-to-br from-[#f4faf6] to-[#eaf4ed] p-5 shadow-[0_14px_40px_rgba(32,78,64,0.08)] md:p-6">
                     <div className="mb-6 flex items-start gap-3">
                       <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#d9ebdf] text-[#246b55]">
                         <UserRound size={21} />
@@ -736,7 +816,9 @@ function MedicionesPage() {
 
                         <div className="rounded-xl border border-white/70 bg-white/65 px-4 py-3 shadow-sm">
                           <p className="font-bold text-[#173f34]">
-                            {cargandoHistorial
+                            {medicionEditandoId
+                              ? 'Editando medición'
+                              : cargandoHistorial
                               ? 'Comprobando historial...'
                               : esPrimeraMedicion
                                 ? 'Primera medición'
@@ -753,7 +835,7 @@ function MedicionesPage() {
                         </div>
                       </div>
 
-                      <label className="space-y-2 md:col-span-2">
+                      <label className="block min-w-0 max-w-full space-y-2 overflow-hidden md:col-span-2">
                         <span className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                           <CalendarDays size={16} />
                           Fecha de la medición
@@ -763,7 +845,7 @@ function MedicionesPage() {
                           type="date"
                           value={fechaRegistro}
                           onChange={(event) => setFechaRegistro(event.target.value)}
-                          className="min-w-0 w-full rounded-xl border border-[#c9d9d1] bg-white/80 px-4 py-3 text-[#173f34] outline-none transition focus:border-[#4d816f]"
+                          className="block min-w-0 max-w-full w-full rounded-xl border border-[#c9d9d1] bg-white/80 px-3 py-3 text-[#173f34] outline-none transition focus:border-[#4d816f] sm:px-4"
                         />
                         <span className="block text-xs text-slate-500">
                           Si no seleccionas una fecha, se registrará automáticamente con la fecha y hora actuales.
@@ -1085,6 +1167,8 @@ function MedicionesPage() {
 
                   {guardando
                     ? 'Guardando...'
+                    : medicionEditandoId
+                      ? 'Guardar cambios'
                     : esPrimeraMedicion
                       ? 'Guardar primera medición'
                       : 'Guardar medición'}
@@ -1098,6 +1182,7 @@ function MedicionesPage() {
                 mediciones={mediciones}
                 cargando={cargandoHistorial}
                 onVer={setMedicionSeleccionada}
+                onEditar={editarMedicion}
                 onRegistrar={() => setMostrarFormulario(true)}
               />
             )}

@@ -1,4 +1,4 @@
-import { ArrowRight, CalendarDays } from 'lucide-react'
+import { ArrowRight, CalendarDays, Pencil } from 'lucide-react'
 import { fechaMedicion, formatearNumero, formatearTiempoRelativo } from '../../utils/mediciones'
 import IndicadorVariacion from './IndicadorVariacion'
 
@@ -12,7 +12,7 @@ function Metrica({ label, valor, unidad, anterior }) {
   )
 }
 
-function CardHistorialMedicion({ medicion, anterior, esUltima, onVer, soloLectura = false }) {
+function CardHistorialMedicion({ medicion, anterior, esUltima, onVer, onEditar, soloLectura = false }) {
   const fecha = new Date(fechaMedicion(medicion))
   const fechaValida = !Number.isNaN(fecha.getTime())
   const secundarios = [
@@ -44,9 +44,16 @@ function CardHistorialMedicion({ medicion, anterior, esUltima, onVer, soloLectur
           ))}
         </div>
 
-        <button type="button" onClick={() => onVer(medicion)} className="col-span-2 inline-flex min-w-0 items-center justify-center gap-2 rounded-xl bg-[#e3f1ea] px-3 py-3 text-center text-sm font-extrabold text-[#246b55] transition hover:bg-[#d6eae0] lg:col-span-1">
-          {soloLectura ? 'Ver detalles' : 'Ver medicion'} <ArrowRight size={16} />
-        </button>
+        <div className="col-span-2 flex min-w-0 flex-col gap-2 lg:col-span-1">
+          <button type="button" onClick={() => onVer(medicion)} className="inline-flex min-w-0 items-center justify-center gap-2 rounded-xl bg-[#e3f1ea] px-3 py-3 text-center text-sm font-extrabold text-[#246b55] transition hover:bg-[#d6eae0]">
+            {soloLectura ? 'Ver detalles' : 'Ver medicion'} <ArrowRight size={16} />
+          </button>
+          {!soloLectura && onEditar && (
+            <button type="button" onClick={() => onEditar(medicion)} className="inline-flex min-w-0 items-center justify-center gap-2 rounded-xl border border-[#c9ddd3] bg-white px-3 py-3 text-center text-sm font-extrabold text-[#48685c] transition hover:bg-[#eef5f1]">
+              <Pencil size={15} /> Editar
+            </button>
+          )}
+        </div>
       </div>
     </article>
   )

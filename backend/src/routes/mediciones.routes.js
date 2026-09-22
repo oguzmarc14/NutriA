@@ -2,6 +2,7 @@ const express = require('express')
 
 const {
   registrarMedicion,
+  actualizarMedicion,
   obtenerHistorialMediciones,
 } = require('../controllers/mediciones.controller')
 
@@ -17,5 +18,6 @@ router.use(allowRoles('nutritionist'))
 
 router.post('/:pacienteId', registrarMedicion)
 router.get('/:pacienteId', obtenerHistorialMediciones)
+router.put('/:pacienteId/:medicionId', actualizarMedicion)
 
 module.exports = router

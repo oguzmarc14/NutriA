@@ -231,6 +231,68 @@ async function registrarMedicion(req, res, next) {
   }
 }
 
+async function actualizarMedicion(req, res, next) {
+  try {
+    const parsed = medicionSchema.safeParse(req.body)
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        message: 'Datos de la medición inválidos',
+        errors: parsed.error.flatten(),
+      })
+    }
+
+    const paciente = await Pacientes.findOne({
+      _id: req.params.pacienteId,
+      nutritionist: req.user.id,
+      active: true,
+    })
+
+    if (!paciente) {
+      return res.status(404).json({
+        message: 'Paciente no encontrado',
+      })
+    }
+
+    const medicion = await Medicion.findOne({
+      _id: req.params.medicionId,
+      paciente: paciente._id,
+      nutritionist: req.user.id,
+    })
+
+    if (!medicion) {
+      return res.status(404).json({
+        message: 'Medición no encontrada',
+      })
+    }
+
+    const imc = Number(
+      (parsed.data.peso / parsed.data.estatura ** 2).toFixed(2),
+    )
+
+    medicion.edad = parsed.data.edad
+    medicion.nivelActividadFisica = parsed.data.nivelActividadFisica
+    medicion.peso = parsed.data.peso
+    medicion.estatura = parsed.data.estatura
+    medicion.imc = imc
+    medicion.grasaCorporal = parsed.data.grasaCorporal
+    medicion.grasaVisceral = parsed.data.grasaVisceral
+    medicion.masaMuscular = parsed.data.masaMuscular
+    medicion.masaOsea = parsed.data.masaOsea
+    medicion.proteina = parsed.data.proteina
+    medicion.fecha = parsed.data.fecha || medicion.fecha
+
+    await medicion.save()
+
+    return res.json({
+      message: 'Medición actualizada correctamente',
+      medicion,
+    })
+  } catch (error) {
+    return next(error)
+  }
+}
+
 async function obtenerHistorialMediciones(
   req,
   res,
@@ -285,5 +347,6 @@ async function obtenerHistorialMediciones(
 
 module.exports = {
   registrarMedicion,
+  actualizarMedicion,
   obtenerHistorialMediciones,
 }
