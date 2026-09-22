@@ -1,4 +1,5 @@
 import { CalendarDays, Utensils } from 'lucide-react'
+import MedidaAlimentoPaciente from './MedidaAlimentoPaciente'
 
 function formatearFecha(fecha) {
   if (!fecha) return 'Sin fecha'
@@ -22,7 +23,7 @@ function CardPlanPaciente({ plan }) {
               {comida.alimentos?.length > 0 ? comida.alimentos.map((alimento, alimentoIndex) => (
                 <div key={alimento._id || alimentoIndex} className="flex min-w-0 flex-col gap-1 rounded-xl bg-white/80 px-3 py-2.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                   <div className="min-w-0"><p className="break-words text-sm font-bold text-[#173f34]">{alimento.nombre}</p>{alimento.notas && <p className="mt-0.5 break-words text-xs text-slate-500">{alimento.notas}</p>}</div>
-                  <p className="break-words text-xs font-bold text-[#8a6840] sm:shrink-0 sm:text-right">{alimento.cantidad || 1} porcion{Number(alimento.cantidad || 1) !== 1 ? 'es' : ''}</p>
+                  <MedidaAlimentoPaciente alimento={alimento} />
                 </div>
               )) : <p className="text-sm text-slate-400">Sin alimentos registrados.</p>}
             </div>
