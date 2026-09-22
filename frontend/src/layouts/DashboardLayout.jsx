@@ -17,6 +17,7 @@ import {
 } from 'react-router-dom'
 
 import { useAuth } from '../context/auth'
+import BotonInstalarApp from '../components/pwa/BotonInstalarApp'
 
 function DashboardLayout() {
   const { logout, user } = useAuth()
@@ -304,6 +305,8 @@ function DashboardLayout() {
             {/* USUARIO */}
 
             <div className="ml-auto flex min-w-0 items-center gap-2">
+              <BotonInstalarApp />
+
               <div className="min-w-0 text-right">
                 <p className="max-w-[150px] truncate text-xs font-bold text-[#466057] sm:max-w-[220px] sm:text-sm">
                   {user.name}

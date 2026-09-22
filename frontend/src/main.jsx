@@ -14,3 +14,14 @@ createRoot(document.getElementById('root')).render(
     </BrowserRouter>
   </StrictMode>,
 )
+
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js')
+      registration.update()
+    } catch (error) {
+      console.error('No fue posible activar el modo instalable de NutriA', error)
+    }
+  })
+}
