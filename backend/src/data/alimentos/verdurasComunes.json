@@ -1,0 +1,32 @@
+{
+  "metadata": {
+    "grupo": "Verduras",
+    "subgrupo": "Porcion estandar por grupo",
+    "equivalentes": 1,
+    "nutrimentos": { "kcal": 25, "proteina": 2, "carbohidratos": 4, "grasas": 0 },
+    "fuentes": [{ "nombre": "IMSS", "edicion": "Nutricion IMSS", "referencia": "Una porcion de verdura cruda es una taza y cocida es 1/2 taza", "url": "https://www.imss.gob.mx/salud-en-linea/nutricion", "tipoDato": "equivalencia" }],
+    "origen": "imss",
+    "activo": true,
+    "revisado": true,
+    "fechaRevision": "2026-09-22T00:00:00.000Z",
+    "notasRevision": "Equivalencias estandarizadas por grupo con medidas caseras institucionales."
+  },
+  "alimentos": [
+    { "nombre": "Ajo crudo", "porcion": { "cantidad": 1, "unidad": "taza", "descripcion": "1 taza" } },
+    { "nombre": "Alcachofa cocida", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Berenjena cocida", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Betabel cocido", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Brócoli crudo", "porcion": { "cantidad": 1, "unidad": "taza", "descripcion": "1 taza" } },
+    { "nombre": "Calabaza de Castilla cocida", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Cebolla morada cruda", "porcion": { "cantidad": 1, "unidad": "taza", "descripcion": "1 taza" } },
+    { "nombre": "Chile jalapeño crudo", "porcion": { "cantidad": 1, "unidad": "taza", "descripcion": "1 taza" } },
+    { "nombre": "Chile serrano crudo", "porcion": { "cantidad": 1, "unidad": "taza", "descripcion": "1 taza" } },
+    { "nombre": "Col morada cruda", "porcion": { "cantidad": 1, "unidad": "taza", "descripcion": "1 taza" } },
+    { "nombre": "Espárragos cocidos", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Jitomate cherry crudo", "porcion": { "cantidad": 1, "unidad": "taza", "descripcion": "1 taza" } },
+    { "nombre": "Nabo cocido", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Rábano crudo", "porcion": { "cantidad": 1, "unidad": "taza", "descripcion": "1 taza" } },
+    { "nombre": "Tomate verde crudo", "porcion": { "cantidad": 1, "unidad": "taza", "descripcion": "1 taza" } },
+    { "nombre": "Zanahoria cocida", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } }
+  ]
+}

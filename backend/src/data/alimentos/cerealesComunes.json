@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "grupo": "Cereales y tubérculos",
+    "subgrupo": "Sin grasa",
+    "equivalentes": 1,
+    "nutrimentos": { "kcal": 70, "proteina": 2, "carbohidratos": 15, "grasas": 0 },
+    "fuentes": [{ "nombre": "IMSS", "edicion": "Nutricion IMSS", "referencia": "Arroz, cereal y pastas: porcion de 1/2 taza medidora", "url": "https://www.imss.gob.mx/salud-en-linea/nutricion", "tipoDato": "equivalencia" }],
+    "origen": "imss",
+    "activo": true,
+    "revisado": true,
+    "fechaRevision": "2026-09-22T00:00:00.000Z",
+    "notasRevision": "Preparaciones cocidas sin grasa agregada; aporte promedio por equivalente del grupo."
+  },
+  "alimentos": [
+    { "nombre": "Arroz integral cocido", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Cebada cocida", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Cuscús cocido", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Fideo cocido", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Macarrón cocido", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Pasta integral cocida", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Quinoa cocida", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Trigo cocido", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Pan integral de caja", "porcion": { "cantidad": 1, "unidad": "rebanada", "descripcion": "1 rebanada" } },
+    { "nombre": "Pan blanco de caja", "porcion": { "cantidad": 1, "unidad": "rebanada", "descripcion": "1 rebanada" } },
+    { "nombre": "Tortilla de harina chica", "porcion": { "cantidad": 1, "unidad": "pieza", "descripcion": "1 pieza chica" } },
+    { "nombre": "Yuca cocida", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } }
+  ]
+}

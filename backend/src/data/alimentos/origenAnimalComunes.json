@@ -1,0 +1,30 @@
+{
+  "metadata": {
+    "grupo": "Alimentos de origen animal",
+    "subgrupo": "Muy bajo aporte de grasa",
+    "equivalentes": 1,
+    "nutrimentos": { "kcal": 40, "proteina": 7, "carbohidratos": 0, "grasas": 1 },
+    "fuentes": [{ "nombre": "IMSS", "edicion": "Nutricion IMSS", "referencia": "Porciones de carnes, pescados, pollo y mariscos por medida equivalente", "url": "https://www.imss.gob.mx/salud-en-linea/nutricion", "tipoDato": "equivalencia" }],
+    "origen": "imss",
+    "activo": true,
+    "revisado": true,
+    "fechaRevision": "2026-09-22T00:00:00.000Z",
+    "notasRevision": "Porciones cocidas sin empanizar ni grasa agregada; aporte promedio del subgrupo."
+  },
+  "alimentos": [
+    { "nombre": "Tilapia cocida", "porcion": { "cantidad": 1, "unidad": "porción", "gramos": 40, "descripcion": "40 g" } },
+    { "nombre": "Merluza cocida", "porcion": { "cantidad": 1, "unidad": "porción", "gramos": 40, "descripcion": "40 g" } },
+    { "nombre": "Bacalao fresco cocido", "porcion": { "cantidad": 1, "unidad": "porción", "gramos": 40, "descripcion": "40 g" } },
+    { "nombre": "Lenguado cocido", "porcion": { "cantidad": 1, "unidad": "porción", "gramos": 40, "descripcion": "40 g" } },
+    { "nombre": "Huachinango cocido", "porcion": { "cantidad": 1, "unidad": "porción", "gramos": 40, "descripcion": "40 g" } },
+    { "nombre": "Camarón cocido", "porcion": { "cantidad": 1, "unidad": "porción", "gramos": 40, "descripcion": "40 g" } },
+    { "nombre": "Pulpo cocido", "porcion": { "cantidad": 1, "unidad": "porción", "gramos": 40, "descripcion": "40 g" } },
+    { "nombre": "Calamar cocido", "porcion": { "cantidad": 1, "unidad": "porción", "gramos": 40, "descripcion": "40 g" } },
+    { "nombre": "Jaiba cocida", "porcion": { "cantidad": 1, "unidad": "porción", "gramos": 40, "descripcion": "40 g" } },
+    { "nombre": "Pechuga de pollo asada", "porcion": { "cantidad": 1, "unidad": "porción", "gramos": 30, "descripcion": "30 g" } },
+    { "nombre": "Carne de res magra cocida", "porcion": { "cantidad": 1, "unidad": "porción", "gramos": 30, "descripcion": "30 g" } },
+    { "nombre": "Lomo de cerdo cocido", "subgrupo": "Bajo aporte de grasa", "nutrimentos": { "kcal": 55, "proteina": 7, "carbohidratos": 0, "grasas": 3 }, "porcion": { "cantidad": 1, "unidad": "porción", "gramos": 40, "descripcion": "40 g" } },
+    { "nombre": "Pierna de pollo sin piel", "subgrupo": "Bajo aporte de grasa", "nutrimentos": { "kcal": 55, "proteina": 7, "carbohidratos": 0, "grasas": 3 }, "porcion": { "cantidad": 1, "unidad": "porción", "gramos": 40, "descripcion": "40 g" } },
+    { "nombre": "Muslo de pollo sin piel", "subgrupo": "Bajo aporte de grasa", "nutrimentos": { "kcal": 55, "proteina": 7, "carbohidratos": 0, "grasas": 3 }, "porcion": { "cantidad": 1, "unidad": "porción", "gramos": 40, "descripcion": "40 g" } }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "metadata": {
+    "grupo": "Leguminosas",
+    "subgrupo": "Porcion estandar por grupo",
+    "equivalentes": 1,
+    "nutrimentos": { "kcal": 120, "proteina": 8, "carbohidratos": 20, "grasas": 1 },
+    "fuentes": [{ "nombre": "IMSS", "edicion": "Nutricion IMSS", "referencia": "Una porcion de leguminosas es 1/2 taza", "url": "https://www.imss.gob.mx/salud-en-linea/nutricion", "tipoDato": "equivalencia" }],
+    "origen": "imss",
+    "activo": true,
+    "revisado": true,
+    "fechaRevision": "2026-09-22T00:00:00.000Z",
+    "notasRevision": "Alimentos cocidos; porcion y aporte promedio por equivalente del grupo."
+  },
+  "alimentos": [
+    { "nombre": "Frijol bayo cocido", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Frijol negro cocido", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Frijol peruano cocido", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Frijol flor de mayo cocido", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Frijol pinto cocido", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Frijol blanco cocido", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Soya cocida", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Edamame cocido", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Chícharo seco cocido", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } },
+    { "nombre": "Lenteja roja cocida", "porcion": { "cantidad": 0.5, "unidad": "taza", "descripcion": "1/2 taza" } }
+  ]
+}
