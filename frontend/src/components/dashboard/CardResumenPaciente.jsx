@@ -1,4 +1,4 @@
-function CardResumenPaciente({ icono: Icono, etiqueta, valor, detalle, tono = 'verde' }) {
+function CardResumenPaciente({ icono: Icono, etiqueta, valor, detalle, tono = 'verde', valorClassName = 'text-2xl' }) {
   const tonos = {
     verde: 'bg-[#e5f2ec] text-[#26735f]',
     arena: 'bg-[#f5eddd] text-[#956c38]',
@@ -11,7 +11,22 @@ function CardResumenPaciente({ icono: Icono, etiqueta, valor, detalle, tono = 'v
         <Icono size={21} />
       </div>
       <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">{etiqueta}</p>
-      <p className="mt-1 text-2xl font-extrabold text-[#173f34]">{valor}</p>
+      {Array.isArray(valor) ? (
+        <div className={`mt-2 flex flex-wrap gap-2 ${valorClassName}`}>
+          {valor.map((item) => (
+            <span
+              key={item}
+              className="rounded-full bg-[#e5f2ec] px-3 py-1.5 text-sm font-bold text-[#26735f]"
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className={`mt-1 font-extrabold text-[#173f34] ${valorClassName}`}>
+          {valor}
+        </p>
+      )}
       <p className="mt-1 text-sm text-slate-500">{detalle}</p>
     </article>
   )
