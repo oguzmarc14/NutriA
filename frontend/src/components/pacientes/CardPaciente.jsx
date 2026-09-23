@@ -1,4 +1,4 @@
-import { CalendarDays, CheckCircle2, ClipboardPlus, Mail, Pencil, Phone, RefreshCw, Trash2 } from 'lucide-react'
+import { CalendarDays, CheckCircle2, ClipboardPlus, Mail, Pencil, Phone, PlayCircle, RefreshCw, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 function DatoPaciente({ icon: Icon, label, value }) {
@@ -13,7 +13,7 @@ function DatoPaciente({ icon: Icon, label, value }) {
   )
 }
 
-function CardPaciente({ paciente, onEditar, onEliminar, obtenerSexo, calcularEdad, obtenerInicial, onReenviar, reenviando, eliminando }) {
+function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, obtenerSexo, calcularEdad, obtenerInicial, onReenviar, reenviando, eliminando }) {
   const edad = calcularEdad(paciente.birthDate)
 
   return (
@@ -57,7 +57,22 @@ function CardPaciente({ paciente, onEditar, onEliminar, obtenerSexo, calcularEda
       )}
 
       {paciente.notes && <div className="mt-4 rounded-xl bg-[#f8faf9] p-3"><p className="mb-1 text-[11px] font-bold uppercase tracking-[0.1em] text-[#83958d]">Notas</p><p className="break-words text-sm leading-5 text-slate-600">{paciente.notes}</p></div>}
-      <div className="mt-4"><Link to={`/pacientes/${paciente._id}/expediente`} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#e5f2eb] px-4 py-3 text-sm font-extrabold text-[#246b55] transition hover:bg-[#246b55] hover:text-white"><ClipboardPlus size={17} className="shrink-0" />Expediente</Link></div>
+      <div className="mt-4 grid gap-2">
+        <button
+          type="button"
+          onClick={onTrabajar}
+          className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-extrabold transition ${
+            trabajando
+              ? 'bg-[#246b55] text-white'
+              : 'bg-[#e5f2eb] text-[#246b55] hover:bg-[#246b55] hover:text-white'
+          }`}
+        >
+          <PlayCircle size={17} className="shrink-0" />
+          {trabajando ? 'Paciente en trabajo' : 'Trabajar con paciente'}
+        </button>
+
+        <Link to={`/pacientes/${paciente._id}/expediente`} className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#d5e5dd] bg-white/70 px-4 py-3 text-sm font-extrabold text-[#48685c] transition hover:bg-white"><ClipboardPlus size={17} className="shrink-0" />Expediente</Link>
+      </div>
     </article>
   )
 }

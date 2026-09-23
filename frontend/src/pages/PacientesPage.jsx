@@ -7,6 +7,7 @@ import CampoPaciente from '../components/pacientes/CampoPaciente'
 import ModalEliminarPaciente from '../components/pacientes/ModalEliminarPaciente'
 import ModalPacienteCreado from '../components/pacientes/ModalPacienteCreado'
 import client from '../api/client'
+import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
 const formularioInicial = {
   name: '',
@@ -19,6 +20,7 @@ const formularioInicial = {
 
 function PacientesPage() {
   const navigate = useNavigate()
+  const { cerrarTrabajo, iniciarTrabajo, pacienteTrabajo } = usePacienteTrabajo()
   const [pacientes, setPacientes] = useState([])
   const [loading, setLoading] = useState(true)
   const [guardando, setGuardando] = useState(false)
@@ -172,6 +174,10 @@ function PacientesPage() {
               : paciente,
           ),
         )
+
+        if (pacienteTrabajo?.id === data.paciente._id) {
+          iniciarTrabajo(data.paciente)
+        }
       } else {
         const { data } =
           await client.post(
@@ -230,6 +236,10 @@ function PacientesPage() {
       setPacientes((actuales) =>
         actuales.filter((paciente) => paciente._id !== pacienteAEliminar._id),
       )
+
+      if (pacienteTrabajo?.id === pacienteAEliminar._id) {
+        cerrarTrabajo()
+      }
       setMensaje(data.message || 'Paciente eliminado correctamente')
       setPacienteAEliminar(null)
     } catch (err) {
@@ -310,7 +320,10 @@ function PacientesPage() {
     <section className="min-h-screen bg-transparent px-4 py-6 sm:px-5 md:px-8 md:py-8">
       <ModalPacienteCreado
         paciente={pacienteCreado}
-        onAceptar={() => navigate(`/pacientes/${pacienteCreado._id}/expediente`)}
+        onAceptar={() => {
+          iniciarTrabajo(pacienteCreado)
+          navigate(`/pacientes/${pacienteCreado._id}/expediente`)
+        }}
       />
       <div className="mx-auto w-full max-w-6xl">
         {/* ============================================
@@ -631,6 +644,11 @@ function PacientesPage() {
                     setMensaje('')
                     setPacienteAEliminar(paciente)
                   }}
+                  onTrabajar={() => {
+                    iniciarTrabajo(paciente)
+                    navigate(`/pacientes/${paciente._id}/expediente`)
+                  }}
+                  trabajando={pacienteTrabajo?.id === paciente._id}
                   obtenerSexo={
                     obtenerSexo
                   }

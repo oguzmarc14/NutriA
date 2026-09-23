@@ -31,6 +31,7 @@ import CardPacientePlanes from '../components/planes/CardPacientePlanes'
 import CardPlanRegistrado from '../components/planes/CardPlanRegistrado'
 import ModalPlanGuardado from '../components/planes/ModalPlanGuardado'
 import TarjetaSelectorComida from '../components/planes/TarjetaSelectorComida'
+import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
 /*
  * ----------------------------------------------------
@@ -157,6 +158,9 @@ const coloresPaciente = [
 
 function PlanesAlimenticiosPage() {
   const [searchParams] = useSearchParams()
+  const { cerrarTrabajo, iniciarTrabajo, pacienteTrabajo } =
+    usePacienteTrabajo()
+  const pacienteSolicitado = searchParams.get('paciente') || ''
   /*
    * PACIENTES
    */
@@ -165,7 +169,7 @@ function PlanesAlimenticiosPage() {
     useState([])
 
   const [pacienteId, setPacienteId] =
-    useState(searchParams.get('paciente') || '')
+    useState(pacienteSolicitado || pacienteTrabajo?.id || '')
 
   const [planes, setPlanes] =
     useState([])
@@ -305,6 +309,23 @@ function PlanesAlimenticiosPage() {
 
     cargarPacientes()
   }, [])
+
+  useEffect(() => {
+    if (!pacienteSolicitado || !pacientes.length) return
+
+    const paciente = pacientes.find(
+      (item) => item._id === pacienteSolicitado,
+    )
+
+    if (paciente && pacienteTrabajo?.id !== paciente._id) {
+      iniciarTrabajo(paciente)
+    }
+  }, [
+    iniciarTrabajo,
+    pacienteSolicitado,
+    pacienteTrabajo?.id,
+    pacientes,
+  ])
 
   /*
    * ----------------------------------------------------
@@ -1536,15 +1557,17 @@ function PlanesAlimenticiosPage() {
   }
 
   function seleccionarPaciente(
-    id,
+    paciente,
   ) {
-    setPacienteId(id)
+    iniciarTrabajo(paciente)
+    setPacienteId(paciente._id)
     setError('')
     setMensaje('')
     setAvisoPlanGuardado(null)
   }
 
   function regresarPacientes() {
+    cerrarTrabajo()
     setPacienteId('')
     setPlanes([])
 
@@ -1720,11 +1743,7 @@ function PlanesAlimenticiosPage() {
                       obtenerSexo={
                         obtenerSexo
                       }
-                      onClick={() =>
-                        seleccionarPaciente(
-                          paciente._id,
-                        )
-                      }
+                      onClick={() => seleccionarPaciente(paciente)}
                     />
                   ),
                 )}

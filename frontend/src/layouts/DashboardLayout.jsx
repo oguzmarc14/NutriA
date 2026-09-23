@@ -18,6 +18,7 @@ import {
 
 import { useAuth } from '../context/auth'
 import BotonInstalarApp from '../components/pwa/BotonInstalarApp'
+import BarraPacienteTrabajo from '../components/pacientes/BarraPacienteTrabajo'
 
 function DashboardLayout() {
   const { logout, user } = useAuth()
@@ -334,6 +335,8 @@ function DashboardLayout() {
             </div>
           </div>
         </header>
+
+        {user.role === 'nutritionist' && <BarraPacienteTrabajo />}
 
         {/* ============================================
             FONDO GLOBAL

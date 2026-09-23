@@ -19,6 +19,7 @@ import MiExpedientePage from './pages/MiExpedientePage'
 import MisMedicionesPage from './pages/MisMedicionesPage'
 import MiPlanPage from './pages/MiPlanPage'
 import CompararMedicionesPage from './pages/CompararMedicionesPage'
+import { PacienteTrabajoProvider } from './context/PacienteTrabajoContext'
 
 function App() {
   return (
@@ -44,7 +45,9 @@ function App() {
       >
         <Route
           element={
-            <DashboardLayout />
+            <PacienteTrabajoProvider>
+              <DashboardLayout />
+            </PacienteTrabajoProvider>
           }
         >
           {/* RESUMEN GENERAL */}

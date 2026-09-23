@@ -28,6 +28,7 @@ import {
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import AvisoExpedienteGuardado from '../components/expediente/AvisoExpedienteGuardado'
 import client from '../api/client'
+import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
 const expedienteInicial = {
   antecedentesPersonales: '',
@@ -98,6 +99,7 @@ const expedienteInicial = {
 function ExpedientePage() {
   const { pacienteId } = useParams()
   const navigate = useNavigate()
+  const { iniciarTrabajo } = usePacienteTrabajo()
 
   const [paciente, setPaciente] = useState(null)
   const [ultimaMedicion, setUltimaMedicion] = useState(null)
@@ -128,6 +130,7 @@ function ExpedientePage() {
         )
 
         setPaciente(data.paciente)
+        iniciarTrabajo(data.paciente)
         setUltimaMedicion(data.ultimaMedicion || null)
 
         if (data.expediente) {
@@ -308,7 +311,7 @@ function ExpedientePage() {
     }
 
     cargarExpediente()
-  }, [pacienteId])
+  }, [iniciarTrabajo, pacienteId])
 
   /*
    * ----------------------------------------------------
@@ -546,7 +549,7 @@ function ExpedientePage() {
           <AvisoExpedienteGuardado
             mensaje={mensaje}
             onCerrar={() => setMensaje('')}
-            onContinuar={() => navigate(`/mediciones?paciente=${pacienteId}`)}
+            onContinuar={() => navigate('/mediciones')}
           />
         )}
 

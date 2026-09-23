@@ -25,6 +25,7 @@ import HistorialMediciones from '../components/mediciones/HistorialMediciones'
 import ModalDetalleMedicion from '../components/mediciones/ModalDetalleMedicion'
 import ResumenProgresoMediciones from '../components/mediciones/ResumenProgresoMediciones'
 import client from '../api/client'
+import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
 const nivelesActividad = [
   {
@@ -92,8 +93,13 @@ const coloresPaciente = [
 function MedicionesPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const { cerrarTrabajo, iniciarTrabajo, pacienteTrabajo } =
+    usePacienteTrabajo()
+  const pacienteSolicitado = searchParams.get('paciente') || ''
   const [pacientes, setPacientes] = useState([])
-  const [pacienteId, setPacienteId] = useState(searchParams.get('paciente') || '')
+  const [pacienteId, setPacienteId] = useState(
+    pacienteSolicitado || pacienteTrabajo?.id || '',
+  )
   const [mediciones, setMediciones] = useState([])
 
   const [busqueda, setBusqueda] = useState('')
@@ -149,6 +155,23 @@ function MedicionesPage() {
 
     cargarPacientes()
   }, [])
+
+  useEffect(() => {
+    if (!pacienteSolicitado || !pacientes.length) return
+
+    const paciente = pacientes.find(
+      (item) => item._id === pacienteSolicitado,
+    )
+
+    if (paciente && pacienteTrabajo?.id !== paciente._id) {
+      iniciarTrabajo(paciente)
+    }
+  }, [
+    iniciarTrabajo,
+    pacienteSolicitado,
+    pacienteTrabajo?.id,
+    pacientes,
+  ])
 
   /*
    * ----------------------------------------------------
@@ -520,8 +543,9 @@ function MedicionesPage() {
     return 'Sin especificar'
   }
 
-  function seleccionarPaciente(id) {
-    setPacienteId(id)
+  function seleccionarPaciente(paciente) {
+    iniciarTrabajo(paciente)
+    setPacienteId(paciente._id)
     setError('')
     setMensaje('')
     setMostrarFormulario(false)
@@ -530,6 +554,7 @@ function MedicionesPage() {
   }
 
   function regresarPacientes() {
+    cerrarTrabajo()
     setPacienteId('')
     setMediciones([])
 
@@ -649,11 +674,7 @@ function MedicionesPage() {
                             coloresPaciente.length
                         ]
                       }
-                      onClick={() =>
-                        seleccionarPaciente(
-                          paciente._id,
-                        )
-                      }
+                      onClick={() => seleccionarPaciente(paciente)}
                       calcularEdad={
                         calcularEdad
                       }
@@ -728,7 +749,7 @@ function MedicionesPage() {
                   setMensaje('')
                   setConfirmacionEditada(false)
                 }}
-                onContinuar={() => navigate(`/planes?paciente=${pacienteId}`)}
+                onContinuar={() => navigate('/planes')}
               />
             )}
 
