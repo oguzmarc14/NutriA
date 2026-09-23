@@ -60,7 +60,7 @@ function BarraPacienteTrabajo() {
           <button
             type="button"
             onClick={cerrarPaciente}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[#a9c8b9] bg-transparent px-3 py-2 text-xs font-bold text-[#48685c] transition hover:bg-white/70"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[#a9c8b9] bg-red-400 px-3 py-2 text-xs font-bold text-black transition hover:bg-red-600 hover:scale-105"
           >
             <X size={14} />
             Cerrar trabajo
