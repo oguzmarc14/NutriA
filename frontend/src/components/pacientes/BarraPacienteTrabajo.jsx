@@ -9,7 +9,7 @@ function AccesoPaciente({ icon: Icon, label, to }) {
       className={({ isActive }) =>
         `inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition ${
           isActive
-            ? 'bg-[#246b55] text-white'
+            ? 'bg-green-900/40 text-white'
             : 'bg-white/75 text-[#246b55] hover:bg-white'
         }`
       }
