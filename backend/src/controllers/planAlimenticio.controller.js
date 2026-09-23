@@ -13,6 +13,9 @@ const Pacientes =
 const Alimento =
   require('../models/Alimento')
 
+const SeguimientoComida =
+  require('../models/SeguimientoComida')
+
 /*
  * ----------------------------------------------------
  * VALIDACIÓN DE ALIMENTO PERSONALIZADO
@@ -186,6 +189,11 @@ const alimentoPlanSchema =
 
 const comidaSchema =
   z.object({
+    _id:
+      z.string()
+        .regex(/^[a-f\d]{24}$/i)
+        .optional(),
+
     nombre:
       z.string()
         .trim()
@@ -479,6 +487,10 @@ async function prepararComidas(
     }
 
     comidasPreparadas.push({
+      ...(comida._id
+        ? { _id: comida._id }
+        : {}),
+
       nombre:
         comida.nombre,
 
@@ -717,6 +729,28 @@ async function actualizarPlanAlimenticio(req, res, next) {
       return res.status(404).json({ message: 'Plan alimenticio no encontrado' })
     }
 
+    await SeguimientoComida.deleteMany({
+      plan: plan._id,
+      comida: {
+        $nin: plan.comidas.map((comida) => comida._id),
+      },
+    })
+
+    const fechaSeguimiento = plan.fechaInicio.toISOString().slice(0, 10)
+
+    await Promise.all(
+      plan.comidas.map((comida) =>
+        SeguimientoComida.updateMany(
+          { plan: plan._id, comida: comida._id },
+          {
+            fecha: fechaSeguimiento,
+            nombreComida: comida.nombre,
+            platillo: comida.platillo || '',
+          },
+        ),
+      ),
+    )
+
     return res.json({ message: 'Plan alimenticio actualizado correctamente', plan })
   } catch (error) {
     if (error.status) {
@@ -737,6 +771,11 @@ async function eliminarPlanAlimenticio(req, res, next) {
     if (!plan) {
       return res.status(404).json({ message: 'Plan alimenticio no encontrado' })
     }
+
+    await SeguimientoComida.deleteMany({
+      plan: plan._id,
+      paciente: plan.paciente,
+    })
 
     return res.json({ message: 'Plan alimenticio eliminado correctamente' })
   } catch (error) {

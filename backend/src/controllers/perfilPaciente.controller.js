@@ -2,6 +2,7 @@ const Paciente = require('../models/Pacientes')
 const ExpedienteClinico = require('../models/ExpedienteClinico')
 const Medicion = require('../models/Medicion')
 const PlanAlimenticio = require('../models/PlanAlimenticio')
+const SeguimientoComida = require('../models/SeguimientoComida')
 
 /*
  * Devuelve unicamente la informacion asociada
@@ -30,13 +31,16 @@ async function obtenerMiPerfil(req, res, next) {
       })
     }
 
-    const [expediente, mediciones, planes] = await Promise.all([
+    const [expediente, mediciones, planes, seguimientosComida] = await Promise.all([
       ExpedienteClinico.findOne({ paciente: paciente._id }).lean(),
       Medicion.find({ paciente: paciente._id })
         .sort({ fecha: -1, createdAt: -1 })
         .lean(),
       PlanAlimenticio.find({ paciente: paciente._id })
         .sort({ activo: -1, fechaInicio: -1, createdAt: -1 })
+        .lean(),
+      SeguimientoComida.find({ paciente: paciente._id })
+        .sort({ fecha: -1, updatedAt: -1 })
         .lean(),
     ])
 
@@ -45,6 +49,7 @@ async function obtenerMiPerfil(req, res, next) {
       expediente: expediente || null,
       mediciones,
       planes,
+      seguimientosComida,
     })
   } catch (error) {
     return next(error)

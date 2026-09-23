@@ -1246,6 +1246,10 @@ function PlanesAlimenticiosPage() {
       const comidasPayload =
         comidasValidas.map(
           (comida) => ({
+            ...(/^[a-f\d]{24}$/i.test(comida.id)
+              ? { _id: comida.id }
+              : {}),
+
             nombre:
               comida.nombre.trim(),
 

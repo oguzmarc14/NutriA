@@ -3,6 +3,7 @@ import {
   ClipboardPlus,
   Goal,
   Ruler,
+  TrendingUp,
   UserRound,
   Utensils,
 } from "lucide-react";
@@ -65,6 +66,12 @@ function DashboardPaciente({ nombre }) {
       icono: Apple,
       to: "/mi-plan",
     },
+    {
+      nombre: "Mi progreso",
+      descripcion: "Consulta tu adherencia y evolucion.",
+      icono: TrendingUp,
+      to: "/mi-progreso",
+    },
   ];
 
   return (
@@ -126,7 +133,7 @@ function DashboardPaciente({ nombre }) {
           <h2 className="mb-4 text-xl font-extrabold text-[#173f34]">
             Accesos rapidos
           </h2>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {accesos.map((acceso) => (
               <CardModuloDashboard
                 key={acceso.nombre}

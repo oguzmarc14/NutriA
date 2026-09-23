@@ -9,6 +9,7 @@ const planAlimenticioRoutes = require('./routes/planAlimenticio.routes')
 const usuariosRoutes = require('./routes/usuarios.routes')
 const alimentosRoutes = require('./routes/alimentos.routes')
 const perfilPacienteRoutes = require('./routes/perfilPaciente.routes')
+const seguimientoComidaRoutes = require('./routes/seguimientoComida.routes')
 
 const app = express()
 
@@ -84,6 +85,11 @@ app.use(
 app.use(
   '/api/mi-perfil',
   perfilPacienteRoutes,
+)
+
+app.use(
+  '/api/seguimiento-comidas',
+  seguimientoComidaRoutes,
 )
 
 /*

@@ -20,6 +20,8 @@ import MisMedicionesPage from './pages/MisMedicionesPage'
 import MiPlanPage from './pages/MiPlanPage'
 import CompararMedicionesPage from './pages/CompararMedicionesPage'
 import { PacienteTrabajoProvider } from './context/PacienteTrabajoContext'
+import ProgresoPacientePage from './pages/ProgresoPacientePage'
+import MiProgresoPage from './pages/MiProgresoPage'
 
 function App() {
   return (
@@ -104,6 +106,11 @@ function App() {
                 <PlanesAlimenticiosPage />
               }
             />
+
+            <Route
+              path="progreso"
+              element={<ProgresoPacientePage />}
+            />
           </Route>
 
           <Route
@@ -128,6 +135,11 @@ function App() {
             <Route
               path="mi-plan"
               element={<MiPlanPage />}
+            />
+
+            <Route
+              path="mi-progreso"
+              element={<MiProgresoPage />}
             />
           </Route>
 

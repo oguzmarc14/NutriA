@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import client from '../api/client'
 
 function usePerfilPaciente() {
@@ -6,11 +6,22 @@ function usePerfilPaciente() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  const recargar = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError('')
+      const { data } = await client.get('/mi-perfil')
+      setPerfil(data)
+    } catch (err) {
+      setError(err.response?.data?.message || 'No fue posible cargar tu informacion')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
-    async function cargarPerfil() {
+    async function cargarPerfilInicial() {
       try {
-        setLoading(true)
-        setError('')
         const { data } = await client.get('/mi-perfil')
         setPerfil(data)
       } catch (err) {
@@ -20,10 +31,10 @@ function usePerfilPaciente() {
       }
     }
 
-    cargarPerfil()
+    cargarPerfilInicial()
   }, [])
 
-  return { perfil, loading, error }
+  return { perfil, loading, error, recargar }
 }
 
 export default usePerfilPaciente

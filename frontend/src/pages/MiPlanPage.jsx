@@ -5,7 +5,7 @@ import EstadoCargaPaciente from '../components/paciente/EstadoCargaPaciente'
 import usePerfilPaciente from '../hooks/usePerfilPaciente'
 
 function MiPlanPage() {
-  const { perfil, loading, error } = usePerfilPaciente()
+  const { perfil, loading, error, recargar } = usePerfilPaciente()
   const planes = perfil?.planes || []
   const [fechaSeleccionada, setFechaSeleccionada] = useState(() => {
     const hoy = new Date()
@@ -23,7 +23,7 @@ function MiPlanPage() {
         <label className="block min-w-0 max-w-full w-full overflow-hidden sm:max-w-xs"><span className="mb-2 flex items-center gap-2 text-sm font-bold text-[#48685c]"><CalendarDays size={17} />Fecha del menú</span><input type="date" value={fechaSeleccionada} onChange={(event) => setFechaSeleccionada(event.target.value)} className="block min-w-0 max-w-full w-full rounded-xl border border-[#c9ddd3] bg-white px-3 py-3 font-bold text-[#173f34] outline-none focus:border-[#4d816f] sm:px-4" /></label>
       </div>
       <EstadoCargaPaciente loading={loading} error={error} vacio={!loading && !error && planes.length === 0}>
-        {planesDelDia.length > 0 ? <div className="space-y-5">{planesDelDia.map((plan) => <CardPlanPaciente key={plan._id} plan={plan} />)}</div> : <div className="rounded-3xl border border-dashed border-[#bdd3c7] bg-white/55 p-10 text-center"><CalendarDays className="mx-auto mb-3 text-[#4d816f]" size={32} /><p className="font-extrabold text-[#173f34]">No hay comidas para esta fecha</p><p className="mt-1 text-sm text-slate-500">Selecciona otro día para consultar tu menú.</p></div>}
+        {planesDelDia.length > 0 ? <div className="space-y-5">{planesDelDia.map((plan) => <CardPlanPaciente key={plan._id} fecha={fechaSeleccionada} plan={plan} seguimientos={perfil?.seguimientosComida || []} onSeguimientoGuardado={recargar} />)}</div> : <div className="rounded-3xl border border-dashed border-[#bdd3c7] bg-white/55 p-10 text-center"><CalendarDays className="mx-auto mb-3 text-[#4d816f]" size={32} /><p className="font-extrabold text-[#173f34]">No hay comidas para esta fecha</p><p className="mt-1 text-sm text-slate-500">Selecciona otro día para consultar tu menú.</p></div>}
       </EstadoCargaPaciente>
     </section>
   )

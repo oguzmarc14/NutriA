@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   LogOut,
   Ruler,
+  TrendingUp,
   UserCog,
   UserRound,
   Users,
@@ -62,6 +63,12 @@ function DashboardLayout() {
             shortLabel: 'Planes',
             to: '/planes',
           },
+          {
+            icon: TrendingUp,
+            label: 'Progreso',
+            shortLabel: 'Progreso',
+            to: '/progreso',
+          },
         ]
       : []),
 
@@ -95,6 +102,12 @@ function DashboardLayout() {
             label: 'Mi plan alimenticio',
             shortLabel: 'Mi plan',
             to: '/mi-plan',
+          },
+          {
+            icon: TrendingUp,
+            label: 'Mi progreso',
+            shortLabel: 'Progreso',
+            to: '/mi-progreso',
           },
         ]
       : []),
@@ -131,6 +144,8 @@ function DashboardLayout() {
     '/mi-expediente',
     '/mis-mediciones',
     '/mi-plan',
+    '/progreso',
+    '/mi-progreso',
   ]
 
   const mostrarAtras =
@@ -372,7 +387,9 @@ function DashboardLayout() {
               ? 'grid-cols-2'
               : navigationVisible.length === 3
                 ? 'grid-cols-3'
-                : 'grid-cols-4'
+              : navigationVisible.length === 4
+                ? 'grid-cols-4'
+                : 'grid-cols-5'
           }`}
         >
           {navigationVisible.map(

@@ -1,4 +1,4 @@
-import { Apple, ClipboardPlus, Ruler, UserRound, X } from 'lucide-react'
+import { Apple, ClipboardPlus, Ruler, TrendingUp, UserRound, X } from 'lucide-react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { usePacienteTrabajo } from '../../context/pacienteTrabajo'
 
@@ -57,6 +57,7 @@ function BarraPacienteTrabajo() {
           />
           <AccesoPaciente icon={Ruler} label="Mediciones" to="/mediciones" />
           <AccesoPaciente icon={Apple} label="Plan alimenticio" to="/planes" />
+          <AccesoPaciente icon={TrendingUp} label="Progreso" to="/progreso" />
           <button
             type="button"
             onClick={cerrarPaciente}
