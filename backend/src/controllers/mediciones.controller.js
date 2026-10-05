@@ -1,29 +1,16 @@
-const { z } = require('zod')
+const { z } = require("zod");
 
-const Medicion = require('../models/Medicion')
-const Pacientes = require('../models/Pacientes')
+const Medicion = require("../models/Medicion");
+const Pacientes = require("../models/Pacientes");
 
 const medicionSchema = z.object({
-  edad: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(120),
+  edad: z.coerce.number().int().min(1).max(120),
 
-  nivelActividadFisica: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(5),
+  nivelActividadFisica: z.coerce.number().int().min(1).max(5),
 
-  peso: z.coerce
-    .number()
-    .positive(),
+  peso: z.coerce.number().positive(),
 
-  estatura: z.coerce
-    .number()
-    .min(0.5)
-    .max(3),
+  estatura: z.coerce.number().min(0.5).max(3),
 
   /*
    * MEDIDAS ANTROPOMÉTRICAS
@@ -35,112 +22,78 @@ const medicionSchema = z.object({
 
   grasaCorporal: z.preprocess(
     (valor) =>
-      valor === '' ||
-      valor === null ||
-      valor === undefined
+      valor === "" || valor === null || valor === undefined
         ? undefined
         : Number(valor),
 
-    z
-      .number()
-      .min(0)
-      .max(100)
-      .optional(),
+    z.number().min(0).max(100).optional(),
   ),
 
   grasaVisceral: z.preprocess(
     (valor) =>
-      valor === '' ||
-      valor === null ||
-      valor === undefined
+      valor === "" || valor === null || valor === undefined
         ? undefined
         : Number(valor),
 
-    z
-      .number()
-      .min(0)
-      .optional(),
+    z.number().min(0).optional(),
   ),
 
   masaMuscular: z.preprocess(
     (valor) =>
-      valor === '' ||
-      valor === null ||
-      valor === undefined
+      valor === "" || valor === null || valor === undefined
         ? undefined
         : Number(valor),
 
-    z
-      .number()
-      .min(0)
-      .optional(),
+    z.number().min(0).optional(),
   ),
 
   masaOsea: z.preprocess(
     (valor) =>
-      valor === '' ||
-      valor === null ||
-      valor === undefined
+      valor === "" || valor === null || valor === undefined
         ? undefined
         : Number(valor),
 
-    z
-      .number()
-      .min(0)
-      .optional(),
+    z.number().min(0).optional(),
   ),
 
   proteina: z.preprocess(
     (valor) =>
-      valor === '' ||
-      valor === null ||
-      valor === undefined
+      valor === "" || valor === null || valor === undefined
         ? undefined
         : Number(valor),
 
-    z
-      .number()
-      .min(0)
-      .max(100)
-      .optional(),
+    z.number().min(0).max(100).optional(),
   ),
 
-  fecha: z.coerce
-    .date()
-    .optional(),
-})
+  fecha: z.coerce.date().optional(),
+});
 
 async function registrarMedicion(req, res, next) {
   try {
-    const parsed =
-      medicionSchema.safeParse(req.body)
+    const parsed = medicionSchema.safeParse(req.body);
 
     if (!parsed.success) {
       return res.status(400).json({
-        message:
-          'Datos de la medición inválidos',
+        message: "Datos de la medición inválidos",
 
-        errors:
-          parsed.error.flatten(),
-      })
+        errors: parsed.error.flatten(),
+      });
     }
 
     /*
      * Confirmamos que el paciente pertenece
      * al nutriólogo autenticado.
      */
-    const paciente =
-      await Pacientes.findOne({
-        _id: req.params.pacienteId,
-        nutritionist: req.user.id,
-        active: true,
-      })
+    const paciente = await Pacientes.findOne({
+      _id: req.params.pacienteId,
+      nutritionist: req.user.id,
+      active: true,
+    });
 
     if (!paciente) {
       return res.status(404).json({
-        message:
-          'Paciente no encontrado',
-      })
+        message: "Paciente no encontrado",
+      });
     }
 
     /*
@@ -150,183 +103,153 @@ async function registrarMedicion(req, res, next) {
      * No confiamos en un valor enviado
      * manualmente desde el frontend.
      */
-    const existeMedicionAnterior =
-      await Medicion.exists({
-        paciente: paciente._id,
-        nutritionist: req.user.id,
-      })
+    const existeMedicionAnterior = await Medicion.exists({
+      paciente: paciente._id,
+      nutritionist: req.user.id,
+    });
 
-    const esPrimeraMedicion =
-      !existeMedicionAnterior
+    const esPrimeraMedicion = !existeMedicionAnterior;
 
     /*
      * IMC calculado exclusivamente
      * en el backend.
      */
     const imc = Number(
-      (
-        parsed.data.peso /
-        parsed.data.estatura ** 2
-      ).toFixed(2),
-    )
+      (parsed.data.peso / parsed.data.estatura ** 2).toFixed(2),
+    );
 
-    const medicion =
-      await Medicion.create({
-        paciente:
-          paciente._id,
+    const medicion = await Medicion.create({
+      paciente: paciente._id,
 
-        nutritionist:
-          req.user.id,
+      nutritionist: req.user.id,
 
-        edad:
-          parsed.data.edad,
+      edad: parsed.data.edad,
 
-        esPrimeraMedicion,
+      esPrimeraMedicion,
 
-        nivelActividadFisica:
-          parsed.data
-            .nivelActividadFisica,
+      nivelActividadFisica: parsed.data.nivelActividadFisica,
 
-        peso:
-          parsed.data.peso,
+      peso: parsed.data.peso,
 
-        estatura:
-          parsed.data.estatura,
+      estatura: parsed.data.estatura,
 
-        imc,
+      imc,
 
-        /*
-         * Antropométricas opcionales
-         */
-        grasaCorporal:
-          parsed.data.grasaCorporal,
+      /*
+       * Antropométricas opcionales
+       */
+      grasaCorporal: parsed.data.grasaCorporal,
 
-        grasaVisceral:
-          parsed.data.grasaVisceral,
+      grasaVisceral: parsed.data.grasaVisceral,
 
-        masaMuscular:
-          parsed.data.masaMuscular,
+      masaMuscular: parsed.data.masaMuscular,
 
-        masaOsea:
-          parsed.data.masaOsea,
+      masaOsea: parsed.data.masaOsea,
 
-        proteina:
-          parsed.data.proteina,
+      proteina: parsed.data.proteina,
 
-        fecha:
-          parsed.data.fecha ||
-          new Date(),
-      })
+      fecha: parsed.data.fecha || new Date(),
+    });
 
     return res.status(201).json({
-      message:
-        esPrimeraMedicion
-          ? 'Primera medición registrada correctamente'
-          : 'Medición registrada correctamente',
+      message: esPrimeraMedicion
+        ? "Primera medición registrada correctamente"
+        : "Medición registrada correctamente",
 
       medicion,
-    })
+    });
   } catch (error) {
-    return next(error)
+    return next(error);
   }
 }
 
 async function actualizarMedicion(req, res, next) {
   try {
-    const parsed = medicionSchema.safeParse(req.body)
+    const parsed = medicionSchema.safeParse(req.body);
 
     if (!parsed.success) {
       return res.status(400).json({
-        message: 'Datos de la medición inválidos',
+        message: "Datos de la medición inválidos",
         errors: parsed.error.flatten(),
-      })
+      });
     }
 
     const paciente = await Pacientes.findOne({
       _id: req.params.pacienteId,
       nutritionist: req.user.id,
       active: true,
-    })
+    });
 
     if (!paciente) {
       return res.status(404).json({
-        message: 'Paciente no encontrado',
-      })
+        message: "Paciente no encontrado",
+      });
     }
 
     const medicion = await Medicion.findOne({
       _id: req.params.medicionId,
       paciente: paciente._id,
       nutritionist: req.user.id,
-    })
+    });
 
     if (!medicion) {
       return res.status(404).json({
-        message: 'Medición no encontrada',
-      })
+        message: "Medición no encontrada",
+      });
     }
 
     const imc = Number(
       (parsed.data.peso / parsed.data.estatura ** 2).toFixed(2),
-    )
+    );
 
-    medicion.edad = parsed.data.edad
-    medicion.nivelActividadFisica = parsed.data.nivelActividadFisica
-    medicion.peso = parsed.data.peso
-    medicion.estatura = parsed.data.estatura
-    medicion.imc = imc
-    medicion.grasaCorporal = parsed.data.grasaCorporal
-    medicion.grasaVisceral = parsed.data.grasaVisceral
-    medicion.masaMuscular = parsed.data.masaMuscular
-    medicion.masaOsea = parsed.data.masaOsea
-    medicion.proteina = parsed.data.proteina
-    medicion.fecha = parsed.data.fecha || medicion.fecha
+    medicion.edad = parsed.data.edad;
+    medicion.nivelActividadFisica = parsed.data.nivelActividadFisica;
+    medicion.peso = parsed.data.peso;
+    medicion.estatura = parsed.data.estatura;
+    medicion.imc = imc;
+    medicion.grasaCorporal = parsed.data.grasaCorporal;
+    medicion.grasaVisceral = parsed.data.grasaVisceral;
+    medicion.masaMuscular = parsed.data.masaMuscular;
+    medicion.masaOsea = parsed.data.masaOsea;
+    medicion.proteina = parsed.data.proteina;
+    medicion.fecha = parsed.data.fecha || medicion.fecha;
 
-    await medicion.save()
+    await medicion.save();
 
     return res.json({
-      message: 'Medición actualizada correctamente',
+      message: "Medición actualizada correctamente",
       medicion,
-    })
+    });
   } catch (error) {
-    return next(error)
+    return next(error);
   }
 }
 
-async function obtenerHistorialMediciones(
-  req,
-  res,
-  next,
-) {
+async function obtenerHistorialMediciones(req, res, next) {
   try {
     /*
      * Nuevamente verificamos que el paciente
      * pertenezca al nutriólogo autenticado.
      */
-    const paciente =
-      await Pacientes.findOne({
-        _id: req.params.pacienteId,
-        nutritionist: req.user.id,
-        active: true,
-      })
+    const paciente = await Pacientes.findOne({
+      _id: req.params.pacienteId,
+      nutritionist: req.user.id,
+      active: true,
+    });
 
     if (!paciente) {
       return res.status(404).json({
-        message:
-          'Paciente no encontrado',
-      })
+        message: "Paciente no encontrado",
+      });
     }
 
-    const mediciones =
-      await Medicion.find({
-        paciente:
-          paciente._id,
+    const mediciones = await Medicion.find({
+      paciente: paciente._id,
 
-        nutritionist:
-          req.user.id,
-      }).sort({
-        fecha: -1,
-      })
+      nutritionist: req.user.id,
+    }).sort({
+      fecha: -1,
+    });
 
     return res.json({
       paciente,
@@ -337,11 +260,10 @@ async function obtenerHistorialMediciones(
        * para saber si el paciente ya tiene
        * registros anteriores.
        */
-      tieneMediciones:
-        mediciones.length > 0,
-    })
+      tieneMediciones: mediciones.length > 0,
+    });
   } catch (error) {
-    return next(error)
+    return next(error);
   }
 }
 
@@ -349,4 +271,4 @@ module.exports = {
   registrarMedicion,
   actualizarMedicion,
   obtenerHistorialMediciones,
-}
+};

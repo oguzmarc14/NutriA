@@ -1,6 +1,6 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 
-const Alimento = require('../models/Alimento')
+const Alimento = require("../models/Alimento");
 
 /*
  * ----------------------------------------------------
@@ -20,25 +20,25 @@ const Alimento = require('../models/Alimento')
 async function obtenerAlimentos(req, res) {
   try {
     const {
-      q = '',
-      grupo = '',
-      activo = 'true',
+      q = "",
+      grupo = "",
+      activo = "true",
       page = 1,
       limit = 30,
-    } = req.query
+    } = req.query;
 
-    const filtro = {}
+    const filtro = {};
 
     /*
      * ACTIVO
      */
 
-    if (activo === 'true') {
-      filtro.activo = true
+    if (activo === "true") {
+      filtro.activo = true;
     }
 
-    if (activo === 'false') {
-      filtro.activo = false
+    if (activo === "false") {
+      filtro.activo = false;
     }
 
     /*
@@ -48,8 +48,8 @@ async function obtenerAlimentos(req, res) {
     if (grupo.trim()) {
       filtro.grupo = {
         $regex: grupo.trim(),
-        $options: 'i',
-      }
+        $options: "i",
+      };
     }
 
     /*
@@ -60,77 +60,62 @@ async function obtenerAlimentos(req, res) {
       const busqueda = q
         .trim()
         .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
 
       filtro.$or = [
         {
           nombre: {
             $regex: q.trim(),
-            $options: 'i',
+            $options: "i",
           },
         },
 
         {
           nombreNormalizado: {
             $regex: busqueda,
-            $options: 'i',
+            $options: "i",
           },
         },
 
         {
           grupo: {
             $regex: q.trim(),
-            $options: 'i',
+            $options: "i",
           },
         },
 
         {
           subgrupo: {
             $regex: q.trim(),
-            $options: 'i',
+            $options: "i",
           },
         },
 
         {
           tags: {
             $regex: q.trim(),
-            $options: 'i',
+            $options: "i",
           },
         },
-      ]
+      ];
     }
 
     /*
      * PAGINACIÓN
      */
 
-    const pagina =
-      Math.max(
-        Number.parseInt(page, 10) || 1,
-        1,
-      )
+    const pagina = Math.max(Number.parseInt(page, 10) || 1, 1);
 
-    const limite =
-      Math.min(
-        Math.max(
-          Number.parseInt(limit, 10) || 30,
-          1,
-        ),
-        100,
-      )
+    const limite = Math.min(Math.max(Number.parseInt(limit, 10) || 30, 1), 100);
 
-    const skip =
-      (pagina - 1) * limite
+    const skip = (pagina - 1) * limite;
 
     /*
      * CONSULTA
      */
 
-    const [
-      alimentos,
-      total,
-    ] = await Promise.all([
+    const [alimentos, total] = await Promise.all([
       Alimento.find(filtro)
         .sort({
           nombre: 1,
@@ -139,10 +124,8 @@ async function obtenerAlimentos(req, res) {
         .limit(limite)
         .lean(),
 
-      Alimento.countDocuments(
-        filtro,
-      ),
-    ])
+      Alimento.countDocuments(filtro),
+    ]);
 
     return res.json({
       alimentos,
@@ -151,21 +134,15 @@ async function obtenerAlimentos(req, res) {
         page: pagina,
         limit: limite,
         total,
-        pages: Math.ceil(
-          total / limite,
-        ),
+        pages: Math.ceil(total / limite),
       },
-    })
+    });
   } catch (error) {
-    console.error(
-      'Error obteniendo alimentos:',
-      error,
-    )
+    console.error("Error obteniendo alimentos:", error);
 
     return res.status(500).json({
-      message:
-        'No fue posible obtener los alimentos',
-    })
+      message: "No fue posible obtener los alimentos",
+    });
   }
 }
 
@@ -175,48 +152,33 @@ async function obtenerAlimentos(req, res) {
  * ----------------------------------------------------
  */
 
-async function obtenerAlimentoPorId(
-  req,
-  res,
-) {
+async function obtenerAlimentoPorId(req, res) {
   try {
-    const { id } =
-      req.params
+    const { id } = req.params;
 
-    if (
-      !mongoose.Types.ObjectId.isValid(
-        id,
-      )
-    ) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        message:
-          'ID de alimento inválido',
-      })
+        message: "ID de alimento inválido",
+      });
     }
 
-    const alimento =
-      await Alimento.findById(id)
+    const alimento = await Alimento.findById(id);
 
     if (!alimento) {
       return res.status(404).json({
-        message:
-          'Alimento no encontrado',
-      })
+        message: "Alimento no encontrado",
+      });
     }
 
     return res.json({
       alimento,
-    })
+    });
   } catch (error) {
-    console.error(
-      'Error obteniendo alimento:',
-      error,
-    )
+    console.error("Error obteniendo alimento:", error);
 
     return res.status(500).json({
-      message:
-        'No fue posible obtener el alimento',
-    })
+      message: "No fue posible obtener el alimento",
+    });
   }
 }
 
@@ -226,10 +188,7 @@ async function obtenerAlimentoPorId(
  * ----------------------------------------------------
  */
 
-async function crearAlimento(
-  req,
-  res,
-) {
+async function crearAlimento(req, res) {
   try {
     const {
       nombre,
@@ -245,126 +204,83 @@ async function crearAlimento(
       fuentes,
       origen,
       revisado,
-    } = req.body
+    } = req.body;
 
-    if (
-      !nombre ||
-      !nombre.trim()
-    ) {
+    if (!nombre || !nombre.trim()) {
       return res.status(400).json({
-        message:
-          'El nombre del alimento es obligatorio',
-      })
+        message: "El nombre del alimento es obligatorio",
+      });
     }
 
-    if (
-      !grupo ||
-      !grupo.trim()
-    ) {
+    if (!grupo || !grupo.trim()) {
       return res.status(400).json({
-        message:
-          'El grupo alimenticio es obligatorio',
-      })
+        message: "El grupo alimenticio es obligatorio",
+      });
     }
 
     /*
      * EVITAR DUPLICADOS EXACTOS
      */
 
-    const nombreNormalizado =
-      nombre
-        .trim()
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(
-          /[\u0300-\u036f]/g,
-          '',
-        )
+    const nombreNormalizado = nombre
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
 
-    const existente =
-      await Alimento.findOne({
-        nombreNormalizado,
-        grupo: {
-          $regex: `^${escaparRegex(
-            grupo.trim(),
-          )}$`,
-          $options: 'i',
-        },
-      })
+    const existente = await Alimento.findOne({
+      nombreNormalizado,
+      grupo: {
+        $regex: `^${escaparRegex(grupo.trim())}$`,
+        $options: "i",
+      },
+    });
 
     if (existente) {
       return res.status(409).json({
-        message:
-          'Ya existe un alimento con ese nombre dentro del mismo grupo',
-      })
+        message: "Ya existe un alimento con ese nombre dentro del mismo grupo",
+      });
     }
 
-    const alimento =
-      await Alimento.create({
-        nombre:
-          nombre.trim(),
+    const alimento = await Alimento.create({
+      nombre: nombre.trim(),
 
-        grupo:
-          grupo.trim(),
+      grupo: grupo.trim(),
 
-        subgrupo:
-          subgrupo?.trim() ||
-          '',
+      subgrupo: subgrupo?.trim() || "",
 
-        porcion:
-          porcion || {},
+      porcion: porcion || {},
 
-        equivalentes:
-          equivalentes ?? 1,
+      equivalentes: equivalentes ?? 1,
 
-        nutrimentos:
-          nutrimentos || {},
+      nutrimentos: nutrimentos || {},
 
-        preparacion:
-          preparacion?.trim() ||
-          '',
+      preparacion: preparacion?.trim() || "",
 
-        marca:
-          marca?.trim() ||
-          '',
+      marca: marca?.trim() || "",
 
-        categoriaNutria:
-          categoriaNutria?.trim() ||
-          '',
+      categoriaNutria: categoriaNutria?.trim() || "",
 
-        tags:
-          Array.isArray(tags)
-            ? tags
-            : [],
+      tags: Array.isArray(tags) ? tags : [],
 
-        fuentes:
-          Array.isArray(fuentes)
-            ? fuentes
-            : [],
+      fuentes: Array.isArray(fuentes) ? fuentes : [],
 
-        origen:
-          origen || 'manual',
+      origen: origen || "manual",
 
-        revisado:
-          Boolean(revisado),
-      })
+      revisado: Boolean(revisado),
+    });
 
     return res.status(201).json({
-      message:
-        'Alimento creado correctamente',
+      message: "Alimento creado correctamente",
 
       alimento,
-    })
+    });
   } catch (error) {
-    console.error(
-      'Error creando alimento:',
-      error,
-    )
+    console.error("Error creando alimento:", error);
 
     return res.status(500).json({
-      message:
-        'No fue posible crear el alimento',
-    })
+      message: "No fue posible crear el alimento",
+    });
   }
 }
 
@@ -374,92 +290,65 @@ async function crearAlimento(
  * ----------------------------------------------------
  */
 
-async function actualizarAlimento(
-  req,
-  res,
-) {
+async function actualizarAlimento(req, res) {
   try {
-    const { id } =
-      req.params
+    const { id } = req.params;
 
-    if (
-      !mongoose.Types.ObjectId.isValid(
-        id,
-      )
-    ) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        message:
-          'ID de alimento inválido',
-      })
+        message: "ID de alimento inválido",
+      });
     }
 
-    const alimento =
-      await Alimento.findById(id)
+    const alimento = await Alimento.findById(id);
 
     if (!alimento) {
       return res.status(404).json({
-        message:
-          'Alimento no encontrado',
-      })
+        message: "Alimento no encontrado",
+      });
     }
 
     const camposPermitidos = [
-      'nombre',
-      'grupo',
-      'subgrupo',
-      'porcion',
-      'equivalentes',
-      'nutrimentos',
-      'preparacion',
-      'marca',
-      'categoriaNutria',
-      'tags',
-      'fuentes',
-      'origen',
-      'revisado',
-    ]
+      "nombre",
+      "grupo",
+      "subgrupo",
+      "porcion",
+      "equivalentes",
+      "nutrimentos",
+      "preparacion",
+      "marca",
+      "categoriaNutria",
+      "tags",
+      "fuentes",
+      "origen",
+      "revisado",
+    ];
 
-    camposPermitidos.forEach(
-      (campo) => {
-        if (
-          req.body[campo] !==
-          undefined
-        ) {
-          alimento[campo] =
-            req.body[campo]
-        }
-      },
-    )
+    camposPermitidos.forEach((campo) => {
+      if (req.body[campo] !== undefined) {
+        alimento[campo] = req.body[campo];
+      }
+    });
 
     /*
      * VALIDACIONES MÍNIMAS
      */
 
-    if (
-      !alimento.nombre ||
-      !alimento.nombre.trim()
-    ) {
+    if (!alimento.nombre || !alimento.nombre.trim()) {
       return res.status(400).json({
-        message:
-          'El nombre del alimento es obligatorio',
-      })
+        message: "El nombre del alimento es obligatorio",
+      });
     }
 
-    if (
-      !alimento.grupo ||
-      !alimento.grupo.trim()
-    ) {
+    if (!alimento.grupo || !alimento.grupo.trim()) {
       return res.status(400).json({
-        message:
-          'El grupo alimenticio es obligatorio',
-      })
+        message: "El grupo alimenticio es obligatorio",
+      });
     }
 
-    alimento.nombre =
-      alimento.nombre.trim()
+    alimento.nombre = alimento.nombre.trim();
 
-    alimento.grupo =
-      alimento.grupo.trim()
+    alimento.grupo = alimento.grupo.trim();
 
     /*
      * GUARDAR
@@ -468,24 +357,19 @@ async function actualizarAlimento(
      * actualizará nombreNormalizado.
      */
 
-    await alimento.save()
+    await alimento.save();
 
     return res.json({
-      message:
-        'Alimento actualizado correctamente',
+      message: "Alimento actualizado correctamente",
 
       alimento,
-    })
+    });
   } catch (error) {
-    console.error(
-      'Error actualizando alimento:',
-      error,
-    )
+    console.error("Error actualizando alimento:", error);
 
     return res.status(500).json({
-      message:
-        'No fue posible actualizar el alimento',
-    })
+      message: "No fue posible actualizar el alimento",
+    });
   }
 }
 
@@ -495,58 +379,41 @@ async function actualizarAlimento(
  * ----------------------------------------------------
  */
 
-async function cambiarEstadoAlimento(
-  req,
-  res,
-) {
+async function cambiarEstadoAlimento(req, res) {
   try {
-    const { id } =
-      req.params
+    const { id } = req.params;
 
-    if (
-      !mongoose.Types.ObjectId.isValid(
-        id,
-      )
-    ) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        message:
-          'ID de alimento inválido',
-      })
+        message: "ID de alimento inválido",
+      });
     }
 
-    const alimento =
-      await Alimento.findById(id)
+    const alimento = await Alimento.findById(id);
 
     if (!alimento) {
       return res.status(404).json({
-        message:
-          'Alimento no encontrado',
-      })
+        message: "Alimento no encontrado",
+      });
     }
 
-    alimento.activo =
-      !alimento.activo
+    alimento.activo = !alimento.activo;
 
-    await alimento.save()
+    await alimento.save();
 
     return res.json({
-      message:
-        alimento.activo
-          ? 'Alimento activado correctamente'
-          : 'Alimento desactivado correctamente',
+      message: alimento.activo
+        ? "Alimento activado correctamente"
+        : "Alimento desactivado correctamente",
 
       alimento,
-    })
+    });
   } catch (error) {
-    console.error(
-      'Error cambiando estado del alimento:',
-      error,
-    )
+    console.error("Error cambiando estado del alimento:", error);
 
     return res.status(500).json({
-      message:
-        'No fue posible cambiar el estado del alimento',
-    })
+      message: "No fue posible cambiar el estado del alimento",
+    });
   }
 }
 
@@ -556,39 +423,23 @@ async function cambiarEstadoAlimento(
  * ----------------------------------------------------
  */
 
-async function obtenerGrupos(
-  req,
-  res,
-) {
+async function obtenerGrupos(req, res) {
   try {
-    const grupos =
-      await Alimento.distinct(
-        'grupo',
-        {
-          activo: true,
-        },
-      )
+    const grupos = await Alimento.distinct("grupo", {
+      activo: true,
+    });
 
-    grupos.sort((a, b) =>
-      a.localeCompare(
-        b,
-        'es',
-      ),
-    )
+    grupos.sort((a, b) => a.localeCompare(b, "es"));
 
     return res.json({
       grupos,
-    })
+    });
   } catch (error) {
-    console.error(
-      'Error obteniendo grupos:',
-      error,
-    )
+    console.error("Error obteniendo grupos:", error);
 
     return res.status(500).json({
-      message:
-        'No fue posible obtener los grupos alimenticios',
-    })
+      message: "No fue posible obtener los grupos alimenticios",
+    });
   }
 }
 
@@ -599,10 +450,7 @@ async function obtenerGrupos(
  */
 
 function escaparRegex(texto) {
-  return texto.replace(
-    /[.*+?^${}()|[\]\\]/g,
-    '\\$&',
-  )
+  return texto.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 module.exports = {
@@ -612,4 +460,4 @@ module.exports = {
   actualizarAlimento,
   cambiarEstadoAlimento,
   obtenerGrupos,
-}
+};
