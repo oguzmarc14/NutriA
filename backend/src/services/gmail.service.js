@@ -43,7 +43,13 @@ function codificarBase64Url(value) {
     .replaceAll('=', '')
 }
 
-function construirMensaje({ from, to, subject, text, html }) {
+function construirMensaje({
+  from,
+  to,
+  subject,
+  text,
+  html,
+}) {
   const boundary = `nutria_${Date.now().toString(36)}`
 
   const subjectEncoded =
@@ -121,7 +127,9 @@ async function enviarCorreoGmail({
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ raw }),
+        body: JSON.stringify({
+          raw,
+        }),
       }
     )
 
@@ -137,10 +145,17 @@ async function enviarCorreoGmail({
       `Correo enviado correctamente a ${to}`
     )
   } catch (error) {
-    // IMPORTANTE:
-    // Mostramos el error original de Google en los logs
-    // para poder identificar el problema real.
-    console.error('ERROR REAL DE GMAIL:', error)
+    // Registramos solamente información segura.
+    // NO mostramos el objeto completo porque puede
+    // contener client_secret o refresh_token.
+    console.error('ERROR DE GMAIL:', {
+      name: error?.name,
+      message: error?.message,
+      status: error?.response?.status,
+      googleError: error?.response?.data?.error,
+      googleDescription:
+        error?.response?.data?.error_description,
+    })
 
     throw new GmailApiError(
       'Gmail API rechazó el envío. Revisa las credenciales OAuth y el remitente.',
