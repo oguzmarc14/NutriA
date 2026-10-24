@@ -5,6 +5,9 @@ import {
   ArrowLeft,
   Bone,
   CalendarDays,
+  ChevronDown,
+  ChevronUp,
+  History,
   Calculator,
   CircleGauge,
   Dumbbell,
@@ -124,6 +127,7 @@ function MedicionesPage() {
   const [error, setError] = useState('')
   const [mensaje, setMensaje] = useState('')
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
+  const [mostrarHistorialEnFormulario, setMostrarHistorialEnFormulario] = useState(false)
   const [medicionSeleccionada, setMedicionSeleccionada] = useState(null)
   const [medicionEditandoId, setMedicionEditandoId] = useState('')
   const [confirmacionEditada, setConfirmacionEditada] = useState(false)
@@ -245,6 +249,22 @@ function MedicionesPage() {
         .includes(texto),
     )
   }, [busqueda, pacientes])
+
+  const ultimaMedicionRegistrada = mediciones[0] || null
+  const referenciaAnterior = medicionEditandoId
+    ? mediciones.find(m => m._id !== medicionEditandoId) || null
+    : ultimaMedicionRegistrada
+
+  function abrirNuevaMedicion() {
+    setMedicionEditandoId('')
+    setPeso(referenciaAnterior?.peso != null ? String(referenciaAnterior.peso) : '')
+    setEstatura(referenciaAnterior?.estatura != null ? String(referenciaAnterior.estatura) : '')
+    setNivelActividadFisica(referenciaAnterior?.nivelActividadFisica || 3)
+    setFechaRegistro('')
+    setAntropometricas(estadoInicialAntropometricas)
+    setMostrarHistorialEnFormulario(false)
+    setMostrarFormulario(true)
+  }
 
   const esPrimeraMedicion =
     mediciones.length === 0
@@ -417,6 +437,7 @@ function MedicionesPage() {
     setError('')
     setMensaje('')
     setMedicionSeleccionada(null)
+    setMostrarHistorialEnFormulario(false)
     setMostrarFormulario(true)
 
     requestAnimationFrame(() => {
@@ -713,7 +734,7 @@ function MedicionesPage() {
                   if (mostrarFormulario) {
                     cerrarFormularioMedicion()
                   } else {
-                    setMostrarFormulario(true)
+                    abrirNuevaMedicion()
                   }
                 }}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#246b55] px-5 py-3 text-sm font-bold text-white shadow-[0_8px_20px_rgba(36,107,85,0.2)] transition hover:bg-[#1d5947]"
@@ -753,6 +774,23 @@ function MedicionesPage() {
                 onComparar={() => navigate(`/mediciones/comparar?paciente=${pacienteId}`)}
               />
             )}
+
+            {mostrarFormulario && mediciones.length > 0 && <div className="mb-5 overflow-hidden rounded-2xl border border-[#cbded2] bg-white shadow-sm">
+              <button type="button" aria-expanded={mostrarHistorialEnFormulario}
+                onClick={() => setMostrarHistorialEnFormulario(v => !v)}
+                className="flex w-full items-center justify-between gap-3 bg-gradient-to-r from-[#f3f9f5] to-white px-4 py-3 text-left hover:bg-[#edf6f0]">
+                <span className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-[#e1f0e7] text-[#246b55]"><History size={18}/></span>
+                  <span><strong className="block text-sm text-[#173f34]">Mediciones anteriores</strong><span className="text-xs text-[#648073]">{mediciones.length} registros · consulta y compara sin salir del formulario</span></span></span>
+                {mostrarHistorialEnFormulario ? <ChevronUp size={18} className="text-[#246b55]"/> : <ChevronDown size={18} className="text-[#246b55]"/>}
+              </button>
+              {mostrarHistorialEnFormulario && <div className="border-t border-[#e1eae3] p-3 sm:p-4">
+                <div className="max-h-80 space-y-2 overflow-y-auto">{mediciones.map(m => <div key={m._id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e0ece3] bg-[#f8fbf9] p-3">
+                  <div><p className="text-xs font-bold text-[#173f34]">{new Date(m.fecha || m.createdAt).toLocaleDateString('es-MX')}</p>
+                    <p className="text-xs text-[#52716a]">{m.peso} kg · {m.estatura} m · Actividad: nivel {m.nivelActividadFisica || '—'}</p></div>
+                  <button type="button" onClick={() => setMedicionSeleccionada(m)} className="rounded-lg bg-[#e3f0e7] px-3 py-1.5 text-xs font-bold text-[#246b55]">Ver detalles</button>
+                </div>)}</div>
+              </div>}
+            </div>}
 
             {/* FORMULARIO */}
 
@@ -957,6 +995,11 @@ function MedicionesPage() {
                     </div>
 
                     <div className="grid gap-5 md:grid-cols-2">
+                      {!medicionEditandoId && referenciaAnterior && <div className="md:col-span-2 grid gap-2 sm:grid-cols-2">
+                        <div className="rounded-xl border border-[#dfd3bd] bg-white/75 p-3"><p className="text-xs font-semibold text-[#8a6840]">Peso anterior</p><p className="text-lg font-extrabold text-[#173f34]">{referenciaAnterior.peso} <span className="text-xs font-medium">kg</span></p></div>
+                        <div className="rounded-xl border border-[#dfd3bd] bg-white/75 p-3"><p className="text-xs font-semibold text-[#8a6840]">Última estatura</p><p className="text-lg font-extrabold text-[#173f34]">{referenciaAnterior.estatura} <span className="text-xs font-medium">m</span></p></div>
+                        <p className="text-xs text-[#8a6840] sm:col-span-2">Valores precargados desde la última medición. Confirma el peso actual y verifica la estatura antes de guardar.</p>
+                      </div>}
                       {/* PESO */}
 
                       <label className="space-y-2">
@@ -1194,7 +1237,7 @@ function MedicionesPage() {
                 cargando={cargandoHistorial}
                 onVer={setMedicionSeleccionada}
                 onEditar={editarMedicion}
-                onRegistrar={() => setMostrarFormulario(true)}
+                onRegistrar={abrirNuevaMedicion}
               />
             )}
           </>
