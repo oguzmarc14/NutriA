@@ -66,6 +66,12 @@ const userSchema = new mongoose.Schema(
      *
      * Para admin y nutritionist queda vacío.
      */
+    clinica: {
+      nombre: { type: String, default: '', maxlength: 80 },
+      nombreProfesional: { type: String, default: '', maxlength: 100 },
+      logo: { type: String, default: '' },
+    },
+
     patient: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Patient',

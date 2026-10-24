@@ -4,6 +4,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardLayout from "./layouts/DashboardLayout";
 
 import DashboardPage from "./pages/DashboardPage";
+import MiClinicaPage from "./pages/MiClinicaPage";
 import LoginPage from "./pages/LoginPage";
 import PacientesPage from "./pages/PacientesPage";
 import ExpedientePage from "./pages/ExpedientePage";
@@ -53,6 +54,7 @@ function App() {
           ============================================ */}
 
           <Route element={<ProtectedRoute roles={["nutritionist"]} />}>
+            <Route path="mi-clinica" element={<MiClinicaPage />} />
             <Route path="pacientes" element={<PacientesPage />} />
 
             <Route

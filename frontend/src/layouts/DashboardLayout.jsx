@@ -11,6 +11,7 @@ import {
   Settings,
   UserPen,
   Users,
+  Building2,
   ClipboardPlus,
 } from 'lucide-react'
 
@@ -25,7 +26,7 @@ import { useAuth } from '../context/auth'
 import BotonInstalarApp from '../components/pwa/BotonInstalarApp'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
-function PerfilMenu({ user, roleLabel, cerrarSesion }) {
+function PerfilMenu({ user, roleLabel, cerrarSesion, irAMiClinica }) {
   return (
     <details className="group relative">
       <summary aria-label="Abrir menú de perfil" className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-[#bcd8c7] bg-[#e3f0e7] text-[#246b55] shadow-sm transition hover:bg-[#d5e8db] [&::-webkit-details-marker]:hidden">
@@ -37,6 +38,7 @@ function PerfilMenu({ user, roleLabel, cerrarSesion }) {
           <p className="text-xs text-[#74897d]">{roleLabel}</p>
           {user.email && <p className="mt-1 break-all text-[11px] text-[#82928a]">{user.email}</p>}
         </div>
+        {user.role === 'nutritionist' && <button type="button" onClick={irAMiClinica} className="my-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#246b55] hover:bg-[#eef5f1]"><Building2 size={16}/>Mi clínica</button>}
         <div className="my-1 flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-[#8b9b92]" title="Próximamente: edición de perfil">
           <UserPen size={16}/> Editar perfil · Próximamente
         </div>
@@ -189,6 +191,7 @@ function DashboardLayout() {
     '/mi-plan',
     '/progreso',
     '/mi-progreso',
+    '/mi-clinica',
   ]
 
   const mostrarAtras =
@@ -310,7 +313,7 @@ function DashboardLayout() {
           <p className="text-lg font-extrabold tracking-tight text-[#173f34]">NutriA</p>
           <div className="ml-auto flex items-center gap-2">
             <BotonInstalarApp />
-            <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion}/>
+            <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} irAMiClinica={() => navigate('/mi-clinica')}/>
           </div>
         </header>
         <div className="absolute right-6 top-3 z-40 hidden items-center gap-2 md:flex">

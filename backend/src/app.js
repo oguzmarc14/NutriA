@@ -11,6 +11,8 @@ const alimentosRoutes = require('./routes/alimentos.routes')
 const perfilPacienteRoutes = require('./routes/perfilPaciente.routes')
 const seguimientoComidaRoutes = require('./routes/seguimientoComida.routes')
 
+const clinicaRoutes = require('./routes/clinica.routes')
+
 const app = express()
 
 app.disable('x-powered-by')
@@ -76,6 +78,8 @@ app.use(
   '/api/planes',
   planAlimenticioRoutes,
 )
+
+app.use('/api/clinica', clinicaRoutes)
 
 app.use(
   '/api/usuarios',
