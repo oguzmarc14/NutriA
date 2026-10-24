@@ -167,6 +167,10 @@ function PlanesAlimenticiosPage() {
   const [modalidadSeleccionada, setModalidadSeleccionada] = useState(null)
   const eleccionMostrada = useRef('')
   const [distribucion, setDistribucion] = useState([25, 40, 35])
+  const [asistenteEquivalentes, setAsistenteEquivalentes] = useState(null)
+  const [mostrarEquivalentes, setMostrarEquivalentes] = useState(false)
+  const [grupoSugerido, setGrupoSugerido] = useState('')
+  const [errorEquivalentes, setErrorEquivalentes] = useState('')
   const { cerrarTrabajo, iniciarTrabajo, pacienteTrabajo } =
     usePacienteTrabajo()
   const pacienteSolicitado = searchParams.get('paciente') || ''
@@ -398,6 +402,17 @@ function PlanesAlimenticiosPage() {
       }
     })
     return () => { activo = false }
+  }, [pacienteId])
+
+  useEffect(() => {
+    if (!pacienteId) { setAsistenteEquivalentes(null); return }
+    let vigente = true
+    setAsistenteEquivalentes(null)
+    setErrorEquivalentes('')
+    client.get('/asistente-equivalentes/' + pacienteId)
+      .then(({ data }) => { if (vigente) setAsistenteEquivalentes(data) })
+      .catch(() => { if (vigente) setErrorEquivalentes('No se pudo cargar el catálogo de equivalencias verificadas.') })
+    return () => { vigente = false }
   }, [pacienteId])
 
   useEffect(() => {
@@ -2106,6 +2121,41 @@ function PlanesAlimenticiosPage() {
                 <div className="flex flex-wrap gap-2">{Object.entries(gruposCatalogo).sort((a,b)=>a[0].localeCompare(b[0])).map(([grupo,cantidad]) =>
                   <span key={grupo} className="rounded-full bg-[#e6f1e9] px-3 py-1.5 text-xs font-bold text-[#246b55]">{grupo}: {Math.round(cantidad * 10) / 10}</span>)}</div>
                 <p className="mt-3 text-xs text-[#648073]">Estas cantidades son porciones del catálogo, no equivalentes SMAE validados.</p>
+              </div>}
+
+              {modoAsistido && <div className="mb-6 overflow-hidden rounded-2xl border border-[#c9dfd0] bg-white">
+                <button type="button" aria-expanded={mostrarEquivalentes} onClick={() => setMostrarEquivalentes(v => !v)}
+                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-extrabold text-[#173f34]">
+                  <span className="flex items-center gap-2"><Apple size={17} className="text-[#246b55]"/> Asistente de equivalentes y alimentos</span>
+                  {mostrarEquivalentes ? <ChevronUp size={18}/> : <ChevronDown size={18}/>}
+                </button>
+                {mostrarEquivalentes && <div className="border-t border-[#e1eae3] p-4">
+                  <p className="mb-3 text-xs text-[#648073]">Solo se muestran alimentos con equivalencia documentada y revisión registrada. Las recomendaciones deben validarse según el expediente.</p>
+                  {errorEquivalentes && <p className="mb-3 text-sm text-amber-800">{errorEquivalentes}</p>}
+                  {asistenteEquivalentes && <>
+                    <p className="mb-3 text-xs font-semibold text-[#52716a]">{asistenteEquivalentes.alimentosVerificados.length} alimentos con equivalencia verificable disponibles</p>
+                    {asistenteEquivalentes.alimentosVerificados.length ? <>
+                      <div className="mb-3 flex flex-wrap gap-2">
+                        <button type="button" onClick={() => setGrupoSugerido('')} className={`rounded-full px-3 py-1.5 text-xs font-semibold ${!grupoSugerido ? 'bg-[#246b55] text-white' : 'bg-[#eaf3ed] text-[#246b55]'}`}>Todos</button>
+                        {[...new Set(asistenteEquivalentes.alimentosVerificados.map(a => a.grupo))].map(grupo =>
+                          <button type="button" key={grupo} onClick={() => setGrupoSugerido(grupo)}
+                            className={`rounded-full px-3 py-1.5 text-xs font-semibold ${grupoSugerido === grupo ? 'bg-[#246b55] text-white' : 'bg-[#eaf3ed] text-[#246b55]'}`}>{grupo}</button>)}
+                      </div>
+                      <div className="max-h-80 space-y-2 overflow-y-auto">
+                        {asistenteEquivalentes.alimentosVerificados.filter(a => !grupoSugerido || a.grupo === grupoSugerido).map(alimento =>
+                          <div key={alimento._id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e1eae3] p-3">
+                            <div><p className="text-sm font-bold text-[#173f34]">{alimento.nombre}</p>
+                              <p className="text-xs text-[#648073]">{alimento.grupo} · {alimento.equivalentes} equivalente(s) por porción · {alimento.porcion?.gramos ? alimento.porcion.gramos + ' g' : alimento.porcion?.unidad || 'porción'}</p>
+                              <p className="text-[11px] text-[#648073]">Fuente: {alimento.fuentes.filter(f => f.tipoDato === 'equivalencia').map(f => f.nombre + (f.edicion ? ' · ' + f.edicion : '')).join(', ')}</p>
+                            </div>
+                            <button type="button" disabled={!comidaActiva} onClick={() => { if (comidaActiva) agregarAlimentoCatalogo(comidaActiva.id, alimento) }}
+                              className="rounded-xl bg-[#e1f0e7] px-3 py-2 text-xs font-bold text-[#246b55] hover:bg-[#d2e8da] disabled:opacity-50">+ Añadir a {comidaActiva?.nombre || 'comida'}</button>
+                          </div>)}
+                      </div>
+                    </> : <p className="rounded-xl bg-[#f4f6f3] p-3 text-sm text-[#648073]">Todavía no hay equivalencias con fuente y revisión verificadas en el catálogo. El editor manual sigue disponible; es necesario revisar e importar datos autorizados antes de generar sustituciones.</p>}
+                    <p className="mt-3 text-xs text-[#648073]">{asistenteEquivalentes.advertencia}</p>
+                  </>}
+                </div>}
               </div>}
 
               {/* RESUMEN GENERAL */}
