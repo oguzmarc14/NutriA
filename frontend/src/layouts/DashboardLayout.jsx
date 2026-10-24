@@ -332,7 +332,7 @@ function DashboardLayout() {
           CONTENIDO
       ============================================ */}
 
-      <main className="relative min-w-0 overflow-x-hidden bg-[#dfece4]">
+      <main className="relative min-w-0 overflow-x-clip bg-[#dfece4]">
         {/* ============================================
             HEADER
         ============================================ */}
@@ -390,7 +390,7 @@ function DashboardLayout() {
             FONDO GLOBAL
         ============================================ */}
 
-        <div className="relative min-h-[calc(100vh-56px)] overflow-hidden bg-[#dfece4]">
+        <div className="relative min-h-[calc(100vh-56px)] overflow-x-clip bg-[#dfece4]">
           {/* DECORACIONES */}
 
           <div className="pointer-events-none absolute -right-32 -top-36 h-[420px] w-[420px] rounded-full bg-[#b5d2bf]/45 blur-3xl" />
@@ -403,7 +403,7 @@ function DashboardLayout() {
 
           {/* CONTENIDO */}
 
-          <div className="relative z-10 min-h-[calc(100vh-64px)] min-w-0 overflow-x-hidden pb-[92px] md:pb-0">
+          <div className="relative z-10 min-h-[calc(100vh-64px)] min-w-0 overflow-x-clip pb-[92px] md:pb-0">
             <Outlet />
           </div>
         </div>
