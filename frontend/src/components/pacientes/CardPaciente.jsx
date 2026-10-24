@@ -35,22 +35,24 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, 
             <Leaf size={12} /> {trabajando ? 'En trabajo' : paciente.accountStatus === 'pending' ? 'Invitación pendiente' : 'Paciente registrado'}
           </div>
         </div>
-        <div className="relative z-10 flex shrink-0 items-center gap-1.5 rounded-2xl border border-[#e1e9e1] bg-[#f9fbf8] p-1 shadow-sm">
-          <button type="button" onClick={onEditar} disabled={eliminando} title="Editar paciente" aria-label={`Editar a ${paciente.name}`} className="grid h-8 w-8 place-items-center rounded-xl text-[#23614e] transition hover:bg-[#e4f1e8] disabled:opacity-50"><Pencil size={16}/></button>
-          <button type="button" onClick={onEliminar} disabled={eliminando} title="Eliminar paciente" aria-label={`Eliminar a ${paciente.name}`} className="grid h-8 w-8 place-items-center rounded-xl text-[#c65a59] transition hover:bg-red-50 disabled:opacity-50"><Trash2 size={16}/></button>
-        </div>
-      </div>
-
-      <div className="relative mt-3 flex flex-wrap items-center justify-end gap-2">
-        <button type="button" onClick={onTrabajar} aria-label={trabajando ? `Continuar trabajando con ${paciente.name}` : `Trabajar con ${paciente.name}`} className={`group/action inline-flex min-h-11 items-stretch overflow-hidden rounded-xl border text-sm font-bold shadow-[0_5px_12px_-7px_rgba(18,107,82,.55)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_15px_-7px_rgba(18,107,82,.65)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#126b52] ${trabajando ? 'border-[#4abf8d] bg-[#dcf5e6] text-[#126b52]' : 'border-[#126b52] bg-[#126b52] text-white'}`}>
-          <span className="inline-flex items-center gap-2 px-3.5 py-2.5">
+        <div className="relative z-10 flex w-[112px] shrink-0 flex-col items-stretch">
+          <div className="flex items-center justify-between rounded-2xl border border-[#e1e9e1] bg-[#f9fbf8] p-1 shadow-sm">
+            <button type="button" onClick={onEditar} disabled={eliminando} title="Editar paciente" aria-label={`Editar a ${paciente.name}`} className="grid h-8 w-8 place-items-center rounded-xl text-[#23614e] transition hover:bg-[#e4f1e8] disabled:opacity-50"><Pencil size={16}/></button>
+            <button type="button" onClick={onEliminar} disabled={eliminando} title="Eliminar paciente" aria-label={`Eliminar a ${paciente.name}`} className="grid h-8 w-8 place-items-center rounded-xl text-[#c65a59] transition hover:bg-red-50 disabled:opacity-50"><Trash2 size={16}/></button>
+          </div>
+        <div className="mt-2 w-full">
+        <button type="button" onClick={onTrabajar} aria-label={trabajando ? `Continuar trabajando con ${paciente.name}` : `Trabajar con ${paciente.name}`} className={`group/action flex w-full min-h-10 items-stretch justify-between overflow-hidden rounded-xl border text-sm font-bold shadow-[0_5px_12px_-7px_rgba(18,107,82,.55)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_15px_-7px_rgba(18,107,82,.65)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#126b52] ${trabajando ? 'border-[#4abf8d] bg-[#dcf5e6] text-[#126b52]' : 'border-[#126b52] bg-[#126b52] text-white'}`}>
+          <span className="inline-flex min-w-0 items-center gap-1.5 px-2 py-2">
             <BriefcaseMedical size={17} strokeWidth={2.1}/>
             {trabajando ? 'En trabajo' : 'Trabajar'}
           </span>
-          <span className={`inline-flex w-10 items-center justify-center border-l transition-colors ${trabajando ? 'border-[#a7dec3] bg-[#c8eed9] group-hover/action:bg-[#b5e7cd]' : 'border-white/15 bg-[#0b543f] group-hover/action:bg-[#084631]'}`}>
+          <span className={`inline-flex w-8 shrink-0 items-center justify-center border-l transition-colors ${trabajando ? 'border-[#a7dec3] bg-[#c8eed9] group-hover/action:bg-[#b5e7cd]' : 'border-white/15 bg-[#0b543f] group-hover/action:bg-[#084631]'}`}>
             {trabajando ? <CheckCircle2 size={17}/> : <ArrowUpRight size={18}/>}
           </span>
         </button>
+      </div>
+
+        </div>
       </div>
 
       <div className="relative mt-5 grid gap-3 rounded-[20px] border border-[#d9e5dc] bg-[#f0f5ef] p-3.5">
