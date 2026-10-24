@@ -364,6 +364,7 @@ function DashboardLayout() {
               shortLabel,
               label,
               to,
+              marca,
             }) => (
               <NavLink
                 key={label}
