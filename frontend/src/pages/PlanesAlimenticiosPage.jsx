@@ -2780,6 +2780,7 @@ function PlanesAlimenticiosPage() {
                       return <div key={clave} className="space-y-1.5">
                         <div className="flex items-center justify-between gap-2 text-xs"><span className="font-bold text-[#52716a]">{etiqueta}</span><span className="font-extrabold tabular-nums text-[#173f34]">{numero(actual, 1)} / {numero(objetivo, 1)} {unidad}</span></div>
                         <div className="h-2 overflow-hidden rounded-full bg-[#e3eee6]"><div className={`h-full rounded-full transition-all ${pct > 105 ? 'bg-amber-500' : 'bg-[#70ae89]'}`} style={{width: Math.min(100, Math.max(0,pct)) + '%'}}/></div>
+                        {clave !== 'kcal' && <p className="text-[11px] font-medium tabular-nums text-[#52716a]">{numero(actual * (clave === 'grasas' ? 9 : 4), 1)} / {numero(objetivo * (clave === 'grasas' ? 9 : 4), 1)} kcal</p>}
                         <p className={`text-[11px] ${pct > 105 ? 'text-amber-700' : 'text-[#789286]'}`}>{actual > objetivo ? 'Excedente: ' : 'Pendiente: '}{numero(Math.abs(objetivo - actual), 1)} {unidad}</p>
                       </div>
                     })}
