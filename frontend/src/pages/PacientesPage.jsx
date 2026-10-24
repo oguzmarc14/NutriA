@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, RefreshCw, UserRound, X } from 'lucide-react'
+import { Plus, RefreshCw, Search, UserRound, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import CardPaciente from '../components/pacientes/CardPaciente'
@@ -22,6 +22,7 @@ function PacientesPage() {
   const navigate = useNavigate()
   const { cerrarTrabajo, iniciarTrabajo, pacienteTrabajo } = usePacienteTrabajo()
   const [pacientes, setPacientes] = useState([])
+  const [busqueda, setBusqueda] = useState('')
   const [loading, setLoading] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [reenviandoId, setReenviandoId] = useState(null)
@@ -306,6 +307,12 @@ function PacientesPage() {
     )
   }
 
+  const terminoBusqueda = busqueda.trim().toLocaleLowerCase('es')
+  const pacientesFiltrados = pacientes.filter((paciente) =>
+    [paciente.name, paciente.email, paciente.phone]
+      .some((valor) => String(valor || '').toLocaleLowerCase('es').includes(terminoBusqueda)),
+  )
+
   /*
    * ----------------------------------------------------
    * RENDER
@@ -326,37 +333,36 @@ function PacientesPage() {
             HEADER
         ============================================ */}
 
-        <div className="mb-7 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
-            <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#4d816f] sm:text-sm">
+            <h1 className="text-[27px] font-black leading-tight tracking-tight text-[#173f34] sm:text-3xl">
               Pacientes
-            </p>
-
-            <h1 className="text-[28px] font-black leading-tight tracking-tight text-[#173f34] sm:text-3xl md:text-4xl">
-              Gestión de pacientes
             </h1>
-
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 sm:text-base">
-              Consulta y administra la
-              información general de tus
-              pacientes.
+            <p className="mt-1 text-xs font-medium text-[#648476]">
+              {loading ? 'Cargando...' : `${pacientes.length} ${pacientes.length === 1 ? 'paciente' : 'pacientes'} registrados`}
             </p>
           </div>
-
-          <button
-            type="button"
-            onClick={
-              abrirNuevoPaciente
-            }
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#246b55] px-5 py-3.5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(36,107,85,0.2)] transition hover:bg-[#1d5947] sm:w-auto"
-          >
-            <Plus
-              size={18}
-              className="shrink-0"
-            />
-
-            Nuevo paciente
-          </button>
+          <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto lg:items-center">
+            <label className="relative block min-w-0 flex-1 sm:min-w-[240px] lg:w-[300px]">
+              <Search size={18} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#729384]" />
+              <input
+                type="search"
+                value={busqueda}
+                onChange={(event) => setBusqueda(event.target.value)}
+                placeholder="Buscar paciente..."
+                aria-label="Buscar pacientes por nombre, correo o teléfono"
+                className="h-11 w-full rounded-xl border border-[#cadfd1] bg-white/80 pl-10 pr-4 text-sm text-[#173f34] outline-none transition placeholder:text-[#8b9d93] focus:border-[#4d816f] focus:ring-2 focus:ring-[#cce3d4]"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={abrirNuevoPaciente}
+              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#246b55] px-4 text-sm font-bold text-white shadow-[0_6px_16px_rgba(36,107,85,.16)] transition hover:bg-[#1d5947]"
+            >
+              <Plus size={18} className="shrink-0" />
+              Nuevo paciente
+            </button>
+          </div>
         </div>
 
         {/* ============================================
@@ -624,13 +630,20 @@ function PacientesPage() {
               Nuevo paciente
             </button>
           </div>
+        ) : pacientesFiltrados.length === 0 ? (
+          <div className="rounded-2xl border border-[#d5e4d9] bg-white/70 px-6 py-10 text-center">
+            <Search size={26} className="mx-auto mb-3 text-[#699581]" />
+            <p className="font-bold text-[#173f34]">No encontramos pacientes</p>
+            <p className="mt-1 text-sm text-slate-500">Prueba con otro nombre, correo o teléfono.</p>
+            <button type="button" onClick={() => setBusqueda('')} className="mt-4 text-sm font-bold text-[#246b55] hover:underline">Limpiar búsqueda</button>
+          </div>
         ) : (
           /* ============================================
              CARDS
           ============================================ */
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {pacientes.map(
+            {pacientesFiltrados.map(
               (paciente) => (
                 <CardPaciente
                   key={
