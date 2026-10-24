@@ -12,6 +12,11 @@ import {
   CalendarDays,
   ChevronDown,
   ChevronUp,
+  ChartNoAxesColumnIncreasing,
+  Target,
+  ListChecks,
+  PanelRightClose,
+  PanelRightOpen,
   CirclePlus,
   LoaderCircle,
   Plus,
@@ -169,6 +174,7 @@ function PlanesAlimenticiosPage() {
   const [distribucion, setDistribucion] = useState([25, 40, 35])
   const [asistenteEquivalentes, setAsistenteEquivalentes] = useState(null)
   const [mostrarEquivalentes, setMostrarEquivalentes] = useState(false)
+  const [panelBalanceVisible, setPanelBalanceVisible] = useState(true)
   const [grupoSugerido, setGrupoSugerido] = useState('')
   const [errorEquivalentes, setErrorEquivalentes] = useState('')
   const { cerrarTrabajo, iniciarTrabajo, pacienteTrabajo } =
@@ -1769,7 +1775,7 @@ function PlanesAlimenticiosPage() {
    */
 
   return (
-    <section className="min-h-screen overflow-x-hidden bg-transparent px-4 py-6 sm:px-5 md:px-8 md:py-9">
+    <section className="min-h-screen bg-transparent px-4 py-6 sm:px-5 md:px-6 md:py-7">
       {avisoPlanGuardado && (
         <ModalPlanGuardado
           tipo={avisoPlanGuardado.tipo}
@@ -1778,7 +1784,7 @@ function PlanesAlimenticiosPage() {
         />
       )}
 
-      <div className="mx-auto max-w-[1480px]">
+      <div className="mx-auto w-full max-w-[1800px]">
         {/* ============================================
             SELECCIÓN DE PACIENTE
         ============================================ */}
@@ -1998,6 +2004,13 @@ function PlanesAlimenticiosPage() {
                 NUEVO PLAN
             ============================================ */}
 
+            <div className={`mb-7 grid items-start gap-5 ${panelBalanceVisible ? 'xl:grid-cols-[minmax(0,1fr)_310px] 2xl:grid-cols-[minmax(0,1fr)_350px]' : 'grid-cols-1'}`}>
+              <div className="min-w-0">
+                <button type="button" onClick={() => setPanelBalanceVisible(v => !v)}
+                  className="mb-3 flex items-center gap-2 rounded-xl border border-[#c9dfd0] bg-white px-3 py-2 text-xs font-bold text-[#246b55] hover:bg-[#eaf3ed]">
+                  {panelBalanceVisible ? <PanelRightClose size={16}/> : <PanelRightOpen size={16}/>}
+                  {panelBalanceVisible ? 'Ocultar seguimiento' : 'Mostrar seguimiento'}
+                </button>
             <form
               ref={formularioPlanRef}
               onSubmit={
@@ -2073,56 +2086,6 @@ function PlanesAlimenticiosPage() {
                 <ChevronDown size={17}/>
               </button>}
 
-              {objetivosReferencia && <div className="mb-6 rounded-2xl border border-[#c9dfd0] bg-white p-4 sm:p-5">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <div><h3 className="font-extrabold text-[#173f34]">Balance nutricional en tiempo real</h3>
-                    <p className="text-xs text-[#648073]">Comparación del menú con el último cálculo guardado. Los totales cambian al agregar alimentos.</p></div>
-                  {modoAsistido && <span className="rounded-full bg-[#e1f0e7] px-3 py-1 text-xs font-bold text-[#246b55]">Plan asistido</span>}
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  {metas.map(([etiqueta, clave, unidad, meta]) => {
-                    const actual = Number(totalesPlan[clave]) || 0
-                    const objetivoValido = Number(meta) > 0 ? Number(meta) : 0
-                    const diferencia = objetivoValido - actual
-                    const porcentaje = objetivoValido ? Math.round(actual / objetivoValido * 100) : 0
-                    return <div key={clave} className="rounded-xl bg-[#f1f6f2] p-3">
-                      <p className="text-xs font-semibold text-[#52716a]">{etiqueta}</p>
-                      <p className="mt-1 text-lg font-extrabold text-[#173f34]">{Math.round(actual * 10) / 10} <span className="text-xs font-medium">/ {Math.round(objetivoValido * 10) / 10} {unidad}</span></p>
-                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#d9e7dd]">
-                        <div className={porcentaje > 105 ? 'h-full rounded-full bg-amber-500' : 'h-full rounded-full bg-[#70ae89]'} style={{ width: Math.min(porcentaje, 100) + '%' }}/>
-                      </div>
-                      <p className={`mt-2 text-xs ${porcentaje > 105 ? 'text-amber-700' : 'text-[#648073]'}`}>{diferencia >= 0 ? 'Restan' : 'Excedente'} {Math.abs(Math.round(diferencia * 10) / 10)} {unidad} · {porcentaje}%</p>
-                    </div>
-                  })}
-                </div>
-                <p className="mt-3 text-xs text-[#648073]">Referencia orientativa; las desviaciones requieren revisión clínica. No representa equivalentes SMAE.</p>
-              </div>}
-
-              {modoAsistido && objetivosReferencia && <div className="mb-6 rounded-2xl border border-[#d2e3d8] bg-white p-4 sm:p-5">
-                <h3 className="font-extrabold text-[#173f34]">Presupuesto por comida</h3>
-                <p className="mb-3 mt-1 text-xs text-[#648073]">Distribución inicial editable. Ajusta los porcentajes según el paciente; deben sumar 100%.</p>
-                <div className="space-y-3">{comidasBalance.map((comida, indice) => {
-                  const porcentaje = distribucion[indice] ?? 0
-                  const metaKcal = Number(objetivosReferencia.objetivoKcal) * porcentaje / 100
-                  return <div key={comida.id} className="flex flex-wrap items-center gap-3 rounded-xl bg-[#f1f6f2] p-3">
-                    <span className="min-w-28 flex-1 text-sm font-bold text-[#173f34]">{comida.nombre}</span>
-                    <label className="flex items-center gap-1 text-xs text-[#52716a]"><input type="number" min="0" max="100" step="1" value={porcentaje}
-                      onChange={e => setDistribucion(actual => comidas.map((_, i) => i === indice ? Number(e.target.value) : (actual[i] ?? 0)))}
-                      className="w-16 rounded-lg border border-[#c8ddd2] bg-white px-2 py-1.5 text-right"/>%</label>
-                    <span className="w-32 text-right text-xs text-[#52716a]">{Math.round(comida.totales.kcal)} / {Math.round(metaKcal)} kcal</span>
-                  </div>
-                })}</div>
-                <p className={`mt-3 text-xs font-semibold ${distribucion.reduce((a,b)=>a+b,0) === 100 ? 'text-[#246b55]' : 'text-amber-700'}`}>Distribución total: {distribucion.reduce((a,b)=>a+b,0)}%</p>
-              </div>}
-
-              {Object.keys(gruposCatalogo).length > 0 && <div className="mb-6 rounded-2xl border border-[#d2e3d8] bg-white p-4 sm:p-5">
-                <h3 className="font-extrabold text-[#173f34]">Grupos de alimentos utilizados</h3>
-                <p className="mb-3 mt-1 text-xs text-[#648073]">Conteo de porciones registradas en el menú actual, según las categorías del catálogo.</p>
-                <div className="flex flex-wrap gap-2">{Object.entries(gruposCatalogo).sort((a,b)=>a[0].localeCompare(b[0])).map(([grupo,cantidad]) =>
-                  <span key={grupo} className="rounded-full bg-[#e6f1e9] px-3 py-1.5 text-xs font-bold text-[#246b55]">{grupo}: {Math.round(cantidad * 10) / 10}</span>)}</div>
-                <p className="mt-3 text-xs text-[#648073]">Estas cantidades son porciones del catálogo, no equivalentes SMAE validados.</p>
-              </div>}
-
               {modoAsistido && <div className="mb-6 overflow-hidden rounded-2xl border border-[#c9dfd0] bg-white">
                 <button type="button" aria-expanded={mostrarEquivalentes} onClick={() => setMostrarEquivalentes(v => !v)}
                   className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-extrabold text-[#173f34]">
@@ -2157,19 +2120,6 @@ function PlanesAlimenticiosPage() {
                   </>}
                 </div>}
               </div>}
-
-              {/* RESUMEN GENERAL */}
-
-              <ResumenNutricional
-                titulo="Resumen del plan"
-                totales={
-                  totalesPlan
-                }
-                numero={
-                  numero
-                }
-                className="mt-6"
-              />
 
               {/* COMIDAS */}
 
@@ -2801,6 +2751,51 @@ function PlanesAlimenticiosPage() {
                 </div>
               </div>
             </form>
+              </div>
+              {panelBalanceVisible && <aside aria-label="Seguimiento nutricional del plan" className="min-w-0 xl:sticky xl:top-[68px]">
+                <div className="max-h-none space-y-4 rounded-2xl border border-[#c9dfd0] bg-white p-4 shadow-[0_12px_32px_rgba(32,78,64,0.08)] xl:max-h-[calc(100vh-84px)] xl:overflow-y-auto">
+                  <div className="flex items-center gap-2 border-b border-[#e3eee6] pb-3">
+                    <ChartNoAxesColumnIncreasing size={19} className="text-[#246b55]"/>
+                    <div><h3 className="text-sm font-extrabold text-[#173f34]">Seguimiento del plan</h3>
+                      <p className="text-[11px] text-[#648073]">Se actualiza al editar alimentos</p></div>
+                  </div>
+                  {objetivosReferencia ? <div className="space-y-4">
+                    {metas.map(([etiqueta, clave, unidad, meta]) => {
+                      const actual = Number(totalesPlan[clave]) || 0
+                      const objetivo = Number(meta) || 0
+                      const pct = objetivo > 0 ? actual / objetivo * 100 : 0
+                      return <div key={clave} className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2 text-xs"><span className="font-bold text-[#52716a]">{etiqueta}</span><span className="font-extrabold tabular-nums text-[#173f34]">{numero(actual, 1)} / {numero(objetivo, 1)} {unidad}</span></div>
+                        <div className="h-2 overflow-hidden rounded-full bg-[#e3eee6]"><div className={`h-full rounded-full transition-all ${pct > 105 ? 'bg-amber-500' : 'bg-[#70ae89]'}`} style={{width: Math.min(100, Math.max(0,pct)) + '%'}}/></div>
+                        <p className={`text-[11px] ${pct > 105 ? 'text-amber-700' : 'text-[#789286]'}`}>{actual > objetivo ? 'Excedente: ' : 'Pendiente: '}{numero(Math.abs(objetivo - actual), 1)} {unidad}</p>
+                      </div>
+                    })}
+                  </div> : <p className="rounded-xl bg-[#f2f7f3] p-3 text-xs text-[#648073]">Guarda un cálculo nutricional para comparar el menú con las metas del paciente.</p>}
+                  <div className="border-t border-[#e3eee6] pt-3">
+                    <h4 className="mb-2 flex items-center gap-2 text-xs font-extrabold text-[#173f34]"><Target size={15} className="text-[#246b55]"/> Comida seleccionada</h4>
+                    <p className="text-xs font-bold text-[#52716a]">{comidaActiva?.nombre || 'Sin comida seleccionada'}</p>
+                    <p className="mt-1 text-xs text-[#648073]">{numero(calcularTotales(comidaActiva?.alimentos || []).kcal, 0)} kcal añadidas{modoAsistido && objetivosReferencia ? ` · Meta: ${numero(Number(objetivosReferencia.objetivoKcal) * (distribucion[comidas.findIndex(c => c.id === comidaActiva?.id)] || 0) / 100, 0)} kcal` : ''}</p>
+                  </div>
+                  {modoAsistido && objetivosReferencia && <div className="border-t border-[#e3eee6] pt-3">
+                    <h4 className="mb-2 flex items-center gap-2 text-xs font-extrabold text-[#173f34]"><ListChecks size={15} className="text-[#246b55]"/> Distribución por comida</h4>
+                    <div className="space-y-2">{comidasBalance.map((comida, indice) => <div key={comida.id} className="flex items-center justify-between gap-2">
+                      <span className="min-w-0 flex-1 truncate text-xs text-[#52716a]">{comida.nombre}</span>
+                      <input aria-label={`Porcentaje para ${comida.nombre}`} type="number" min="0" max="100" step="1" value={distribucion[indice] ?? 0}
+                        onChange={e => setDistribucion(actual => comidas.map((_, i) => i === indice ? Number(e.target.value) : (actual[i] ?? 0)))}
+                        className="w-14 rounded-lg border border-[#c8ddd2] px-1.5 py-1 text-right text-xs"/> <span className="text-xs text-[#648073]">%</span>
+                    </div>)}</div>
+                    <p className={`mt-2 text-[11px] font-bold ${distribucion.reduce((a,b)=>a+b,0) === 100 ? 'text-[#246b55]' : 'text-amber-700'}`}>Total: {distribucion.reduce((a,b)=>a+b,0)}% {distribucion.reduce((a,b)=>a+b,0) !== 100 && '· Ajusta a 100%'}</p>
+                  </div>}
+                  <div className="border-t border-[#e3eee6] pt-3">
+                    <h4 className="mb-2 flex items-center gap-2 text-xs font-extrabold text-[#173f34]"><Apple size={15} className="text-[#246b55]"/> Grupos utilizados</h4>
+                    {Object.keys(gruposCatalogo).length ? Object.entries(gruposCatalogo).map(([grupo,cantidad]) =>
+                      <div key={grupo} className="flex justify-between gap-2 py-1 text-xs"><span className="text-[#52716a]">{grupo}</span><strong className="text-[#173f34]">{numero(cantidad, 1)}</strong></div>)
+                      : <p className="text-xs text-[#82968b]">Sin alimentos agregados</p>}
+                    <p className="mt-2 text-[11px] text-[#82968b]">Porciones del catálogo; aún no son equivalentes SMAE asignados.</p>
+                  </div>
+                </div>
+              </aside>}
+            </div>
 
             {/* ============================================
                 PLANES REGISTRADOS
