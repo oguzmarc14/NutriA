@@ -10,6 +10,7 @@ import {
   Apple,
   ArrowUp,
   ArrowDown,
+  GripVertical,
   Coffee,
   ArrowLeft,
   CalendarDays,
@@ -949,6 +950,20 @@ function PlanesAlimenticiosPage() {
       if (destino === undefined) return comida
       const [elemento] = alimentos.splice(origen, 1)
       alimentos.splice(destino, 0, elemento)
+      return { ...comida, alimentos }
+    }))
+  }
+
+  function reubicarAlimento(comidaId, alimentoId, destinoId) {
+    if (alimentoId === destinoId) return
+    setComidas(actuales => actuales.map(comida => {
+      if (comida.id !== comidaId) return comida
+      const alimentos = [...comida.alimentos]
+      const origen = alimentos.findIndex(a => a.id === alimentoId)
+      const destino = alimentos.findIndex(a => a.id === destinoId)
+      if (origen < 0 || destino < 0 || alimentos[origen].preparacionId !== alimentos[destino].preparacionId) return comida
+      const [movido] = alimentos.splice(origen, 1)
+      alimentos.splice(destino, 0, movido)
       return { ...comida, alimentos }
     }))
   }
@@ -2732,6 +2747,7 @@ function PlanesAlimenticiosPage() {
                                             alimento.id,
                                           )
                                         }
+                                        onReordenar={destinoId => reubicarAlimento(comida.id, alimento.id, destinoId)}
                                         onSubir={() => moverAlimento(comida.id, alimento.id, -1)}
                                         onBajar={() => moverAlimento(comida.id, alimento.id, 1)}
                                         puedeSubir={alimentosPreparacion[0]?.id !== alimento.id}
@@ -3146,9 +3162,50 @@ function AlimentoAgregado({
   onEliminar,
   onSubir,
   onBajar,
+  onReordenar,
   puedeSubir = false,
   puedeBajar = false,
 }) {
+  const [arrastrandoOrden, setArrastrandoOrden] = useState(false)
+  const dragRef = useRef({ timer: null, activo: false, destino: null, inicioX: 0, inicioY: 0 })
+  useEffect(() => () => { if (dragRef.current.timer) clearTimeout(dragRef.current.timer) }, [])
+
+  function iniciarOrden(event) {
+    if (event.button !== undefined && event.button !== 0) return
+    const pointerId = event.pointerId
+    const elemento = event.currentTarget
+    dragRef.current = { timer: null, activo: false, destino: null, inicioX: event.clientX, inicioY: event.clientY }
+    const activar = () => {
+      dragRef.current.activo = true
+      setArrastrandoOrden(true)
+      try { elemento.setPointerCapture(pointerId) } catch {}
+    }
+    if (event.pointerType === 'mouse') activar()
+    else dragRef.current.timer = setTimeout(activar, 320)
+  }
+  function moverOrden(event) {
+    const drag = dragRef.current
+    if (!drag.activo) {
+      if (Math.hypot(event.clientX - drag.inicioX, event.clientY - drag.inicioY) > 9 && drag.timer) {
+        clearTimeout(drag.timer)
+        drag.timer = null
+      }
+      return
+    }
+    event.preventDefault()
+    const destino = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-ingrediente-id]')
+    const id = destino?.getAttribute('data-ingrediente-id')
+    drag.destino = id && id !== String(alimento.id) ? id : null
+  }
+  function terminarOrden(event) {
+    const drag = dragRef.current
+    if (drag.timer) clearTimeout(drag.timer)
+    if (drag.activo && drag.destino) onReordenar(drag.destino)
+    dragRef.current = { timer: null, activo: false, destino: null, inicioX: 0, inicioY: 0 }
+    setArrastrandoOrden(false)
+    try { event.currentTarget.releasePointerCapture(event.pointerId) } catch {}
+  }
+
   const [desplazamiento, setDesplazamiento] = useState(0)
   const gesto = useRef({ activo: false, inicioX: 0, inicioY: 0, horizontal: false })
 
@@ -3218,7 +3275,7 @@ function AlimentoAgregado({
     cantidad
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-[#dde8e2] bg-red-50">
+    <div data-ingrediente-id={alimento.id} className={`relative overflow-hidden rounded-2xl border bg-red-50 ${arrastrandoOrden ? "border-[#246b55] ring-2 ring-[#a8d4b7]" : "border-[#dde8e2]"}`}>
       <button
         type="button"
         onClick={onEliminar}
@@ -3237,7 +3294,7 @@ function AlimentoAgregado({
         onPointerUp={terminarArrastre}
         onPointerCancel={terminarArrastre}
       >
-      <div className="mb-2 flex justify-end gap-1.5">
+      <div className="mb-2 flex justify-end gap-1.5">\n        <button type="button" aria-label={`Mantener y arrastrar ${alimento.nombre} para reordenar`} title="Arrastrar para ordenar" onPointerDown={iniciarOrden} onPointerMove={moverOrden} onPointerUp={terminarOrden} onPointerCancel={terminarOrden} onContextMenu={e => e.preventDefault()} style={{touchAction:"none"}} className={`mr-auto flex cursor-grab items-center gap-1 rounded-lg border border-[#d6e5da] px-2 py-1.5 text-xs text-[#246b55] ${arrastrandoOrden ? "bg-[#d8eddf] cursor-grabbing" : "bg-white"}`}><GripVertical size={16}/><span>Arrastrar</span></button>
         <button type="button" onClick={onSubir} disabled={!puedeSubir} aria-label={`Subir ${alimento.nombre}`} title="Mover arriba" className="rounded-lg border border-[#d6e5da] bg-white p-1.5 text-[#246b55] disabled:cursor-not-allowed disabled:opacity-30"><ArrowUp size={16}/></button>
         <button type="button" onClick={onBajar} disabled={!puedeBajar} aria-label={`Bajar ${alimento.nombre}`} title="Mover abajo" className="rounded-lg border border-[#d6e5da] bg-white p-1.5 text-[#246b55] disabled:cursor-not-allowed disabled:opacity-30"><ArrowDown size={16}/></button>
       </div>
