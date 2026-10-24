@@ -375,9 +375,22 @@ function PlanesAlimenticiosPage() {
     let activo = true
     setReferenciaNutricional(null)
     setErrorReferencia('')
-    client.get('/calculo-nutricional/' + pacienteId)
-      .then(({ data }) => { if (activo) setReferenciaNutricional({ calculo: data.calculos?.[0] || null, expediente: data.expediente || null }) })
-      .catch(() => { if (activo) setErrorReferencia('No se pudo consultar la referencia nutricional.') })
+    // Consultar el expediente directamente: los objetivos son independientes
+    // de que el paciente tenga un cálculo nutricional guardado.
+    Promise.allSettled([
+      client.get('/expedientes/' + pacienteId),
+      client.get('/calculo-nutricional/' + pacienteId),
+    ]).then(([expedienteRespuesta, calculoRespuesta]) => {
+      if (!activo) return
+      const expediente = expedienteRespuesta.status === 'fulfilled'
+        ? expedienteRespuesta.value.data.expediente : null
+      const calculo = calculoRespuesta.status === 'fulfilled'
+        ? calculoRespuesta.value.data.calculos?.[0] || null : null
+      setReferenciaNutricional({ expediente, calculo })
+      if (expedienteRespuesta.status === 'rejected') {
+        setErrorReferencia('No fue posible cargar el expediente clínico. Comprueba la conexión.')
+      }
+    })
     return () => { activo = false }
   }, [pacienteId])
 
