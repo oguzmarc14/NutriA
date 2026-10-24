@@ -162,6 +162,9 @@ function PlanesAlimenticiosPage() {
   const [referenciaNutricional, setReferenciaNutricional] = useState(null)
   const [errorReferencia, setErrorReferencia] = useState('')
   const [modoAsistido, setModoAsistido] = useState(false)
+  const [mostrarGuia, setMostrarGuia] = useState(false)
+  const [mostrarEleccion, setMostrarEleccion] = useState(false)
+  const eleccionMostrada = useRef('')
   const [distribucion, setDistribucion] = useState([25, 40, 35])
   const { cerrarTrabajo, iniciarTrabajo, pacienteTrabajo } =
     usePacienteTrabajo()
@@ -395,6 +398,13 @@ function PlanesAlimenticiosPage() {
     })
     return () => { activo = false }
   }, [pacienteId])
+
+  useEffect(() => {
+    if (!pacienteId || !referenciaNutricional || planEditandoId) return
+    if (eleccionMostrada.current === pacienteId) return
+    eleccionMostrada.current = pacienteId
+    setMostrarEleccion(true)
+  }, [pacienteId, referenciaNutricional, planEditandoId])
 
   /*
    * ----------------------------------------------------
@@ -1246,9 +1256,22 @@ function PlanesAlimenticiosPage() {
       : cantidadComidas >= 5
         ? ['Desayuno', 'Colación matutina', 'Comida', 'Colación vespertina', 'Cena']
         : ['Desayuno', 'Comida', 'Cena']
-    const horas = nombres.length === 3 ? ['08:00', '14:30', '20:30'] :
+    const horasPredeterminadas = nombres.length === 3 ? ['08:00', '14:30', '20:30'] :
       nombres.length === 4 ? ['08:00', '11:30', '14:30', '20:30'] :
       ['08:00', '11:30', '14:30', '17:30', '20:30']
+    // El expediente registra primera y última comida, no el horario de cada una.
+    // Respetamos los extremos y distribuimos los tiempos intermedios de forma editable.
+    const convertirMinutos = valor => {
+      if (!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(valor || '')) return null
+      const [h, m] = valor.split(':').map(Number)
+      return h * 60 + m
+    }
+    const inicio = convertirMinutos(nutricion.primeraComida)
+    const fin = convertirMinutos(nutricion.ultimaComida)
+    const minutosHora = minutos => String(Math.floor(minutos / 60)).padStart(2, '0') + ':' + String(minutos % 60).padStart(2, '0')
+    const horas = inicio !== null && fin !== null && fin > inicio
+      ? nombres.map((_, i) => minutosHora(Math.round((inicio + (fin - inicio) * i / (nombres.length - 1)) / 5) * 5))
+      : horasPredeterminadas.map((hora, i) => i === 0 && inicio !== null ? minutosHora(inicio) : i === nombres.length - 1 && fin !== null ? minutosHora(fin) : hora)
     const nuevas = nombres.map((n, i) => crearComidaInicial(n, horas[i]))
     setComidas(nuevas)
     setComidaActivaId(nuevas[0].id)
@@ -1262,6 +1285,7 @@ function PlanesAlimenticiosPage() {
     setDistribucion(nombres.length === 3 ? [25, 40, 35] :
       nombres.length === 4 ? [25, 10, 40, 25] : [20, 10, 35, 10, 25])
     setModoAsistido(true)
+    setMostrarEleccion(false)
     setError('')
     setMensaje('Estructura preparada con los datos del expediente y el cálculo. Agrega alimentos y revisa las metas antes de guardar.')
   }
@@ -1284,6 +1308,7 @@ function PlanesAlimenticiosPage() {
     setObjetivo(plan.objetivo || '')
     setFechaPlan(obtenerFechaActual())
     setModoAsistido(false)
+    setMostrarEleccion(false)
     setError('')
     setMensaje('Plan anterior duplicado como borrador nuevo. Revisa los alimentos y cantidades antes de guardar.')
     formularioPlanRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -1902,40 +1927,28 @@ function PlanesAlimenticiosPage() {
               </p>
             </div>
 
-            {referenciaNutricional && (
-              <div className="mb-6 rounded-2xl border border-[#d2e3d8] bg-white/85 px-4 py-4 sm:px-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-extrabold uppercase tracking-[.14em] text-[#4d816f]">Guía del tratamiento</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {(() => {
-                        const n = referenciaNutricional.expediente?.nutricion || {}
-                        const etiquetas = {
-                          perdida_peso: 'Pérdida de peso',
-                          incremento_masa: 'Incremento de masa muscular',
-                          imagen_personal: 'Imagen personal',
-                          salud: 'Mejorar la salud',
-                          rendimiento_deportivo: 'Rendimiento deportivo',
-                          control_enfermedades: 'Control de enfermedades',
-                          otro: n.objetivoOtro?.trim() || 'Otro objetivo',
-                        }
-                        const objetivos = [...new Set([...(Array.isArray(n.objetivos) ? n.objetivos : []), n.objetivoPrincipal].filter(Boolean))]
-                        return objetivos.length ? objetivos.map(valor => <span key={valor} className="rounded-full bg-[#e3f0e7] px-3 py-1 text-xs font-bold text-[#246b55]">{etiquetas[valor] || valor}</span>) : <span className="text-xs text-[#648073]">Sin objetivos registrados en el expediente</span>
-                      })()}
-                    </div>
-                  </div>
-                  <button type="button" onClick={() => navigate('/calculo-nutricional')} className="rounded-xl border border-[#c8ddd2] px-3 py-2 text-xs font-bold text-[#246b55] hover:bg-[#eef5f1]">Cálculo nutricional →</button>
+            {referenciaNutricional && <div className="mb-5 rounded-2xl border border-[#d2e3d8] bg-white/90">
+              <button type="button" aria-expanded={mostrarGuia} onClick={() => setMostrarGuia(v => !v)}
+                className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-extrabold text-[#173f34]">
+                <span className="flex items-center gap-2"><Sparkles size={17} className="text-[#4d816f]"/> Guía del tratamiento y recomendaciones</span>
+                {mostrarGuia ? <ChevronUp size={18}/> : <ChevronDown size={18}/>}
+              </button>
+              {mostrarGuia && <div className="border-t border-[#e1eae3] px-4 pb-4 pt-3">
+                <p className="mb-2 text-xs text-[#648073]">Consulta objetivos, restricciones y el cálculo antes de ajustar el menú.</p>
+                <div className="flex flex-wrap gap-2">
+                  {(referenciaNutricional.expediente?.nutricion?.objetivos || []).map(v =>
+                    <span key={v} className="rounded-full bg-[#e3f0e7] px-3 py-1 text-xs text-[#246b55]">{({
+                      perdida_peso:'Pérdida de peso', incremento_masa:'Incremento de masa muscular',
+                      rendimiento_deportivo:'Rendimiento deportivo', salud:'Mejorar la salud',
+                      control_enfermedades:'Control de enfermedades', imagen_personal:'Imagen personal',
+                    })[v] || v}</span>)}
                 </div>
-                {referenciaNutricional.calculo ? <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-[#e1eae3] pt-3 text-sm text-[#52716a]">
-                  <span><strong className="text-[#173f34]">{referenciaNutricional.calculo.resultado?.objetivoKcal ?? '—'} kcal</strong> objetivo</span>
-                  <span><strong className="text-[#173f34]">{referenciaNutricional.calculo.resultado?.proteinasGramos ?? '—'} g</strong> proteína</span>
-                  <span><strong className="text-[#173f34]">{referenciaNutricional.calculo.resultado?.carbohidratosGramos ?? '—'} g</strong> carbohidratos</span>
-                  <span><strong className="text-[#173f34]">{referenciaNutricional.calculo.resultado?.grasasGramos ?? '—'} g</strong> grasas</span>
-                  <span className="text-xs text-[#8b987f]">Referencia del último borrador</span>
-                </div> : <p className="mt-2 text-xs text-[#648073]">Sin cálculo guardado. Puedes seguir creando un plan libre.</p>}
-                {(referenciaNutricional.expediente?.alergias || referenciaNutricional.expediente?.nutricion?.intoleranciasAlimentarias) && <p className="mt-3 text-xs font-semibold text-amber-800">Revisar restricciones: {[referenciaNutricional.expediente.alergias, referenciaNutricional.expediente.nutricion?.intoleranciasAlimentarias].filter(Boolean).join(' · ')}</p>}
-              </div>
-            )}
+                {objetivosReferencia && <p className="mt-3 text-sm text-[#52716a]">Meta: <strong>{objetivosReferencia.objetivoKcal} kcal</strong> · {objetivosReferencia.proteinasGramos} g proteína · {objetivosReferencia.carbohidratosGramos} g carbohidratos · {objetivosReferencia.grasasGramos} g grasas</p>}
+                <p className="mt-2 text-xs text-[#648073]">Comidas habituales: {referenciaNutricional.expediente?.nutricion?.numeroComidasDia || 'sin registrar'} · Primera: {referenciaNutricional.expediente?.nutricion?.primeraComida || 'sin registrar'} · Última: {referenciaNutricional.expediente?.nutricion?.ultimaComida || 'sin registrar'}</p>
+                <p className="mt-2 text-xs text-[#648073]">Alergias: {referenciaNutricional.expediente?.alergias || 'sin registrar'} · Intolerancias: {referenciaNutricional.expediente?.nutricion?.intoleranciasAlimentarias || 'sin registrar'}</p>
+                <button type="button" onClick={() => navigate('/calculo-nutricional')} className="mt-3 text-xs font-bold text-[#246b55] underline underline-offset-4">Abrir cálculo nutricional →</button>
+              </div>}
+            </div>}
 
             {errorReferencia && <p className="mb-4 text-xs text-amber-800">{errorReferencia}</p>}
 
@@ -2026,26 +2039,11 @@ function PlanesAlimenticiosPage() {
                 </label>
               </div>
 
-              {!planEditandoId && <div className="mb-6 grid gap-3 sm:grid-cols-3">
-                <button type="button" onClick={prepararPlanAsistido} disabled={!objetivosReferencia}
-                  className="rounded-2xl border border-[#9dc9ad] bg-[#e5f2e9] p-4 text-left transition hover:bg-[#d8ebdf] disabled:cursor-not-allowed disabled:opacity-50">
-                  <Sparkles size={19} className="mb-2 text-[#246b55]"/>
-                  <span className="block text-sm font-extrabold text-[#173f34]">Plan asistido</span>
-                  <span className="mt-1 block text-xs text-[#52716a]">Prepara tiempos de comida y objetivos usando el cálculo.</span>
-                </button>
-                <button type="button" onClick={() => planes.length && duplicarPlan(planes[0])} disabled={!planes.length}
-                  className="rounded-2xl border border-[#d2e3d8] bg-white p-4 text-left transition hover:bg-[#f0f7f3] disabled:cursor-not-allowed disabled:opacity-50">
-                  <Save size={19} className="mb-2 text-[#246b55]"/>
-                  <span className="block text-sm font-extrabold text-[#173f34]">Duplicar último plan</span>
-                  <span className="mt-1 block text-xs text-[#52716a]">Reutiliza comidas y alimentos para el seguimiento.</span>
-                </button>
-                <button type="button" onClick={() => { if (comidas.some(c => c.alimentos.length) && !window.confirm('¿Reiniciar el borrador actual?')) return; cancelarEdicion(); setModoAsistido(false); setMensaje('Editor libre listo.') }}
-                  className="rounded-2xl border border-[#d2e3d8] bg-white p-4 text-left transition hover:bg-[#f0f7f3]">
-                  <Apple size={19} className="mb-2 text-[#246b55]"/>
-                  <span className="block text-sm font-extrabold text-[#173f34]">Desde cero</span>
-                  <span className="mt-1 block text-xs text-[#52716a]">Conserva el editor manual de siempre.</span>
-                </button>
-              </div>}
+              {!planEditandoId && <button type="button" onClick={() => setMostrarEleccion(true)}
+                className="mb-5 flex w-full items-center justify-between gap-3 rounded-xl border border-[#c9dfd0] bg-white px-4 py-3 text-left text-sm font-bold text-[#246b55] hover:bg-[#edf5f0]">
+                <span className="flex items-center gap-2"><Sparkles size={17}/> {modoAsistido ? 'Plan asistido activo · Cambiar modalidad' : 'Elegir modalidad de creación del plan'}</span>
+                <ChevronDown size={17}/>
+              </button>}
 
               {objetivosReferencia && <div className="mb-6 rounded-2xl border border-[#c9dfd0] bg-white p-4 sm:p-5">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -2830,6 +2828,32 @@ function PlanesAlimenticiosPage() {
           </>
         )}
       </div>
+      {mostrarEleccion && pacienteId && !planEditandoId && <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#173f34]/45 p-4" onMouseDown={e => { if (e.target === e.currentTarget) setMostrarEleccion(false) }}>
+        <div role="dialog" aria-modal="true" aria-labelledby="modal-modalidad-plan" className="w-full max-w-lg rounded-3xl border border-[#d5e5da] bg-white p-5 shadow-2xl sm:p-7">
+          <div className="flex items-start justify-between gap-4">
+            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#e1f0e7] text-[#246b55]"><Sparkles size={23}/></div>
+            <button type="button" aria-label="Cerrar" onClick={() => setMostrarEleccion(false)} className="rounded-lg p-2 text-[#648073] hover:bg-[#edf5f0]"><X size={19}/></button>
+          </div>
+          <h2 id="modal-modalidad-plan" className="mt-4 text-xl font-extrabold text-[#173f34]">¿Cómo quieres crear este plan?</h2>
+          <p className="mt-1 text-sm text-[#648073]">Elige cómo comenzar. Puedes cambiar de modalidad antes de guardar.</p>
+          <div className="mt-5 space-y-2">
+            <button type="button" disabled={!objetivosReferencia} onClick={prepararPlanAsistido}
+              className="flex w-full items-start gap-3 rounded-2xl border border-[#a7d0b5] bg-[#eaf5ed] p-4 text-left hover:bg-[#dcefe2] disabled:opacity-50">
+              <Sparkles size={20} className="mt-0.5 shrink-0 text-[#246b55]"/><span><strong className="block text-sm text-[#173f34]">Plan asistido</strong><span className="mt-1 block text-xs text-[#52716a]">Usa objetivos, cantidad de comidas y horarios del expediente. {objetivosReferencia ? 'Cálculo disponible.' : 'Requiere cálculo guardado.'}</span></span>
+            </button>
+            <button type="button" disabled={!planes.length} onClick={() => duplicarPlan(planes[0])}
+              className="flex w-full items-start gap-3 rounded-2xl border border-[#d2e3d8] p-4 text-left hover:bg-[#f0f7f3] disabled:opacity-50">
+              <Save size={20} className="mt-0.5 shrink-0 text-[#246b55]"/><span><strong className="block text-sm text-[#173f34]">Duplicar último plan</strong><span className="mt-1 block text-xs text-[#52716a]">Recupera alimentos y cantidades para ajustarlos.</span></span>
+            </button>
+            <button type="button" onClick={() => { if (comidas.some(c => c.alimentos.length) && !window.confirm('¿Reiniciar el borrador actual?')) return; cancelarEdicion(); setModoAsistido(false); setMostrarEleccion(false) }}
+              className="flex w-full items-start gap-3 rounded-2xl border border-[#d2e3d8] p-4 text-left hover:bg-[#f0f7f3]">
+              <Apple size={20} className="mt-0.5 shrink-0 text-[#246b55]"/><span><strong className="block text-sm text-[#173f34]">Desde cero</strong><span className="mt-1 block text-xs text-[#52716a]">Editor libre, sin modificar tu información clínica.</span></span>
+            </button>
+          </div>
+          <button type="button" onClick={() => setMostrarEleccion(false)} className="mt-4 w-full rounded-xl px-4 py-2 text-sm font-semibold text-[#648073] hover:bg-[#f0f7f3]">Decidir después</button>
+        </div>
+      </div>}
+
     </section>
   )
 }
