@@ -42,7 +42,7 @@ export default function MiClinicaPage() {
     } catch(err) {setError(err.response?.data?.message || 'No fue posible guardar los cambios.')}
     finally {setGuardando(false)}
   }
-  return <section className="mx-auto max-w-3xl p-4 md:p-8">
+  return <section className="mx-auto max-w-[1480px] p-4 md:p-8">
     <button type="button" onClick={() => navigate('/')} className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-[#246b55]"><ArrowLeft size={16}/>Volver al resumen</button>
     <h1 className="text-3xl font-extrabold text-[#173f34]">Mi clínica</h1>
     <p className="mt-1 text-sm text-[#708779]">Personaliza la identidad de tu consultorio.</p>
