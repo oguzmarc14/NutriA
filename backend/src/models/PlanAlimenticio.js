@@ -187,6 +187,8 @@ const comidaSchema =
         trim: true,
       },
 
+      porcentajeDistribucion: { type: Number, min: 0, max: 100, default: null },
+
       platillo: {
         type: String,
         trim: true,
