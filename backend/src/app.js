@@ -12,6 +12,7 @@ const perfilPacienteRoutes = require('./routes/perfilPaciente.routes')
 const seguimientoComidaRoutes = require('./routes/seguimientoComida.routes')
 
 const clinicaRoutes = require('./routes/clinica.routes')
+const calculoNutricionalRoutes = require('./routes/calculoNutricional.routes')
 
 const app = express()
 
@@ -80,6 +81,7 @@ app.use(
 )
 
 app.use('/api/clinica', clinicaRoutes)
+app.use('/api/calculo-nutricional', calculoNutricionalRoutes)
 
 app.use(
   '/api/usuarios',

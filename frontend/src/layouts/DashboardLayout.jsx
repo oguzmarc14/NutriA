@@ -18,6 +18,7 @@ import {
   X,
   ArrowLeftRight,
   UserRoundCheck,
+  Calculator,
 } from 'lucide-react'
 
 import {
@@ -97,6 +98,13 @@ function DashboardLayout() {
           },
 
           {
+            icon: Calculator,
+            label: 'Cálculo nutricional',
+            shortLabel: 'Cálculo',
+            to: '/calculo-nutricional',
+          },
+
+          {
             icon: Apple,
             label: 'Planes alimenticios',
             shortLabel: 'Planes',
@@ -156,6 +164,7 @@ function DashboardLayout() {
     ? [
         { icon: ClipboardPlus, label: 'Expediente clínico', shortLabel: 'Expediente', to: `/pacientes/${pacienteTrabajo.id}/expediente` },
         { icon: Ruler, label: 'Mediciones', shortLabel: 'Medidas', to: '/mediciones' },
+        { icon: Calculator, label: 'Cálculo nutricional', shortLabel: 'Cálculo', to: '/calculo-nutricional' },
         { icon: Apple, label: 'Plan alimenticio', shortLabel: 'Planes', to: '/planes' },
         { icon: TrendingUp, label: 'Progreso', shortLabel: 'Progreso', to: '/progreso' },
         { icon: Users, label: 'Pacientes', shortLabel: 'Pacientes', to: '/pacientes' },
@@ -195,6 +204,7 @@ function DashboardLayout() {
     '/pacientes',
     '/mediciones',
     '/planes',
+    '/calculo-nutricional',
     '/usuarios',
     '/mi-expediente',
     '/mis-mediciones',
