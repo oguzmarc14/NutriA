@@ -99,6 +99,26 @@ export default function CalculoNutricionalPage() {
           <div><p className="text-xs text-[#648073]">Paciente activo</p><h2 className="font-bold text-[#173f34]">{pacienteTrabajo.name}</h2></div></div>
         <span className="rounded-full bg-[#f0f5ef] px-3 py-1 text-xs font-semibold text-[#4d816f]">Fórmula Mifflin-St Jeor · Adultos</span>
       </div>
+      {datos && <div className={tarjeta + ' space-y-3'}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div><h2 className="font-extrabold text-[#173f34]">Contexto del expediente clínico</h2>
+          <p className="mt-1 text-xs text-[#648073]">Información registrada previamente para revisar antes de calcular.</p></div>
+          <button type="button" onClick={() => navigate('/pacientes/' + pacienteTrabajo.id + '/expediente')} className="rounded-xl border border-[#c8ddd2] px-3 py-2 text-xs font-bold text-[#246b55] hover:bg-[#eef5f1]">Abrir expediente →</button>
+        </div>
+        {datos.expediente ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            ['Objetivo', datos.expediente.nutricion?.objetivoPrincipal],
+            ['Alergias', datos.expediente.alergias],
+            ['Intolerancias', datos.expediente.nutricion?.intoleranciasAlimentarias],
+            ['Enfermedades', datos.expediente.enfermedades],
+            ['Medicamentos', datos.expediente.medicamentos],
+            ['Comidas al día', datos.expediente.nutricion?.numeroComidasDia],
+          ].map(([label, value]) => <div key={label} className="rounded-xl bg-[#f1f6f2] p-3">
+            <p className="text-xs font-semibold text-[#648073]">{label}</p><p className="mt-1 whitespace-pre-wrap break-words text-sm font-semibold text-[#173f34]">{value || 'No registrado'}</p>
+          </div>)}
+        </div> : <p className="text-sm text-amber-800">Este paciente aún no tiene expediente clínico registrado. Revísalo antes de diseñar un plan.</p>}
+        <p className="text-xs text-[#648073]">Estos datos se consultan automáticamente, pero no sustituyen la revisión del nutriólogo ni modifican la ecuación sin su autorización.</p>
+      </div>}
       {cargando && <p className="text-sm text-[#648073]">Cargando mediciones y cálculos...</p>}
       {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {exito && <p role="status" className="rounded-xl border border-[#b8dcc4] bg-[#ecf7ee] p-3 text-sm text-[#246b55]">{exito}</p>}

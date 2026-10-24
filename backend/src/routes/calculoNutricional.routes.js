@@ -3,6 +3,7 @@ const { z } = require('zod')
 const mongoose = require('mongoose')
 const Pacientes = require('../models/Pacientes')
 const Medicion = require('../models/Medicion')
+const ExpedienteClinico = require('../models/ExpedienteClinico')
 const Calculo = require('../models/CalculoNutricional')
 const { requireAuth, allowRoles } = require('../middleware/auth.middleware')
 const router = express.Router()
@@ -35,11 +36,12 @@ router.get('/:pacienteId', async (req, res, next) => {
   try {
     const paciente = await verificarPaciente(req, res)
     if (!paciente) return
-    const [mediciones, calculos] = await Promise.all([
+    const [mediciones, calculos, expediente] = await Promise.all([
       Medicion.find({ paciente: paciente._id, nutritionist: req.user.id }).sort({ fecha: -1 }).limit(20).lean(),
       Calculo.find({ paciente: paciente._id, nutritionist: req.user.id }).sort({ createdAt: -1 }).limit(20).lean(),
+      ExpedienteClinico.findOne({ paciente: paciente._id, nutritionist: req.user.id }).lean(),
     ])
-    return res.json({ paciente, mediciones, calculos })
+    return res.json({ paciente, mediciones, calculos, expediente })
   } catch (error) { next(error) }
 })
 

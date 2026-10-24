@@ -4,7 +4,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import {
   Apple,
@@ -158,6 +158,9 @@ const coloresPaciente = [
 
 function PlanesAlimenticiosPage() {
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const [referenciaNutricional, setReferenciaNutricional] = useState(null)
+  const [errorReferencia, setErrorReferencia] = useState('')
   const { cerrarTrabajo, iniciarTrabajo, pacienteTrabajo } =
     usePacienteTrabajo()
   const pacienteSolicitado = searchParams.get('paciente') || ''
@@ -365,6 +368,17 @@ function PlanesAlimenticiosPage() {
     }
 
     cargarPlanes()
+  }, [pacienteId])
+
+  useEffect(() => {
+    if (!pacienteId) { setReferenciaNutricional(null); setErrorReferencia(''); return }
+    let activo = true
+    setReferenciaNutricional(null)
+    setErrorReferencia('')
+    client.get('/calculo-nutricional/' + pacienteId)
+      .then(({ data }) => { if (activo) setReferenciaNutricional({ calculo: data.calculos?.[0] || null, expediente: data.expediente || null }) })
+      .catch(() => { if (activo) setErrorReferencia('No se pudo consultar la referencia nutricional.') })
+    return () => { activo = false }
   }, [pacienteId])
 
   /*
@@ -1762,6 +1776,29 @@ function PlanesAlimenticiosPage() {
 
         {pacienteId && (
           <>
+            <div className="mb-6 rounded-2xl border border-[#d2e3d8] bg-white/90 p-5 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div><p className="text-xs font-extrabold uppercase tracking-widest text-[#4d816f]">Referencia del tratamiento</p>
+                  <h2 className="mt-1 text-lg font-extrabold text-[#173f34]">Objetivos nutricionales del paciente</h2>
+                  <p className="mt-1 text-xs text-[#648073]">Consulta el cálculo y el expediente mientras construyes el menú.</p>
+                </div>
+                <button type="button" onClick={() => navigate('/calculo-nutricional')} className="rounded-xl border border-[#c8ddd2] px-3 py-2 text-sm font-bold text-[#246b55] hover:bg-[#eef5f1]">Ver cálculo →</button>
+              </div>
+              {errorReferencia && <p className="mt-3 text-sm text-amber-700">{errorReferencia}</p>}
+              {referenciaNutricional?.calculo ? <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {[
+                  ['Objetivo energético', referenciaNutricional.calculo.resultado?.objetivoKcal, 'kcal'],
+                  ['Proteínas', referenciaNutricional.calculo.resultado?.proteinasGramos, 'g'],
+                  ['Carbohidratos', referenciaNutricional.calculo.resultado?.carbohidratosGramos, 'g'],
+                  ['Grasas', referenciaNutricional.calculo.resultado?.grasasGramos, 'g'],
+                ].map(([label, value, unit]) => <div key={label} className="rounded-xl bg-[#f1f6f2] p-3">
+                  <p className="text-xs text-[#648073]">{label}</p><p className="mt-1 text-lg font-extrabold text-[#173f34]">{value ?? '—'} {unit}</p>
+                </div>)}
+              </div> : <p className="mt-3 text-sm text-amber-800">Aún no hay cálculo nutricional guardado para este paciente. Puedes crear un plan libre, pero no tendrá objetivos calculados como referencia.</p>}
+              {referenciaNutricional?.expediente && <p className="mt-3 text-xs text-[#648073]">Objetivo clínico: {referenciaNutricional.expediente.nutricion?.objetivoPrincipal || 'Sin registrar'} · Alergias: {referenciaNutricional.expediente.alergias || 'Sin registrar'} · Intolerancias: {referenciaNutricional.expediente.nutricion?.intoleranciasAlimentarias || 'Sin registrar'}</p>}
+              <p className="mt-3 text-xs text-[#648073]">Los equivalentes por grupo (frutas, verduras, cereales, etc.) aún no están calculados. Se incorporarán con el motor SMAE y un catálogo autorizado; los gramos y calorías actuales no equivalen a porciones SMAE.</p>
+            </div>
+
             <button
               type="button"
               onClick={
