@@ -248,8 +248,8 @@ function DashboardLayout() {
         {/* MARCA */}
 
         <div className="mb-9 flex items-center gap-3 px-2">
-          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#246b55] to-[#4d816f] text-lg font-black text-white shadow-[0_8px_20px_rgba(36,107,85,0.22)]">
-            N
+          <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white shadow-[0_8px_20px_rgba(36,107,85,0.14)]">
+            <img src="/imagenes/logo-nutria.png" alt="Logotipo de NutriA" className="h-full w-full object-contain" />
           </div>
 
           <div className="min-w-0">
