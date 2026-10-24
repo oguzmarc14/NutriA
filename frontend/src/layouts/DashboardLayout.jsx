@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   Apple,
   ArrowLeft,
@@ -19,6 +20,8 @@ import {
   ArrowLeftRight,
   UserRoundCheck,
   Calculator,
+  PanelLeftOpen,
+  PanelLeftClose,
 } from 'lucide-react'
 
 import {
@@ -66,6 +69,8 @@ function DashboardLayout() {
 
   const location = useLocation()
   const navigate = useNavigate()
+  const enEditorPlanes = user.role === 'nutritionist' && location.pathname === '/planes'
+  const [sidebarPlanesVisible, setSidebarPlanesVisible] = useState(false)
 
   /*
    * ----------------------------------------------------
@@ -260,12 +265,12 @@ function DashboardLayout() {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#dfece4] md:grid md:grid-cols-[260px_minmax(0,1fr)]">
+    <div className={`min-h-screen overflow-x-hidden bg-[#dfece4] md:grid ${enEditorPlanes && !sidebarPlanesVisible ? "md:grid-cols-[0px_minmax(0,1fr)]" : "md:grid-cols-[260px_minmax(0,1fr)]"}`}>
       {/* ============================================
           SIDEBAR DESKTOP
       ============================================ */}
 
-      <aside className="hidden min-h-screen border-r border-[#c8dbd0] bg-[#eaf0e9] p-5 shadow-[6px_0_30px_rgba(36,107,85,0.05)] md:flex md:flex-col">
+      <aside className={`hidden min-h-screen overflow-hidden border-r border-[#c8dbd0] bg-[#eaf0e9] p-5 shadow-[6px_0_30px_rgba(36,107,85,0.05)] md:flex md:flex-col ${enEditorPlanes && !sidebarPlanesVisible ? "md:invisible md:p-0 md:border-0" : ""}`}>
         {/* MARCA */}
 
         <div className="mb-9 flex items-center gap-3 px-2">
@@ -327,7 +332,7 @@ function DashboardLayout() {
           CONTENIDO
       ============================================ */}
 
-      <main className="relative min-w-0 overflow-x-hidden bg-[#dfece4]">
+      <main className="relative min-w-0 overflow-x-clip bg-[#dfece4]">
         {/* ============================================
             HEADER
         ============================================ */}
@@ -348,6 +353,12 @@ function DashboardLayout() {
           </div>
         </header>
         <div className="sticky top-0 z-40 hidden h-[52px] items-center justify-between gap-3 border-b border-[#c8dbd0] bg-[#eaf0e9]/95 px-5 text-[#173f34] backdrop-blur-md md:flex">
+          {enEditorPlanes && <button type="button" onClick={() => setSidebarPlanesVisible(v => !v)}
+            title={sidebarPlanesVisible ? 'Ocultar menú lateral' : 'Mostrar menú lateral'}
+            aria-label={sidebarPlanesVisible ? 'Ocultar menú lateral' : 'Mostrar menú lateral'}
+            className="mr-2 grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[#246b55] hover:bg-[#d8ebe0]">
+            {sidebarPlanesVisible ? <PanelLeftClose size={18}/> : <PanelLeftOpen size={18}/>}
+          </button>}
           {user.role === 'nutritionist' ? (
             <div className="flex min-w-0 items-center gap-2">
               <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${pacienteTrabajo ? 'bg-[#e1f0e7] text-[#246b55]' : 'bg-[#edf2ed] text-[#82968b]'}`}>
@@ -379,7 +390,7 @@ function DashboardLayout() {
             FONDO GLOBAL
         ============================================ */}
 
-        <div className="relative min-h-[calc(100vh-56px)] overflow-hidden bg-[#dfece4]">
+        <div className="relative min-h-[calc(100vh-56px)] overflow-x-clip bg-[#dfece4]">
           {/* DECORACIONES */}
 
           <div className="pointer-events-none absolute -right-32 -top-36 h-[420px] w-[420px] rounded-full bg-[#b5d2bf]/45 blur-3xl" />
@@ -392,7 +403,7 @@ function DashboardLayout() {
 
           {/* CONTENIDO */}
 
-          <div className="relative z-10 min-h-[calc(100vh-64px)] min-w-0 overflow-x-hidden pb-[92px] md:pb-0">
+          <div className="relative z-10 min-h-[calc(100vh-64px)] min-w-0 overflow-x-clip pb-[92px] md:pb-0">
             <Outlet />
           </div>
         </div>
