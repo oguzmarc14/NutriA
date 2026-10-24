@@ -1,4 +1,4 @@
-import { CheckCircle2, Pencil, RefreshCw, Trash2, ArrowUpRight, BriefcaseMedical, Clock3, CheckCheck, MessageCircle, CalendarDays, CalendarClock, Activity, TrendingDown } from 'lucide-react'
+import { CheckCircle2, Pencil, RefreshCw, Trash2, ArrowUpRight, BriefcaseMedical, Clock3, CheckCheck, UserRound, MessageCircle, CalendarDays, CalendarClock, Activity, TrendingDown } from 'lucide-react'
 
 function enlaceWhatsApp(telefono) {
   const numero = String(telefono || '').replace(/\D/g, '')
@@ -50,16 +50,22 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, 
           <button type="button" onClick={onEliminar} disabled={eliminando} title="Eliminar paciente" aria-label={`Eliminar a ${paciente.name}`} className="grid h-8 w-8 place-items-center rounded-lg text-[#c65a59] transition hover:bg-red-50 disabled:opacity-50"><Trash2 size={15}/></button>
         </div>
       </div>
-      <div className="relative mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-[#77848a]">
-        {edad !== null && <span className="whitespace-nowrap">{edad} años</span>}
-        {edad !== null && <span aria-hidden="true" className="text-[#a7b7ac]">·</span>}
-        <span className="whitespace-nowrap">{obtenerSexo(paciente.sex)}</span>
-        {pesoValido && (
-          <>
-            <span aria-hidden="true" className="text-[#a7b7ac]">·</span>
-            <span className="whitespace-nowrap font-bold text-[#246b55]">{peso.toFixed(1)} kg</span>
-          </>
-        )}
+      <div className="relative mt-3 rounded-2xl border border-[#d6e5da] bg-[#eaf2eb] px-3.5 py-3">
+        <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.1em] text-[#6f8d7b]">
+          <UserRound size={13} />
+          Información personal
+        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-[#405d50]">
+          {edad !== null && <span className="whitespace-nowrap">{edad} años</span>}
+          {edad !== null && <span aria-hidden="true" className="text-[#a6bbaa]">·</span>}
+          <span className="whitespace-nowrap">{obtenerSexo(paciente.sex)}</span>
+          {pesoValido && (
+            <>
+              <span aria-hidden="true" className="text-[#a6bbaa]">·</span>
+              <span className="whitespace-nowrap font-bold text-[#23694f]">{peso.toFixed(1)} kg</span>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="relative mt-4 grid grid-cols-2 gap-2.5">
