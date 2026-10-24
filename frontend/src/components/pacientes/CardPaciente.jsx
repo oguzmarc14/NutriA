@@ -1,4 +1,4 @@
-import { CalendarDays, CheckCircle2, Mail, Pencil, Phone, RefreshCw, Trash2, ArrowUpRight, Leaf } from 'lucide-react'
+import { CalendarDays, CheckCircle2, Mail, Pencil, Phone, RefreshCw, Trash2, ArrowUpRight, BriefcaseMedical, Leaf } from 'lucide-react'
 
 function DatoPaciente({ icon: Icon, label, value, accent = false }) {
   return (
@@ -20,7 +20,7 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, 
     ? new Intl.DateTimeFormat('es-MX', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(paciente.birthDate))
     : 'Sin registrar'
   return (
-    <article className="group relative isolate flex h-full min-h-[430px] min-w-0 flex-col overflow-hidden rounded-[28px] border border-[#e3e8e1] bg-[#f6f8f3] p-4 shadow-[0_10px_25px_-18px_rgba(25,70,55,.28)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#b9d8c8] hover:shadow-[0_16px_28px_-17px_rgba(25,70,55,.3)] sm:p-5">
+    <article className={`group relative isolate flex h-full min-h-[390px] min-w-0 flex-col overflow-hidden rounded-[28px] border border-[#e3e8e1] bg-[#f6f8f3] ${trabajando ? "ring-2 ring-[#39b985] border-[#39b985]" : ""} p-4 shadow-[0_10px_25px_-18px_rgba(25,70,55,.28)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#b9d8c8] hover:shadow-[0_16px_28px_-17px_rgba(25,70,55,.3)] sm:p-5`}>
       <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-14 h-36 w-36 rounded-full bg-[#e9f2e8]" />
 
       <div className="relative flex min-w-0 items-start gap-3">
@@ -39,6 +39,18 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, 
           <button type="button" onClick={onEditar} disabled={eliminando} title="Editar paciente" aria-label={`Editar a ${paciente.name}`} className="grid h-8 w-8 place-items-center rounded-xl text-[#23614e] transition hover:bg-[#e4f1e8] disabled:opacity-50"><Pencil size={16}/></button>
           <button type="button" onClick={onEliminar} disabled={eliminando} title="Eliminar paciente" aria-label={`Eliminar a ${paciente.name}`} className="grid h-8 w-8 place-items-center rounded-xl text-[#c65a59] transition hover:bg-red-50 disabled:opacity-50"><Trash2 size={16}/></button>
         </div>
+      </div>
+
+      <div className="relative mt-3 flex flex-wrap items-center justify-end gap-2">
+        <button type="button" onClick={onTrabajar} aria-label={trabajando ? `Continuar trabajando con ${paciente.name}` : `Trabajar con ${paciente.name}`} className={`group/action inline-flex min-h-11 items-stretch overflow-hidden rounded-xl border text-sm font-bold shadow-[0_5px_12px_-7px_rgba(18,107,82,.55)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_15px_-7px_rgba(18,107,82,.65)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#126b52] ${trabajando ? 'border-[#4abf8d] bg-[#dcf5e6] text-[#126b52]' : 'border-[#126b52] bg-[#126b52] text-white'}`}>
+          <span className="inline-flex items-center gap-2 px-3.5 py-2.5">
+            <BriefcaseMedical size={17} strokeWidth={2.1}/>
+            {trabajando ? 'En trabajo' : 'Trabajar'}
+          </span>
+          <span className={`inline-flex w-10 items-center justify-center border-l transition-colors ${trabajando ? 'border-[#a7dec3] bg-[#c8eed9] group-hover/action:bg-[#b5e7cd]' : 'border-white/15 bg-[#0b543f] group-hover/action:bg-[#084631]'}`}>
+            {trabajando ? <CheckCircle2 size={17}/> : <ArrowUpRight size={18}/>}
+          </span>
+        </button>
       </div>
 
       <div className="relative mt-5 grid gap-3 rounded-[20px] border border-[#d9e5dc] bg-[#f0f5ef] p-3.5">
@@ -71,11 +83,6 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, 
         <p className="relative mt-3 flex items-center gap-1.5 text-[11px] font-semibold text-[#47846d]"><CheckCircle2 size={13}/> Cuenta de paciente activa</p>
       )}
 
-      <div className="relative mt-auto flex justify-end pt-5">
-        <button type="button" onClick={onTrabajar} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[#126b52] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_4px_10px_-6px_rgba(18,107,82,.6)] transition hover:bg-[#0d5945] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#126b52]">
-          {trabajando ? 'Trabajando' : 'Trabajar'} <ArrowUpRight size={17}/>
-        </button>
-      </div>
     </article>
   )
 }
