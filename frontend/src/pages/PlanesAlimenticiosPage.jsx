@@ -189,6 +189,21 @@ function PlanesAlimenticiosPage() {
   const [modalidadSeleccionada, setModalidadSeleccionada] = useState(null)
   const eleccionMostrada = useRef('')
   const [distribucion, setDistribucion] = useState([25, 40, 35])
+  const [confirmacion, setConfirmacion] = useState(null)
+  const confirmacionResolver = useRef(null)
+  function pedirConfirmacion(mensaje, titulo = 'Confirmar acción', peligro = false) {
+    return new Promise(resolve => {
+      if (confirmacionResolver.current) confirmacionResolver.current(false)
+      confirmacionResolver.current = resolve
+      setConfirmacion({ mensaje, titulo, peligro })
+    })
+  }
+  function resolverConfirmacion(aceptar) {
+    confirmacionResolver.current?.(aceptar)
+    confirmacionResolver.current = null
+    setConfirmacion(null)
+  }
+  useEffect(() => () => { confirmacionResolver.current?.(false) }, [])
   const [asistenteEquivalentes, setAsistenteEquivalentes] = useState(null)
   const [mostrarEquivalentes, setMostrarEquivalentes] = useState(false)
   const [panelBalanceVisible, setPanelBalanceVisible] = useState(true)
@@ -261,11 +276,11 @@ function PlanesAlimenticiosPage() {
   function renombrarPreparacion(comidaId, preparacionId, nombre) {
     setComidas(actuales => actuales.map(c => c.id === comidaId ? { ...c, preparaciones: c.preparaciones.map(p => p.id === preparacionId ? { ...p, nombre } : p) } : c))
   }
-  function quitarPreparacion(comidaId, preparacionId) {
+  async function quitarPreparacion(comidaId, preparacionId) {
     const comida = comidas.find(c => c.id === comidaId)
     if (!comida || comida.preparaciones.length <= 1) return
     const vinculados = comida.alimentos.filter(a => a.preparacionId === preparacionId)
-    if (vinculados.length && !window.confirm('¿Eliminar esta preparación y sus alimentos?')) return
+    if (vinculados.length && !(await pedirConfirmacion('¿Eliminar esta preparación y sus alimentos?', 'Eliminar preparación', true))) return
     setComidas(actuales => actuales.map(c => c.id === comidaId ? { ...c, preparaciones: c.preparaciones.filter(p => p.id !== preparacionId), alimentos: c.alimentos.filter(a => a.preparacionId !== preparacionId) } : c))
     setPreparacionActivaPorComida(actual => ({ ...actual, [comidaId]: comida.preparaciones.find(p => p.id !== preparacionId).id }))
   }
@@ -518,13 +533,16 @@ function PlanesAlimenticiosPage() {
     )
 
     setComidas((actuales) => [...actuales, nueva])
+    setDistribucion(actual => [...actual, 0])
     setComidaActivaId(nueva.id)
     setMostrarMenuComidas(false)
   }
 
-  function eliminarComida(
+  async function eliminarComida(
     comidaId,
   ) {
+    if (!(await pedirConfirmacion('¿Eliminar este tiempo de comida y todos sus alimentos?', 'Eliminar comida', true))) return
+    setDistribucion(actual => actual.filter((_, i) => comidas[i]?.id !== comidaId))
     setComidas(
       (actuales) => {
         const restantes = actuales.filter(
@@ -607,6 +625,16 @@ function PlanesAlimenticiosPage() {
     const limites = event.currentTarget.getBoundingClientRect()
     const colocarDespues = event.clientX > limites.left + limites.width / 2
 
+    setDistribucion(actual => {
+      const origen = comidas.findIndex(c => c.id === origenId)
+      const destinoOriginal = comidas.findIndex(c => c.id === destinoId)
+      if (origen < 0 || destinoOriginal < 0) return actual
+      const copia = [...actual]
+      const [valor] = copia.splice(origen, 1)
+      const destino = comidas.filter(c => c.id !== origenId).findIndex(c => c.id === destinoId)
+      copia.splice(destino + (colocarDespues ? 1 : 0), 0, valor)
+      return copia
+    })
     setComidas((actuales) => {
       const origen = actuales.findIndex((comida) => comida.id === origenId)
       const destinoOriginal = actuales.findIndex((comida) => comida.id === destinoId)
@@ -630,6 +658,7 @@ function PlanesAlimenticiosPage() {
 
       if (origen < 0 || destino < 0 || destino >= actuales.length) return actuales
 
+      setDistribucion(actual => { const copia = [...actual]; const [valor] = copia.splice(origen, 1); copia.splice(destino, 0, valor); return copia })
       const reordenadas = [...actuales]
       const [movida] = reordenadas.splice(origen, 1)
       reordenadas.splice(destino, 0, movida)
@@ -969,10 +998,11 @@ function PlanesAlimenticiosPage() {
     }))
   }
 
-  function eliminarAlimento(
+  async function eliminarAlimento(
     comidaId,
     alimentoId,
   ) {
+    if (!(await pedirConfirmacion('¿Quitar este alimento de la preparación?', 'Quitar alimento', true))) return
     setComidas(
       (actuales) =>
         actuales.map(
@@ -1338,25 +1368,25 @@ function PlanesAlimenticiosPage() {
     acc[grupo] = (acc[grupo] || 0) + (Number(alimento.cantidad) || 0)
     return acc
   }, {})
-  function confirmarModalidad() {
+  async function confirmarModalidad() {
     if (!modalidadSeleccionada) return
-    if (modalidadSeleccionada === 'asistido') prepararPlanAsistido()
-    if (modalidadSeleccionada === 'duplicar' && planes.length) duplicarPlan(planes[0])
+    if (modalidadSeleccionada === 'asistido' && !(await prepararPlanAsistido())) return
+    if (modalidadSeleccionada === 'duplicar' && planes.length && !(await duplicarPlan(planes[0]))) return
     if (modalidadSeleccionada === 'libre') {
-      if (comidas.some(c => c.alimentos.length > 0) && !window.confirm('¿Reiniciar el borrador actual?')) return
+      if (comidas.some(c => c.alimentos.length > 0) && !(await pedirConfirmacion('¿Reiniciar el borrador actual? Se perderán los cambios sin guardar.', 'Reiniciar borrador', true))) return
       cancelarEdicion()
       setModoAsistido(false)
       setMostrarEleccion(false)
     }
     setModalidadSeleccionada(null)
   }
-  function prepararPlanAsistido() {
+  async function prepararPlanAsistido() {
     if (!objetivosReferencia) {
       setError('Para preparar un plan asistido, guarda primero un cálculo nutricional.')
-      return
+      return false
     }
-    if (planEditandoId && !window.confirm('¿Reemplazar las comidas de la edición actual por una estructura vacía?')) return
-    if (comidas.some(comida => comida.alimentos.length > 0) && !window.confirm('¿Reemplazar las comidas actuales? Se perderán los alimentos aún no guardados.')) return
+    if (planEditandoId && !(await pedirConfirmacion('¿Reemplazar las comidas de la edición actual por una estructura vacía?', 'Reemplazar comidas', true))) return false
+    if (comidas.some(comida => comida.alimentos.length > 0) && !(await pedirConfirmacion('¿Reemplazar las comidas actuales? Se perderán los alimentos aún no guardados.', 'Reemplazar comidas', true))) return false
     const nutricion = referenciaNutricional?.expediente?.nutricion || {}
     const objetivos = Array.isArray(nutricion.objetivos) ? nutricion.objetivos : []
     const cantidadComidas = Number(nutricion.numeroComidasDia)
@@ -1397,9 +1427,10 @@ function PlanesAlimenticiosPage() {
     setMostrarEleccion(false)
     setError('')
     setMensaje('')
+    return true
   }
-  function duplicarPlan(plan) {
-    if (comidas.some(comida => comida.alimentos.length > 0) && !window.confirm('¿Reemplazar el borrador actual con una copia del plan seleccionado?')) return
+  async function duplicarPlan(plan) {
+    if (comidas.some(comida => comida.alimentos.length > 0) && !(await pedirConfirmacion('¿Reemplazar el borrador actual con una copia del plan seleccionado?', 'Duplicar plan', true))) return false
     const copias = (plan.comidas || []).map(comida => ({
       id: `${Date.now()}-${Math.random()}`,
       nombre: comida.nombre || '',
@@ -1420,8 +1451,10 @@ function PlanesAlimenticiosPage() {
     setModoAsistido(false)
     setMostrarEleccion(false)
     setError('')
-    setMensaje('Plan anterior duplicado como borrador nuevo. Revisa los alimentos y cantidades antes de guardar.')
+    setMensaje('')
+    setDistribucion((plan.comidas || []).map(c => Number(c.porcentajeDistribucion) || 0))
     formularioPlanRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    return true
   }
 
   /*
@@ -1474,6 +1507,13 @@ function PlanesAlimenticiosPage() {
       return
     }
 
+    const totalPorcentajes = comidas.reduce((suma, _, indice) => suma + (Number(distribucion[indice]) || 0), 0)
+    if (objetivosReferencia && Math.abs(totalPorcentajes - 100) > 0.01) {
+      setError(`La distribución de comidas debe sumar 100 %. Actualmente suma ${totalPorcentajes} %.`)
+      return
+    }
+    if (!(await pedirConfirmacion(planEditandoId ? '¿Quieres guardar los cambios de este plan alimenticio?' : '¿Quieres guardar este nuevo plan alimenticio?', planEditandoId ? 'Guardar cambios' : 'Guardar plan'))) return
+
     try {
       const tipoGuardado = planEditandoId ? 'editado' : 'creado'
 
@@ -1487,6 +1527,8 @@ function PlanesAlimenticiosPage() {
             ...(/^[a-f\d]{24}$/i.test(comida.id)
               ? { _id: comida.id }
               : {}),
+
+            porcentajeDistribucion: objetivosReferencia ? (Number(distribucion[comidas.findIndex(item => item.id === comida.id)]) || 0) : null,
 
             nombre:
               comida.nombre.trim(),
@@ -1652,12 +1694,14 @@ function PlanesAlimenticiosPage() {
     setObjetivo(plan.objetivo || '')
     setFechaPlan((plan.fechaInicio || plan.createdAt || '').slice(0, 10))
     setComidas(comidasEditables.length > 0 ? comidasEditables.map(normalizarPreparaciones) : crearComidasIniciales())
+    const guardados = (plan.comidas || []).map(comida => comida.porcentajeDistribucion)
+    setDistribucion(guardados.some(valor => valor != null) ? guardados.map(valor => Number(valor) || 0) : (comidasEditables.length ? comidasEditables.map((_, i) => Math.floor(100 / comidasEditables.length) + (i === comidasEditables.length - 1 ? 100 % comidasEditables.length : 0)) : [25, 40, 35]))
     setComidaActivaId(comidasEditables[0]?.id || '')
     setBusquedasAlimentos({})
     setResultadosAlimentos({})
     setMostrarResultados({})
     setError('')
-    setMensaje('Editando plan alimenticio.')
+    setMensaje('')
     formularioPlanRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
@@ -1674,9 +1718,7 @@ function PlanesAlimenticiosPage() {
   }
 
   async function eliminarPlan(plan) {
-    const confirmado = window.confirm(
-      `¿Eliminar definitivamente el plan "${plan.nombre}"?`,
-    )
+    const confirmado = await pedirConfirmacion(`¿Eliminar definitivamente el plan "${plan.nombre}"?`, 'Eliminar plan', true)
 
     if (!confirmado) return
 
@@ -3006,6 +3048,16 @@ function PlanesAlimenticiosPage() {
           </>
         )}
       </div>
+      {confirmacion && <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#173f34]/55 p-4" onMouseDown={event => { if (event.target === event.currentTarget) resolverConfirmacion(false) }}>
+        <div role="alertdialog" aria-modal="true" aria-labelledby="titulo-confirmacion-plan" aria-describedby="mensaje-confirmacion-plan" className="w-full max-w-md rounded-3xl border border-[#d5e5da] bg-white p-5 shadow-2xl sm:p-7">
+          <div className="mb-4 flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#e1f0e7] text-[#246b55]">{confirmacion.peligro ? <Trash2 size={20}/> : <Save size={20}/>}</span><h2 id="titulo-confirmacion-plan" className="text-lg font-extrabold text-[#173f34]">{confirmacion.titulo}</h2></div>
+          <p id="mensaje-confirmacion-plan" className="text-sm leading-6 text-[#52716a]">{confirmacion.mensaje}</p>
+          <div className="mt-6 flex justify-end gap-2">
+            <button type="button" onClick={() => resolverConfirmacion(false)} className="rounded-xl border border-[#cbded2] bg-white px-4 py-2.5 text-sm font-bold text-[#246b55] hover:bg-[#f1f7f3]">Cancelar</button>
+            <button type="button" autoFocus onClick={() => resolverConfirmacion(true)} className={`rounded-xl px-4 py-2.5 text-sm font-bold text-white ${confirmacion.peligro ? 'bg-[#a33c3c] hover:bg-[#852d2d]' : 'bg-[#246b55] hover:bg-[#173f34]'}`}>Aceptar</button>
+          </div>
+        </div>
+      </div>}
       {mostrarEleccion && pacienteId && !planEditandoId && <div className="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto overscroll-contain bg-[#173f34]/45 p-3 sm:p-4" onMouseDown={e => { if (e.target === e.currentTarget) { setModalidadSeleccionada(null); setMostrarEleccion(false) } }}>
         <div role="dialog" aria-modal="true" aria-labelledby="modal-modalidad-plan" className="my-auto max-h-[calc(100dvh-24px)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-3xl border border-[#d5e5da] bg-white p-5 shadow-2xl sm:p-7">
           <div className="flex items-start justify-between gap-4">
