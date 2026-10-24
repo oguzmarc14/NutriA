@@ -164,6 +164,7 @@ function PlanesAlimenticiosPage() {
   const [modoAsistido, setModoAsistido] = useState(false)
   const [mostrarGuia, setMostrarGuia] = useState(false)
   const [mostrarEleccion, setMostrarEleccion] = useState(false)
+  const [modalidadSeleccionada, setModalidadSeleccionada] = useState(null)
   const eleccionMostrada = useRef('')
   const [distribucion, setDistribucion] = useState([25, 40, 35])
   const { cerrarTrabajo, iniciarTrabajo, pacienteTrabajo } =
@@ -1241,6 +1242,18 @@ function PlanesAlimenticiosPage() {
     acc[grupo] = (acc[grupo] || 0) + (Number(alimento.cantidad) || 0)
     return acc
   }, {})
+  function confirmarModalidad() {
+    if (!modalidadSeleccionada) return
+    if (modalidadSeleccionada === 'asistido') prepararPlanAsistido()
+    if (modalidadSeleccionada === 'duplicar' && planes.length) duplicarPlan(planes[0])
+    if (modalidadSeleccionada === 'libre') {
+      if (comidas.some(c => c.alimentos.length > 0) && !window.confirm('¿Reiniciar el borrador actual?')) return
+      cancelarEdicion()
+      setModoAsistido(false)
+      setMostrarEleccion(false)
+    }
+    setModalidadSeleccionada(null)
+  }
   function prepararPlanAsistido() {
     if (!objetivosReferencia) {
       setError('Para preparar un plan asistido, guarda primero un cálculo nutricional.')
@@ -2039,7 +2052,7 @@ function PlanesAlimenticiosPage() {
                 </label>
               </div>
 
-              {!planEditandoId && <button type="button" onClick={() => setMostrarEleccion(true)}
+              {!planEditandoId && <button type="button" onClick={() => { setModalidadSeleccionada(null); setMostrarEleccion(true) }}
                 className="mb-5 flex w-full items-center justify-between gap-3 rounded-xl border border-[#c9dfd0] bg-white px-4 py-3 text-left text-sm font-bold text-[#246b55] hover:bg-[#edf5f0]">
                 <span className="flex items-center gap-2"><Sparkles size={17}/> {modoAsistido ? 'Plan asistido activo · Cambiar modalidad' : 'Elegir modalidad de creación del plan'}</span>
                 <ChevronDown size={17}/>
@@ -2837,20 +2850,34 @@ function PlanesAlimenticiosPage() {
           <h2 id="modal-modalidad-plan" className="mt-4 text-xl font-extrabold text-[#173f34]">¿Cómo quieres crear este plan?</h2>
           <p className="mt-1 text-sm text-[#648073]">Elige cómo comenzar. Puedes cambiar de modalidad antes de guardar.</p>
           <div className="mt-5 space-y-2">
-            <button type="button" disabled={!objetivosReferencia} onClick={prepararPlanAsistido}
+            <button type="button" disabled={!objetivosReferencia} onClick={() => setModalidadSeleccionada('asistido')}
+              aria-pressed={modalidadSeleccionada === 'asistido'}
               className="flex w-full items-start gap-3 rounded-2xl border border-[#a7d0b5] bg-[#eaf5ed] p-4 text-left hover:bg-[#dcefe2] disabled:opacity-50">
               <Sparkles size={20} className="mt-0.5 shrink-0 text-[#246b55]"/><span><strong className="block text-sm text-[#173f34]">Plan asistido</strong><span className="mt-1 block text-xs text-[#52716a]">Usa objetivos, cantidad de comidas y horarios del expediente. {objetivosReferencia ? 'Cálculo disponible.' : 'Requiere cálculo guardado.'}</span></span>
             </button>
-            <button type="button" disabled={!planes.length} onClick={() => duplicarPlan(planes[0])}
+            <button type="button" disabled={!planes.length} onClick={() => setModalidadSeleccionada('duplicar')}
+              aria-pressed={modalidadSeleccionada === 'duplicar'}
               className="flex w-full items-start gap-3 rounded-2xl border border-[#d2e3d8] p-4 text-left hover:bg-[#f0f7f3] disabled:opacity-50">
               <Save size={20} className="mt-0.5 shrink-0 text-[#246b55]"/><span><strong className="block text-sm text-[#173f34]">Duplicar último plan</strong><span className="mt-1 block text-xs text-[#52716a]">Recupera alimentos y cantidades para ajustarlos.</span></span>
             </button>
-            <button type="button" onClick={() => { if (comidas.some(c => c.alimentos.length) && !window.confirm('¿Reiniciar el borrador actual?')) return; cancelarEdicion(); setModoAsistido(false); setMostrarEleccion(false) }}
+            <button type="button" onClick={() => setModalidadSeleccionada('libre')}
+              aria-pressed={modalidadSeleccionada === 'libre'}
               className="flex w-full items-start gap-3 rounded-2xl border border-[#d2e3d8] p-4 text-left hover:bg-[#f0f7f3]">
               <Apple size={20} className="mt-0.5 shrink-0 text-[#246b55]"/><span><strong className="block text-sm text-[#173f34]">Desde cero</strong><span className="mt-1 block text-xs text-[#52716a]">Editor libre, sin modificar tu información clínica.</span></span>
             </button>
           </div>
-          <button type="button" onClick={() => setMostrarEleccion(false)} className="mt-4 w-full rounded-xl px-4 py-2 text-sm font-semibold text-[#648073] hover:bg-[#f0f7f3]">Decidir después</button>
+          {modalidadSeleccionada && <div className="mt-4 rounded-xl border border-[#c8ddd2] bg-[#f1f7f3] p-3">
+            <p className="text-sm font-extrabold text-[#173f34]">¿Confirmas esta modalidad?</p>
+            <p className="mt-1 text-xs text-[#52716a]">{{
+              asistido: 'Preparar un plan asistido con el expediente y cálculo del paciente.',
+              duplicar: 'Crear una copia independiente del último plan registrado.',
+              libre: 'Comenzar un plan nuevo desde cero.',
+            }[modalidadSeleccionada]} {comidas.some(c => c.alimentos.length > 0) ? 'El borrador actual podría reemplazarse.' : ''}</p>
+          </div>}
+          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <button type="button" onClick={() => { setModalidadSeleccionada(null); setMostrarEleccion(false) }} className="rounded-xl border border-[#c8ddd2] bg-white px-5 py-2.5 text-sm font-bold text-[#52716a]">Cancelar</button>
+            <button type="button" disabled={!modalidadSeleccionada} onClick={confirmarModalidad} className="rounded-xl bg-[#246b55] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-40">Confirmar selección</button>
+          </div>
         </div>
       </div>}
 
