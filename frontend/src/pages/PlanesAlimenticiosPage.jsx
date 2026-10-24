@@ -8,6 +8,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import {
   Apple,
+  Coffee,
   ArrowLeft,
   CalendarDays,
   CheckCircle2,
@@ -46,6 +47,16 @@ import { usePacienteTrabajo } from '../context/pacienteTrabajo'
  * ----------------------------------------------------
  */
 
+function crearPreparacion(tipo = 'platillo', nombre = '') {
+  return { id: `prep-${Date.now()}-${Math.random().toString(36).slice(2)}`, tipo, nombre }
+}
+
+function normalizarPreparaciones(comida) {
+  const existentes = Array.isArray(comida.preparaciones) ? comida.preparaciones : []
+  const preparaciones = existentes.length ? existentes : [crearPreparacion('platillo', comida.platillo || '')]
+  return { ...comida, preparaciones, alimentos: (comida.alimentos || []).map(a => ({ ...a, preparacionId: preparaciones.some(p => p.id === a.preparacionId) ? a.preparacionId : preparaciones[0].id })) }
+}
+
 function crearComidaInicial(
   nombre = '',
   hora = '',
@@ -54,6 +65,7 @@ function crearComidaInicial(
     id: `${Date.now()}-${Math.random()}`,
     nombre,
     platillo: '',
+    preparaciones: [crearPreparacion()],
     hora,
     alimentos: [],
   }
@@ -219,6 +231,8 @@ function PlanesAlimenticiosPage() {
   const [comidas, setComidas] =
     useState(crearComidasIniciales)
 
+  const [preparacionActivaPorComida, setPreparacionActivaPorComida] = useState({})
+
   const [comidaActivaId, setComidaActivaId] =
     useState('')
 
@@ -231,6 +245,26 @@ function PlanesAlimenticiosPage() {
   const comidaActiva =
     comidas.find((comida) => comida.id === comidaActivaId) ||
     comidas[0]
+
+  function preparacionActiva(comida) {
+    return preparacionActivaPorComida[comida.id] || comida.preparaciones?.[0]?.id || ''
+  }
+  function agregarPreparacion(comidaId, tipo) {
+    const nueva = crearPreparacion(tipo)
+    setComidas(actuales => actuales.map(c => c.id === comidaId ? { ...c, preparaciones: [...(c.preparaciones || []), nueva] } : c))
+    setPreparacionActivaPorComida(actual => ({ ...actual, [comidaId]: nueva.id }))
+  }
+  function renombrarPreparacion(comidaId, preparacionId, nombre) {
+    setComidas(actuales => actuales.map(c => c.id === comidaId ? { ...c, preparaciones: c.preparaciones.map(p => p.id === preparacionId ? { ...p, nombre } : p) } : c))
+  }
+  function quitarPreparacion(comidaId, preparacionId) {
+    const comida = comidas.find(c => c.id === comidaId)
+    if (!comida || comida.preparaciones.length <= 1) return
+    const vinculados = comida.alimentos.filter(a => a.preparacionId === preparacionId)
+    if (vinculados.length && !window.confirm('¿Eliminar esta preparación y sus alimentos?')) return
+    setComidas(actuales => actuales.map(c => c.id === comidaId ? { ...c, preparaciones: c.preparaciones.filter(p => p.id !== preparacionId), alimentos: c.alimentos.filter(a => a.preparacionId !== preparacionId) } : c))
+    setPreparacionActivaPorComida(actual => ({ ...actual, [comidaId]: comida.preparaciones.find(p => p.id !== preparacionId).id }))
+  }
 
   /*
    * CATÁLOGO DE ALIMENTOS
@@ -752,7 +786,7 @@ function PlanesAlimenticiosPage() {
                   item.tipo ===
                     'catalogo' &&
                   item.alimentoId ===
-                    alimento._id,
+                    alimento._id && item.preparacionId === preparacionActiva(comida),
               )
 
             if (yaExiste) {
@@ -764,7 +798,7 @@ function PlanesAlimenticiosPage() {
                       item.tipo ===
                         'catalogo' &&
                       item.alimentoId ===
-                        alimento._id
+                        alimento._id && item.preparacionId === preparacionActiva(comida)
                         ? {
                             ...item,
                             cantidad:
@@ -821,6 +855,7 @@ function PlanesAlimenticiosPage() {
                 },
 
               cantidad: 1,
+              preparacionId: preparacionActiva(comida),
 
               notas: '',
             }
@@ -1108,7 +1143,7 @@ function PlanesAlimenticiosPage() {
                   ...comida,
                   alimentos: [
                     ...comida.alimentos,
-                    nuevo,
+                    { ...nuevo, preparacionId: preparacionActiva(comida) },
                   ],
                 }
               : comida,
@@ -1334,13 +1369,14 @@ function PlanesAlimenticiosPage() {
       id: `${Date.now()}-${Math.random()}`,
       nombre: comida.nombre || '',
       platillo: comida.platillo || '',
+      preparaciones: comida.preparaciones || [],
       hora: comida.hora || '',
       alimentos: (comida.alimentos || []).map(alimento => ({
         ...alimento, id: `${Date.now()}-${Math.random()}`,
         alimentoId: typeof alimento.alimento === 'object' ? alimento.alimento?._id : alimento.alimento,
       })),
     }))
-    setComidas(copias.length ? copias : crearComidasIniciales())
+    setComidas(copias.length ? copias.map(normalizarPreparaciones) : crearComidasIniciales())
     setComidaActivaId(copias[0]?.id || '')
     setPlanEditandoId('')
     setNombre((plan.nombre || 'Plan') + ' (copia)')
@@ -1388,8 +1424,7 @@ function PlanesAlimenticiosPage() {
         (comida) =>
           comida.nombre
             .trim() &&
-          comida.platillo
-            .trim() &&
+          (comida.preparaciones || []).some(p => p.nombre.trim()) &&
           comida.alimentos
             .length > 0,
       )
@@ -1399,7 +1434,7 @@ function PlanesAlimenticiosPage() {
       0
     ) {
       setError(
-        'Agrega el nombre del platillo y por lo menos un alimento.',
+        'Agrega al menos una preparación con nombre y un alimento.',
       )
       return
     }
@@ -1422,7 +1457,8 @@ function PlanesAlimenticiosPage() {
               comida.nombre.trim(),
 
             platillo:
-              comida.platillo?.trim() || '',
+              comida.preparaciones?.find(p => p.tipo === 'platillo')?.nombre?.trim() || '',
+            preparaciones: comida.preparaciones.map(p => ({ id: p.id, nombre: p.nombre.trim(), tipo: p.tipo })),
 
             hora:
               comida.hora || '',
@@ -1452,6 +1488,7 @@ function PlanesAlimenticiosPage() {
                         alimento.alimentoId,
 
                       cantidad,
+                      preparacionId: alimento.preparacionId || comida.preparaciones[0]?.id || '',
 
                       notas:
                         alimento.notas
@@ -1478,6 +1515,7 @@ function PlanesAlimenticiosPage() {
                       alimento.nutrimentos,
 
                     cantidad,
+                    preparacionId: alimento.preparacionId || comida.preparaciones[0]?.id || '',
 
                     notas:
                       alimento.notas
@@ -1563,6 +1601,7 @@ function PlanesAlimenticiosPage() {
       nombre: comida.nombre || '',
       platillo: comida.platillo || '',
       hora: comida.hora || '',
+      preparaciones: comida.preparaciones || [],
       alimentos: (comida.alimentos || []).map((alimento) => ({
         ...alimento,
         id: alimento._id || `${Date.now()}-${Math.random()}`,
@@ -1577,7 +1616,7 @@ function PlanesAlimenticiosPage() {
     setNombre(plan.nombre || '')
     setObjetivo(plan.objetivo || '')
     setFechaPlan((plan.fechaInicio || plan.createdAt || '').slice(0, 10))
-    setComidas(comidasEditables.length > 0 ? comidasEditables : crearComidasIniciales())
+    setComidas(comidasEditables.length > 0 ? comidasEditables.map(normalizarPreparaciones) : crearComidasIniciales())
     setComidaActivaId(comidasEditables[0]?.id || '')
     setBusquedasAlimentos({})
     setResultadosAlimentos({})
@@ -2298,7 +2337,7 @@ function PlanesAlimenticiosPage() {
                           <div className="space-y-5 p-4 sm:p-5">
                             {/* DATOS COMIDA */}
 
-                            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)_minmax(0,170px)]">
+                            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,170px)]">
                               <CampoTexto
                                 label="Tiempo de comida *"
                                 value={
@@ -2316,14 +2355,6 @@ function PlanesAlimenticiosPage() {
                                 placeholder="Desayuno"
                               />
 
-                              <CampoTexto
-                                label="Nombre del platillo *"
-                                value={comida.platillo}
-                                onChange={(valor) => cambiarComida(comida.id, 'platillo', valor)}
-                                placeholder="Ej. ensalada de pollo"
-                                required
-                              />
-
                               <label className="block min-w-0 max-w-full overflow-hidden">
                                 <span className="mb-1.5 block text-sm font-semibold text-slate-700">Hora</span>
                                 <input
@@ -2334,6 +2365,36 @@ function PlanesAlimenticiosPage() {
                                 />
                               </label>
                             </div>
+
+                            <section className="rounded-2xl border border-[#cfe0d6] bg-[#f5faf6] p-3 sm:p-4" aria-label="Platillos y bebidas del tiempo de comida">
+                              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                                <div><h4 className="text-sm font-extrabold text-[#173f34]">Platillos y bebidas</h4><p className="text-xs text-[#648073]">Selecciona dónde agregar los ingredientes del catálogo.</p></div>
+                                <div className="flex flex-wrap gap-2">
+                                  <button type="button" onClick={() => agregarPreparacion(comida.id, 'platillo')} className="inline-flex items-center gap-1.5 rounded-xl border border-[#b7d6c2] bg-white px-3 py-2 text-xs font-bold text-[#246b55] hover:bg-[#e6f2e9]"><Plus size={14}/><Utensils size={14}/> Platillo</button>
+                                  <button type="button" onClick={() => agregarPreparacion(comida.id, 'bebida')} className="inline-flex items-center gap-1.5 rounded-xl border border-[#b7d6c2] bg-white px-3 py-2 text-xs font-bold text-[#246b55] hover:bg-[#e6f2e9]"><Plus size={14}/><Coffee size={14}/> Bebida</button>
+                                </div>
+                              </div>
+                              <div className="grid gap-2 sm:grid-cols-2">
+                                {(comida.preparaciones || []).map((p, pi) => {
+                                  const activos = comida.alimentos.filter(a => a.preparacionId === p.id)
+                                  const subtotalPreparacion = calcularTotales(activos)
+                                  const seleccionado = preparacionActiva(comida) === p.id
+                                  return <div key={p.id} className={`rounded-xl border p-3 transition ${seleccionado ? 'border-[#246b55] bg-[#e5f2e9] shadow-sm' : 'border-[#d8e8dd] bg-white'}`}>
+                                    <div className="flex items-center gap-2">
+                                      <button type="button" onClick={() => setPreparacionActivaPorComida(actual => ({...actual, [comida.id]: p.id}))} aria-pressed={seleccionado}
+                                        className="flex min-w-0 flex-1 items-center gap-2 text-left text-xs font-bold text-[#173f34]">
+                                        {p.tipo === 'bebida' ? <Coffee size={16}/> : <Utensils size={16}/>}
+                                        {p.tipo === 'bebida' ? 'Bebida' : 'Platillo'} {pi + 1} {seleccionado && <CheckCircle2 size={15} className="text-[#246b55]"/>}
+                                      </button>
+                                      {comida.preparaciones.length > 1 && <button type="button" onClick={() => quitarPreparacion(comida.id, p.id)} title="Eliminar preparación" aria-label="Eliminar preparación" className="text-red-500 hover:text-red-700"><Trash2 size={15}/></button>}
+                                    </div>
+                                    <input aria-label={`Nombre de ${p.tipo} ${pi + 1}`} value={p.nombre} onFocus={() => setPreparacionActivaPorComida(actual => ({...actual, [comida.id]: p.id}))} onChange={e => renombrarPreparacion(comida.id, p.id, e.target.value)}
+                                      placeholder={p.tipo === 'bebida' ? 'Ej. Café con leche' : 'Ej. Huevos con verduras'} className="mt-2 w-full rounded-lg border border-[#cbded2] bg-white px-3 py-2 text-sm text-[#173f34] outline-none focus:border-[#246b55]"/>
+                                    <p className="mt-2 text-[11px] font-semibold text-[#52716a]">{activos.length} alimentos · {numero(subtotalPreparacion.kcal, 0)} kcal</p>
+                                  </div>
+                                })}
+                              </div>
+                            </section>
 
                             {/* BUSCADOR */}
 
@@ -2606,39 +2667,16 @@ function PlanesAlimenticiosPage() {
                                 )}
                               </div>
 
-                              {comida
-                                .alimentos
-                                .length ===
-                              0 ? (
-                                <div className="rounded-2xl border border-dashed border-[#cadcd2] bg-[#f7faf8] p-7 text-center">
-                                  <Apple
-                                    size={
-                                      28
-                                    }
-                                    className="mx-auto mb-2 text-[#84a496]"
-                                  />
-
-                                  <p className="text-sm font-bold text-[#173f34]">
-                                    Aún no
-                                    hay
-                                    alimentos
-                                  </p>
-
-                                  <p className="mt-1 text-xs text-slate-500">
-                                    Utiliza
-                                    el
-                                    buscador
-                                    de arriba
-                                    para
-                                    comenzar.
-                                  </p>
-                                </div>
-                              ) : (
-                                <div className="space-y-3">
-                                  {comida.alimentos.map(
-                                    (
-                                      alimento,
-                                    ) => (
+                              <div className="space-y-3">
+                                {(comida.preparaciones || []).map(p => {
+                                  const alimentosPreparacion = comida.alimentos.filter(a => a.preparacionId === p.id)
+                                  const totalPreparacion = calcularTotales(alimentosPreparacion)
+                                  return <div key={p.id} className="rounded-2xl border border-[#d8e8dd] bg-white p-3">
+                                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                                      <span className="flex items-center gap-2 text-sm font-extrabold text-[#173f34]">{p.tipo === 'bebida' ? <Coffee size={16}/> : <Utensils size={16}/>} {p.nombre || (p.tipo === 'bebida' ? 'Bebida sin nombre' : 'Platillo sin nombre')}</span>
+                                      <span className="text-xs font-bold text-[#246b55]">{numero(totalPreparacion.kcal, 0)} kcal</span>
+                                    </div>
+                                    {alimentosPreparacion.length ? <div className="space-y-3">{alimentosPreparacion.map(alimento => (
                                       <AlimentoAgregado
                                         key={
                                           alimento.id
@@ -2676,10 +2714,10 @@ function PlanesAlimenticiosPage() {
                                           )
                                         }
                                       />
-                                    ),
-                                  )}
-                                </div>
-                              )}
+                                    ))}</div> : <p className="rounded-xl bg-[#f5faf6] p-3 text-xs text-[#648073]">Sin ingredientes. Selecciona esta preparación arriba para agregar alimentos.</p>}
+                                  </div>
+                                })}
+                              </div>
                             </div>
 
                             {mostrarDistribucion && <div className="mt-3 rounded-xl border border-[#cfe0d6] bg-[#f0f7f2] px-3 py-2.5">
@@ -2696,7 +2734,7 @@ function PlanesAlimenticiosPage() {
                               0 && (
                               <ResumenNutricional
                                 titulo={`Total de ${
-                                  comida.platillo || comida.nombre ||
+                                  comida.nombre ||
                                   `comida ${
                                     index +
                                     1
