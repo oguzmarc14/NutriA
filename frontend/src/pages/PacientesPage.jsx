@@ -121,10 +121,6 @@ function PacientesPage() {
     setError('')
     setMostrarFormulario(true)
 
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    })
   }
 
   function cancelarFormulario() {
@@ -368,11 +364,15 @@ function PacientesPage() {
         ============================================ */}
 
         {mostrarFormulario && (
+          <div className={pacienteEditando ? 'fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-[#102e24]/55 p-3 backdrop-blur-[3px] sm:p-6' : ''}>
           <form
             onSubmit={
               guardarPaciente
             }
-            className="mb-7 overflow-hidden rounded-3xl border border-[#cfe0d6] bg-white/85 p-4 shadow-[0_14px_40px_rgba(32,78,64,0.08)] backdrop-blur sm:p-5 md:p-6"
+            role={pacienteEditando ? 'dialog' : undefined}
+            aria-modal={pacienteEditando ? 'true' : undefined}
+            aria-label={pacienteEditando ? 'Editar paciente' : undefined}
+            className={`overflow-hidden rounded-3xl border border-[#cfe0d6] bg-white/95 p-4 shadow-[0_14px_40px_rgba(32,78,64,0.08)] backdrop-blur sm:p-5 md:p-6 ${pacienteEditando ? 'my-auto max-h-[calc(100dvh-24px)] w-full max-w-2xl overflow-y-auto sm:max-h-[calc(100dvh-48px)]' : 'mb-7'}`}
           >
             <div className="mb-6 flex items-start gap-3">
               <div className="min-w-0 flex-1">
@@ -531,6 +531,10 @@ function PacientesPage() {
               </div>
             </div>
 
+            {pacienteEditando && error && (
+              <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>
+            )}
+
             {/* BOTONES */}
 
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -562,11 +566,12 @@ function PacientesPage() {
               </button>
             </div>
           </form>
+          </div>
         )}
 
         {/* ERROR */}
 
-        {error && (
+        {error && !pacienteEditando && (
           <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
           </div>
