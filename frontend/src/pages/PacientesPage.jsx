@@ -347,7 +347,7 @@ function PacientesPage() {
                   Trabajando con: {pacienteTrabajo.name || 'Paciente activo'}
                 </span>
                 <button type="button" onClick={cerrarTrabajo} title="Dejar de trabajar con este paciente" aria-label="Dejar de trabajar con el paciente" className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-white px-2 py-1.5 text-xs font-bold text-[#a63c3c] transition hover:bg-red-50">
-                  <X size={13}/> Cerrar
+                  <X size={13}/> Dejar de trabajar
                 </button>
               </div>
             )}
