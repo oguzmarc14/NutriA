@@ -17,7 +17,7 @@ function MiPlanPage() {
   )
 
   return (
-    <section className="mx-auto min-w-0 max-w-6xl overflow-x-hidden p-4 sm:p-5 md:p-8">
+    <section className="mx-auto min-w-0 max-w-[1480px] overflow-x-hidden p-4 sm:p-5 md:p-8">
       <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div><p className="mb-2 text-sm font-bold uppercase tracking-[0.16em] text-[#4d816f]">Mi alimentacion</p><h1 className="text-3xl font-extrabold tracking-tight text-[#173f34]">Mi plan alimenticio</h1><p className="mt-2 text-slate-500">Selecciona una fecha para consultar las comidas preparadas por tu nutriologo.</p></div>
         <label className="block min-w-0 max-w-full w-full overflow-hidden sm:max-w-xs"><span className="mb-2 flex items-center gap-2 text-sm font-bold text-[#48685c]"><CalendarDays size={17} />Fecha del menú</span><input type="date" value={fechaSeleccionada} onChange={(event) => setFechaSeleccionada(event.target.value)} className="block min-w-0 max-w-full w-full rounded-xl border border-[#c9ddd3] bg-white px-3 py-3 font-bold text-[#173f34] outline-none focus:border-[#4d816f] sm:px-4" /></label>

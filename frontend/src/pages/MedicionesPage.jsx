@@ -585,7 +585,7 @@ function MedicionesPage() {
 
   return (
     <section className="min-h-screen min-w-0 overflow-x-hidden bg-transparent px-4 py-7 sm:px-5 md:px-8 md:py-9">
-      <div className="mx-auto min-w-0 max-w-7xl">
+      <div className="mx-auto min-w-0 max-w-[1480px]">
         {/* ============================================
             VISTA PRINCIPAL DE PACIENTES
         ============================================ */}
@@ -701,17 +701,7 @@ function MedicionesPage() {
 
         {pacienteId && (
           <>
-            <button
-              type="button"
-              onClick={regresarPacientes}
-              className="mb-5 inline-flex items-center gap-2 rounded-xl border border-[#c8ddd2] bg-white/70 px-4 py-2 text-sm font-bold text-[#246b55] transition hover:bg-white"
-            >
-              <ArrowLeft size={16} />
-
-              Volver a pacientes
-            </button>
-
-            <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+<div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="mb-2 text-sm font-bold uppercase tracking-[0.16em] text-[#4d816f]">Mediciones</p>
                 <h1 className="text-3xl font-extrabold tracking-tight text-[#173f34] md:text-4xl">{pacienteSeleccionado?.name || 'Seguimiento de mediciones'}</h1>

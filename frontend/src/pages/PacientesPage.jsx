@@ -350,7 +350,7 @@ function PacientesPage() {
           navigate(`/pacientes/${pacienteCreado._id}/expediente`)
         }}
       />
-      <div className="mx-auto w-full max-w-6xl">
+      <div className="mx-auto w-full max-w-[1480px]">
         {/* ============================================
             HEADER
         ============================================ */}

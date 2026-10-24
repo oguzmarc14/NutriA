@@ -15,7 +15,7 @@ function MiExpedientePage() {
   const expediente = perfil?.expediente
 
   return (
-    <section className="mx-auto max-w-6xl p-5 md:p-8">
+    <section className="mx-auto max-w-[1480px] p-5 md:p-8">
       <div className="mb-8"><p className="mb-2 text-sm font-bold uppercase tracking-[0.16em] text-[#4d816f]">Mi informacion</p><h1 className="text-3xl font-extrabold tracking-tight text-[#173f34]">Mi expediente</h1><p className="mt-2 text-slate-500">Consulta la informacion registrada por tu nutriologo.</p></div>
 
       <EstadoCargaPaciente loading={loading} error={error} vacio={!loading && !error && !paciente}>
