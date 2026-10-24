@@ -1621,7 +1621,7 @@ function PlanesAlimenticiosPage() {
         />
       )}
 
-      <div className="mx-auto max-w-7xl">
+      <div className="mx-auto max-w-[1480px]">
         {/* ============================================
             SELECCIÓN DE PACIENTE
         ============================================ */}
