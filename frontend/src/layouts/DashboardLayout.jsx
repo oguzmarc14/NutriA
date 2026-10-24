@@ -7,6 +7,9 @@ import {
   TrendingUp,
   UserCog,
   UserRound,
+  ChevronDown,
+  Settings,
+  UserPen,
   Users,
 } from 'lucide-react'
 
@@ -20,6 +23,33 @@ import {
 import { useAuth } from '../context/auth'
 import BotonInstalarApp from '../components/pwa/BotonInstalarApp'
 import BarraPacienteTrabajo from '../components/pacientes/BarraPacienteTrabajo'
+
+function PerfilMenu({ user, roleLabel, cerrarSesion }) {
+  return (
+    <details className="group relative">
+      <summary aria-label="Abrir menú de perfil" className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-[#bcd8c7] bg-[#e3f0e7] text-[#246b55] shadow-sm transition hover:bg-[#d5e8db] [&::-webkit-details-marker]:hidden">
+        <UserRound size={20}/>
+      </summary>
+      <div className="absolute right-0 top-12 z-50 w-64 rounded-2xl border border-[#d5e3d9] bg-white p-2 shadow-[0_16px_40px_rgba(24,73,53,.18)]">
+        <div className="border-b border-[#e7eee8] px-3 py-3">
+          <p className="break-words text-sm font-extrabold text-[#173f34]">{user.name}</p>
+          <p className="text-xs text-[#74897d]">{roleLabel}</p>
+          {user.email && <p className="mt-1 break-all text-[11px] text-[#82928a]">{user.email}</p>}
+        </div>
+        <div className="my-1 flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-[#8b9b92]" title="Próximamente: edición de perfil">
+          <UserPen size={16}/> Editar perfil · Próximamente
+        </div>
+        <div className="my-1 flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-[#8b9b92]" title="Próximamente: configuración">
+          <Settings size={16}/> Configuración · Próximamente
+        </div>
+        <div className="my-2 border-t border-[#e7eee8]"/>
+        <button type="button" onClick={cerrarSesion} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-[#b94d4d] transition hover:bg-red-50">
+          <LogOut size={16}/> Cerrar sesión
+        </button>
+      </div>
+    </details>
+  )
+}
 
 function DashboardLayout() {
   const { logout, user } = useAuth()
@@ -247,109 +277,33 @@ function DashboardLayout() {
           )}
         </nav>
 
-        {/* USUARIO */}
-
-        <div className="mt-auto rounded-2xl border border-[#e6dfcf] bg-gradient-to-br from-[#faf7ef] to-[#f3eee3] p-4 shadow-sm">
-          <p className="truncate text-sm font-bold text-[#173f34]">
-            {user.name}
-          </p>
-
-          <p className="mb-3 text-xs text-slate-500">
-            {roleLabel}
-          </p>
-
-          <button
-            type="button"
-            onClick={
-              cerrarSesion
-            }
-            className="flex items-center gap-2 text-sm font-semibold text-[#246b55] transition hover:text-[#173f34]"
-          >
-            <LogOut
-              size={16}
-            />
-
-            Cerrar sesión
-          </button>
-        </div>
       </aside>
 
       {/* ============================================
           CONTENIDO
       ============================================ */}
 
-      <main className="min-w-0 overflow-x-hidden bg-[#dfece4]">
+      <main className="relative min-w-0 overflow-x-hidden bg-[#dfece4]">
         {/* ============================================
             HEADER
         ============================================ */}
 
-        <header className="sticky top-0 z-40 border-b border-[#c8dbd0] bg-[#fbfdfb]/95 shadow-[0_4px_18px_rgba(32,78,64,0.04)] backdrop-blur-md">
-          <div className="flex min-h-[64px] items-center gap-3 px-4 sm:px-5 md:px-8">
-            {/* BOTÓN ATRÁS EN MÓVIL */}
-
-            {mostrarAtras && (
-              <button
-                type="button"
-                onClick={regresar}
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#d9e5de] bg-white text-[#246b55] shadow-sm transition hover:bg-[#eef5f1] md:hidden"
-                aria-label="Volver"
-              >
-                <ArrowLeft
-                  size={19}
-                />
-              </button>
-            )}
-
-            {/* MARCA MÓVIL */}
-
-            <div className="min-w-0 md:hidden">
-              <p className="truncate text-lg font-extrabold tracking-tight text-[#173f34]">
-                NutriA
-              </p>
-
-              {mostrarAtras && (
-                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6e8d80]">
-                  Regresar
-                </p>
-              )}
-            </div>
-
-            {/* ESPACIADOR DESKTOP */}
-
-            <div className="hidden md:block" />
-
-            {/* USUARIO */}
-
-            <div className="ml-auto flex min-w-0 items-center gap-2">
-              <BotonInstalarApp />
-
-              <div className="min-w-0 text-right">
-                <p className="max-w-[150px] truncate text-xs font-bold text-[#466057] sm:max-w-[220px] sm:text-sm">
-                  {user.name}
-                </p>
-
-                <p className="hidden text-[10px] text-slate-400 sm:block md:hidden">
-                  {roleLabel}
-                </p>
-              </div>
-
-              {/* LOGOUT MÓVIL */}
-
-              <button
-                type="button"
-                onClick={
-                  cerrarSesion
-                }
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-[#60776e] transition hover:bg-[#edf4f0] hover:text-[#246b55] md:hidden"
-                aria-label="Cerrar sesión"
-              >
-                <LogOut
-                  size={17}
-                />
-              </button>
-            </div>
+        <header className="sticky top-0 z-40 flex min-h-[56px] items-center border-b border-[#c8dbd0] bg-[#fbfdfb]/95 px-4 backdrop-blur-md md:hidden">
+          {mostrarAtras && (
+            <button type="button" onClick={regresar} aria-label="Volver" className="mr-2 grid h-9 w-9 place-items-center rounded-xl text-[#246b55] hover:bg-[#e6f0e9]">
+              <ArrowLeft size={19}/>
+            </button>
+          )}
+          <p className="text-lg font-extrabold tracking-tight text-[#173f34]">NutriA</p>
+          <div className="ml-auto flex items-center gap-2">
+            <BotonInstalarApp />
+            <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion}/>
           </div>
         </header>
+        <div className="absolute right-6 top-3 z-40 hidden items-center gap-2 md:flex">
+          <BotonInstalarApp />
+          <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion}/>
+        </div>
 
         {user.role === 'nutritionist' && <BarraPacienteTrabajo />}
 
@@ -357,7 +311,7 @@ function DashboardLayout() {
             FONDO GLOBAL
         ============================================ */}
 
-        <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-[#dfece4]">
+        <div className="relative min-h-[calc(100vh-56px)] overflow-hidden bg-[#dfece4]">
           {/* DECORACIONES */}
 
           <div className="pointer-events-none absolute -right-32 -top-36 h-[420px] w-[420px] rounded-full bg-[#b5d2bf]/45 blur-3xl" />
