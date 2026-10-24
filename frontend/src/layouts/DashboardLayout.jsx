@@ -90,6 +90,13 @@ function DashboardLayout() {
             to: '/pacientes',
           },
 
+          ...(pacienteTrabajo ? [{
+            icon: ClipboardPlus,
+            label: 'Expediente clínico',
+            shortLabel: 'Expediente',
+            to: `/pacientes/${pacienteTrabajo.id}/expediente`,
+          }] : []),
+
           {
             icon: Ruler,
             label: 'Mediciones',
