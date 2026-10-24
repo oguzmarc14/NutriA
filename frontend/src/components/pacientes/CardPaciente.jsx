@@ -1,21 +1,4 @@
-import { CheckCircle2, Pencil, Phone, RefreshCw, Trash2, ArrowUpRight, BriefcaseMedical, Leaf, MessageCircle, Clock3 } from 'lucide-react'
-
-function tiempoComoPaciente(fecha) {
-  if (!fecha) return 'Sin registrar'
-  const inicio = new Date(fecha)
-  if (Number.isNaN(inicio.getTime()) || inicio > new Date()) return 'Sin registrar'
-  const hoy = new Date()
-  let meses = (hoy.getFullYear() - inicio.getFullYear()) * 12 + hoy.getMonth() - inicio.getMonth()
-  if (hoy.getDate() < inicio.getDate()) meses -= 1
-  if (meses < 1) {
-    const dias = Math.max(0, Math.floor((hoy - inicio) / 86400000))
-    return dias === 1 ? '1 día' : `${dias} días`
-  }
-  if (meses < 12) return meses === 1 ? '1 mes' : `${meses} meses`
-  const anos = Math.floor(meses / 12)
-  const resto = meses % 12
-  return `${anos} ${anos === 1 ? 'año' : 'años'}${resto ? ` y ${resto} ${resto === 1 ? 'mes' : 'meses'}` : ''}`
-}
+import { CheckCircle2, Pencil, RefreshCw, Trash2, ArrowUpRight, BriefcaseMedical, Leaf, MessageCircle, CalendarDays, CalendarClock, Activity, TrendingDown } from 'lucide-react'
 
 function enlaceWhatsApp(telefono) {
   const numero = String(telefono || '').replace(/\D/g, '')
@@ -27,7 +10,28 @@ function enlaceWhatsApp(telefono) {
 function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, obtenerSexo, calcularEdad, obtenerInicial, onReenviar, reenviando, eliminando }) {
   const edad = calcularEdad(paciente.birthDate)
   const whatsapp = enlaceWhatsApp(paciente.phone)
-  const antiguedad = tiempoComoPaciente(paciente.createdAt)
+  const mediciones = Array.isArray(paciente.mediciones) ? paciente.mediciones : []
+  const ordenadas = [...mediciones].filter(m => m && (m.fecha || m.createdAt)).sort((a,b) => new Date(a.fecha || a.createdAt) - new Date(b.fecha || b.createdAt))
+  const ultima = ordenadas.at(-1)
+  const primera = ordenadas[0]
+  const peso = Number(ultima?.peso ?? ultima?.weight ?? paciente.ultimaMedicion?.peso ?? paciente.pesoActual)
+  const pesoValido = Number.isFinite(peso) && peso > 0
+  const inicial = Number(primera?.peso ?? primera?.weight)
+  const cambio = pesoValido && Number.isFinite(inicial) && inicial > 0 && ordenadas.length > 1 ? peso - inicial : null
+  const altura = Number(ultima?.altura ?? ultima?.estatura ?? paciente.ultimaMedicion?.altura ?? paciente.ultimaMedicion?.estatura)
+  const metros = altura > 3 ? altura / 100 : altura
+  const imc = pesoValido && metros > 0 && metros < 3 ? peso / (metros * metros) : null
+  const fechaCorta = valor => {
+    if (!valor) return null
+    const fecha = new Date(valor)
+    return Number.isNaN(fecha.getTime()) ? null : new Intl.DateTimeFormat('es-MX', {day:'numeric',month:'short',year:'numeric'}).format(fecha)
+  }
+  const indicadores = [
+    {titulo:'Cambio de peso', valor:cambio === null ? 'Sin mediciones' : `${cambio > 0 ? '+' : ''}${cambio.toFixed(1)} kg`, detalle:'Desde la primera medición', Icono:TrendingDown},
+    {titulo:'Última consulta', valor:fechaCorta(paciente.ultimaConsulta?.fecha ?? paciente.fechaUltimaConsulta) || 'Sin registrar', detalle:'Última atención', Icono:CalendarDays},
+    {titulo:'IMC actual', valor:imc === null ? 'Sin medición' : imc.toFixed(1), detalle:'Según última medición', Icono:Activity},
+    {titulo:'Próxima consulta', valor:fechaCorta(paciente.proximaConsulta?.fecha ?? paciente.fechaProximaConsulta) || 'Por programar', detalle:'Agenda del paciente', Icono:CalendarClock},
+  ]
 
   return (
     <article className={`group relative isolate flex h-full min-w-0 flex-col overflow-hidden rounded-[24px] border bg-[#f6f8f3] p-4 shadow-[0_10px_25px_-18px_rgba(25,70,55,.28)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_28px_-17px_rgba(25,70,55,.3)] sm:p-5 ${trabajando ? 'border-[#69ad8a] ring-2 ring-[#b6dcc6]' : 'border-[#e0e8df] hover:border-[#b9d8c8]'}`}>
@@ -37,9 +41,9 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, 
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="break-words text-[16px] font-extrabold leading-snug tracking-tight text-[#123c36]">{paciente.name}</h2>
-          <p className="mt-1 text-xs font-medium text-[#77848a]">{edad !== null ? `${edad} años · ` : ''}{obtenerSexo(paciente.sex)}</p>
+          <p className="mt-1 text-xs font-medium text-[#77848a]">{edad !== null ? `${edad} años · ` : ''}{obtenerSexo(paciente.sex)}{pesoValido ? ` · ${peso.toFixed(1)} kg` : ''}</p>
           <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#d6e9dd] bg-[#e1f0e6] px-2.5 py-1 text-[11px] font-bold text-[#23694f]">
-            <Leaf size={12} /> {trabajando ? 'En trabajo' : paciente.accountStatus === 'pending' ? 'Invitación pendiente' : 'Paciente registrado'}
+            <Leaf size={12} /> {paciente.accountStatus === 'pending' ? 'Invitación pendiente' : 'Paciente registrado'}
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-1 rounded-xl border border-[#e1e9e1] bg-[#f9fbf8] p-1">
@@ -48,22 +52,19 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, 
         </div>
       </div>
 
-      <div className="relative mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-[#d9e5dc] bg-[#f0f5ef] p-3.5">
-        <div className="min-w-0">
-          <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[#819188]"><Clock3 size={13}/> Tiempo como paciente</p>
-          <p className="mt-1 text-sm font-bold text-[#173e38]">{antiguedad}</p>
-        </div>
-        <div className="min-w-0">
-          <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[#819188]"><Phone size={13}/> Teléfono</p>
-          <p className="mt-1 break-words text-sm font-bold text-[#173e38]">{paciente.phone || 'Sin registrar'}</p>
-        </div>
+      <div className="relative mt-4 grid grid-cols-2 gap-2.5">
+        {indicadores.map(({titulo,valor,detalle,Icono}) => (
+          <div key={titulo} className="min-w-0 rounded-2xl border border-[#d9e5dc] bg-[#f0f5ef] p-3">
+            <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[#728c7d]"><Icono size={13} className="shrink-0"/>{titulo}</p>
+            <p className="mt-1.5 break-words text-[15px] font-extrabold text-[#20523e]">{valor}</p>
+            <p className="mt-1 text-[10px] leading-snug text-[#819188]">{detalle}</p>
+          </div>
+        ))}
       </div>
-
-      <div className="relative mt-3 min-h-[76px] rounded-2xl border border-[#f0d7ca] bg-[#f9eae1] p-3.5">
-        <p className="text-[10px] font-black uppercase tracking-[.12em] text-[#b16d51]">Objetivo / notas</p>
+      <div className="relative mt-3 min-h-[72px] rounded-2xl border border-[#f0d7ca] bg-[#f9eae1] p-3.5">
+        <p className="text-[10px] font-black uppercase tracking-[.12em] text-[#b16d51]">Objetivo nutricional / notas</p>
         <p className="mt-1 line-clamp-2 break-words text-xs font-semibold leading-relaxed text-[#38524c]">{paciente.notes || 'Sin notas registradas'}</p>
       </div>
-
       {paciente.accountStatus === 'pending' && (
         <div className="relative mt-3 rounded-xl border border-amber-200 bg-amber-50/90 p-3">
           <p className="text-xs font-bold text-amber-800">Invitación pendiente</p>
@@ -72,10 +73,6 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, 
           </button>
         </div>
       )}
-      {paciente.accountStatus === 'active' && (
-        <p className="relative mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-[#47846d]"><CheckCircle2 size={13}/> Cuenta de paciente activa</p>
-      )}
-
       <div className="relative mt-auto flex items-stretch gap-2 pt-4">
         <button type="button" onClick={onTrabajar} aria-label={trabajando ? `Continuar trabajando con ${paciente.name}` : `Trabajar con ${paciente.name}`} className="inline-flex min-h-[46px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border border-[#b4d4bf] bg-[#cfe5d5] px-2.5 text-[13px] font-bold text-[#245e49] transition hover:border-[#8fbea3] hover:bg-[#bfddc8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#245e49] sm:px-3">
           <BriefcaseMedical size={17} className="shrink-0"/>
