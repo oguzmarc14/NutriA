@@ -46,6 +46,11 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, 
           <span tabIndex={0} role="img" title={paciente.accountStatus === 'pending' ? 'Invitación pendiente' : 'Paciente registrado'} aria-label={paciente.accountStatus === 'pending' ? 'Invitación pendiente' : 'Paciente registrado'} className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border ${paciente.accountStatus === 'pending' ? 'border-amber-200 bg-amber-100 text-amber-700' : 'border-[#c8e5d2] bg-[#ddefe3] text-[#23694f]'}`}>
             {paciente.accountStatus === 'pending' ? <Clock3 size={16} /> : <CheckCheck size={16} />}
           </span>
+          {paciente.accountStatus === 'pending' && (
+            <button type="button" onClick={onReenviar} disabled={reenviando || eliminando} title="Reenviar invitación" aria-label="Reenviar invitación" className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-amber-700 transition hover:bg-amber-100 disabled:opacity-50">
+              <RefreshCw size={15} className={reenviando ? 'animate-spin' : ''}/>
+            </button>
+          )}
           <button type="button" onClick={onEditar} disabled={eliminando} title="Editar paciente" aria-label={`Editar a ${paciente.name}`} className="grid h-8 w-8 place-items-center rounded-lg text-[#23614e] transition hover:bg-[#e4f1e8] disabled:opacity-50"><Pencil size={15}/></button>
           <button type="button" onClick={onEliminar} disabled={eliminando} title="Eliminar paciente" aria-label={`Eliminar a ${paciente.name}`} className="grid h-8 w-8 place-items-center rounded-lg text-[#c65a59] transition hover:bg-red-50 disabled:opacity-50"><Trash2 size={15}/></button>
         </div>
@@ -81,17 +86,6 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, 
         <p className="text-[10px] font-black uppercase tracking-[.12em] text-[#b16d51]">Objetivo nutricional / notas</p>
         <p className="mt-1 line-clamp-2 break-words text-xs font-semibold leading-relaxed text-[#38524c]">{paciente.notes || 'Sin notas registradas'}</p>
       </div>
-      {paciente.accountStatus === 'pending' && (
-        <div className="relative mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50/90 p-3">
-          <div className="min-w-0">
-            <p className="text-xs font-bold text-amber-900">Invitación sin aceptar</p>
-            <p className="mt-0.5 text-[11px] text-amber-800">El paciente aún no activa su cuenta.</p>
-          </div>
-          <button type="button" onClick={onReenviar} disabled={reenviando} className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-bold text-amber-900 shadow-sm transition hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600 disabled:cursor-not-allowed disabled:opacity-50">
-            <RefreshCw size={14} className={reenviando ? 'animate-spin' : ''}/> {reenviando ? 'Enviando...' : 'Reenviar invitación'}
-          </button>
-        </div>
-      )}
       <div className="relative mt-auto flex items-stretch gap-2 pt-4">
         <button type="button" onClick={onTrabajar} aria-label={trabajando ? `Continuar trabajando con ${paciente.name}` : `Trabajar con ${paciente.name}`} className={`inline-flex min-h-[46px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border px-2.5 text-[13px] font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#245e49] sm:px-3 ${trabajando ? 'border-[#226b50] bg-[#277557] text-white shadow-[0_4px_12px_-6px_rgba(22,92,67,.55)] hover:bg-[#1c6148]' : 'border-[#b4d4bf] bg-[#cfe5d5] text-[#245e49] hover:border-[#8fbea3] hover:bg-[#bfddc8]'}`}>
           <BriefcaseMedical size={17} className="shrink-0"/>
