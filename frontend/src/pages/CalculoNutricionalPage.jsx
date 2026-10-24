@@ -204,8 +204,8 @@ export default function CalculoNutricionalPage() {
                 {[[ 'Metabolismo basal', resultado.basal ],[ 'Gasto total', resultado.gasto ],[ 'Objetivo energético', resultado.objetivo ]].map(([label, valor]) =>
                   <div key={label} className="rounded-xl bg-[#f1f6f2] p-3"><p className="text-xs text-[#648073]">{label}</p><p className="mt-1 text-xl font-extrabold text-[#173f34]">{formato(valor)} <span className="text-xs font-medium">kcal</span></p></div>)}
               </div>
-              <div className="grid grid-cols-3 gap-2">{[[ 'Carbs', resultado.carbohidratos ],[ 'Proteína', resultado.proteinas ],[ 'Grasas', resultado.grasas ]].map(([label, valor]) =>
-                <div key={label} className="rounded-xl border border-[#d2e3d8] p-2 text-center"><p className="text-xs text-[#648073]">{label}</p><p className="mt-1 font-bold text-[#173f34]">{formato(valor)} g</p></div>)}</div>
+              <div className="grid grid-cols-3 gap-2">{[[ 'Carbs', resultado.carbohidratos, 4 ],[ 'Proteína', resultado.proteinas, 4 ],[ 'Grasas', resultado.grasas, 9 ]].map(([label, valor, kcalPorGramo]) =>
+                <div key={label} className="rounded-xl border border-[#d2e3d8] p-2 text-center"><p className="text-xs text-[#648073]">{label}</p><p className="mt-1 font-bold text-[#173f34]">{formato(valor)} g</p><p className="mt-1 text-xs font-medium text-[#648073]">{formato(valor * kcalPorGramo)} kcal</p></div>)}</div>
             </> : <p className="text-sm text-[#648073]">Completa los datos para visualizar el cálculo.</p>}
             <button type="submit" disabled={!valido || guardando} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#246b55] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#173f34] disabled:cursor-not-allowed disabled:opacity-40"><Save size={17}/>{guardando ? 'Guardando...' : 'Guardar borrador'}</button>
             <p className="text-xs leading-relaxed text-[#648073]">Los resultados son estimaciones para revisión profesional. No constituyen una dieta aprobada ni incluyen todavía equivalentes SMAE.</p>
