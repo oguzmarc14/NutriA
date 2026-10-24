@@ -533,13 +533,16 @@ function PlanesAlimenticiosPage() {
     )
 
     setComidas((actuales) => [...actuales, nueva])
+    setDistribucion(actual => [...actual, 0])
     setComidaActivaId(nueva.id)
     setMostrarMenuComidas(false)
   }
 
-  function eliminarComida(
+  async function eliminarComida(
     comidaId,
   ) {
+    if (!(await pedirConfirmacion('¿Eliminar este tiempo de comida y todos sus alimentos?', 'Eliminar comida', true))) return
+    setDistribucion(actual => actual.filter((_, i) => comidas[i]?.id !== comidaId))
     setComidas(
       (actuales) => {
         const restantes = actuales.filter(
@@ -622,6 +625,16 @@ function PlanesAlimenticiosPage() {
     const limites = event.currentTarget.getBoundingClientRect()
     const colocarDespues = event.clientX > limites.left + limites.width / 2
 
+    setDistribucion(actual => {
+      const origen = comidas.findIndex(c => c.id === origenId)
+      const destinoOriginal = comidas.findIndex(c => c.id === destinoId)
+      if (origen < 0 || destinoOriginal < 0) return actual
+      const copia = [...actual]
+      const [valor] = copia.splice(origen, 1)
+      const destino = comidas.filter(c => c.id !== origenId).findIndex(c => c.id === destinoId)
+      copia.splice(destino + (colocarDespues ? 1 : 0), 0, valor)
+      return copia
+    })
     setComidas((actuales) => {
       const origen = actuales.findIndex((comida) => comida.id === origenId)
       const destinoOriginal = actuales.findIndex((comida) => comida.id === destinoId)
@@ -645,6 +658,7 @@ function PlanesAlimenticiosPage() {
 
       if (origen < 0 || destino < 0 || destino >= actuales.length) return actuales
 
+      setDistribucion(actual => { const copia = [...actual]; const [valor] = copia.splice(origen, 1); copia.splice(destino, 0, valor); return copia })
       const reordenadas = [...actuales]
       const [movida] = reordenadas.splice(origen, 1)
       reordenadas.splice(destino, 0, movida)
@@ -984,10 +998,11 @@ function PlanesAlimenticiosPage() {
     }))
   }
 
-  function eliminarAlimento(
+  async function eliminarAlimento(
     comidaId,
     alimentoId,
   ) {
+    if (!(await pedirConfirmacion('¿Quitar este alimento de la preparación?', 'Quitar alimento', true))) return
     setComidas(
       (actuales) =>
         actuales.map(
@@ -1370,8 +1385,8 @@ function PlanesAlimenticiosPage() {
       setError('Para preparar un plan asistido, guarda primero un cálculo nutricional.')
       return false
     }
-    if (planEditandoId && !(await pedirConfirmacion('¿Reemplazar las comidas de la edición actual por una estructura vacía?', 'Reemplazar comidas', true))) return
-    if (comidas.some(comida => comida.alimentos.length > 0) && !(await pedirConfirmacion('¿Reemplazar las comidas actuales? Se perderán los alimentos aún no guardados.', 'Reemplazar comidas', true))) return
+    if (planEditandoId && !(await pedirConfirmacion('¿Reemplazar las comidas de la edición actual por una estructura vacía?', 'Reemplazar comidas', true))) return false
+    if (comidas.some(comida => comida.alimentos.length > 0) && !(await pedirConfirmacion('¿Reemplazar las comidas actuales? Se perderán los alimentos aún no guardados.', 'Reemplazar comidas', true))) return false
     const nutricion = referenciaNutricional?.expediente?.nutricion || {}
     const objetivos = Array.isArray(nutricion.objetivos) ? nutricion.objetivos : []
     const cantidadComidas = Number(nutricion.numeroComidasDia)
@@ -1415,7 +1430,7 @@ function PlanesAlimenticiosPage() {
     return true
   }
   async function duplicarPlan(plan) {
-    if (comidas.some(comida => comida.alimentos.length > 0) && !(await pedirConfirmacion('¿Reemplazar el borrador actual con una copia del plan seleccionado?', 'Duplicar plan', true))) return
+    if (comidas.some(comida => comida.alimentos.length > 0) && !(await pedirConfirmacion('¿Reemplazar el borrador actual con una copia del plan seleccionado?', 'Duplicar plan', true))) return false
     const copias = (plan.comidas || []).map(comida => ({
       id: `${Date.now()}-${Math.random()}`,
       nombre: comida.nombre || '',
@@ -1436,8 +1451,10 @@ function PlanesAlimenticiosPage() {
     setModoAsistido(false)
     setMostrarEleccion(false)
     setError('')
-    setMensaje('Plan anterior duplicado como borrador nuevo. Revisa los alimentos y cantidades antes de guardar.')
+    setMensaje('')
+    setDistribucion((plan.comidas || []).map(c => Number(c.porcentajeDistribucion) || 0))
     formularioPlanRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    return true
   }
 
   /*
@@ -1678,7 +1695,7 @@ function PlanesAlimenticiosPage() {
     setFechaPlan((plan.fechaInicio || plan.createdAt || '').slice(0, 10))
     setComidas(comidasEditables.length > 0 ? comidasEditables.map(normalizarPreparaciones) : crearComidasIniciales())
     const guardados = (plan.comidas || []).map(comida => comida.porcentajeDistribucion)
-    setDistribucion(guardados.some(valor => valor != null) ? guardados.map(valor => Number(valor) || 0) : (comidasEditables.length ? comidasEditables.map(() => Math.round(100 / comidasEditables.length)) : [25, 40, 35]))
+    setDistribucion(guardados.some(valor => valor != null) ? guardados.map(valor => Number(valor) || 0) : (comidasEditables.length ? comidasEditables.map((_, i) => Math.floor(100 / comidasEditables.length) + (i === comidasEditables.length - 1 ? 100 % comidasEditables.length : 0)) : [25, 40, 35]))
     setComidaActivaId(comidasEditables[0]?.id || '')
     setBusquedasAlimentos({})
     setResultadosAlimentos({})
