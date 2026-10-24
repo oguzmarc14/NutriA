@@ -11,6 +11,7 @@ import {
   Settings,
   UserPen,
   Users,
+  ClipboardPlus,
 } from 'lucide-react'
 
 import {
@@ -22,7 +23,7 @@ import {
 
 import { useAuth } from '../context/auth'
 import BotonInstalarApp from '../components/pwa/BotonInstalarApp'
-import BarraPacienteTrabajo from '../components/pacientes/BarraPacienteTrabajo'
+import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
 function PerfilMenu({ user, roleLabel, cerrarSesion }) {
   return (
@@ -53,6 +54,7 @@ function PerfilMenu({ user, roleLabel, cerrarSesion }) {
 
 function DashboardLayout() {
   const { logout, user } = useAuth()
+  const { pacienteTrabajo } = usePacienteTrabajo()
 
   const location = useLocation()
   const navigate = useNavigate()
@@ -142,6 +144,17 @@ function DashboardLayout() {
         ]
       : []),
   ]
+
+  const navegacionMovil = user.role === 'nutritionist' && pacienteTrabajo
+    ? [
+        { icon: ClipboardPlus, label: 'Expediente clínico', shortLabel: 'Expediente', to: `/pacientes/${pacienteTrabajo.id}/expediente` },
+        { icon: Ruler, label: 'Mediciones', shortLabel: 'Medidas', to: '/mediciones' },
+        { icon: Apple, label: 'Plan alimenticio', shortLabel: 'Planes', to: '/planes' },
+        { icon: TrendingUp, label: 'Progreso', shortLabel: 'Progreso', to: '/progreso' },
+        { icon: Users, label: 'Pacientes', shortLabel: 'Pacientes', to: '/pacientes' },
+        { icon: LayoutDashboard, label: 'Resumen', shortLabel: 'Resumen', to: '/' },
+      ]
+    : navigationVisible
 
   /*
    * ----------------------------------------------------
@@ -305,7 +318,6 @@ function DashboardLayout() {
           <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion}/>
         </div>
 
-        {user.role === 'nutritionist' && <BarraPacienteTrabajo />}
 
         {/* ============================================
             FONDO GLOBAL
@@ -335,18 +347,8 @@ function DashboardLayout() {
       ============================================ */}
 
       <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-[#c9dbd1] bg-[#fbfdfb]/95 px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_30px_rgba(31,72,57,0.08)] backdrop-blur-xl md:hidden">
-        <div
-          className={`mx-auto grid max-w-lg gap-1 ${
-            navigationVisible.length === 2
-              ? 'grid-cols-2'
-              : navigationVisible.length === 3
-                ? 'grid-cols-3'
-              : navigationVisible.length === 4
-                ? 'grid-cols-4'
-                : 'grid-cols-5'
-          }`}
-        >
-          {navigationVisible.map(
+        <div className="mx-auto flex max-w-lg snap-x snap-mandatory gap-1.5 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {navegacionMovil.map(
             ({
               icon: Icon,
               shortLabel,
@@ -360,7 +362,7 @@ function DashboardLayout() {
                 className={({
                   isActive,
                 }) =>
-                  `flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 transition-all ${
+                  `flex min-w-[74px] flex-1 shrink-0 snap-start flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 transition-all ${
                     isActive
                       ? 'bg-[#e1f0e7] text-[#246b55]'
                       : 'text-[#75877f] active:bg-[#eef4f1]'
