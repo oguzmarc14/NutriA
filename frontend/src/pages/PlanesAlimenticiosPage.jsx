@@ -241,6 +241,7 @@ function PlanesAlimenticiosPage() {
 
   const [mostrarMenuComidas, setMostrarMenuComidas] =
     useState(false)
+  const [posicionMenuComidas, setPosicionMenuComidas] = useState({ top: 0, left: 0 })
 
   const [comidaArrastradaId, setComidaArrastradaId] =
     useState('')
@@ -2262,7 +2263,7 @@ function PlanesAlimenticiosPage() {
 
                     <button
                       type="button"
-                      onClick={() => setMostrarMenuComidas((visible) => !visible)}
+                      onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); setPosicionMenuComidas({ top: Math.min(rect.bottom + 6, window.innerHeight - 300), left: Math.max(8, Math.min(rect.left, window.innerWidth - 232)) }); setMostrarMenuComidas(visible => !visible) }}
                       className="min-w-[142px] snap-start rounded-2xl border border-dashed border-[#9ebbad] bg-[#f6faf7] px-3 py-2.5 text-sm font-extrabold text-[#246b55] transition hover:bg-[#eaf4ee]"
                     >
                       <span className="flex items-center justify-center gap-2">
@@ -2273,7 +2274,7 @@ function PlanesAlimenticiosPage() {
                   </div>
 
                   {mostrarMenuComidas && (
-                    <div className="absolute right-0 z-30 mt-1 w-56 overflow-hidden rounded-2xl border border-[#d4e3db] bg-white p-2 shadow-[0_16px_40px_rgba(32,78,64,0.16)]">
+                    <div style={{ top: posicionMenuComidas.top, left: posicionMenuComidas.left }} className="fixed z-[80] w-56 overflow-hidden rounded-2xl border border-[#d4e3db] bg-white p-2 shadow-[0_16px_40px_rgba(32,78,64,0.16)]">
                       {opcionesComida.map((opcion) => (
                         <button
                           key={opcion}
@@ -3167,8 +3168,8 @@ function AlimentoAgregado({
   puedeBajar = false,
 }) {
   const [arrastrandoOrden, setArrastrandoOrden] = useState(false)
-  const dragRef = useRef({ timer: null, activo: false, destino: null, inicioX: 0, inicioY: 0 })
-  useEffect(() => () => { if (dragRef.current.timer) clearTimeout(dragRef.current.timer) }, [])
+  const dragRef = useRef({ timer: null, activo: false, destino: null, ghost: null, inicioX: 0, inicioY: 0 })
+  useEffect(() => () => { if (dragRef.current.timer) clearTimeout(dragRef.current.timer); dragRef.current.ghost?.remove() }, [])
 
   function iniciarOrden(event) {
     if (event.button !== undefined && event.button !== 0) return
@@ -3176,6 +3177,16 @@ function AlimentoAgregado({
     const elemento = event.currentTarget
     dragRef.current = { timer: null, activo: false, destino: null, inicioX: event.clientX, inicioY: event.clientY }
     const activar = () => {
+      const tarjeta = elemento.closest("[data-ingrediente-id]")
+      if (!tarjeta) return
+      const rect = tarjeta.getBoundingClientRect()
+      const ghost = tarjeta.cloneNode(true)
+      ghost.removeAttribute("data-ingrediente-id")
+      Object.assign(ghost.style, { position: "fixed", left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`, zIndex: "9999", pointerEvents: "none", opacity: "0.92", transform: "rotate(1.5deg) scale(1.02)", boxShadow: "0 18px 45px rgba(23,63,52,.22)", transition: "none", overflow: "hidden" })
+      document.body.appendChild(ghost)
+      dragRef.current.ghost = ghost
+      dragRef.current.offsetX = rect.left - dragRef.current.inicioX
+      dragRef.current.offsetY = rect.top - dragRef.current.inicioY
       dragRef.current.activo = true
       setArrastrandoOrden(true)
       try { elemento.setPointerCapture(pointerId) } catch {}
@@ -3193,6 +3204,7 @@ function AlimentoAgregado({
       return
     }
     event.preventDefault()
+    if (drag.ghost) { drag.ghost.style.left = `${event.clientX + drag.offsetX}px`; drag.ghost.style.top = `${event.clientY + drag.offsetY}px` }
     const destino = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-ingrediente-id]')
     const id = destino?.getAttribute('data-ingrediente-id')
     drag.destino = id && id !== String(alimento.id) ? id : null
@@ -3201,6 +3213,7 @@ function AlimentoAgregado({
     const drag = dragRef.current
     if (drag.timer) clearTimeout(drag.timer)
     if (drag.activo && drag.destino) onReordenar(drag.destino)
+    drag.ghost?.remove()
     dragRef.current = { timer: null, activo: false, destino: null, inicioX: 0, inicioY: 0 }
     setArrastrandoOrden(false)
     try { event.currentTarget.releasePointerCapture(event.pointerId) } catch {}
@@ -3294,7 +3307,8 @@ function AlimentoAgregado({
         onPointerUp={terminarArrastre}
         onPointerCancel={terminarArrastre}
       >
-      <div className="mb-2 flex justify-end gap-1.5">\n        <button type="button" aria-label={`Mantener y arrastrar ${alimento.nombre} para reordenar`} title="Arrastrar para ordenar" onPointerDown={iniciarOrden} onPointerMove={moverOrden} onPointerUp={terminarOrden} onPointerCancel={terminarOrden} onContextMenu={e => e.preventDefault()} style={{touchAction:"none"}} className={`mr-auto flex cursor-grab items-center gap-1 rounded-lg border border-[#d6e5da] px-2 py-1.5 text-xs text-[#246b55] ${arrastrandoOrden ? "bg-[#d8eddf] cursor-grabbing" : "bg-white"}`}><GripVertical size={16}/><span>Arrastrar</span></button>
+      <div className="mb-2 flex justify-end gap-1.5">
+        <button type="button" aria-label={`Mantener y arrastrar ${alimento.nombre} para reordenar`} title="Arrastrar para ordenar" onPointerDown={iniciarOrden} onPointerMove={moverOrden} onPointerUp={terminarOrden} onPointerCancel={terminarOrden} onContextMenu={e => e.preventDefault()} style={{touchAction:"none"}} className={`mr-auto flex cursor-grab items-center gap-1 rounded-lg border border-[#d6e5da] px-2 py-1.5 text-xs text-[#246b55] ${arrastrandoOrden ? "bg-[#d8eddf] cursor-grabbing" : "bg-white"}`}><GripVertical size={16}/><span>Arrastrar</span></button>
         <button type="button" onClick={onSubir} disabled={!puedeSubir} aria-label={`Subir ${alimento.nombre}`} title="Mover arriba" className="rounded-lg border border-[#d6e5da] bg-white p-1.5 text-[#246b55] disabled:cursor-not-allowed disabled:opacity-30"><ArrowUp size={16}/></button>
         <button type="button" onClick={onBajar} disabled={!puedeBajar} aria-label={`Bajar ${alimento.nombre}`} title="Mover abajo" className="rounded-lg border border-[#d6e5da] bg-white p-1.5 text-[#246b55] disabled:cursor-not-allowed disabled:opacity-30"><ArrowDown size={16}/></button>
       </div>
