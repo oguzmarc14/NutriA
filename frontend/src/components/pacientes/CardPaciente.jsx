@@ -20,9 +20,9 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, 
     ? new Intl.DateTimeFormat('es-MX', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(paciente.birthDate))
     : 'Sin registrar'
   return (
-    <article className="group relative isolate min-w-0 overflow-hidden rounded-[30px] border border-white/90 bg-gradient-to-br from-[#fffdfa] via-[#fff9f5] to-[#fcebe2] p-4 shadow-[0_20px_40px_-20px_rgba(99,55,39,.32),0_8px_20px_-14px_rgba(38,98,77,.18)] ring-1 ring-[#f2dfd5]/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_48px_-18px_rgba(99,55,39,.32)] sm:p-5">
-      <div aria-hidden="true" className="pointer-events-none absolute -right-14 -top-20 h-52 w-52 rounded-full bg-[#f5c8b5]/35 blur-3xl" />
-      <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -left-12 h-48 w-48 rounded-full bg-[#d9e9dc]/50 blur-3xl" />
+    <article className="group relative isolate min-w-0 overflow-hidden rounded-[30px] border border-white/90 bg-[linear-gradient(135deg,#CDE9D9_0%,#E5C6B8_48%,#F0B69C_100%)] p-4 shadow-[0_20px_40px_-20px_rgba(99,55,39,.32),0_8px_20px_-14px_rgba(38,98,77,.18)] ring-1 ring-[#f2dfd5]/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_48px_-18px_rgba(99,55,39,.32)] sm:p-5">
+      <div aria-hidden="true" className="pointer-events-none absolute -right-14 -top-20 h-52 w-52 rounded-full bg-[#EEA583]/55 blur-3xl" />
+      <div aria-hidden="true" className="pointer-events-none absolute -bottom-24 -left-12 h-48 w-48 rounded-full bg-[#8ECDB0]/55 blur-3xl" />
       <div aria-hidden="true" className="pointer-events-none absolute right-5 top-16 rotate-[-28deg] text-[#eebca6]/45"><Leaf size={90} strokeWidth={0.65}/></div>
 
       <div className="relative flex min-w-0 items-start gap-3">
