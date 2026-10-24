@@ -165,6 +165,8 @@ const alimentoPlanSchema =
         default: 1,
       },
 
+      preparacionId: { type: String, trim: true, default: '' },
+
       notas: {
         type: String,
         trim: true,
@@ -210,6 +212,8 @@ const comidaSchema =
         default: '',
         match: /^([01]\d|2[0-3]):[0-5]\d$/,
       },
+
+      preparaciones: { type: [{ id: { type: String, required: true }, nombre: { type: String, trim: true, default: '' }, tipo: { type: String, enum: ['platillo', 'bebida'], default: 'platillo' } }], default: [] },
 
       alimentos: {
         type: [

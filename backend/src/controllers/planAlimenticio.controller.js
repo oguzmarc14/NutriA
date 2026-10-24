@@ -115,6 +115,8 @@ const alimentoCatalogoSchema =
         .min(0.1)
         .default(1),
 
+    preparacionId: z.string().trim().optional(),
+
     notas:
       z.string()
         .trim()
@@ -214,6 +216,8 @@ const comidaSchema =
         .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
         .or(z.literal(''))
         .optional(),
+
+    preparaciones: z.array(z.object({ id: z.string().min(1), nombre: z.string().trim(), tipo: z.enum(['platillo', 'bebida']) })).max(30).optional(),
 
     alimentos:
       z.array(
@@ -394,6 +398,8 @@ async function prepararComidas(
             item.cantidad ??
             1,
 
+          preparacionId: item.preparacionId || '',
+
           notas:
             item.notas ||
             '',
@@ -480,6 +486,8 @@ async function prepararComidas(
           item.cantidad ??
           1,
 
+        preparacionId: item.preparacionId || '',
+
         notas:
           item.notas ||
           '',
@@ -496,6 +504,8 @@ async function prepararComidas(
 
       platillo:
         comida.platillo || '',
+
+      preparaciones: comida.preparaciones || [],
 
       hora:
         comida.hora || '',
