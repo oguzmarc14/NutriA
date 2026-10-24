@@ -7,9 +7,9 @@ function AccesoPaciente({ icon: Icon, label, to }) {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition ${
+        `inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-bold transition ${
           isActive
-            ? 'bg-green-900/40 text-white'
+            ? 'bg-[#246b55] text-white'
             : 'bg-white/75 text-[#246b55] hover:bg-white'
         }`
       }
@@ -32,8 +32,8 @@ function BarraPacienteTrabajo() {
   }
 
   return (
-    <section className="border-b border-[#b9d3c6] bg-[#d4e9dd] px-4 py-3 sm:px-5 md:px-8">
-      <div className="mx-auto flex max-w-7xl flex-col gap-3 lg:flex-row lg:items-center">
+    <section className="border-b border-[#b9d3c6] bg-[#d4e9dd] px-4 py-2 md:hidden">
+      <div className="mx-auto flex max-w-7xl flex-col gap-2">
         <div className="flex min-w-0 items-center gap-2.5">
           <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#246b55] text-white">
             <UserRound size={17} />
@@ -49,7 +49,7 @@ function BarraPacienteTrabajo() {
           </div>
         </div>
 
-        <div className="flex min-w-0 flex-wrap gap-2 lg:ml-auto">
+        <div className="flex min-w-0 items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <AccesoPaciente
             icon={ClipboardPlus}
             label="Expediente"
@@ -61,7 +61,7 @@ function BarraPacienteTrabajo() {
           <button
             type="button"
             onClick={cerrarPaciente}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[#a9c8b9] bg-red-400 px-3 py-2 text-xs font-bold text-black transition hover:bg-red-600 hover:scale-105"
+            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-[#a9c8b9] bg-red-400 px-3 py-2 text-xs font-bold text-black transition hover:bg-red-600 hover:scale-105"
           >
             <X size={14} />
             Cerrar trabajo
