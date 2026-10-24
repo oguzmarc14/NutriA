@@ -114,7 +114,7 @@ function DashboardPage() {
 
   if (!isAdmin) {
     return (
-      <section className="mx-auto max-w-6xl space-y-5 p-4 md:p-8">
+      <section className="mx-auto max-w-[1480px] space-y-5 p-4 md:px-6 md:py-8 xl:px-8">
         <div>
           <h1 className="text-2xl font-extrabold text-[#173f34]">Resumen de la clínica</h1>
           <p className="text-xs text-[#648073]">Indicadores calculados con tus registros</p>
@@ -178,7 +178,7 @@ function DashboardPage() {
   const modules = isAdmin ? adminModules : nutritionistModules
 
   return (
-    <section className="mx-auto max-w-6xl p-5 md:p-8">
+    <section className="mx-auto max-w-[1480px] p-5 md:px-6 md:py-8 xl:px-8">
       <div className="mb-8">
         <p className="mb-2 text-sm font-bold uppercase tracking-[0.16em] text-[#4d816f]">
           Panel principal

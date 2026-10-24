@@ -248,7 +248,7 @@ function DashboardLayout() {
           SIDEBAR DESKTOP
       ============================================ */}
 
-      <aside className="hidden min-h-screen border-r border-[#c8dbd0] bg-[#fbfdfb] p-5 shadow-[6px_0_30px_rgba(36,107,85,0.05)] md:flex md:flex-col">
+      <aside className="hidden min-h-screen border-r border-[#c8dbd0] bg-[#eaf0e9] p-5 shadow-[6px_0_30px_rgba(36,107,85,0.05)] md:flex md:flex-col">
         {/* MARCA */}
 
         <div className="mb-9 flex items-center gap-3 px-2">
@@ -330,18 +330,18 @@ function DashboardLayout() {
             <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} irAMiClinica={() => navigate('/mi-clinica')}/>
           </div>
         </header>
-        <div className="sticky top-0 z-40 hidden h-11 items-center justify-between gap-3 border-b border-[#c8dbd0] bg-[#fbfdfb]/95 px-5 text-[#173f34] backdrop-blur-md md:flex">
+        <div className="sticky top-0 z-40 hidden h-[52px] items-center justify-between gap-3 border-b border-[#c8dbd0] bg-[#eaf0e9]/95 px-5 text-[#173f34] backdrop-blur-md md:flex">
           {user.role === 'nutritionist' ? (
             <div className="flex min-w-0 items-center gap-2">
-              <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg ${pacienteTrabajo ? 'bg-[#e1f0e7] text-[#246b55]' : 'bg-[#edf2ed] text-[#82968b]'}`}>
+              <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${pacienteTrabajo ? 'bg-[#e1f0e7] text-[#246b55]' : 'bg-[#edf2ed] text-[#82968b]'}`}>
                 <UserRoundCheck size={16} />
               </span>
               {pacienteTrabajo ? (
                 <>
                   <span className="max-w-[min(42vw,480px)] truncate text-xs font-bold text-[#173f34]">{pacienteTrabajo.name}</span>
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#62a881]" title="Paciente activo" />
-                  <button type="button" onClick={() => navigate('/pacientes')} aria-label="Cambiar paciente" title="Cambiar paciente" className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-[#4d816f] transition hover:bg-[#e1f0e7] hover:text-[#173f34]"><ArrowLeftRight size={16}/></button>
-                  <button type="button" onClick={() => { if (window.confirm('¿Dejar de trabajar con este paciente?')) cerrarTrabajo() }} aria-label="Dejar de trabajar con el paciente" title="Finalizar trabajo con paciente" className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-[#789286] transition hover:bg-red-50 hover:text-red-600"><X size={16}/></button>
+                  <button type="button" onClick={() => navigate('/pacientes')} aria-label="Cambiar paciente" title="Cambiar paciente" className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[#4d816f] transition hover:bg-[#e1f0e7] hover:text-[#173f34]"><ArrowLeftRight size={16}/></button>
+                  <button type="button" onClick={() => { if (window.confirm('¿Dejar de trabajar con este paciente?')) cerrarTrabajo() }} aria-label="Dejar de trabajar con el paciente" title="Finalizar trabajo con paciente" className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[#789286] transition hover:bg-red-50 hover:text-red-600"><X size={16}/></button>
                 </>
               ) : (
                 <>
