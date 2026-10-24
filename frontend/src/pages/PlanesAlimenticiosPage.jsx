@@ -1257,6 +1257,8 @@ function PlanesAlimenticiosPage() {
     ['Carbohidratos', 'carbohidratos', 'g', objetivosReferencia?.carbohidratosGramos],
     ['Grasas', 'grasas', 'g', objetivosReferencia?.grasasGramos],
   ]
+  const mostrarDistribucion = Boolean(objetivosReferencia && comidas.length)
+  const totalDistribucion = comidas.reduce((total, _, indice) => total + (Number(distribucion[indice]) || 0), 0)
   const comidasBalance = comidas.map(comida => ({
     ...comida,
     totales: calcularTotales(comida.alimentos),
@@ -2680,6 +2682,14 @@ function PlanesAlimenticiosPage() {
                               )}
                             </div>
 
+                            {mostrarDistribucion && <div className="mt-3 rounded-xl border border-[#cfe0d6] bg-[#f0f7f2] px-3 py-2.5">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <span className="text-xs font-extrabold text-[#173f34]">Meta de {comida.nombre || `comida ${index + 1}`}</span>
+                                <span className="text-xs font-bold tabular-nums text-[#246b55]">{distribucion[index] ?? 0}% · {numero((Number(objetivosReferencia.objetivoKcal) || 0) * (Number(distribucion[index]) || 0) / 100, 0)} kcal objetivo</span>
+                              </div>
+                              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#d9e8dd]"><div className="h-full rounded-full bg-[#70ae89] transition-all" style={{width: `${Math.min(100, (Number(objetivosReferencia.objetivoKcal) * (Number(distribucion[index]) || 0) / 100) > 0 ? subtotal.kcal / (Number(objetivosReferencia.objetivoKcal) * (Number(distribucion[index]) || 0) / 100) * 100 : 0)}%`}}/></div>
+                              <p className="mt-1 text-[11px] text-[#52716a]">{numero(subtotal.kcal, 0)} kcal agregadas · {numero(Math.max(0, (Number(objetivosReferencia.objetivoKcal) || 0) * (Number(distribucion[index]) || 0) / 100 - subtotal.kcal), 0)} kcal pendientes</p>
+                            </div>}
                             {comida
                               .alimentos
                               .length >
@@ -2795,15 +2805,28 @@ function PlanesAlimenticiosPage() {
                     <p className="text-xs font-bold text-[#52716a]">{comidaActiva?.nombre || 'Sin comida seleccionada'}</p>
                     <p className="mt-1 text-xs text-[#648073]">{numero(calcularTotales(comidaActiva?.alimentos || []).kcal, 0)} kcal añadidas{modoAsistido && objetivosReferencia ? ` · Meta: ${numero(Number(objetivosReferencia.objetivoKcal) * (distribucion[comidas.findIndex(c => c.id === comidaActiva?.id)] || 0) / 100, 0)} kcal` : ''}</p>
                   </div>
-                  {modoAsistido && objetivosReferencia && <div className="border-t border-[#e3eee6] pt-3">
+                  {mostrarDistribucion && <div className="border-t border-[#e3eee6] pt-3">
                     <h4 className="mb-2 flex items-center gap-2 text-xs font-extrabold text-[#173f34]"><ListChecks size={15} className="text-[#246b55]"/> Distribución por comida</h4>
-                    <div className="space-y-2">{comidasBalance.map((comida, indice) => <div key={comida.id} className="flex items-center justify-between gap-2">
-                      <span className="min-w-0 flex-1 truncate text-xs text-[#52716a]">{comida.nombre}</span>
-                      <input aria-label={`Porcentaje para ${comida.nombre}`} type="number" min="0" max="100" step="1" value={distribucion[indice] ?? 0}
-                        onChange={e => setDistribucion(actual => comidas.map((_, i) => i === indice ? Number(e.target.value) : (actual[i] ?? 0)))}
-                        className="w-14 rounded-lg border border-[#c8ddd2] px-1.5 py-1 text-right text-xs"/> <span className="text-xs text-[#648073]">%</span>
-                    </div>)}</div>
-                    <p className={`mt-2 text-[11px] font-bold ${distribucion.reduce((a,b)=>a+b,0) === 100 ? 'text-[#246b55]' : 'text-amber-700'}`}>Total: {distribucion.reduce((a,b)=>a+b,0)}% {distribucion.reduce((a,b)=>a+b,0) !== 100 && '· Ajusta a 100%'}</p>
+                    <p className="mb-3 text-[11px] text-[#648073]">Modifica el porcentaje y la meta se actualiza inmediatamente en cada comida.</p>
+                    <div className="space-y-3">{comidasBalance.map((comida, indice) => {
+                      const porcentaje = Number(distribucion[indice]) || 0
+                      const metaKcal = (Number(objetivosReferencia.objetivoKcal) || 0) * porcentaje / 100
+                      return <div key={comida.id} className="rounded-xl bg-[#f5f9f6] p-2.5">
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                          <span className="min-w-0 flex-1 truncate text-xs font-bold text-[#173f34]">{comida.nombre || `Comida ${indice + 1}`}</span>
+                          <label className="flex shrink-0 items-center gap-1 text-xs text-[#52716a]">
+                            <input aria-label={`Porcentaje para ${comida.nombre || `comida ${indice + 1}`}`} type="number" min="0" max="100" step="1" value={distribucion[indice] ?? 0}
+                              onChange={e => { const valor = e.target.value === '' ? 0 : Number(e.target.value); if (Number.isFinite(valor)) setDistribucion(actual => comidas.map((_, i) => i === indice ? Math.min(100, Math.max(0, valor)) : (actual[i] ?? 0))) }}
+                              className="w-14 rounded-lg border border-[#c8ddd2] bg-white px-1.5 py-1 text-right text-xs font-bold text-[#173f34]"/> %
+                          </label>
+                        </div>
+                        <input type="range" min="0" max="100" step="1" aria-label={`Ajustar distribución de ${comida.nombre || `comida ${indice + 1}`}`}
+                          value={porcentaje} onChange={e => setDistribucion(actual => comidas.map((_, i) => i === indice ? Number(e.target.value) : (actual[i] ?? 0)))}
+                          className="w-full accent-[#246b55]"/>
+                        <p className="mt-1 text-[11px] tabular-nums text-[#52716a]">{numero(comida.totales.kcal, 0)} / {numero(metaKcal, 0)} kcal</p>
+                      </div>
+                    })}</div>
+                    <p className={`mt-3 text-[11px] font-bold ${totalDistribucion === 100 ? 'text-[#246b55]' : 'text-amber-700'}`}>Total: {totalDistribucion}% {totalDistribucion !== 100 && '· Ajusta la distribución a 100%'}</p>
                   </div>}
                   <div className="border-t border-[#e3eee6] pt-3">
                     <h4 className="mb-2 flex items-center gap-2 text-xs font-extrabold text-[#173f34]"><Apple size={15} className="text-[#246b55]"/> Grupos utilizados</h4>
