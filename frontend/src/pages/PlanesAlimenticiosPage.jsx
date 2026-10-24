@@ -8,6 +8,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import {
   Apple,
+  ArrowUp,
+  ArrowDown,
   Coffee,
   ArrowLeft,
   CalendarDays,
@@ -932,6 +934,23 @@ function PlanesAlimenticiosPage() {
               : comida,
         ),
     )
+  }
+
+  function moverAlimento(comidaId, alimentoId, direccion) {
+    setComidas(actuales => actuales.map(comida => {
+      if (comida.id !== comidaId) return comida
+      const alimentos = [...comida.alimentos]
+      const origen = alimentos.findIndex(a => a.id === alimentoId)
+      if (origen < 0) return comida
+      const grupo = alimentos[origen].preparacionId
+      const indices = alimentos.map((a, i) => a.preparacionId === grupo ? i : -1).filter(i => i >= 0)
+      const posicion = indices.indexOf(origen)
+      const destino = indices[posicion + direccion]
+      if (destino === undefined) return comida
+      const [elemento] = alimentos.splice(origen, 1)
+      alimentos.splice(destino, 0, elemento)
+      return { ...comida, alimentos }
+    }))
   }
 
   function eliminarAlimento(
@@ -2713,6 +2732,10 @@ function PlanesAlimenticiosPage() {
                                             alimento.id,
                                           )
                                         }
+                                        onSubir={() => moverAlimento(comida.id, alimento.id, -1)}
+                                        onBajar={() => moverAlimento(comida.id, alimento.id, 1)}
+                                        puedeSubir={alimentosPreparacion[0]?.id !== alimento.id}
+                                        puedeBajar={alimentosPreparacion[alimentosPreparacion.length - 1]?.id !== alimento.id}
                                       />
                                     ))}</div> : <p className="rounded-xl bg-[#f5faf6] p-3 text-xs text-[#648073]">Sin ingredientes. Selecciona esta preparación arriba para agregar alimentos.</p>}
                                   </div>
@@ -2966,8 +2989,8 @@ function PlanesAlimenticiosPage() {
           </>
         )}
       </div>
-      {mostrarEleccion && pacienteId && !planEditandoId && <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#173f34]/45 p-4" onMouseDown={e => { if (e.target === e.currentTarget) { setModalidadSeleccionada(null); setMostrarEleccion(false) } }}>
-        <div role="dialog" aria-modal="true" aria-labelledby="modal-modalidad-plan" className="w-full max-w-lg rounded-3xl border border-[#d5e5da] bg-white p-5 shadow-2xl sm:p-7">
+      {mostrarEleccion && pacienteId && !planEditandoId && <div className="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto overscroll-contain bg-[#173f34]/45 p-3 sm:p-4" onMouseDown={e => { if (e.target === e.currentTarget) { setModalidadSeleccionada(null); setMostrarEleccion(false) } }}>
+        <div role="dialog" aria-modal="true" aria-labelledby="modal-modalidad-plan" className="my-auto max-h-[calc(100dvh-24px)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-3xl border border-[#d5e5da] bg-white p-5 shadow-2xl sm:p-7">
           <div className="flex items-start justify-between gap-4">
             <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#e1f0e7] text-[#246b55]"><Sparkles size={23}/></div>
             <button type="button" aria-label="Cerrar" onClick={() => { setModalidadSeleccionada(null); setMostrarEleccion(false) }} className="rounded-lg p-2 text-[#648073] hover:bg-[#edf5f0]"><X size={19}/></button>
@@ -3121,37 +3144,44 @@ function AlimentoAgregado({
   onCantidad,
   onNotas,
   onEliminar,
+  onSubir,
+  onBajar,
+  puedeSubir = false,
+  puedeBajar = false,
 }) {
   const [desplazamiento, setDesplazamiento] = useState(0)
-  const gesto = useRef({ activo: false, inicioX: 0 })
+  const gesto = useRef({ activo: false, inicioX: 0, inicioY: 0, horizontal: false })
 
   function iniciarArrastre(event) {
-    if (event.target.closest('input, button')) return
+    if (event.pointerType === 'mouse' || event.target.closest('input, button, textarea, select')) return
 
     gesto.current = {
       activo: true,
       inicioX: event.clientX,
+      inicioY: event.clientY,
+      horizontal: false,
     }
-    event.currentTarget.setPointerCapture?.(event.pointerId)
   }
 
   function moverArrastre(event) {
     if (!gesto.current.activo) return
 
-    const distancia = Math.min(0, event.clientX - gesto.current.inicioX)
-    setDesplazamiento(Math.max(-130, distancia))
+    const dx = event.clientX - gesto.current.inicioX
+    const dy = event.clientY - gesto.current.inicioY
+    if (!gesto.current.horizontal) {
+      if (Math.abs(dy) > 8 && Math.abs(dy) > Math.abs(dx)) { gesto.current.activo = false; return }
+      if (Math.abs(dx) < 12 || Math.abs(dx) <= Math.abs(dy) * 1.4) return
+      gesto.current.horizontal = true
+    }
+    setDesplazamiento(Math.max(-72, Math.min(0, dx)))
   }
 
   function terminarArrastre() {
     if (!gesto.current.activo) return
     gesto.current.activo = false
 
-    if (desplazamiento <= -105) {
-      onEliminar()
-      return
-    }
-
-    setDesplazamiento(desplazamiento < -45 ? -72 : 0)
+    if (!gesto.current.horizontal) return
+    setDesplazamiento(desplazamiento < -40 ? -72 : 0)
   }
 
   const cantidad =
@@ -3200,13 +3230,17 @@ function AlimentoAgregado({
       </button>
 
       <div
-        className="relative bg-white p-3 transition-transform duration-200 ease-out touch-pan-y sm:p-4"
+        className="relative bg-white p-3 transition-transform duration-150 ease-out touch-pan-y sm:p-4"
         style={{ transform: `translateX(${desplazamiento}px)` }}
         onPointerDown={iniciarArrastre}
         onPointerMove={moverArrastre}
         onPointerUp={terminarArrastre}
         onPointerCancel={terminarArrastre}
       >
+      <div className="mb-2 flex justify-end gap-1.5">
+        <button type="button" onClick={onSubir} disabled={!puedeSubir} aria-label={`Subir ${alimento.nombre}`} title="Mover arriba" className="rounded-lg border border-[#d6e5da] bg-white p-1.5 text-[#246b55] disabled:cursor-not-allowed disabled:opacity-30"><ArrowUp size={16}/></button>
+        <button type="button" onClick={onBajar} disabled={!puedeBajar} aria-label={`Bajar ${alimento.nombre}`} title="Mover abajo" className="rounded-lg border border-[#d6e5da] bg-white p-1.5 text-[#246b55] disabled:cursor-not-allowed disabled:opacity-30"><ArrowDown size={16}/></button>
+      </div>
       <div className="flex items-start gap-3">
         <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#e5f2eb] text-[#246b55]">
           <Apple
