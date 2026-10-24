@@ -479,7 +479,7 @@ function ExpedientePage() {
 
   if (loading) {
     return (
-      <section className="mx-auto max-w-7xl p-5 md:p-8">
+      <section className="mx-auto max-w-[1480px] p-5 md:p-8">
         <div className="rounded-3xl border border-[#cfe0d6] bg-white/70 p-8">
           <p className="text-sm text-slate-500">
             Cargando expediente clínico...
@@ -501,19 +501,8 @@ function ExpedientePage() {
 
   return (
     <section className="min-h-screen bg-transparent px-5 py-7 md:px-8 md:py-9">
-      <div className="mx-auto max-w-7xl">
-        {/* VOLVER */}
-
-        <Link
-          to="/pacientes"
-          className="mb-5 inline-flex items-center gap-2 rounded-xl border border-[#c8ddd2] bg-white/70 px-4 py-2 text-sm font-bold text-[#246b55] transition hover:bg-white"
-        >
-          <ArrowLeft size={17} />
-
-          Volver a pacientes
-        </Link>
-
-        {/* HEADER */}
+      <div className="mx-auto max-w-[1480px]">
+{/* HEADER */}
 
         <div className="mb-8">
           <div className="mb-3 flex items-center gap-3">
