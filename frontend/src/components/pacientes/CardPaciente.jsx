@@ -7,7 +7,7 @@ function enlaceWhatsApp(telefono) {
   return null
 }
 
-function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, obtenerSexo, calcularEdad, obtenerInicial, onReenviar, reenviando, eliminando }) {
+function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, onDejarTrabajar, trabajando, obtenerSexo, calcularEdad, obtenerInicial, onReenviar, reenviando, eliminando }) {
   const edad = calcularEdad(paciente.birthDate)
   const whatsapp = enlaceWhatsApp(paciente.phone)
   const mediciones = Array.isArray(paciente.mediciones) ? paciente.mediciones : []
@@ -87,9 +87,9 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, 
         <p className="mt-1 line-clamp-2 break-words text-xs font-semibold leading-relaxed text-[#38524c]">{paciente.notes || 'Sin notas registradas'}</p>
       </div>
       <div className="relative mt-auto flex items-stretch gap-2 pt-4">
-        <button type="button" onClick={onTrabajar} aria-label={trabajando ? `Continuar trabajando con ${paciente.name}` : `Trabajar con ${paciente.name}`} className={`inline-flex min-h-[46px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border px-2.5 text-[13px] font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#245e49] sm:px-3 ${trabajando ? 'border-[#226b50] bg-[#277557] text-white shadow-[0_4px_12px_-6px_rgba(22,92,67,.55)] hover:bg-[#1c6148]' : 'border-[#b4d4bf] bg-[#cfe5d5] text-[#245e49] hover:border-[#8fbea3] hover:bg-[#bfddc8]'}`}>
+        <button type="button" onClick={trabajando ? onDejarTrabajar : onTrabajar} aria-label={trabajando ? `Dejar de trabajar con ${paciente.name}` : `Trabajar con ${paciente.name}`} className={`inline-flex min-h-[46px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border px-2.5 text-[13px] font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#245e49] sm:px-3 ${trabajando ? 'border-[#226b50] bg-[#277557] text-white shadow-[0_4px_12px_-6px_rgba(22,92,67,.55)] hover:bg-[#1c6148]' : 'border-[#b4d4bf] bg-[#cfe5d5] text-[#245e49] hover:border-[#8fbea3] hover:bg-[#bfddc8]'}`}>
           <BriefcaseMedical size={17} className="shrink-0"/>
-          <span className="text-center">{trabajando ? 'Continuar trabajando' : 'Trabajar con paciente'}</span>
+          <span className="text-center">{trabajando ? 'Dejar de trabajar' : 'Trabajar con paciente'}</span>
           {trabajando ? <CheckCircle2 size={16} className="shrink-0"/> : <ArrowUpRight size={16} className="shrink-0"/>}
         </button>
         {whatsapp ? (
