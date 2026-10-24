@@ -41,7 +41,6 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, 
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="break-words text-[16px] font-extrabold leading-snug tracking-tight text-[#123c36]">{paciente.name}</h2>
-          <p className="mt-1.5 text-xs font-medium text-[#77848a]">{edad !== null ? `${edad} años · ` : ''}{obtenerSexo(paciente.sex)}{pesoValido ? ` · ${peso.toFixed(1)} kg` : ''}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1 rounded-xl border border-[#e1e9e1] bg-[#f9fbf8] p-1">
           <span tabIndex={0} role="img" title={paciente.accountStatus === 'pending' ? 'Invitación pendiente' : 'Paciente registrado'} aria-label={paciente.accountStatus === 'pending' ? 'Invitación pendiente' : 'Paciente registrado'} className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border ${paciente.accountStatus === 'pending' ? 'border-amber-200 bg-amber-100 text-amber-700' : 'border-[#c8e5d2] bg-[#ddefe3] text-[#23694f]'}`}>
@@ -50,6 +49,17 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, 
           <button type="button" onClick={onEditar} disabled={eliminando} title="Editar paciente" aria-label={`Editar a ${paciente.name}`} className="grid h-8 w-8 place-items-center rounded-lg text-[#23614e] transition hover:bg-[#e4f1e8] disabled:opacity-50"><Pencil size={15}/></button>
           <button type="button" onClick={onEliminar} disabled={eliminando} title="Eliminar paciente" aria-label={`Eliminar a ${paciente.name}`} className="grid h-8 w-8 place-items-center rounded-lg text-[#c65a59] transition hover:bg-red-50 disabled:opacity-50"><Trash2 size={15}/></button>
         </div>
+      </div>
+      <div className="relative mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-[#77848a]">
+        {edad !== null && <span className="whitespace-nowrap">{edad} años</span>}
+        {edad !== null && <span aria-hidden="true" className="text-[#a7b7ac]">·</span>}
+        <span className="whitespace-nowrap">{obtenerSexo(paciente.sex)}</span>
+        {pesoValido && (
+          <>
+            <span aria-hidden="true" className="text-[#a7b7ac]">·</span>
+            <span className="whitespace-nowrap font-bold text-[#246b55]">{peso.toFixed(1)} kg</span>
+          </>
+        )}
       </div>
 
       <div className="relative mt-4 grid grid-cols-2 gap-2.5">
