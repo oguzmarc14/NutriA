@@ -1928,21 +1928,6 @@ function PlanesAlimenticiosPage() {
 
         {pacienteId && (
           <>
-            <button
-              type="button"
-              onClick={
-                regresarPacientes
-              }
-              className="mb-5 inline-flex items-center gap-2 rounded-xl border border-[#c8ddd2] bg-white/70 px-4 py-2 text-sm font-bold text-[#246b55] transition hover:bg-white"
-            >
-              <ArrowLeft
-                size={16}
-              />
-
-              Volver a
-              pacientes
-            </button>
-
             <div className="mb-8">
               <p className="mb-2 text-sm font-bold uppercase tracking-[0.16em] text-[#4d816f]">
                 Planes
@@ -2755,7 +2740,7 @@ function PlanesAlimenticiosPage() {
               </div>
             </form>
               </div>
-              {panelBalanceVisible && <aside aria-label="Seguimiento nutricional del plan" className="min-w-0 xl:sticky xl:top-[68px]">
+              {panelBalanceVisible && <aside aria-label="Seguimiento nutricional del plan" className="min-w-0 xl:fixed xl:right-6 xl:top-[68px] xl:z-30 xl:w-[310px] 2xl:w-[350px]">
                 <div className="max-h-none space-y-4 rounded-2xl border border-[#c9dfd0] bg-white p-4 shadow-[0_12px_32px_rgba(32,78,64,0.08)] xl:max-h-[calc(100vh-84px)] xl:overflow-y-auto">
                   <div className="flex items-center gap-2 border-b border-[#e3eee6] pb-3">
                     <ChartNoAxesColumnIncreasing size={19} className="text-[#246b55]"/>
