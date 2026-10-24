@@ -11,6 +11,7 @@ const factores = [
   { value: '1.725', label: '1.725 · Actividad alta' },
   { value: '1.9', label: '1.90 · Actividad muy alta' },
 ]
+const factorPorNivel = { 1: '1.2', 2: '1.375', 3: '1.55', 4: '1.725', 5: '1.9' }
 const formato = valor => Number.isFinite(valor) ? Math.round(valor * 10) / 10 : '—'
 const campo = 'w-full rounded-xl border border-[#c8ddd2] bg-white px-3 py-2.5 text-sm text-[#173f34] outline-none focus:border-[#4d816f] focus:ring-2 focus:ring-[#d7e8dc]'
 const tarjeta = 'rounded-2xl border border-[#d2e3d8] bg-white/90 p-5 shadow-[0_8px_24px_rgba(31,72,57,.04)]'
@@ -47,6 +48,12 @@ export default function CalculoNutricionalPage() {
       .finally(() => { if (activo) setCargando(false) })
     return () => { activo = false }
   }, [pacienteTrabajo?.id])
+
+  useEffect(() => {
+    const seleccionada = datos?.mediciones?.find(item => item._id === medicionId)
+    const sugerido = factorPorNivel[seleccionada?.nivelActividadFisica]
+    if (sugerido) setFactor(sugerido)
+  }, [datos?.mediciones, medicionId])
 
   const medicion = datos?.mediciones?.find(item => item._id === medicionId)
   const resultado = useMemo(() => {
@@ -166,7 +173,7 @@ export default function CalculoNutricionalPage() {
                   <option value="">Seleccionar</option><option value="female">Femenino</option><option value="male">Masculino</option>
                 </select>
               </label>
-              <label className="text-xs font-bold text-[#52716a]">Factor de actividad
+              <label className="text-xs font-bold text-[#52716a]">Factor de actividad · sugerido según la medición
                 <select className={campo + ' mt-2'} value={factor} onChange={e => setFactor(e.target.value)}>
                   {factores.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
                 </select>
