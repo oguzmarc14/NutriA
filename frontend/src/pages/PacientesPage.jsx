@@ -341,6 +341,16 @@ function PacientesPage() {
             <p className="mt-1 text-xs font-medium text-[#648476]">
               {loading ? 'Cargando...' : `${pacientes.length} ${pacientes.length === 1 ? 'paciente' : 'pacientes'} registrados`}
             </p>
+            {pacienteTrabajo && (
+              <div className="mt-2 inline-flex max-w-full items-center gap-2 rounded-xl border border-[#b8d6c4] bg-[#e6f2e9] py-1.5 pl-3 pr-1.5">
+                <span className="min-w-0 truncate text-xs font-semibold text-[#246b55]" title={pacienteTrabajo.name || 'Paciente activo'}>
+                  Trabajando con: {pacienteTrabajo.name || 'Paciente activo'}
+                </span>
+                <button type="button" onClick={cerrarTrabajo} title="Dejar de trabajar con este paciente" aria-label="Dejar de trabajar con el paciente" className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-white px-2 py-1.5 text-xs font-bold text-[#a63c3c] transition hover:bg-red-50">
+                  <X size={13}/> Cerrar
+                </button>
+              </div>
+            )}
           </div>
           <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto lg:items-center">
             <label className="relative block min-w-0 flex-1 sm:min-w-[240px] lg:w-[300px]">
