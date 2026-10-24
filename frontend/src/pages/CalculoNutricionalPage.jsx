@@ -107,7 +107,22 @@ export default function CalculoNutricionalPage() {
         </div>
         {datos.expediente ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            ['Objetivo', datos.expediente.nutricion?.objetivoPrincipal],
+            ['Objetivos de la dieta', (() => {
+              const nutricion = datos.expediente.nutricion || {}
+              const nombres = {
+                perdida_peso: 'Pérdida de peso corporal',
+                incremento_masa: 'Incremento de masa muscular',
+                imagen_personal: 'Imagen personal',
+                salud: 'Salud',
+                rendimiento_deportivo: 'Rendimiento deportivo',
+                control_enfermedades: 'Control de enfermedades',
+                otro: nutricion.objetivoOtro?.trim() || 'Otro',
+              }
+              const objetivos = Array.isArray(nutricion.objetivos) && nutricion.objetivos.length
+                ? nutricion.objetivos
+                : nutricion.objetivoPrincipal ? [nutricion.objetivoPrincipal] : []
+              return objetivos.map(valor => nombres[valor] || valor).join(' · ')
+            })()],
             ['Alergias', datos.expediente.alergias],
             ['Intolerancias', datos.expediente.nutricion?.intoleranciasAlimentarias],
             ['Enfermedades', datos.expediente.enfermedades],
