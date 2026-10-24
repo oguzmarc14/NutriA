@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, RefreshCw, Search, UserRound, X } from 'lucide-react'
+import { Plus, RefreshCw, Search, UserRound, X, BriefcaseMedical, Check } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import CardPaciente from '../components/pacientes/CardPaciente'
@@ -23,6 +23,7 @@ function PacientesPage() {
   const { cerrarTrabajo, iniciarTrabajo, pacienteTrabajo } = usePacienteTrabajo()
   const [pacientes, setPacientes] = useState([])
   const [busqueda, setBusqueda] = useState('')
+  const [confirmacionTrabajo, setConfirmacionTrabajo] = useState(null)
   const [loading, setLoading] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [reenviandoId, setReenviandoId] = useState(null)
@@ -70,6 +71,27 @@ function PacientesPage() {
   useEffect(() => {
     cargarPacientes()
   }, [])
+
+  useEffect(() => {
+    if (!confirmacionTrabajo) return undefined
+    const manejarEscape = (event) => {
+      if (event.key === 'Escape') setConfirmacionTrabajo(null)
+    }
+    window.addEventListener('keydown', manejarEscape)
+    return () => window.removeEventListener('keydown', manejarEscape)
+  }, [confirmacionTrabajo])
+
+  function confirmarTrabajo() {
+    if (!confirmacionTrabajo) return
+    const { tipo, paciente } = confirmacionTrabajo
+    setConfirmacionTrabajo(null)
+    if (tipo === 'dejar') {
+      cerrarTrabajo()
+    } else {
+      iniciarTrabajo(paciente)
+      navigate(`/pacientes/${paciente._id}/expediente`)
+    }
+  }
 
   /*
    * ----------------------------------------------------
@@ -663,12 +685,9 @@ function PacientesPage() {
                     setMensaje('')
                     setPacienteAEliminar(paciente)
                   }}
-                  onTrabajar={() => {
-                    iniciarTrabajo(paciente)
-                    navigate(`/pacientes/${paciente._id}/expediente`)
-                  }}
+                  onTrabajar={() => setConfirmacionTrabajo({ tipo: 'iniciar', paciente })}
                   trabajando={pacienteTrabajo?.id === paciente._id}
-                  onDejarTrabajar={cerrarTrabajo}
+                  onDejarTrabajar={() => setConfirmacionTrabajo({ tipo: 'dejar', paciente })}
                   obtenerSexo={
                     obtenerSexo
                   }
@@ -687,6 +706,29 @@ function PacientesPage() {
           </div>
         )}
       </div>
+
+      {confirmacionTrabajo && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#102e24]/55 p-4 backdrop-blur-[3px]" onMouseDown={(event) => { if (event.target === event.currentTarget) setConfirmacionTrabajo(null) }}>
+          <div role="alertdialog" aria-modal="true" aria-labelledby="titulo-confirmacion-trabajo" aria-describedby="descripcion-confirmacion-trabajo" className="w-full max-w-[410px] rounded-[24px] border border-[#d6e5da] bg-white p-5 shadow-[0_24px_70px_rgba(16,46,36,.24)] sm:p-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="mb-4 grid h-16 w-16 place-items-center rounded-full bg-[#e1f1e6]">
+                <BriefcaseMedical size={30} className="text-[#246b55]" aria-hidden="true" />
+              </div>
+              <h2 id="titulo-confirmacion-trabajo" className="text-xl font-extrabold tracking-tight text-[#173f34]">
+                {confirmacionTrabajo.tipo === 'dejar' ? '¿Dejar de trabajar?' : '¿Comenzar a trabajar?'}
+              </h2>
+              <p id="descripcion-confirmacion-trabajo" className="mt-2 text-sm text-[#6b8174]">
+                {confirmacionTrabajo.tipo === 'dejar' ? 'Estás por dejar de trabajar con' : 'Estás por comenzar a trabajar con'}
+              </p>
+              <p className="mt-1 break-words text-base font-extrabold text-[#205c45]">{confirmacionTrabajo.paciente.name}</p>
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-2 border-t border-[#e5eee7] pt-4">
+              <button type="button" autoFocus onClick={() => setConfirmacionTrabajo(null)} className="min-h-11 rounded-xl border border-[#dce6de] bg-[#f5f7f5] px-3 text-sm font-bold text-[#526d5d] transition hover:bg-[#eaf0eb] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#246b55]">Cancelar</button>
+              <button type="button" onClick={confirmarTrabajo} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#246b55] px-3 text-sm font-bold text-white transition hover:bg-[#1d5947] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#246b55]"><Check size={17} aria-hidden="true"/>Aceptar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ModalEliminarPaciente
         paciente={pacienteAEliminar}
