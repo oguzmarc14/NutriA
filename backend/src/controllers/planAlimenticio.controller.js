@@ -201,6 +201,8 @@ const comidaSchema =
         .trim()
         .min(2),
 
+    porcentajeDistribucion: z.number().min(0).max(100).nullable().optional(),
+
     platillo:
       z.string()
         .trim()
@@ -501,6 +503,8 @@ async function prepararComidas(
 
       nombre:
         comida.nombre,
+
+      porcentajeDistribucion: comida.porcentajeDistribucion ?? null,
 
       platillo:
         comida.platillo || '',
