@@ -16,6 +16,8 @@ import {
   ClipboardPlus,
   CircleCheck,
   X,
+  ArrowLeftRight,
+  UserRoundCheck,
 } from 'lucide-react'
 
 import {
@@ -328,23 +330,28 @@ function DashboardLayout() {
             <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} irAMiClinica={() => navigate('/mi-clinica')}/>
           </div>
         </header>
-        <div className="sticky top-0 z-40 hidden h-12 items-center justify-between gap-3 border-b border-[#315d4e] bg-[#173f34] px-5 text-white shadow-[0_3px_12px_rgba(23,63,52,0.13)] md:flex">
+        <div className="sticky top-0 z-40 hidden h-11 items-center justify-between gap-3 border-b border-[#c8dbd0] bg-[#fbfdfb]/95 px-5 text-[#173f34] backdrop-blur-md md:flex">
           {user.role === 'nutritionist' ? (
-            <div className="flex min-w-0 items-center gap-2 text-xs">
-              <CircleCheck size={15} className={pacienteTrabajo ? 'shrink-0 text-[#a8d9b9]' : 'shrink-0 text-[#92afa2]'} />
-              <span className="shrink-0 text-[#bed5c8]">{pacienteTrabajo ? 'Trabajando con:' : 'Sin paciente activo'}</span>
+            <div className="flex min-w-0 items-center gap-2">
+              <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg ${pacienteTrabajo ? 'bg-[#e1f0e7] text-[#246b55]' : 'bg-[#edf2ed] text-[#82968b]'}`}>
+                <UserRoundCheck size={16} />
+              </span>
               {pacienteTrabajo ? (
                 <>
-                  <span className="max-w-[min(42vw,480px)] truncate font-bold text-white">{pacienteTrabajo.name}</span>
-                  <button type="button" onClick={() => navigate('/pacientes')} className="shrink-0 rounded-md px-2 py-1 font-semibold text-[#c8e9d5] transition hover:bg-white/10 hover:text-white">Cambiar</button>
-                  <button type="button" onClick={() => { if (window.confirm('¿Dejar de trabajar con este paciente?')) cerrarTrabajo() }} aria-label="Dejar de trabajar con el paciente" title="Finalizar trabajo con paciente" className="rounded-md p-1 text-[#bed5c8] transition hover:bg-white/10 hover:text-white"><X size={15}/></button>
+                  <span className="max-w-[min(42vw,480px)] truncate text-xs font-bold text-[#173f34]">{pacienteTrabajo.name}</span>
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#62a881]" title="Paciente activo" />
+                  <button type="button" onClick={() => navigate('/pacientes')} aria-label="Cambiar paciente" title="Cambiar paciente" className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-[#4d816f] transition hover:bg-[#e1f0e7] hover:text-[#173f34]"><ArrowLeftRight size={16}/></button>
+                  <button type="button" onClick={() => { if (window.confirm('¿Dejar de trabajar con este paciente?')) cerrarTrabajo() }} aria-label="Dejar de trabajar con el paciente" title="Finalizar trabajo con paciente" className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-[#789286] transition hover:bg-red-50 hover:text-red-600"><X size={16}/></button>
                 </>
               ) : (
-                <button type="button" onClick={() => navigate('/pacientes')} className="font-semibold text-[#c8e9d5] hover:text-white">Seleccionar paciente →</button>
+                <>
+                  <span className="text-xs font-medium text-[#648073]">Sin paciente activo</span>
+                  <button type="button" onClick={() => navigate('/pacientes')} aria-label="Seleccionar paciente" title="Seleccionar paciente" className="grid h-7 w-7 place-items-center rounded-lg text-[#246b55] hover:bg-[#e1f0e7]"><ArrowLeftRight size={16}/></button>
+                </>
               )}
             </div>
-          ) : <span className="text-xs font-semibold text-[#bed5c8]">NutriA</span>}
-          <div className="flex shrink-0 items-center gap-2 [&_summary]:border-white/20 [&_summary]:bg-white/10 [&_summary]:text-white [&_summary:hover]:bg-white/20">
+          ) : <span className="text-xs font-semibold text-[#648073]">NutriA</span>}
+          <div className="flex shrink-0 items-center gap-2">
             <BotonInstalarApp />
             <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} irAMiClinica={() => navigate('/mi-clinica')}/>
           </div>
