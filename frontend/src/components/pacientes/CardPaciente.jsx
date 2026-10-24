@@ -34,17 +34,17 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, 
   ]
 
   return (
-    <article className={`group relative isolate flex h-full min-w-0 flex-col overflow-hidden rounded-[24px] border bg-[#f6f8f3] p-4 shadow-[0_10px_25px_-18px_rgba(25,70,55,.28)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_28px_-17px_rgba(25,70,55,.3)] sm:p-5 ${trabajando ? 'border-[#69ad8a] ring-2 ring-[#b6dcc6]' : 'border-[#e0e8df] hover:border-[#b9d8c8]'}`}>
+    <article className={`group relative isolate flex h-full min-w-0 flex-col overflow-hidden rounded-[24px] border bg-[#f6f8f3] p-4 shadow-[0_10px_25px_-18px_rgba(25,70,55,.28)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_28px_-17px_rgba(25,70,55,.3)] sm:p-5 ${trabajando ? 'border-[#216a50] ring-[3px] ring-[#368464] shadow-[0_12px_32px_-14px_rgba(22,92,67,.38)]' : 'border-[#e0e8df] hover:border-[#b9d8c8]'}`}>
       <div className="relative flex min-w-0 items-start gap-3">
         <div className="relative grid h-12 w-12 shrink-0 place-items-center rounded-2xl border-2 border-white bg-[#dcece0] text-xl font-black text-[#205e4d]">
           {obtenerInicial(paciente.name)}
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="break-words text-[16px] font-extrabold leading-snug tracking-tight text-[#123c36]">{paciente.name}</h2>
-          <p className="mt-1 text-xs font-medium text-[#77848a]">{edad !== null ? `${edad} años · ` : ''}{obtenerSexo(paciente.sex)}{pesoValido ? ` · ${peso.toFixed(1)} kg` : ''}</p>
-          <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#d6e9dd] bg-[#e1f0e6] px-2.5 py-1 text-[11px] font-bold text-[#23694f]">
+          <span className={`mt-1.5 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold ${paciente.accountStatus === 'pending' ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-[#d6e9dd] bg-[#e1f0e6] text-[#23694f]'}`}>
             <Leaf size={12} /> {paciente.accountStatus === 'pending' ? 'Invitación pendiente' : 'Paciente registrado'}
           </span>
+          <p className="mt-1.5 text-xs font-medium text-[#77848a]">{edad !== null ? `${edad} años · ` : ''}{obtenerSexo(paciente.sex)}{pesoValido ? ` · ${peso.toFixed(1)} kg` : ''}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1 rounded-xl border border-[#e1e9e1] bg-[#f9fbf8] p-1">
           <button type="button" onClick={onEditar} disabled={eliminando} title="Editar paciente" aria-label={`Editar a ${paciente.name}`} className="grid h-8 w-8 place-items-center rounded-lg text-[#23614e] transition hover:bg-[#e4f1e8] disabled:opacity-50"><Pencil size={15}/></button>
@@ -66,15 +66,18 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, 
         <p className="mt-1 line-clamp-2 break-words text-xs font-semibold leading-relaxed text-[#38524c]">{paciente.notes || 'Sin notas registradas'}</p>
       </div>
       {paciente.accountStatus === 'pending' && (
-        <div className="relative mt-3 rounded-xl border border-amber-200 bg-amber-50/90 p-3">
-          <p className="text-xs font-bold text-amber-800">Invitación pendiente</p>
-          <button type="button" onClick={onReenviar} disabled={reenviando} className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-bold text-[#246b55] disabled:opacity-50">
-            <RefreshCw size={13} className={reenviando ? 'animate-spin' : ''}/> {reenviando ? 'Enviando...' : 'Reenviar invitación'}
+        <div className="relative mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50/90 p-3">
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-amber-900">Invitación sin aceptar</p>
+            <p className="mt-0.5 text-[11px] text-amber-800">El paciente aún no activa su cuenta.</p>
+          </div>
+          <button type="button" onClick={onReenviar} disabled={reenviando} className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-bold text-amber-900 shadow-sm transition hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600 disabled:cursor-not-allowed disabled:opacity-50">
+            <RefreshCw size={14} className={reenviando ? 'animate-spin' : ''}/> {reenviando ? 'Enviando...' : 'Reenviar invitación'}
           </button>
         </div>
       )}
       <div className="relative mt-auto flex items-stretch gap-2 pt-4">
-        <button type="button" onClick={onTrabajar} aria-label={trabajando ? `Continuar trabajando con ${paciente.name}` : `Trabajar con ${paciente.name}`} className="inline-flex min-h-[46px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border border-[#b4d4bf] bg-[#cfe5d5] px-2.5 text-[13px] font-bold text-[#245e49] transition hover:border-[#8fbea3] hover:bg-[#bfddc8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#245e49] sm:px-3">
+        <button type="button" onClick={onTrabajar} aria-label={trabajando ? `Continuar trabajando con ${paciente.name}` : `Trabajar con ${paciente.name}`} className={`inline-flex min-h-[46px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border px-2.5 text-[13px] font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#245e49] sm:px-3 ${trabajando ? 'border-[#226b50] bg-[#277557] text-white shadow-[0_4px_12px_-6px_rgba(22,92,67,.55)] hover:bg-[#1c6148]' : 'border-[#b4d4bf] bg-[#cfe5d5] text-[#245e49] hover:border-[#8fbea3] hover:bg-[#bfddc8]'}`>
           <BriefcaseMedical size={17} className="shrink-0"/>
           <span className="text-center">{trabajando ? 'Continuar trabajando' : 'Trabajar con paciente'}</span>
           {trabajando ? <CheckCircle2 size={16} className="shrink-0"/> : <ArrowUpRight size={16} className="shrink-0"/>}
