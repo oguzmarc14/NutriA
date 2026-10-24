@@ -1,6 +1,4 @@
-import { CalendarDays, CheckCircle2, ClipboardPlus, Mail, MoreHorizontal, Pencil, Phone, Play, RefreshCw, Trash2, ArrowUpRight, Leaf } from 'lucide-react'
-import { Link } from 'react-router-dom'
-import { useState } from 'react'
+import { CalendarDays, CheckCircle2, Mail, Pencil, Phone, Play, RefreshCw, Trash2, ArrowUpRight, Leaf } from 'lucide-react'
 
 function DatoPaciente({ icon: Icon, label, value, accent = false }) {
   return (
@@ -17,7 +15,6 @@ function DatoPaciente({ icon: Icon, label, value, accent = false }) {
 }
 
 function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, obtenerSexo, calcularEdad, obtenerInicial, onReenviar, reenviando, eliminando }) {
-  const [menuAbierto, setMenuAbierto] = useState(false)
   const edad = calcularEdad(paciente.birthDate)
   const nacimiento = paciente.birthDate
     ? new Intl.DateTimeFormat('es-MX', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(paciente.birthDate))
@@ -40,14 +37,9 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, 
             <Leaf size={12} /> {trabajando ? 'En trabajo' : paciente.accountStatus === 'pending' ? 'Invitación pendiente' : 'Paciente registrado'}
           </div>
         </div>
-        <div className="relative z-10">
-          <button type="button" onClick={() => setMenuAbierto(!menuAbierto)} aria-expanded={menuAbierto} aria-label={`Opciones de ${paciente.name}`} className="grid h-9 w-9 place-items-center rounded-2xl border border-white bg-white/75 text-[#285c4e] shadow-sm transition hover:bg-white"><MoreHorizontal size={20}/></button>
-          {menuAbierto && (
-            <div className="absolute right-0 top-11 z-20 w-40 overflow-hidden rounded-2xl border border-[#eedbd1] bg-white p-1.5 shadow-xl">
-              <button type="button" onClick={() => {setMenuAbierto(false);onEditar()}} disabled={eliminando} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-bold text-[#255f4f] hover:bg-[#edf5ef]"><Pencil size={14}/> Editar</button>
-              <button type="button" onClick={() => {setMenuAbierto(false);onEliminar()}} disabled={eliminando} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-bold text-red-600 hover:bg-red-50"><Trash2 size={14}/> Eliminar</button>
-            </div>
-          )}
+        <div className="relative z-10 flex shrink-0 items-center gap-1.5 rounded-2xl border border-white/80 bg-white/70 p-1 shadow-sm">
+          <button type="button" onClick={onEditar} disabled={eliminando} title="Editar paciente" aria-label={`Editar a ${paciente.name}`} className="grid h-8 w-8 place-items-center rounded-xl text-[#23614e] transition hover:bg-[#e4f1e8] disabled:opacity-50"><Pencil size={16}/></button>
+          <button type="button" onClick={onEliminar} disabled={eliminando} title="Eliminar paciente" aria-label={`Eliminar a ${paciente.name}`} className="grid h-8 w-8 place-items-center rounded-xl text-[#c65a59] transition hover:bg-red-50 disabled:opacity-50"><Trash2 size={16}/></button>
         </div>
       </div>
 
@@ -81,12 +73,10 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, trabajando, 
         <p className="relative mt-3 flex items-center gap-1.5 text-[11px] font-semibold text-[#47846d]"><CheckCircle2 size={13}/> Cuenta de paciente activa</p>
       )}
 
-      <div className="relative mt-4 grid grid-cols-2 gap-2.5">
+      <div className="relative mt-4">
         <button type="button" onClick={onTrabajar} className={`col-span-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-[#3c806c] bg-gradient-to-r from-[#27775f] via-[#185e4c] to-[#104a3e] px-4 py-3.5 text-sm font-extrabold text-white shadow-[0_8px_15px_-6px_rgba(24,94,76,.6),inset_0_1px_0_rgba(255,255,255,.2)] transition hover:brightness-110 active:scale-[.99]`}>
           <Play size={16} fill="currentColor"/> {trabajando ? 'Paciente en trabajo' : 'Trabajar con paciente'} <ArrowUpRight size={16}/>
         </button>
-        <Link to={`/pacientes/${paciente._id}/expediente`} className="flex items-center justify-center gap-2 rounded-2xl border border-[#eecdbf] bg-white/80 px-2 py-3 text-xs font-extrabold text-[#214e44] shadow-[0_5px_12px_-10px_rgba(71,50,40,.5)] transition hover:bg-white"><ClipboardPlus size={16}/> Expediente</Link>
-        <button type="button" onClick={onEditar} disabled={eliminando} className="flex items-center justify-center gap-2 rounded-2xl border border-[#eecdbf] bg-white/80 px-2 py-3 text-xs font-extrabold text-[#214e44] shadow-[0_5px_12px_-10px_rgba(71,50,40,.5)] transition hover:bg-white disabled:opacity-50"><Pencil size={15}/> Editar</button>
       </div>
     </article>
   )
