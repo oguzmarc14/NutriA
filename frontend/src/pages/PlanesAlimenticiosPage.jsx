@@ -1949,26 +1949,56 @@ function PlanesAlimenticiosPage() {
               </p>
             </div>
 
-            {referenciaNutricional && <div className="mb-5 rounded-2xl border border-[#d2e3d8] bg-white/90">
+            {referenciaNutricional && <div className={`mb-5 overflow-hidden rounded-3xl border border-[#cbded2] bg-white shadow-[0_12px_30px_rgba(24,73,53,0.06)] ${panelBalanceVisible ? 'xl:mr-[330px] 2xl:mr-[370px]' : ''}`}>
               <button type="button" aria-expanded={mostrarGuia} onClick={() => setMostrarGuia(v => !v)}
-                className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-extrabold text-[#173f34]">
-                <span className="flex items-center gap-2"><Sparkles size={17} className="text-[#4d816f]"/> Guía del tratamiento y recomendaciones</span>
-                {mostrarGuia ? <ChevronUp size={18}/> : <ChevronDown size={18}/>}
+                className="flex w-full items-center justify-between gap-3 bg-gradient-to-r from-[#f3f9f5] to-white px-5 py-4 text-left transition hover:bg-[#edf6f0]">
+                <span className="flex min-w-0 items-center gap-3">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#e1f0e7] text-[#246b55]"><Sparkles size={19}/></span>
+                  <span className="min-w-0"><strong className="block text-sm font-extrabold text-[#173f34] sm:text-base">Guía clínica del paciente</strong>
+                    <span className="mt-0.5 block text-xs text-[#648073]">Objetivos, horarios y consideraciones alimentarias</span></span>
+                </span>
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-white text-[#246b55] shadow-sm">{mostrarGuia ? <ChevronUp size={18}/> : <ChevronDown size={18}/>}</span>
               </button>
-              {mostrarGuia && <div className="border-t border-[#e1eae3] px-4 pb-4 pt-3">
-                <p className="mb-2 text-xs text-[#648073]">Consulta objetivos, restricciones y el cálculo antes de ajustar el menú.</p>
-                <div className="flex flex-wrap gap-2">
-                  {(referenciaNutricional.expediente?.nutricion?.objetivos || []).map(v =>
-                    <span key={v} className="rounded-full bg-[#e3f0e7] px-3 py-1 text-xs text-[#246b55]">{({
-                      perdida_peso:'Pérdida de peso', incremento_masa:'Incremento de masa muscular',
-                      rendimiento_deportivo:'Rendimiento deportivo', salud:'Mejorar la salud',
-                      control_enfermedades:'Control de enfermedades', imagen_personal:'Imagen personal',
-                    })[v] || v}</span>)}
+              {mostrarGuia && <div className="border-t border-[#e4eee6] p-4 sm:p-5">
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                  <Target size={16} className="text-[#246b55]"/>
+                  <span className="mr-1 text-xs font-extrabold uppercase tracking-wide text-[#52716a]">Objetivos clínicos</span>
+                  {(referenciaNutricional.expediente?.nutricion?.objetivos || []).length ?
+                    referenciaNutricional.expediente.nutricion.objetivos.map(v =>
+                      <span key={v} className="rounded-full border border-[#d6e9dc] bg-[#eef7f0] px-3 py-1 text-xs font-semibold text-[#246b55]">{({
+                        perdida_peso:'Pérdida de peso', incremento_masa:'Incremento de masa muscular',
+                        rendimiento_deportivo:'Rendimiento deportivo', salud:'Mejorar la salud',
+                        control_enfermedades:'Control de enfermedades', imagen_personal:'Imagen personal',
+                      })[v] || v}</span>) : <span className="text-xs text-[#82968b]">Sin objetivos registrados</span>}
                 </div>
-                {objetivosReferencia && <p className="mt-3 text-sm text-[#52716a]">Meta: <strong>{objetivosReferencia.objetivoKcal} kcal</strong> · {objetivosReferencia.proteinasGramos} g proteína · {objetivosReferencia.carbohidratosGramos} g carbohidratos · {objetivosReferencia.grasasGramos} g grasas</p>}
-                <p className="mt-2 text-xs text-[#648073]">Comidas habituales: {referenciaNutricional.expediente?.nutricion?.numeroComidasDia || 'sin registrar'} · Primera: {referenciaNutricional.expediente?.nutricion?.primeraComida || 'sin registrar'} · Última: {referenciaNutricional.expediente?.nutricion?.ultimaComida || 'sin registrar'}</p>
-                <p className="mt-2 text-xs text-[#648073]">Alergias: {referenciaNutricional.expediente?.alergias || 'sin registrar'} · Intolerancias: {referenciaNutricional.expediente?.nutricion?.intoleranciasAlimentarias || 'sin registrar'}</p>
-                <button type="button" onClick={() => navigate('/calculo-nutricional')} className="mt-3 text-xs font-bold text-[#246b55] underline underline-offset-4">Abrir cálculo nutricional →</button>
+                {objetivosReferencia && <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {[
+                    ['Energía', objetivosReferencia.objetivoKcal, 'kcal'],
+                    ['Proteína', objetivosReferencia.proteinasGramos, 'g'],
+                    ['Carbohidratos', objetivosReferencia.carbohidratosGramos, 'g'],
+                    ['Grasas', objetivosReferencia.grasasGramos, 'g'],
+                  ].map(([titulo, valor, unidad]) => <div key={titulo} className="rounded-2xl border border-[#e0ece3] bg-[#f5f9f6] p-3">
+                    <p className="text-[11px] font-semibold text-[#648073]">{titulo}</p>
+                    <p className="mt-1 text-lg font-extrabold tabular-nums text-[#173f34]">{numero(Number(valor) || 0, 1)} <span className="text-xs font-medium text-[#648073]">{unidad}</span></p>
+                  </div>)}
+                </div>}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-[#e0ece3] p-3">
+                    <h4 className="mb-2 flex items-center gap-2 text-xs font-extrabold text-[#173f34]"><CalendarDays size={15} className="text-[#246b55]"/> Hábitos de alimentación</h4>
+                    <p className="text-xs leading-6 text-[#52716a]">Comidas al día: <strong>{referenciaNutricional.expediente?.nutricion?.numeroComidasDia || 'Sin registrar'}</strong></p>
+                    <p className="text-xs leading-6 text-[#52716a]">Primera comida: <strong>{referenciaNutricional.expediente?.nutricion?.primeraComida || 'Sin registrar'}</strong></p>
+                    <p className="text-xs leading-6 text-[#52716a]">Última comida: <strong>{referenciaNutricional.expediente?.nutricion?.ultimaComida || 'Sin registrar'}</strong></p>
+                  </div>
+                  <div className="rounded-2xl border border-[#e0ece3] p-3">
+                    <h4 className="mb-2 flex items-center gap-2 text-xs font-extrabold text-[#173f34]"><Apple size={15} className="text-[#246b55]"/> Restricciones y cuidados</h4>
+                    <p className="text-xs leading-6 text-[#52716a]">Alergias: <strong>{referenciaNutricional.expediente?.alergias || 'Sin registrar'}</strong></p>
+                    <p className="text-xs leading-6 text-[#52716a]">Intolerancias: <strong>{referenciaNutricional.expediente?.nutricion?.intoleranciasAlimentarias || 'Sin registrar'}</strong></p>
+                  </div>
+                </div>
+                <button type="button" onClick={() => navigate('/calculo-nutricional')}
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#e7f2eb] px-3 py-2 text-xs font-bold text-[#246b55] transition hover:bg-[#d6e9dc]">
+                  <ChartNoAxesColumnIncreasing size={15}/> Ver cálculo nutricional <ArrowLeft size={14} className="rotate-180"/>
+                </button>
               </div>}
             </div>}
 
@@ -1992,13 +2022,13 @@ function PlanesAlimenticiosPage() {
                 NUEVO PLAN
             ============================================ */}
 
+            {!panelBalanceVisible && <button type="button" onClick={() => setPanelBalanceVisible(true)}
+              className="mb-4 inline-flex items-center gap-2 rounded-xl border border-[#c9dfd0] bg-white px-3 py-2 text-xs font-bold text-[#246b55] shadow-sm hover:bg-[#eaf3ed]">
+              <PanelRightOpen size={16}/> Mostrar seguimiento del plan
+            </button>}
+
             <div className={`mb-7 grid items-start gap-5 ${panelBalanceVisible ? 'xl:grid-cols-[minmax(0,1fr)_310px] 2xl:grid-cols-[minmax(0,1fr)_350px]' : 'grid-cols-1'}`}>
               <div className="min-w-0">
-                <button type="button" onClick={() => setPanelBalanceVisible(v => !v)}
-                  className="mb-3 flex items-center gap-2 rounded-xl border border-[#c9dfd0] bg-white px-3 py-2 text-xs font-bold text-[#246b55] hover:bg-[#eaf3ed]">
-                  {panelBalanceVisible ? <PanelRightClose size={16}/> : <PanelRightOpen size={16}/>}
-                  {panelBalanceVisible ? 'Ocultar seguimiento' : 'Mostrar seguimiento'}
-                </button>
             <form
               ref={formularioPlanRef}
               onSubmit={
@@ -2731,10 +2761,16 @@ function PlanesAlimenticiosPage() {
               </div>
               {panelBalanceVisible && <aside aria-label="Seguimiento nutricional del plan" className="min-w-0 xl:fixed xl:right-6 xl:top-[68px] xl:z-30 xl:w-[310px] 2xl:w-[350px]">
                 <div className="max-h-none space-y-4 rounded-2xl border border-[#c9dfd0] bg-white p-4 shadow-[0_12px_32px_rgba(32,78,64,0.08)] xl:max-h-[calc(100vh-84px)] xl:overflow-y-auto">
-                  <div className="flex items-center gap-2 border-b border-[#e3eee6] pb-3">
-                    <ChartNoAxesColumnIncreasing size={19} className="text-[#246b55]"/>
-                    <div><h3 className="text-sm font-extrabold text-[#173f34]">Seguimiento del plan</h3>
-                      <p className="text-[11px] text-[#648073]">Se actualiza al editar alimentos</p></div>
+                  <div className="flex items-center justify-between gap-2 border-b border-[#e3eee6] pb-3">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <ChartNoAxesColumnIncreasing size={19} className="shrink-0 text-[#246b55]"/>
+                      <div><h3 className="text-sm font-extrabold text-[#173f34]">Seguimiento del plan</h3>
+                        <p className="text-[11px] text-[#648073]">Se actualiza al editar alimentos</p></div>
+                    </div>
+                    <button type="button" onClick={() => setPanelBalanceVisible(false)} aria-label="Ocultar seguimiento" title="Ocultar seguimiento"
+                      className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[#52716a] transition hover:bg-[#e7f2eb] hover:text-[#173f34]">
+                      <PanelRightClose size={18}/>
+                    </button>
                   </div>
                   {objetivosReferencia ? <div className="space-y-4">
                     {metas.map(([etiqueta, clave, unidad, meta]) => {
