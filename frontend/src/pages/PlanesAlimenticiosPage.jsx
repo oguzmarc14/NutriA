@@ -1324,7 +1324,7 @@ function PlanesAlimenticiosPage() {
     setModoAsistido(true)
     setMostrarEleccion(false)
     setError('')
-    setMensaje('Estructura preparada con los datos del expediente y el cálculo. Agrega alimentos y revisa las metas antes de guardar.')
+    setMensaje('')
   }
   function duplicarPlan(plan) {
     if (comidas.some(comida => comida.alimentos.length > 0) && !window.confirm('¿Reemplazar el borrador actual con una copia del plan seleccionado?')) return
@@ -2030,7 +2030,7 @@ function PlanesAlimenticiosPage() {
                 </div>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-2">
                 <CampoTexto
                   label="Nombre del plan *"
                   value={
@@ -2041,17 +2041,6 @@ function PlanesAlimenticiosPage() {
                   }
                   placeholder="Plan para control de peso"
                   required
-                />
-
-                <CampoTexto
-                  label="Objetivo"
-                  value={
-                    objetivo
-                  }
-                  onChange={
-                    setObjetivo
-                  }
-                  placeholder="Mejorar hábitos alimenticios"
                 />
 
                 <label className="block min-w-0 max-w-full overflow-hidden">
@@ -2789,7 +2778,7 @@ function PlanesAlimenticiosPage() {
                 PLANES REGISTRADOS
             ============================================ */}
 
-            <div className="rounded-3xl border border-[#eadfc8] bg-gradient-to-br from-[#fffaf1] to-[#f7efdf] p-4 shadow-[0_14px_40px_rgba(94,76,48,0.07)] sm:p-5 md:p-6">
+            <div className={`rounded-3xl border border-[#eadfc8] bg-gradient-to-br from-[#fffaf1] to-[#f7efdf] p-4 shadow-[0_14px_40px_rgba(94,76,48,0.07)] sm:p-5 md:p-6 ${panelBalanceVisible ? "xl:mr-[330px] 2xl:mr-[370px]" : ""}`}>
               <div className="mb-6 flex items-center gap-3">
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#efe2c6] text-[#8a6840]">
                   <Apple
