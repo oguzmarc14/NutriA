@@ -166,7 +166,7 @@ function UsuariosPage() {
   }
 
   return (
-    <section className="mx-auto max-w-6xl p-5 md:p-8">
+    <section className="mx-auto max-w-[1480px] p-5 md:p-8">
       <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="mb-2 text-sm font-bold uppercase tracking-[0.16em] text-[#4d816f]">
