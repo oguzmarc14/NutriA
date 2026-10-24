@@ -5,6 +5,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 
 import DashboardPage from "./pages/DashboardPage";
 import MiClinicaPage from "./pages/MiClinicaPage";
+import CalculoNutricionalPage from "./pages/CalculoNutricionalPage";
 import LoginPage from "./pages/LoginPage";
 import PacientesPage from "./pages/PacientesPage";
 import ExpedientePage from "./pages/ExpedientePage";
@@ -68,6 +69,8 @@ function App() {
               path="mediciones/comparar"
               element={<CompararMedicionesPage />}
             />
+
+            <Route path="calculo-nutricional" element={<CalculoNutricionalPage />} />
 
             <Route path="planes" element={<PlanesAlimenticiosPage />} />
 
