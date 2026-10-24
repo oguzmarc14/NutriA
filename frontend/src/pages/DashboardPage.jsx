@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import client from '../api/client'
 import {
-  Building2, Camera, TrendingUp, UserRoundPlus, CalendarClock, RefreshCw,
+  Building2, Pencil, TrendingUp, UserRoundPlus, CalendarClock,
   Apple,
   ClipboardPlus,
   Ruler,
@@ -65,12 +65,15 @@ function DashboardPage() {
   const [pacientes, setPacientes] = useState([])
   const [cargando, setCargando] = useState(true)
   const [errorDatos, setErrorDatos] = useState('')
-  const claveMarca = `nutria_clinica_${user._id || user.id || user.email || 'usuario'}`
-  const [marca, setMarca] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(claveMarca) || '{}') } catch { return {} }
-  })
-  const [editandoMarca, setEditandoMarca] = useState(false)
-  const [nombreClinica, setNombreClinica] = useState(marca.nombre || '')
+  const [marca, setMarca] = useState({ nombre: '', nombreProfesional: '', logo: '' })
+  useEffect(() => {
+    if (user.role !== 'nutritionist') return undefined
+    let activo = true
+    const cargar = () => client.get('/clinica').then(({data}) => { if (activo) setMarca(data.clinica || {}) }).catch(() => {})
+    cargar()
+    window.addEventListener('nutria-clinica-actualizada', cargar)
+    return () => { activo = false; window.removeEventListener('nutria-clinica-actualizada', cargar) }
+  }, [user.role])
 
   useEffect(() => {
     if (user.role !== 'nutritionist') return undefined
@@ -81,24 +84,6 @@ function DashboardPage() {
       .finally(() => { if (vigente) setCargando(false) })
     return () => { vigente = false }
   }, [user.role])
-
-  function guardarMarca(nueva) {
-    setMarca(nueva)
-    localStorage.setItem(claveMarca, JSON.stringify(nueva))
-  }
-
-  function subirLogo(event) {
-    const archivo = event.target.files?.[0]
-    if (!archivo) return
-    if (!archivo.type.startsWith('image/') || archivo.size > 1024 * 1024) {
-      setErrorDatos('El logo debe ser una imagen de máximo 1 MB.')
-      return
-    }
-    const lector = new FileReader()
-    lector.onload = () => guardarMarca({ ...marca, logo: lector.result })
-    lector.readAsDataURL(archivo)
-    event.target.value = ''
-  }
 
   const hoy = new Date()
   const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
@@ -130,35 +115,20 @@ function DashboardPage() {
   if (!isAdmin) {
     return (
       <section className="mx-auto max-w-6xl space-y-5 p-4 md:p-8">
+        <div>
+          <h1 className="text-2xl font-extrabold text-[#173f34]">Resumen de la clínica</h1>
+          <p className="text-xs text-[#648073]">Indicadores calculados con tus registros</p>
+        </div>
         <div className="flex flex-wrap items-center gap-4 rounded-3xl border border-[#d4e5d9] bg-white/80 p-5 shadow-sm">
           <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl border border-[#d4e5d9] bg-[#e4f2e9]">
             {marca.logo ? <img src={marca.logo} alt="Logo de la clínica" className="h-full w-full object-contain" /> : <Building2 className="text-[#267153]" size={30} />}
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-bold uppercase tracking-widest text-[#6f8c7a]">Mi consultorio</p>
-            <h1 className="break-words text-2xl font-extrabold text-[#173f34]">{marca.nombre || 'Tu clínica'}</h1>
-            <p className="text-sm text-[#648073]">Bienvenido, {user.name.split(' ')[0]}</p>
+            <h2 className="break-words text-2xl font-extrabold text-[#173f34]">{marca.nombre || 'Tu clínica'}</h2>
+            <p className="text-sm text-[#648073]">Bienvenido, {(marca.nombreProfesional || user.name).split(' ')[0]}</p>
           </div>
-          <button type="button" onClick={() => setEditandoMarca(!editandoMarca)} className="rounded-xl border border-[#c8dfcf] bg-[#edf5ef] px-3 py-2 text-sm font-bold text-[#246b55]">Personalizar</button>
-          {editandoMarca && (
-            <div className="w-full space-y-3 border-t border-[#e4eee6] pt-4">
-              <label className="block text-xs font-semibold text-[#526d5d]">Nombre de la clínica
-                <input maxLength={80} value={nombreClinica} onChange={e => setNombreClinica(e.target.value)} placeholder="Nombre de tu consultorio" className="mt-1 w-full rounded-xl border border-[#cadfd1] bg-white p-3 text-sm outline-none focus:border-[#246b55]" />
-              </label>
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-[#cadfd1] bg-white px-3 py-2 text-sm font-semibold text-[#246b55]"><Camera size={16}/> Subir logo (máx. 1 MB)
-                <input type="file" accept="image/*" onChange={subirLogo} className="sr-only"/>
-              </label>
-              <div className="flex gap-2">
-                <button type="button" onClick={() => { guardarMarca({ ...marca, nombre: nombreClinica.trim() }); setEditandoMarca(false) }} className="rounded-xl bg-[#246b55] px-4 py-2 text-sm font-bold text-white">Guardar</button>
-                <button type="button" onClick={() => { setNombreClinica(marca.nombre || ''); setEditandoMarca(false) }} className="rounded-xl bg-[#edf3ee] px-4 py-2 text-sm font-bold text-[#526d5d]">Cancelar</button>
-              </div>
-              <p className="text-xs text-[#7b8e82]">Por ahora la personalización se guarda únicamente en este navegador.</p>
-            </div>
-          )}
-        </div>
-        <div className="flex items-end justify-between gap-2">
-          <div><h2 className="text-xl font-extrabold text-[#173f34]">Resumen de la clínica</h2><p className="text-xs text-[#648073]">Indicadores calculados con tus registros</p></div>
-          <button type="button" onClick={() => navigate('/pacientes')} className="text-xs font-bold text-[#246b55] hover:underline">Ver pacientes →</button>
+          <button type="button" onClick={() => navigate('/mi-clinica')} title="Editar información de mi clínica" aria-label="Editar información de mi clínica" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#c8dfcf] bg-[#edf5ef] text-[#246b55] hover:bg-[#dcebe0]"><Pencil size={18}/></button>
         </div>
         {errorDatos && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{errorDatos}</p>}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
