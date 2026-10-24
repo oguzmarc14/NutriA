@@ -161,6 +161,8 @@ function PlanesAlimenticiosPage() {
   const navigate = useNavigate()
   const [referenciaNutricional, setReferenciaNutricional] = useState(null)
   const [errorReferencia, setErrorReferencia] = useState('')
+  const [modoAsistido, setModoAsistido] = useState(false)
+  const [distribucion, setDistribucion] = useState([25, 40, 35])
   const { cerrarTrabajo, iniciarTrabajo, pacienteTrabajo } =
     usePacienteTrabajo()
   const pacienteSolicitado = searchParams.get('paciente') || ''
@@ -1212,6 +1214,81 @@ function PlanesAlimenticiosPage() {
       )
     }, [comidas])
 
+  const calculoReferencia = referenciaNutricional?.calculo
+  const objetivosReferencia = calculoReferencia?.resultado
+  const metas = [
+    ['Energía', 'kcal', 'kcal', objetivosReferencia?.objetivoKcal],
+    ['Proteína', 'proteina', 'g', objetivosReferencia?.proteinasGramos],
+    ['Carbohidratos', 'carbohidratos', 'g', objetivosReferencia?.carbohidratosGramos],
+    ['Grasas', 'grasas', 'g', objetivosReferencia?.grasasGramos],
+  ]
+  const comidasBalance = comidas.map(comida => ({
+    ...comida,
+    totales: calcularTotales(comida.alimentos),
+  }))
+  const gruposCatalogo = comidas.flatMap(comida => comida.alimentos || []).reduce((acc, alimento) => {
+    const grupo = alimento.grupo?.trim() || 'Sin clasificar'
+    acc[grupo] = (acc[grupo] || 0) + (Number(alimento.cantidad) || 0)
+    return acc
+  }, {})
+  function prepararPlanAsistido() {
+    if (!objetivosReferencia) {
+      setError('Para preparar un plan asistido, guarda primero un cálculo nutricional.')
+      return
+    }
+    if (planEditandoId && !window.confirm('¿Reemplazar las comidas de la edición actual por una estructura vacía?')) return
+    if (comidas.some(comida => comida.alimentos.length > 0) && !window.confirm('¿Reemplazar las comidas actuales? Se perderán los alimentos aún no guardados.')) return
+    const nutricion = referenciaNutricional?.expediente?.nutricion || {}
+    const objetivos = Array.isArray(nutricion.objetivos) ? nutricion.objetivos : []
+    const cantidadComidas = Number(nutricion.numeroComidasDia)
+    const nombres = cantidadComidas === 4
+      ? ['Desayuno', 'Colación', 'Comida', 'Cena']
+      : cantidadComidas >= 5
+        ? ['Desayuno', 'Colación matutina', 'Comida', 'Colación vespertina', 'Cena']
+        : ['Desayuno', 'Comida', 'Cena']
+    const horas = nombres.length === 3 ? ['08:00', '14:30', '20:30'] :
+      nombres.length === 4 ? ['08:00', '11:30', '14:30', '20:30'] :
+      ['08:00', '11:30', '14:30', '17:30', '20:30']
+    const nuevas = nombres.map((n, i) => crearComidaInicial(n, horas[i]))
+    setComidas(nuevas)
+    setComidaActivaId(nuevas[0].id)
+    setPlanEditandoId('')
+    setNombre('Plan nutricional - ' + obtenerFechaActual())
+    setObjetivo(objetivos.map(v => ({
+      perdida_peso: 'Pérdida de peso', incremento_masa: 'Incremento de masa muscular',
+      salud: 'Mejorar la salud', rendimiento_deportivo: 'Rendimiento deportivo',
+      control_enfermedades: 'Control de enfermedades',
+    }[v] || v)).join(', '))
+    setDistribucion(nombres.length === 3 ? [25, 40, 35] :
+      nombres.length === 4 ? [25, 10, 40, 25] : [20, 10, 35, 10, 25])
+    setModoAsistido(true)
+    setError('')
+    setMensaje('Estructura preparada con los datos del expediente y el cálculo. Agrega alimentos y revisa las metas antes de guardar.')
+  }
+  function duplicarPlan(plan) {
+    if (comidas.some(comida => comida.alimentos.length > 0) && !window.confirm('¿Reemplazar el borrador actual con una copia del plan seleccionado?')) return
+    const copias = (plan.comidas || []).map(comida => ({
+      id: `${Date.now()}-${Math.random()}`,
+      nombre: comida.nombre || '',
+      platillo: comida.platillo || '',
+      hora: comida.hora || '',
+      alimentos: (comida.alimentos || []).map(alimento => ({
+        ...alimento, id: `${Date.now()}-${Math.random()}`,
+        alimentoId: typeof alimento.alimento === 'object' ? alimento.alimento?._id : alimento.alimento,
+      })),
+    }))
+    setComidas(copias.length ? copias : crearComidasIniciales())
+    setComidaActivaId(copias[0]?.id || '')
+    setPlanEditandoId('')
+    setNombre((plan.nombre || 'Plan') + ' (copia)')
+    setObjetivo(plan.objetivo || '')
+    setFechaPlan(obtenerFechaActual())
+    setModoAsistido(false)
+    setError('')
+    setMensaje('Plan anterior duplicado como borrador nuevo. Revisa los alimentos y cantidades antes de guardar.')
+    formularioPlanRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   /*
    * ----------------------------------------------------
    * GUARDAR PLAN
@@ -1948,6 +2025,77 @@ function PlanesAlimenticiosPage() {
                   />
                 </label>
               </div>
+
+              {!planEditandoId && <div className="mb-6 grid gap-3 sm:grid-cols-3">
+                <button type="button" onClick={prepararPlanAsistido} disabled={!objetivosReferencia}
+                  className="rounded-2xl border border-[#9dc9ad] bg-[#e5f2e9] p-4 text-left transition hover:bg-[#d8ebdf] disabled:cursor-not-allowed disabled:opacity-50">
+                  <Sparkles size={19} className="mb-2 text-[#246b55]"/>
+                  <span className="block text-sm font-extrabold text-[#173f34]">Plan asistido</span>
+                  <span className="mt-1 block text-xs text-[#52716a]">Prepara tiempos de comida y objetivos usando el cálculo.</span>
+                </button>
+                <button type="button" onClick={() => planes.length && duplicarPlan(planes[0])} disabled={!planes.length}
+                  className="rounded-2xl border border-[#d2e3d8] bg-white p-4 text-left transition hover:bg-[#f0f7f3] disabled:cursor-not-allowed disabled:opacity-50">
+                  <Save size={19} className="mb-2 text-[#246b55]"/>
+                  <span className="block text-sm font-extrabold text-[#173f34]">Duplicar último plan</span>
+                  <span className="mt-1 block text-xs text-[#52716a]">Reutiliza comidas y alimentos para el seguimiento.</span>
+                </button>
+                <button type="button" onClick={() => { if (comidas.some(c => c.alimentos.length) && !window.confirm('¿Reiniciar el borrador actual?')) return; cancelarEdicion(); setModoAsistido(false); setMensaje('Editor libre listo.') }}
+                  className="rounded-2xl border border-[#d2e3d8] bg-white p-4 text-left transition hover:bg-[#f0f7f3]">
+                  <Apple size={19} className="mb-2 text-[#246b55]"/>
+                  <span className="block text-sm font-extrabold text-[#173f34]">Desde cero</span>
+                  <span className="mt-1 block text-xs text-[#52716a]">Conserva el editor manual de siempre.</span>
+                </button>
+              </div>}
+
+              {objetivosReferencia && <div className="mb-6 rounded-2xl border border-[#c9dfd0] bg-white p-4 sm:p-5">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div><h3 className="font-extrabold text-[#173f34]">Balance nutricional en tiempo real</h3>
+                    <p className="text-xs text-[#648073]">Comparación del menú con el último cálculo guardado. Los totales cambian al agregar alimentos.</p></div>
+                  {modoAsistido && <span className="rounded-full bg-[#e1f0e7] px-3 py-1 text-xs font-bold text-[#246b55]">Plan asistido</span>}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  {metas.map(([etiqueta, clave, unidad, meta]) => {
+                    const actual = Number(totalesPlan[clave]) || 0
+                    const objetivoValido = Number(meta) > 0 ? Number(meta) : 0
+                    const diferencia = objetivoValido - actual
+                    const porcentaje = objetivoValido ? Math.round(actual / objetivoValido * 100) : 0
+                    return <div key={clave} className="rounded-xl bg-[#f1f6f2] p-3">
+                      <p className="text-xs font-semibold text-[#52716a]">{etiqueta}</p>
+                      <p className="mt-1 text-lg font-extrabold text-[#173f34]">{Math.round(actual * 10) / 10} <span className="text-xs font-medium">/ {Math.round(objetivoValido * 10) / 10} {unidad}</span></p>
+                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#d9e7dd]">
+                        <div className={porcentaje > 105 ? 'h-full rounded-full bg-amber-500' : 'h-full rounded-full bg-[#70ae89]'} style={{ width: Math.min(porcentaje, 100) + '%' }}/>
+                      </div>
+                      <p className={`mt-2 text-xs ${porcentaje > 105 ? 'text-amber-700' : 'text-[#648073]'}`}>{diferencia >= 0 ? 'Restan' : 'Excedente'} {Math.abs(Math.round(diferencia * 10) / 10)} {unidad} · {porcentaje}%</p>
+                    </div>
+                  })}
+                </div>
+                <p className="mt-3 text-xs text-[#648073]">Referencia orientativa; las desviaciones requieren revisión clínica. No representa equivalentes SMAE.</p>
+              </div>}
+
+              {modoAsistido && objetivosReferencia && <div className="mb-6 rounded-2xl border border-[#d2e3d8] bg-white p-4 sm:p-5">
+                <h3 className="font-extrabold text-[#173f34]">Presupuesto por comida</h3>
+                <p className="mb-3 mt-1 text-xs text-[#648073]">Distribución inicial editable. Ajusta los porcentajes según el paciente; deben sumar 100%.</p>
+                <div className="space-y-3">{comidasBalance.map((comida, indice) => {
+                  const porcentaje = distribucion[indice] ?? 0
+                  const metaKcal = Number(objetivosReferencia.objetivoKcal) * porcentaje / 100
+                  return <div key={comida.id} className="flex flex-wrap items-center gap-3 rounded-xl bg-[#f1f6f2] p-3">
+                    <span className="min-w-28 flex-1 text-sm font-bold text-[#173f34]">{comida.nombre}</span>
+                    <label className="flex items-center gap-1 text-xs text-[#52716a]"><input type="number" min="0" max="100" step="1" value={porcentaje}
+                      onChange={e => setDistribucion(actual => comidas.map((_, i) => i === indice ? Number(e.target.value) : (actual[i] ?? 0)))}
+                      className="w-16 rounded-lg border border-[#c8ddd2] bg-white px-2 py-1.5 text-right"/>%</label>
+                    <span className="w-32 text-right text-xs text-[#52716a]">{Math.round(comida.totales.kcal)} / {Math.round(metaKcal)} kcal</span>
+                  </div>
+                })}</div>
+                <p className={`mt-3 text-xs font-semibold ${distribucion.reduce((a,b)=>a+b,0) === 100 ? 'text-[#246b55]' : 'text-amber-700'}`}>Distribución total: {distribucion.reduce((a,b)=>a+b,0)}%</p>
+              </div>}
+
+              {Object.keys(gruposCatalogo).length > 0 && <div className="mb-6 rounded-2xl border border-[#d2e3d8] bg-white p-4 sm:p-5">
+                <h3 className="font-extrabold text-[#173f34]">Grupos de alimentos utilizados</h3>
+                <p className="mb-3 mt-1 text-xs text-[#648073]">Conteo de porciones registradas en el menú actual, según las categorías del catálogo.</p>
+                <div className="flex flex-wrap gap-2">{Object.entries(gruposCatalogo).sort((a,b)=>a[0].localeCompare(b[0])).map(([grupo,cantidad]) =>
+                  <span key={grupo} className="rounded-full bg-[#e6f1e9] px-3 py-1.5 text-xs font-bold text-[#246b55]">{grupo}: {Math.round(cantidad * 10) / 10}</span>)}</div>
+                <p className="mt-3 text-xs text-[#648073]">Estas cantidades son porciones del catálogo, no equivalentes SMAE validados.</p>
+              </div>}
 
               {/* RESUMEN GENERAL */}
 
