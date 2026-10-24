@@ -10,6 +10,8 @@ import {
   Apple,
   ArrowLeft,
   CalendarDays,
+  CheckCircle2,
+  Circle,
   ChevronDown,
   ChevronUp,
   ChartNoAxesColumnIncreasing,
@@ -425,6 +427,7 @@ function PlanesAlimenticiosPage() {
     if (!pacienteId || !referenciaNutricional || planEditandoId) return
     if (eleccionMostrada.current === pacienteId) return
     eleccionMostrada.current = pacienteId
+    setModalidadSeleccionada(null)
     setMostrarEleccion(true)
   }, [pacienteId, referenciaNutricional, planEditandoId])
 
@@ -2886,29 +2889,35 @@ function PlanesAlimenticiosPage() {
           </>
         )}
       </div>
-      {mostrarEleccion && pacienteId && !planEditandoId && <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#173f34]/45 p-4" onMouseDown={e => { if (e.target === e.currentTarget) setMostrarEleccion(false) }}>
+      {mostrarEleccion && pacienteId && !planEditandoId && <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#173f34]/45 p-4" onMouseDown={e => { if (e.target === e.currentTarget) { setModalidadSeleccionada(null); setMostrarEleccion(false) } }}>
         <div role="dialog" aria-modal="true" aria-labelledby="modal-modalidad-plan" className="w-full max-w-lg rounded-3xl border border-[#d5e5da] bg-white p-5 shadow-2xl sm:p-7">
           <div className="flex items-start justify-between gap-4">
             <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#e1f0e7] text-[#246b55]"><Sparkles size={23}/></div>
-            <button type="button" aria-label="Cerrar" onClick={() => setMostrarEleccion(false)} className="rounded-lg p-2 text-[#648073] hover:bg-[#edf5f0]"><X size={19}/></button>
+            <button type="button" aria-label="Cerrar" onClick={() => { setModalidadSeleccionada(null); setMostrarEleccion(false) }} className="rounded-lg p-2 text-[#648073] hover:bg-[#edf5f0]"><X size={19}/></button>
           </div>
           <h2 id="modal-modalidad-plan" className="mt-4 text-xl font-extrabold text-[#173f34]">¿Cómo quieres crear este plan?</h2>
           <p className="mt-1 text-sm text-[#648073]">Elige cómo comenzar. Puedes cambiar de modalidad antes de guardar.</p>
           <div className="mt-5 space-y-2">
             <button type="button" disabled={!objetivosReferencia} onClick={() => setModalidadSeleccionada('asistido')}
               aria-pressed={modalidadSeleccionada === 'asistido'}
-              className="flex w-full items-start gap-3 rounded-2xl border border-[#a7d0b5] bg-[#eaf5ed] p-4 text-left hover:bg-[#dcefe2] disabled:opacity-50">
-              <Sparkles size={20} className="mt-0.5 shrink-0 text-[#246b55]"/><span><strong className="block text-sm text-[#173f34]">Plan asistido</strong><span className="mt-1 block text-xs text-[#52716a]">Usa objetivos, cantidad de comidas y horarios del expediente. {objetivosReferencia ? 'Cálculo disponible.' : 'Requiere cálculo guardado.'}</span></span>
+              aria-label="Plan asistido"
+              className={`flex w-full items-start gap-3 rounded-2xl border-2 p-4 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#246b55] disabled:cursor-not-allowed disabled:opacity-50 ${modalidadSeleccionada === 'asistido' ? 'border-[#246b55] bg-[#e1f1e7] shadow-[0_0_0_2px_rgba(36,107,85,0.12)]' : 'border-[#d2e3d8] bg-white hover:border-[#9bc8ab] hover:bg-[#f4faf6]'}`}>
+              <Sparkles size={20} className="mt-0.5 shrink-0 text-[#246b55]"/><span className="min-w-0 flex-1"><strong className="block text-sm text-[#173f34]">Plan asistido</strong><span className="mt-1 block text-xs text-[#52716a]">Usa objetivos, cantidad de comidas y horarios del expediente. {objetivosReferencia ? 'Cálculo disponible.' : 'Requiere cálculo guardado.'}</span></span>
+              {modalidadSeleccionada === 'asistido' ? <CheckCircle2 size={21} className="shrink-0 text-[#246b55]"/> : <Circle size={21} className="shrink-0 text-[#b7cfc0]"/>}
             </button>
             <button type="button" disabled={!planes.length} onClick={() => setModalidadSeleccionada('duplicar')}
               aria-pressed={modalidadSeleccionada === 'duplicar'}
-              className="flex w-full items-start gap-3 rounded-2xl border border-[#d2e3d8] p-4 text-left hover:bg-[#f0f7f3] disabled:opacity-50">
+              aria-label="Duplicar último plan"
+              className={`flex w-full items-start gap-3 rounded-2xl border-2 p-4 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#246b55] disabled:cursor-not-allowed disabled:opacity-50 ${modalidadSeleccionada === 'duplicar' ? 'border-[#246b55] bg-[#e1f1e7] shadow-[0_0_0_2px_rgba(36,107,85,0.12)]' : 'border-[#d2e3d8] bg-white hover:border-[#9bc8ab] hover:bg-[#f4faf6]'}`}>
               <Save size={20} className="mt-0.5 shrink-0 text-[#246b55]"/><span><strong className="block text-sm text-[#173f34]">Duplicar último plan</strong><span className="mt-1 block text-xs text-[#52716a]">Recupera alimentos y cantidades para ajustarlos.</span></span>
+              {modalidadSeleccionada === 'duplicar' ? <CheckCircle2 size={21} className="shrink-0 text-[#246b55]"/> : <Circle size={21} className="shrink-0 text-[#b7cfc0]"/>}
             </button>
             <button type="button" onClick={() => setModalidadSeleccionada('libre')}
               aria-pressed={modalidadSeleccionada === 'libre'}
-              className="flex w-full items-start gap-3 rounded-2xl border border-[#d2e3d8] p-4 text-left hover:bg-[#f0f7f3]">
+              aria-label="Desde cero"
+              className={`flex w-full items-start gap-3 rounded-2xl border-2 p-4 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#246b55] disabled:cursor-not-allowed disabled:opacity-50 ${modalidadSeleccionada === 'libre' ? 'border-[#246b55] bg-[#e1f1e7] shadow-[0_0_0_2px_rgba(36,107,85,0.12)]' : 'border-[#d2e3d8] bg-white hover:border-[#9bc8ab] hover:bg-[#f4faf6]'}`}>
               <Apple size={20} className="mt-0.5 shrink-0 text-[#246b55]"/><span><strong className="block text-sm text-[#173f34]">Desde cero</strong><span className="mt-1 block text-xs text-[#52716a]">Editor libre, sin modificar tu información clínica.</span></span>
+              {modalidadSeleccionada === 'libre' ? <CheckCircle2 size={21} className="shrink-0 text-[#246b55]"/> : <Circle size={21} className="shrink-0 text-[#b7cfc0]"/>}
             </button>
           </div>
           {modalidadSeleccionada && <div className="mt-4 rounded-xl border border-[#c8ddd2] bg-[#f1f7f3] p-3">
