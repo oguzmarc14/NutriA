@@ -12,6 +12,7 @@ import {
   UserPen,
   Users,
   Building2,
+  Leaf,
   ClipboardPlus,
 } from 'lucide-react'
 
@@ -158,6 +159,11 @@ function DashboardLayout() {
       ]
     : navigationVisible
 
+  const navegacionConMarca = [
+    { icon: Leaf, label: 'NutriA', shortLabel: 'NutriA', to: '/', marca: true },
+    ...navegacionMovil.filter(item => item.to !== '/'),
+  ]
+
   /*
    * ----------------------------------------------------
    * ROL
@@ -265,6 +271,7 @@ function DashboardLayout() {
               icon: Icon,
               label,
               to,
+              marca,
             }) => (
               <NavLink
                 key={label}
@@ -318,7 +325,7 @@ function DashboardLayout() {
         </header>
         <div className="absolute right-6 top-3 z-40 hidden items-center gap-2 md:flex">
           <BotonInstalarApp />
-          <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion}/>
+          <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} irAMiClinica={() => navigate('/mi-clinica')}/>
         </div>
 
 
@@ -349,9 +356,9 @@ function DashboardLayout() {
           NAVEGACIÓN MÓVIL
       ============================================ */}
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-[#c9dbd1] bg-[#fbfdfb]/95 px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_30px_rgba(31,72,57,0.08)] backdrop-blur-xl md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t-2 border-[#a9cbb6] bg-[#f5faf6]/98 px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_30px_rgba(31,72,57,0.08)] backdrop-blur-xl md:hidden">
         <div className="mx-auto flex max-w-lg snap-x snap-mandatory gap-1.5 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {navegacionMovil.map(
+          {navegacionConMarca.map(
             ({
               icon: Icon,
               shortLabel,
@@ -365,10 +372,10 @@ function DashboardLayout() {
                 className={({
                   isActive,
                 }) =>
-                  `flex min-w-[74px] flex-1 shrink-0 snap-start flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 transition-all ${
+                  `flex min-w-[76px] flex-1 shrink-0 snap-start flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 transition-all ${
                     isActive
-                      ? 'bg-[#e1f0e7] text-[#246b55]'
-                      : 'text-[#75877f] active:bg-[#eef4f1]'
+                      ? 'bg-[#d5e9dc] text-[#174b38] shadow-[inset_0_0_0_1px_#b4d4bf]'
+                      : 'text-[#356c55] hover:bg-[#e7f1e9] active:bg-[#dbece1]'
                   }`
                 }
               >
@@ -378,9 +385,9 @@ function DashboardLayout() {
                   <>
                     <div
                       className={`grid h-8 w-8 place-items-center rounded-xl transition ${
-                        isActive
-                          ? 'bg-[#246b55] text-white shadow-[0_5px_14px_rgba(36,107,85,0.2)]'
-                          : ''
+                        isActive || marca
+                          ? 'bg-[#246b55] text-white shadow-[0_5px_14px_rgba(36,107,85,0.22)]'
+                          : 'bg-[#e2efe6] text-[#246b55]'
                       }`}
                     >
                       <Icon
@@ -388,7 +395,7 @@ function DashboardLayout() {
                       />
                     </div>
 
-                    <span className="max-w-full truncate text-[10px] font-bold sm:text-[11px]">
+                    <span className="max-w-full truncate text-[10px] font-extrabold sm:text-[11px]">
                       {
                         shortLabel
                       }
