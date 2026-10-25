@@ -19,7 +19,7 @@ function TarjetaSelectorComida({
 }) {
   return (
     <div
-      draggable
+      draggable={false}
       onDragStart={(event) => onDragStart(event, comida.id)}
       onDragEnd={onDragEnd}
       onDragOver={onDragOver}
