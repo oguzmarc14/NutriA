@@ -265,7 +265,7 @@ function DashboardLayout() {
   }
 
   return (
-    <div className={`min-h-screen overflow-x-hidden bg-[#dfece4] md:grid ${enEditorPlanes && !sidebarPlanesVisible ? "md:grid-cols-[0px_minmax(0,1fr)]" : "md:grid-cols-[260px_minmax(0,1fr)]"}`}>
+    <div className={`min-h-screen bg-[#dfece4] md:grid ${enEditorPlanes && !sidebarPlanesVisible ? "md:grid-cols-[0px_minmax(0,1fr)]" : "md:grid-cols-[260px_minmax(0,1fr)]"}`}>
       {/* ============================================
           SIDEBAR DESKTOP
       ============================================ */}
@@ -332,12 +332,12 @@ function DashboardLayout() {
           CONTENIDO
       ============================================ */}
 
-      <main className="relative min-w-0 overflow-x-clip bg-[#dfece4]">
+      <main className="relative min-w-0 bg-[#dfece4]">
         {/* ============================================
             HEADER
         ============================================ */}
 
-        <header className="sticky top-0 z-40 flex min-h-[56px] items-center border-b border-[#c8dbd0] bg-[#fbfdfb]/95 px-4 backdrop-blur-md md:hidden">
+        <header className="sticky top-0 z-40 flex min-h-[56px] items-center border-b border-[#c8dbd0] bg-[#fbfdfb]/95 px-4 md:backdrop-blur-md md:hidden">
           {mostrarAtras && (
             <button type="button" onClick={regresar} aria-label="Volver" className="mr-2 grid h-9 w-9 place-items-center rounded-xl text-[#246b55] hover:bg-[#e6f0e9]">
               <ArrowLeft size={19}/>
@@ -390,10 +390,10 @@ function DashboardLayout() {
             FONDO GLOBAL
         ============================================ */}
 
-        <div className="relative min-h-[calc(100vh-56px)] overflow-x-clip bg-[#dfece4]">
+        <div className="relative min-h-[calc(100vh-56px)] bg-[#dfece4]">
           {/* DECORACIONES */}
 
-          <div className="pointer-events-none absolute -right-32 -top-36 h-[420px] w-[420px] rounded-full bg-[#b5d2bf]/45 blur-3xl" />
+          <div className="pointer-events-none hidden md:block absolute -right-32 -top-36 h-[420px] w-[420px] rounded-full bg-[#b5d2bf]/45 blur-3xl" />
 
           <div className="pointer-events-none absolute -bottom-48 -left-32 h-[480px] w-[480px] rounded-full bg-[#cbdcbd]/40 blur-3xl" />
 
@@ -403,7 +403,7 @@ function DashboardLayout() {
 
           {/* CONTENIDO */}
 
-          <div className="relative z-10 min-h-[calc(100vh-64px)] min-w-0 overflow-x-clip pb-[92px] md:pb-0">
+          <div className="relative z-10 min-h-[calc(100vh-64px)] min-w-0 pb-[92px] md:pb-0">
             <Outlet />
           </div>
         </div>
@@ -413,8 +413,8 @@ function DashboardLayout() {
           NAVEGACIÓN MÓVIL
       ============================================ */}
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t-2 border-[#a9cbb6] bg-[#f5faf6]/98 px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_30px_rgba(31,72,57,0.08)] backdrop-blur-xl md:hidden">
-        <div className="mx-auto flex max-w-lg snap-x snap-mandatory gap-1.5 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t-2 border-[#a9cbb6] bg-[#f5faf6]/98 px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_30px_rgba(31,72,57,0.08)] md:backdrop-blur-xl md:hidden">
+        <div className="mx-auto flex max-w-lg snap-x snap-mandatory gap-1.5 overflow-x-auto overscroll-x-contain touch-pan-x pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {navegacionConMarca.map(
             ({
               icon: Icon,

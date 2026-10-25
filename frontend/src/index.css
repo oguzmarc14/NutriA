@@ -67,3 +67,11 @@ button,
 a {
   -webkit-tap-highlight-color: transparent;
 }
+
+/* PWA: un único scroll vertical fluido, sin bloquear gestos táctiles. */
+html { -webkit-text-size-adjust: 100%; }
+body { overscroll-behavior-y: auto; }
+@media (hover: none) and (pointer: coarse) {
+  html, body, #root { touch-action: pan-y pinch-zoom; }
+  input, textarea, select { touch-action: manipulation; }
+}

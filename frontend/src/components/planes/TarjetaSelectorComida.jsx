@@ -19,7 +19,7 @@ function TarjetaSelectorComida({
 }) {
   return (
     <div
-      draggable
+      draggable={typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches}
       onDragStart={(event) => onDragStart(event, comida.id)}
       onDragEnd={onDragEnd}
       onDragOver={onDragOver}
