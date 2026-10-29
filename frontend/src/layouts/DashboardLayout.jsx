@@ -32,6 +32,7 @@ import {
 } from 'react-router-dom'
 
 import { useAuth } from '../context/auth'
+import ThemeSelector from '../components/theme/ThemeSelector'
 import BotonInstalarApp from '../components/pwa/BotonInstalarApp'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
@@ -54,6 +55,7 @@ function PerfilMenu({ user, roleLabel, cerrarSesion, irAMiClinica }) {
         <div className="my-1 flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-[#8b9b92]" title="Próximamente: configuración">
           <Settings size={16}/> Configuración · Próximamente
         </div>
+        <ThemeSelector />
         <div className="my-2 border-t border-[#e7eee8]"/>
         <button type="button" onClick={cerrarSesion} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-[#b94d4d] transition hover:bg-red-50">
           <LogOut size={16}/> Cerrar sesión
