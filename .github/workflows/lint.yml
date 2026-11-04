@@ -1,0 +1,33 @@
+name: 4. Code Quality - Linter
+
+on:
+  push:
+    branches: [ "automatizacion", "react-mvp", "main" ]
+  pull_request:
+    branches: [ "automatizacion", "react-mvp", "main" ]
+
+jobs:
+  lint-code:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Run Backend Linter
+      run: |
+        cd backend
+        npm install
+        npm run lint --if-present
+
+    - name: Run Frontend Linter
+      run: |
+        cd frontend
+        npm install
+        npm run lint --if-present

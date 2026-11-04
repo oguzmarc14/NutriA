@@ -1,0 +1,27 @@
+name: 5. Infrastructure - Docker Build Test
+
+on:
+  push:
+    branches: [ "automatizacion", "react-mvp", "main" ]
+  pull_request:
+    branches: [ "automatizacion", "react-mvp", "main" ]
+
+jobs:
+  test-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Backend Docker Image (si existe Dockerfile)
+      run: |
+        if [ -f backend/Dockerfile ]; then
+          docker build -t nutria-backend:latest ./backend
+          echo "Imagen de Docker del backend compilada con éxito."
+        else
+          echo "No se encontró un Dockerfile en el backend, saltando paso."
+        fi
