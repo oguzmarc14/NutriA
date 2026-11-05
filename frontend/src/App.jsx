@@ -23,6 +23,7 @@ import MiProgresoPage from "./pages/MiProgresoPage";
 import PrivacidadPage from "./pages/PrivacidadPage";
 import TerminosPage from "./pages/TerminosPage";
 import CommunityPage from "./pages/CommunityPage";
+import CitasPage from "./pages/CitasPage";
 import CommunityModeracionPage from "./pages/CommunityModeracionPage";
 
 function App() {
@@ -75,6 +76,7 @@ function App() {
             <Route path="calculo-nutricional" element={<CalculoNutricionalPage />} />
 
             <Route path="planes" element={<PlanesAlimenticiosPage />} />
+            <Route path="citas" element={<CitasPage />} />
 
             <Route path="community" element={<CommunityPage />} />
             <Route path="progreso" element={<ProgresoPacientePage />} />
