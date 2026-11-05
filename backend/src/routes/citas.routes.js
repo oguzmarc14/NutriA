@@ -4,6 +4,11 @@ const { z } = require('zod')
 const { requireAuth, allowRoles } = require('../middleware/auth.middleware')
 const Patient = require('../models/Pacientes')
 const Cita = require('../models/Cita')
+const { syncAppointment } = require('../services/calendar.service')
+async function intentarSincronizar(cita) {
+  try { await syncAppointment(cita); return true }
+  catch (error) { console.error('Error de sincronización Calendar:', error.message); return false }
+}
 const router = express.Router()
 router.use(requireAuth, allowRoles('nutritionist'))
 
@@ -44,7 +49,8 @@ router.post('/', async (req,res,next) => {
     const data = await validar(req,res); if (!data) return
     if (data.estado !== 'cancelada' && await conflicto(req.user._id, data.inicio, data.fin)) return res.status(409).json({ message: 'Ya existe una cita en ese horario' })
     const cita = await Cita.create({ ...data, nutritionist: req.user._id })
-    res.status(201).json(cita)
+    const calendarSynced = await intentarSincronizar(cita)
+    res.status(201).json({ ...cita.toObject(), calendarSynced })
   } catch(e) { next(e) }
 })
 router.put('/:id', async (req,res,next) => {
@@ -58,7 +64,8 @@ router.put('/:id', async (req,res,next) => {
     cita.recordatorio24hEnviado = null
     cita.recordatorio2hEnviado = null
     await cita.save()
-    res.json(cita)
+    const calendarSynced = await intentarSincronizar(cita)
+    res.json({ ...cita.toObject(), calendarSynced })
   } catch(e) { next(e) }
 })
 module.exports = router
