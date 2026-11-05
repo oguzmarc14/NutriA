@@ -29,6 +29,8 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
+    communityTrusted: { type: Boolean, default: false, select: false },
+
     role: {
       type: String,
       enum: ['admin', 'nutritionist', 'patient'],
