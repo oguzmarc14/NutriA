@@ -22,6 +22,8 @@ import ProgresoPacientePage from "./pages/ProgresoPacientePage";
 import MiProgresoPage from "./pages/MiProgresoPage";
 import PrivacidadPage from "./pages/PrivacidadPage";
 import TerminosPage from "./pages/TerminosPage";
+import CommunityPage from "./pages/CommunityPage";
+import CommunityModeracionPage from "./pages/CommunityModeracionPage";
 
 function App() {
   return (
@@ -74,6 +76,7 @@ function App() {
 
             <Route path="planes" element={<PlanesAlimenticiosPage />} />
 
+            <Route path="community" element={<CommunityPage />} />
             <Route path="progreso" element={<ProgresoPacientePage />} />
           </Route>
 
@@ -93,6 +96,7 @@ function App() {
 
           <Route element={<ProtectedRoute roles={["admin"]} />}>
             <Route path="usuarios" element={<UsuariosPage />} />
+            <Route path="community/moderacion" element={<CommunityModeracionPage />} />
           </Route>
         </Route>
       </Route>
