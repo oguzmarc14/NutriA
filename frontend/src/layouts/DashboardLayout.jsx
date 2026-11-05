@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {
   Apple,
+  CalendarDays,
   BookOpen,
   ShieldCheck,
   ArrowLeft,
@@ -121,6 +122,12 @@ function DashboardLayout() {
           },
 
           {
+            icon: CalendarDays,
+            label: 'Citas',
+            shortLabel: 'Citas',
+            to: '/citas',
+          },
+          {
             icon: Apple,
             label: 'Planes alimenticios',
             shortLabel: 'Planes',
@@ -232,6 +239,7 @@ function DashboardLayout() {
     '/pacientes',
     '/mediciones',
     '/planes',
+    '/citas',
     '/community',
     '/community/moderacion',
     '/calculo-nutricional',
