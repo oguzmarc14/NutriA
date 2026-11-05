@@ -39,6 +39,7 @@ import {
 
 import client from '../api/client'
 import CardPacientePlanes from '../components/planes/CardPacientePlanes'
+import RecetasDietasPanel from '../components/planes/RecetasDietasPanel'
 import CardPlanRegistrado from '../components/planes/CardPlanRegistrado'
 import ModalPlanGuardado from '../components/planes/ModalPlanGuardado'
 import TarjetaSelectorComida from '../components/planes/TarjetaSelectorComida'
@@ -1897,6 +1898,7 @@ function PlanesAlimenticiosPage() {
 
   return (
     <section className="min-h-screen bg-transparent px-4 py-6 sm:px-5 md:px-6 md:py-7">
+      <RecetasDietasPanel />
       {avisoPlanGuardado && (
         <ModalPlanGuardado
           tipo={avisoPlanGuardado.tipo}
