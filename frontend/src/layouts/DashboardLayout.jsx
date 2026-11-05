@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import {
   Apple,
+  BookOpen,
+  ShieldCheck,
   ArrowLeft,
   LayoutDashboard,
   LogOut,
@@ -125,6 +127,12 @@ function DashboardLayout() {
             to: '/planes',
           },
           {
+            icon: BookOpen,
+            label: 'NutriA Community',
+            shortLabel: 'Recetas',
+            to: '/community',
+          },
+          {
             icon: TrendingUp,
             label: 'Progreso',
             shortLabel: 'Progreso',
@@ -135,6 +143,12 @@ function DashboardLayout() {
 
     ...(user.role === 'admin'
       ? [
+          {
+            icon: ShieldCheck,
+            label: 'Moderar recetas',
+            shortLabel: 'Moderación',
+            to: '/community/moderacion',
+          },
           {
             icon: UserCog,
             label: 'Usuarios',
@@ -218,6 +232,8 @@ function DashboardLayout() {
     '/pacientes',
     '/mediciones',
     '/planes',
+    '/community',
+    '/community/moderacion',
     '/calculo-nutricional',
     '/usuarios',
     '/mi-expediente',
