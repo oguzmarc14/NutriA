@@ -5,6 +5,8 @@ const initial = { patient: '', inicio: '', fin: '', tipo: 'seguimiento', estado:
 const datetime = value => value ? new Date(value).toLocaleString('es-MX') : ''
 export default function CitasPage() {
   const [citas, setCitas] = useState([])
+  const [calendarConnected, setCalendarConnected] = useState(false)
+  const [calendarLoading, setCalendarLoading] = useState(false)
   const [pacientes, setPacientes] = useState([])
   const [form, setForm] = useState(initial)
   const [editando, setEditando] = useState('')
@@ -18,7 +20,18 @@ export default function CitasPage() {
       setPacientes(Array.isArray(b.data) ? b.data : b.data.pacientes || b.data.data || [])
     } catch(e) { setError(e.response?.data?.message || 'No se pudo cargar la agenda') }
   }
-  useEffect(() => { cargar() }, [])
+  useEffect(() => { cargar(); client.get('/calendar/status').then(({data}) => setCalendarConnected(data.connected)).catch(() => {}) }, [])
+  async function conectarCalendar() {
+    setCalendarLoading(true)
+    try { const {data} = await client.get('/calendar/connect'); window.location.assign(data.url) }
+    catch(e) { setError(e.response?.data?.message || 'No se pudo iniciar la conexión con Google') ; setCalendarLoading(false) }
+  }
+  async function desconectarCalendar() {
+    setCalendarLoading(true)
+    try { await client.delete('/calendar/disconnect'); setCalendarConnected(false); setAviso('Google Calendar desconectado. Las citas siguen guardadas en NutriA.') }
+    catch(e) { setError(e.response?.data?.message || 'No se pudo desconectar') }
+    finally { setCalendarLoading(false) }
+  }
   async function guardar(e) {
     e.preventDefault()
     setError('')
@@ -27,11 +40,11 @@ export default function CitasPage() {
     setCargando(true)
     try {
       const payload = { ...form, inicio: new Date(form.inicio).toISOString(), fin: new Date(form.fin).toISOString(), zonaHoraria: Intl.DateTimeFormat().resolvedOptions().timeZone }
-      if (editando) await client.put('/citas/' + editando, payload)
-      else await client.post('/citas', payload)
+      const respuesta = editando ? await client.put('/citas/' + editando, payload) : await client.post('/citas', payload)
+      const sincronizado = respuesta.data.calendarSynced
       setForm(initial)
       setEditando('')
-      setAviso(editando ? 'Cita actualizada' : 'Cita registrada')
+      setAviso((editando ? 'Cita actualizada' : 'Cita registrada') + (calendarConnected && !sincronizado ? '. No se pudo sincronizar con Google Calendar; la cita sí quedó guardada.' : ''))
       await cargar()
     } catch(e) { setError(e.response?.data?.message || 'No se pudo guardar la cita') }
     finally { setCargando(false) }
@@ -45,6 +58,7 @@ export default function CitasPage() {
   const field = 'w-full rounded-xl border border-emerald-200 bg-white p-2.5 text-sm'
   return <main className="mx-auto max-w-6xl space-y-5 p-4 md:p-8">
     <header><h1 className="text-2xl font-extrabold text-emerald-900">Agenda de citas</h1><p className="text-sm text-slate-600">Registra, consulta y reprograma las citas de tus pacientes.</p></header>
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-white p-4"><div><p className="font-bold text-emerald-900">Google Calendar</p><p className="text-sm text-slate-600">{calendarConnected ? 'Conectado: las citas nuevas se sincronizan con tu calendario.' : 'Conecta tu calendario para recibir avisos de tus consultas.'}</p></div><button type="button" disabled={calendarLoading} onClick={calendarConnected ? desconectarCalendar : conectarCalendar} className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{calendarConnected ? 'Desconectar' : 'Conectar Google Calendar'}</button></div>
     {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-red-700">{error}</p>}
     {aviso && <p role="status" className="rounded-xl bg-emerald-50 p-3 text-emerald-800">{aviso}</p>}
     <form onSubmit={guardar} className="space-y-4 rounded-2xl bg-white p-5 shadow-sm">
