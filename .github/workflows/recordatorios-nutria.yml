@@ -1,0 +1,22 @@
+name: Recordatorios NutriA
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+jobs:
+  enviar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Procesar recordatorios de citas
+        env:
+          BACKEND_URL: ${{ secrets.NUTRIA_BACKEND_URL }}
+          CRON_SECRET: ${{ secrets.NUTRIA_CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -z "$BACKEND_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "Configura NUTRIA_BACKEND_URL y NUTRIA_CRON_SECRET como secrets del repositorio"
+            exit 1
+          fi
+          curl --fail-with-body --retry 2 --max-time 90 \
+            -X POST "${BACKEND_URL%/}/api/recordatorios/procesar" \
+            -H "x-cron-secret: $CRON_SECRET"
