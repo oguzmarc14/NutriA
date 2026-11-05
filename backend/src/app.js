@@ -16,6 +16,7 @@ const calculoNutricionalRoutes = require('./routes/calculoNutricional.routes')
 const asistenteEquivalentesRoutes = require('./routes/asistenteEquivalentes.routes')
 
 const communityRoutes = require('./routes/community.routes')
+const citasRoutes = require('./routes/citas.routes')
 
 const app = express()
 
@@ -120,6 +121,7 @@ app.use(
 )
 
 app.use('/api/community', communityRoutes)
+app.use('/api/citas', citasRoutes)
 
 /*
  * ----------------------------------------------------
