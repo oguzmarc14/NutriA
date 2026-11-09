@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Plus, RefreshCw, X } from 'lucide-react'
 import client from '../api/client'
 
-const EMPTY = { patient: '', inicio: '', fin: '', tipo: 'seguimiento', estado: 'programada', notas: '' }
+const EMPTY = { patient: '', inicio: '', tipo: 'seguimiento', estado: 'programada', notas: '' }
 const NO_APPOINTMENTS = []
 const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 const WEEKDAYS = [...DAYS.slice(1), DAYS[0]]
@@ -176,12 +176,12 @@ export default function CitasPage() {
       start.setHours(now.getHours() + 1)
       if (dayKey(start) !== dayKey(date)) start.setTime(now.getTime())
     }
-    const end = new Date(start.getTime()+60*60000)
-    setForm({...EMPTY,inicio:localInput(start),fin:localInput(end)})
+    if (start < now) { setError('No puedes programar citas en una fecha u hora pasada.'); return }
+    setForm({...EMPTY,inicio:localInput(start)})
     setEditing('');setError('');setModal(true)
   }
   function openEdit(c) {
-    setForm({patient:c.patient?._id||c.patient||'',inicio:localInput(c.inicio),fin:localInput(c.fin),tipo:c.tipo,estado:c.estado,notas:c.notas||''})
+    setForm({patient:c.patient?._id||c.patient||'',inicio:localInput(c.inicio),tipo:c.tipo,estado:c.estado,notas:c.notas||''})
     setEditing(c._id);setError('');setModal(true)
   }
   function updateField(field, value) {
@@ -189,41 +189,46 @@ export default function CitasPage() {
   }
 
   function updateStart(inicio) {
-    setForm(current => {
-      const start = Date.parse(inicio)
-      const needsEnd = Number.isFinite(start) && (!current.fin || Date.parse(current.fin) <= start)
-      return { ...current, inicio, fin: needsEnd ? localInput(new Date(start + 3600000)) : current.fin }
-    })
+    setForm(current => ({ ...current, inicio }))
   }
 
   async function persist(payload, id) {
-    const data={...payload,inicio:new Date(payload.inicio).toISOString(),fin:new Date(payload.fin).toISOString(),zonaHoraria:Intl.DateTimeFormat().resolvedOptions().timeZone}
-    return id ? client.put('/citas/'+id,data) : client.post('/citas',data)
+    const start = new Date(payload.inicio)
+    if (!Number.isFinite(start.getTime()) || start <= new Date()) {
+      throw new Error('Selecciona una fecha y hora futuras para la cita.')
+    }
+    const data = {
+      ...payload,
+      inicio: start.toISOString(),
+      fin: new Date(start.getTime() + 60 * 60000).toISOString(),
+      zonaHoraria: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    }
+    return id ? client.put('/citas/' + id, data) : client.post('/citas', data)
   }
   async function save(e) {
     e.preventDefault()
-    if (new Date(form.fin)<=new Date(form.inicio)) {setError('La hora final debe ser posterior al inicio');return}
+    if (!form.inicio || new Date(form.inicio) <= new Date()) {setError('Selecciona una fecha y hora futuras para la cita.');return}
     setSaving(true);setError('')
     try {
       const response=await persist(form,editing)
       setModal(false);setNotice((editing?'Cita actualizada':'Cita registrada')+(connected&&!response.data.calendarSynced?' · No se sincronizó con Google Calendar':''))
       load()
-    } catch(e) {setError(e.response?.data?.message||'No se pudo guardar la cita')}
+    } catch(e) {setError(e.response?.data?.message||e.message||'No se pudo guardar la cita')}
     finally {setSaving(false)}
   }
   async function moveAppointment(c, date, hour) {
     if (saving || c.estado === 'cancelada') return
-    const oldStart=new Date(c.inicio),oldEnd=new Date(c.fin)
+    const oldStart=new Date(c.inicio)
     const start=new Date(date.getFullYear(),date.getMonth(),date.getDate(),hour??oldStart.getHours(),hour===undefined?oldStart.getMinutes():0)
-    const end=new Date(start.getTime()+(oldEnd-oldStart))
+    if (start <= new Date()) { setError('No puedes reprogramar una cita al pasado.'); return }
     if (start.getTime()===oldStart.getTime()) return
     if (!window.confirm(`¿Reprogramar la cita de ${c.patient?.name||'este paciente'} al ${dateTitle(start)} a las ${formatTime(start)}?`)) return
     setSaving(true);setError('')
     try {
-      const response=await persist({patient:c.patient?._id||c.patient,inicio:localInput(start),fin:localInput(end),tipo:c.tipo,estado:c.estado,notas:c.notas||''},c._id)
+      const response=await persist({patient:c.patient?._id||c.patient,inicio:localInput(start),tipo:c.tipo,estado:c.estado,notas:c.notas||''},c._id)
       setNotice('Cita reprogramada'+(connected&&!response.data.calendarSynced?' · No se sincronizó con Google Calendar':''))
       load()
-    } catch(e){setError(e.response?.data?.message||'No se pudo reprogramar la cita')}
+    } catch(e){setError(e.response?.data?.message||e.message||'No se pudo reprogramar la cita')}
     finally{setSaving(false);setDragging('')}
   }
   async function connect() {
@@ -543,12 +548,9 @@ export default function CitasPage() {
             </label>
             <label className="grid min-w-0 gap-1.5 text-sm font-semibold">
               Inicio
-              <input required type="datetime-local" className={inputClass} value={form.inicio} onChange={e => updateStart(e.target.value)} />
+              <input required type="datetime-local" min={localInput(now)} className={inputClass} value={form.inicio} onChange={e => updateStart(e.target.value)} />
             </label>
-            <label className="grid min-w-0 gap-1.5 text-sm font-semibold">
-              Fin
-              <input required type="datetime-local" className={inputClass} value={form.fin} onChange={e => updateField('fin', e.target.value)} />
-            </label>
+            <p className="self-end rounded-xl bg-[#e5f2eb] px-3 py-3 text-sm font-semibold text-[#246b55]">Duración fija: 1 hora</p>
             <label className="grid gap-1.5 text-sm font-semibold">
               Tipo
               <select className={inputClass} value={form.tipo} onChange={e => updateField('tipo', e.target.value)}>
