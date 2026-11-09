@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import client from '../api/client'
+import HorarioLaboral from '../components/HorarioLaboral'
 import {
   Apple,
   CalendarDays,
@@ -39,7 +41,7 @@ import ThemeSelector from '../components/theme/ThemeSelector'
 import BotonInstalarApp from '../components/pwa/BotonInstalarApp'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
-function PerfilMenu({ user, roleLabel, cerrarSesion, irAMiClinica }) {
+function PerfilMenu({ user, roleLabel, cerrarSesion, irAMiClinica, irAEditarPerfil }) {
   return (
     <details className="group relative">
       <summary aria-label="Abrir menú de perfil" className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-[#bcd8c7] bg-[#e3f0e7] text-[#246b55] shadow-sm transition hover:bg-[#d5e8db] [&::-webkit-details-marker]:hidden">
@@ -52,9 +54,7 @@ function PerfilMenu({ user, roleLabel, cerrarSesion, irAMiClinica }) {
           {user.email && <p className="mt-1 break-all text-[11px] text-[#82928a]">{user.email}</p>}
         </div>
         {user.role === 'nutritionist' && <button type="button" onClick={irAMiClinica} className="my-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#246b55] hover:bg-[#eef5f1]"><Building2 size={16}/>Mi clínica</button>}
-        <div className="my-1 flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-[#8b9b92]" title="Próximamente: edición de perfil">
-          <UserPen size={16}/> Editar perfil · Próximamente
-        </div>
+        {user.role === 'nutritionist' && <button type="button" onClick={irAEditarPerfil} className="my-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#246b55] hover:bg-[#eef5f1]"><UserPen size={16}/>Editar perfil y horario</button>}
         <div className="my-1 flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-[#8b9b92]" title="Próximamente: configuración">
           <Settings size={16}/> Configuración · Próximamente
         </div>
@@ -76,6 +76,13 @@ function DashboardLayout() {
   const navigate = useNavigate()
   const enEditorPlanes = user.role === 'nutritionist' && location.pathname === '/planes'
   const [sidebarPlanesVisible, setSidebarPlanesVisible] = useState(false)
+  const [configurarHorario, setConfigurarHorario] = useState(false)
+  useEffect(() => {
+    if (user.role !== 'nutritionist') return
+    let active = true
+    client.get('/horario').then(({data}) => {if(active && !data.horario?.configurado)setConfigurarHorario(true)}).catch(()=>{})
+    return ()=>{active=false}
+  }, [user.role, user._id])
 
   /*
    * ----------------------------------------------------
@@ -375,7 +382,7 @@ function DashboardLayout() {
           </div>
           <div className="ml-auto flex items-center gap-2">
             <BotonInstalarApp />
-            <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} irAMiClinica={() => navigate('/mi-clinica')}/>
+            <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} irAMiClinica={() => navigate('/mi-clinica')} irAEditarPerfil={() => navigate('/editar-perfil')}/>
           </div>
         </header>
         <div className="sticky top-0 z-40 hidden h-[52px] items-center justify-between gap-3 border-b border-[#c8dbd0] bg-[#eaf0e9]/95 px-5 text-[#173f34] backdrop-blur-md md:flex">
@@ -435,6 +442,7 @@ function DashboardLayout() {
         </div>
       </main>
 
+      {configurarHorario && <div className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto bg-[#102d26]/70 p-3 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Configuración inicial del horario"><div className="my-auto w-full max-w-2xl"><HorarioLaboral primerIngreso onSaved={()=>setConfigurarHorario(false)}/></div></div>}
       {/* ============================================
           NAVEGACIÓN MÓVIL
       ============================================ */}
