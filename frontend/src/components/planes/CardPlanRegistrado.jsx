@@ -39,7 +39,7 @@ function CardPlanRegistrado({ plan, formatearFecha, numero, calcularTotales, onE
       {abierto && <div className="mt-4 space-y-3 border-t border-[#efe5d2] pt-4">
         {plan.comidas?.length > 0 ? plan.comidas.map((comida, index) => (
           <div key={comida._id || `${plan._id}-${index}`} className="rounded-xl bg-[#f7f2e7] p-3">
-            <p className="text-xs font-bold uppercase tracking-wide text-[#8a6840]">{comida.nombre}</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-[#8a6840]">{comida.nombre}</p>{comida.hora && <p className="mt-1 text-xs font-extrabold text-[#246b55]">Hora: {comida.hora}</p>}
             <p className="mt-0.5 font-bold text-[#173f34]">{comida.platillo || 'Platillo sin nombre'}</p>
             {comida.alimentos?.length > 0 ? <div className="mt-3 space-y-2">{comida.alimentos.map((alimento, alimentoIndex) => {
               const cantidad = Number(alimento.cantidad) || 1
