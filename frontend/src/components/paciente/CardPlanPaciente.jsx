@@ -36,7 +36,7 @@ function CardPlanPaciente({ fecha, onSeguimientoGuardado, plan, seguimientos = [
           const registro = encontrarRegistro(comida)
           return (
           <section key={comida._id || index} className="min-w-0 overflow-hidden rounded-2xl bg-[#f7f2e7] p-3 sm:p-4">
-            <div className="flex min-w-0 items-start gap-2"><Utensils size={17} className="mt-0.5 shrink-0 text-[#8a6840]" /><div className="min-w-0"><p className="break-words text-xs font-bold uppercase tracking-wide text-[#8a6840]">{comida.nombre || `Comida ${index + 1}`}</p><h3 className="break-words font-extrabold text-[#173f34]">{comida.platillo || 'Platillo sin nombre'}</h3></div></div>
+            <div className="flex min-w-0 items-start gap-2"><Utensils size={17} className="mt-0.5 shrink-0 text-[#8a6840]" /><div className="min-w-0"><p className="break-words text-xs font-bold uppercase tracking-wide text-[#8a6840]">{comida.nombre || `Comida ${index + 1}`}</p>{comida.hora && <p className="mt-1 inline-flex rounded-lg bg-[#e2efe5] px-2 py-1 text-xs font-extrabold text-[#246b55]">Hora: {comida.hora}</p>}<h3 className="break-words font-extrabold text-[#173f34]">{comida.platillo || 'Platillo sin nombre'}</h3></div></div>
             <p className="mt-2 text-xs font-bold text-[#6e9484]">{comida.alimentos?.reduce((total, alimento) => total + ((Number(alimento.porcion?.gramos) || 0) * (Number(alimento.cantidad) || 0)), 0).toLocaleString('es-MX', { maximumFractionDigits: 0 })} g conocidos</p>
             <div className="mt-3 space-y-2">
               {comida.alimentos?.length > 0 ? comida.alimentos.map((alimento, alimentoIndex) => (
