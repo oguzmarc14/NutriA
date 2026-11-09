@@ -3052,6 +3052,10 @@ function PlanesAlimenticiosPage() {
                         }
                         onEditar={editarPlan}
                         onEliminar={eliminarPlan}
+                        onExportarPDF={(plan) => {
+                          try { exportarPlanPDF(plan, pacienteSeleccionado) }
+                          catch (error) { setError(error.message || 'No se pudo exportar el PDF.') }
+                        }}
                       />
                     ),
                   )}
