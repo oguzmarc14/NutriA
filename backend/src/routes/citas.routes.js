@@ -4,6 +4,7 @@ const { z } = require('zod')
 const { requireAuth, allowRoles } = require('../middleware/auth.middleware')
 const Patient = require('../models/Pacientes')
 const Cita = require('../models/Cita')
+const User = require('../models/User')
 const { syncAppointment } = require('../services/calendar.service')
 async function intentarSincronizar(cita) {
   try { await syncAppointment(cita); return true }
@@ -33,6 +34,22 @@ async function validar(req, res) {
   const inicio = new Date(data.inicio)
   if (inicio <= new Date()) { res.status(400).json({ message: 'No se permiten citas en fechas u horas pasadas' }); return null }
   const fin = new Date(inicio.getTime() + 60 * 60 * 1000)
+  const nutricionista = await User.findById(req.user._id).select('horarioLaboral').lean()
+  const horario = nutricionista?.horarioLaboral
+  if (horario?.configurado) {
+    const partes = fecha => Object.fromEntries(new Intl.DateTimeFormat('en-GB', {
+      timeZone: horario.zonaHoraria, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+    }).formatToParts(fecha).filter(p => ['weekday','hour','minute'].includes(p.type)).map(p => [p.type,p.value]))
+    const local = partes(inicio)
+    const dia = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 }[local.weekday]
+    const minutos = Number(local.hour)*60 + Number(local.minute)
+    const [hi,mi] = horario.inicio.split(':').map(Number)
+    const [hf,mf] = horario.fin.split(':').map(Number)
+    if (!horario.dias.includes(dia) || minutos < hi*60+mi || minutos+60 > hf*60+mf) {
+      res.status(400).json({ message:'La cita debe estar dentro de tus días y horas laborales. Modifica tu horario desde Editar perfil.' })
+      return null
+    }
+  }
   const paciente = await Patient.exists({ _id: data.patient, nutritionist: req.user._id, active: true })
   if (!paciente) { res.status(404).json({ message: 'Paciente no encontrado' }); return null }
   return { ...data, inicio, fin }
