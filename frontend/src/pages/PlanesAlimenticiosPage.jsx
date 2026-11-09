@@ -345,6 +345,8 @@ function PlanesAlimenticiosPage() {
 
   const [error, setError] =
     useState('')
+  const [alertaVisible, setAlertaVisible] = useState('')
+  useEffect(() => { if (error) setAlertaVisible(error) }, [error])
 
   const [mensaje, setMensaje] =
     useState('')
@@ -1918,6 +1920,20 @@ function PlanesAlimenticiosPage() {
         />
       )}
 
+      {alertaVisible && (
+        <div className="fixed inset-0 z-[160] flex items-center justify-center bg-[#102d26]/60 p-4 backdrop-blur-sm" role="presentation">
+          <div role="alertdialog" aria-modal="true" aria-labelledby="titulo-alerta-plan" aria-describedby="detalle-alerta-plan" className="w-full max-w-md rounded-3xl border border-[#f4d7c6] bg-white p-6 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-50 text-amber-700"><X size={22} /></span>
+              <div className="min-w-0 flex-1">
+                <h2 id="titulo-alerta-plan" className="text-lg font-extrabold text-[#173f34]">Revisa la información</h2>
+                <p id="detalle-alerta-plan" className="mt-2 text-sm leading-6 text-slate-600">{alertaVisible}</p>
+              </div>
+            </div>
+            <button type="button" autoFocus onClick={() => { setAlertaVisible(''); setError('') }} className="mt-6 w-full rounded-xl bg-[#246b55] px-4 py-3 text-sm font-extrabold text-white hover:bg-[#1d5947]">Entendido</button>
+          </div>
+        </div>
+      )}
       <div className="mx-auto w-full max-w-[1800px]">
         {/* ============================================
             SELECCIÓN DE PACIENTE
@@ -2165,6 +2181,7 @@ function PlanesAlimenticiosPage() {
               onSubmit={
                 guardarPlan
               }
+              noValidate
               className="mb-7 rounded-3xl border border-[#cfe0d6] bg-gradient-to-br from-[#f8fbf8] to-[#edf5f0] p-4 shadow-[0_14px_40px_rgba(32,78,64,0.08)] sm:p-5 md:p-6"
             >
               <div className="mb-6 flex items-start gap-3">
