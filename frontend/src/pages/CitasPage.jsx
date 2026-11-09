@@ -29,7 +29,7 @@ const dateTitle = d => new Intl.DateTimeFormat('es-MX', { weekday:'long', day:'n
 const shortDate = new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
 const weekTitle = (start, end) => shortDate.formatRange(start, end)
 
-function MiniCalendar({ focus, today, onSelect }) {
+function MiniCalendar({ focus, today, onSelect, diasLaborales }) {
   const first = new Date(focus.getFullYear(), focus.getMonth(), 1)
   const begin = startWeek(first)
   const monthLength = new Date(focus.getFullYear(), focus.getMonth() + 1, 0).getDate()
@@ -44,6 +44,7 @@ function MiniCalendar({ focus, today, onSelect }) {
           const date = addDays(begin, i)
           const key = dayKey(date)
           const selected = key === dayKey(focus)
+          if (diasLaborales && !diasLaborales.includes(date.getDay())) return <span key={key} aria-label="Día de descanso" className="min-h-9 rounded-lg bg-[#edf1ed]" />
           return (
             <button key={key} type="button" aria-label={dateTitle(date)}
               aria-current={key === today ? 'date' : undefined} aria-pressed={selected}
@@ -65,6 +66,14 @@ export default function CitasPage() {
   const [now, setNow] = useState(() => new Date())
   const [pacientes, setPacientes] = useState([])
   const [connected, setConnected] = useState(false)
+  const [horario, setHorario] = useState(null)
+  useEffect(() => {
+    let active = true
+    const loadHorario = () => client.get('/horario').then(({data}) => {if(active)setHorario(data.horario)}).catch(()=>{})
+    loadHorario()
+    window.addEventListener('nutria-horario-actualizado',loadHorario)
+    return ()=>{active=false;window.removeEventListener('nutria-horario-actualizado',loadHorario)}
+  }, [])
   const [reload, setReload] = useState(0)
   const [patientError, setPatientError] = useState('')
   const [calendarBusy, setCalendarBusy] = useState(false)
@@ -168,15 +177,27 @@ export default function CitasPage() {
     return map
   },[filtered])
   const today = dayKey(now)
+  const diasLaborales = horario?.configurado ? horario.dias : null
+  const diaHabilitado = date => !diasLaborales || diasLaborales.includes(new Date(date).getDay())
+  const horasLaborales = horario?.configurado ? { inicio: Number(horario.inicio.slice(0,2)), fin: Number(horario.fin.slice(0,2)) } : {inicio:7,fin:20}
+  const disponible = date => {
+    if (!diaHabilitado(date)) return false
+    if (!horario?.configurado) return true
+    const minutos = date.getHours()*60+date.getMinutes()
+    const [hi,mi] = horario.inicio.split(':').map(Number)
+    const [hf,mf] = horario.fin.split(':').map(Number)
+    return minutos >= hi*60+mi && minutos+60 <= hf*60+mf
+  }
 
   function openNew(date = new Date(), hour) {
-    const start = new Date(date.getFullYear(),date.getMonth(),date.getDate(),hour ?? 9,0)
+    const start = new Date(date.getFullYear(),date.getMonth(),date.getDate(),hour ?? horasLaborales.inicio,0)
     const now = new Date()
     if (hour === undefined && dayKey(start) === dayKey(now) && start < now) {
       start.setHours(now.getHours() + 1)
       if (dayKey(start) !== dayKey(date)) start.setTime(now.getTime())
     }
     if (start < now) { setError('No puedes programar citas en una fecha u hora pasada.'); return }
+    if (!disponible(start)) { setError('Este día u horario no está disponible según tu perfil.'); return }
     setForm({...EMPTY,inicio:localInput(start)})
     setEditing('');setError('');setModal(true)
   }
@@ -197,6 +218,7 @@ export default function CitasPage() {
     if (!Number.isFinite(start.getTime()) || start <= new Date()) {
       throw new Error('Selecciona una fecha y hora futuras para la cita.')
     }
+    if (!disponible(start)) throw new Error('El horario está fuera de tus días u horas de atención.')
     const data = {
       ...payload,
       inicio: start.toISOString(),
@@ -254,7 +276,7 @@ export default function CitasPage() {
   const focusKey = dayKey(focus)
   const visibleDays = range.days.filter(d => byDay[dayKey(d)]?.length)
   const period = view === 'mes' ? formatMonth(focus) : view === 'dia' ? dateTitle(focus) : weekTitle(range.begin, addDays(range.end, -1))
-  const hours = Array.from({ length: 13 }, (_, i) => i + 7)
+  const hours = Array.from({ length: Math.max(1, horasLaborales.fin-horasLaborales.inicio) }, (_, i) => i + horasLaborales.inicio)
 
   function showDay(date) {
     setFocus(date)
@@ -430,10 +452,10 @@ export default function CitasPage() {
 
           {view === 'semana' && (
             <div className="px-3 pb-5 sm:px-4">
-              <div className="hidden grid-cols-7 gap-1.5 xl:grid">{range.days.map(d => dayCards(d))}</div>
+              <div className="hidden grid-cols-7 gap-1.5 xl:grid">{range.days.map(d => diaHabilitado(d) ? dayCards(d) : <div key={dayKey(d)} className="rounded-xl bg-[#edf1ed] p-3 text-center text-xs text-[#8c9b91]">Descanso</div>)}</div>
               <div className="space-y-3 xl:hidden">
                 <div role="group" aria-label="Día de la semana" className="grid grid-cols-7 gap-1">
-                  {range.days.map(d => (
+                  {range.days.filter(diaHabilitado).map(d => (
                     <button key={dayKey(d)} type="button" onClick={() => setFocus(d)}
                       aria-label={dateTitle(d)} aria-current={dayKey(d) === today ? 'date' : undefined} aria-pressed={dayKey(d) === focusKey}
                       className={`min-h-12 rounded-xl px-0.5 py-1 text-xs font-bold ${FOCUS} ${dayKey(d) === focusKey ? 'bg-[#246b55] text-white' : 'bg-[#e8f1e7] text-[#315d4d] hover:bg-[#dcecdf]'}`}>
@@ -441,12 +463,12 @@ export default function CitasPage() {
                     </button>
                   ))}
                 </div>
-                {dayCards(focus, true)}
+                {diaHabilitado(focus) ? dayCards(focus, true) : <p className="rounded-xl bg-[#edf1ed] p-4 text-sm">Día de descanso. Selecciona un día laboral.</p>}
               </div>
             </div>
           )}
 
-          {view === 'dia' && dayTimeline()}
+          {view === 'dia' && (diaHabilitado(focus) ? dayTimeline() : <p className="p-6 text-sm text-[#607b6c]">Este día está marcado como descanso en tu perfil.</p>)}
 
           {view === 'mes' && (
             <div className="px-2 pb-5 sm:px-4">
@@ -455,6 +477,7 @@ export default function CitasPage() {
                 {range.days.map(d => {
                   const key = dayKey(d)
                   const events = byDay[key] || []
+                  if (!diaHabilitado(d)) return <div key={key} title="Día de descanso" className="min-h-12 rounded-xl bg-[#edf1ed] sm:min-h-24" />
                   return (
                     <div key={key} {...dropTarget(d)}
                       className={`min-h-12 min-w-0 rounded-xl border p-0.5 sm:min-h-24 sm:p-1.5 ${key === today ? 'border-[#a3c6af] bg-[#e3f0e4]' : 'border-[#e0e9de] bg-[#f1f6ef]'} ${d.getMonth() !== focus.getMonth() ? 'text-[#526d5d]' : ''} ${dragging ? 'hover:border-[#246b55] hover:bg-[#dfefe3]' : ''}`}>
@@ -501,7 +524,7 @@ export default function CitasPage() {
         </section>
 
         <aside aria-label="Resumen de agenda" className="grid min-w-0 gap-4 md:grid-cols-3 xl:grid-cols-1">
-          <MiniCalendar focus={focus} today={today} onSelect={showDay} />
+          <MiniCalendar focus={focus} today={today} onSelect={showDay} diasLaborales={diasLaborales} />
           <section className={`${PANEL} min-w-0 p-4`}>
             <h2 className="flex items-center gap-2 text-sm font-extrabold"><Clock3 size={17} aria-hidden="true" /> Próximas citas</h2>
             <p className="mt-1 mb-3 text-xs text-[#526d5d]">En el periodo visible</p>
