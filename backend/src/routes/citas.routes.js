@@ -15,7 +15,6 @@ router.use(requireAuth, allowRoles('nutritionist'))
 const input = z.object({
   patient: z.string().regex(/^[a-f\d]{24}$/i),
   inicio: z.iso.datetime({ offset: true }),
-  fin: z.iso.datetime({ offset: true }),
   zonaHoraria: z.string().min(3).max(80),
   tipo: z.enum(['primera', 'seguimiento', 'otra']).default('seguimiento'),
   estado: z.enum(['programada', 'confirmada', 'cancelada', 'completada']).default('programada'),
@@ -31,10 +30,12 @@ async function validar(req, res) {
   const parsed = input.safeParse(req.body)
   if (!parsed.success) { res.status(400).json({ message: 'Datos de cita inválidos', issues: parsed.error.issues }); return null }
   const data = parsed.data
-  if (Date.parse(data.fin) <= Date.parse(data.inicio)) { res.status(400).json({ message: 'La hora final debe ser posterior a la inicial' }); return null }
+  const inicio = new Date(data.inicio)
+  if (inicio <= new Date()) { res.status(400).json({ message: 'No se permiten citas en fechas u horas pasadas' }); return null }
+  const fin = new Date(inicio.getTime() + 60 * 60 * 1000)
   const paciente = await Patient.exists({ _id: data.patient, nutritionist: req.user._id, active: true })
   if (!paciente) { res.status(404).json({ message: 'Paciente no encontrado' }); return null }
-  return { ...data, inicio: new Date(data.inicio), fin: new Date(data.fin) }
+  return { ...data, inicio, fin }
 }
 router.get('/', async (req,res,next) => {
   try {
