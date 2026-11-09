@@ -274,7 +274,7 @@ export default function CitasPage() {
 
   const upcoming = filtered.filter(c => Date.parse(c.inicio) > now.getTime() && !['cancelada', 'completada'].includes(c.estado))
   const focusKey = dayKey(focus)
-  const visibleDays = range.days.filter(d => byDay[dayKey(d)]?.length)
+  const visibleDays = range.days.filter(d => diaHabilitado(d))
   const period = view === 'mes' ? formatMonth(focus) : view === 'dia' ? dateTitle(focus) : weekTitle(range.begin, addDays(range.end, -1))
   const hours = Array.from({ length: Math.max(1, horasLaborales.fin-horasLaborales.inicio) }, (_, i) => i + horasLaborales.inicio)
 
@@ -332,26 +332,38 @@ export default function CitasPage() {
     )
   }
 
-  function dayCards(date, mobile = false) {
+  function hourlySlots(date, compact = false) {
     const key = dayKey(date)
     const events = byDay[key] || []
-    return (
-      <div key={key} {...dropTarget(date)}
-        className={`flex min-w-0 flex-col gap-2 rounded-2xl border p-2 ${mobile ? 'min-h-36' : 'min-h-64'} ${key === today ? 'border-[#a3c6af] bg-[#e7f2e8]' : 'border-[#dce7dd] bg-[#f1f6ef]'} ${dragging ? 'hover:border-[#246b55] hover:bg-[#dfefe3]' : ''}`}>
-        <button type="button" onClick={() => showDay(date)}
-          aria-label={`Abrir ${dateTitle(date)}`} aria-current={key === today ? 'date' : undefined}
-          className={`flex min-h-11 items-center justify-between gap-1 rounded-xl px-1.5 text-xs font-bold text-[#416458] hover:bg-white/70 ${FOCUS}`}>
-          <span className="first-letter:uppercase">{mobile ? dateTitle(date) : DAYS[date.getDay()]}</span>
-          <span className={`grid size-7 shrink-0 place-items-center rounded-full text-sm ${key === today ? 'bg-[#246b55] text-white' : 'bg-white/75 text-[#173f34]'}`}>{date.getDate()}</span>
-        </button>
-        {events.map(c => eventCard(c))}
-        {!events.length && <p className="px-1 py-3 text-xs text-[#526d5d]">Sin citas</p>}
-        <button type="button" onClick={() => openNew(date)} aria-label={`Nueva cita el ${dateTitle(date)}`}
-          className={`mt-auto grid min-h-10 place-items-center rounded-xl border border-dashed border-[#adc5b6] text-[#246b55] hover:bg-white ${FOCUS}`}>
-          <Plus size={17} aria-hidden="true" />
-        </button>
-      </div>
-    )
+    const slots = [...new Set([...hours, ...events.map(c => new Date(c.inicio).getHours())])].sort((a,b)=>a-b)
+    return <div className="space-y-1">
+      {slots.map(hour => {
+        const start = new Date(date.getFullYear(),date.getMonth(),date.getDate(),hour,0)
+        const booked = events.filter(c => new Date(c.inicio).getHours() === hour)
+        const enabled = disponible(start) && start > new Date()
+        return <div key={hour} {...dropTarget(date,hour)} className="grid min-h-12 grid-cols-[3rem_minmax(0,1fr)] gap-1.5 border-t border-[#d5e4d8] py-1.5 first:border-t-0">
+          <span className="pt-2 text-[10px] font-extrabold tabular-nums text-[#527363]">{pad(hour)}:00</span>
+          <div className="min-w-0 space-y-1">{booked.map(c=>eventCard(c,true))}
+            {!booked.length && <button type="button" disabled={!enabled} onClick={()=>openNew(date,hour)}
+              aria-label={`Agendar a las ${pad(hour)}:00`}
+              className={`min-h-9 w-full rounded-lg border border-dashed px-1 text-left text-[11px] font-semibold ${enabled?'border-[#b6d1bf] text-[#397359] hover:bg-white':'border-transparent text-[#a4b2a8]'}`}>
+              {enabled?'+ Disponible':'—'}
+            </button>}
+          </div>
+        </div>
+      })}
+    </div>
+  }
+
+  function dayCards(date, mobile = false) {
+    const key = dayKey(date)
+    return <div key={key} className={`min-w-0 rounded-2xl border p-2 ${key===today?'border-[#a3c6af] bg-[#e7f2e8]':'border-[#dce7dd] bg-[#f1f6ef]'}`}>
+      <button type="button" onClick={()=>showDay(date)} className="mb-2 flex min-h-11 w-full items-center justify-between rounded-xl px-2 text-xs font-bold text-[#416458] hover:bg-white/70">
+        <span className="first-letter:uppercase">{mobile?dateTitle(date):DAYS[date.getDay()]}</span>
+        <span className="rounded-full bg-white px-2 py-1">{date.getDate()}</span>
+      </button>
+      {hourlySlots(date,true)}
+    </div>
   }
 
   function dayTimeline() {
@@ -471,133 +483,18 @@ export default function CitasPage() {
           {view === 'dia' && (diaHabilitado(focus) ? dayTimeline() : <p className="p-6 text-sm text-[#607b6c]">Este día está marcado como descanso en tu perfil.</p>)}
 
           {view === 'mes' && (
-            <div className="px-2 pb-5 sm:px-4">
-              <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
-                {WEEKDAYS.map(d => <div key={d} className="py-1 text-center text-xs font-bold text-[#526d5d]">{d}</div>)}
-                {range.days.map(d => {
-                  const key = dayKey(d)
-                  const events = byDay[key] || []
-                  if (!diaHabilitado(d)) return <div key={key} title="Día de descanso" className="min-h-12 rounded-xl bg-[#edf1ed] sm:min-h-24" />
-                  return (
-                    <div key={key} {...dropTarget(d)}
-                      className={`min-h-12 min-w-0 rounded-xl border p-0.5 sm:min-h-24 sm:p-1.5 ${key === today ? 'border-[#a3c6af] bg-[#e3f0e4]' : 'border-[#e0e9de] bg-[#f1f6ef]'} ${d.getMonth() !== focus.getMonth() ? 'text-[#526d5d]' : ''} ${dragging ? 'hover:border-[#246b55] hover:bg-[#dfefe3]' : ''}`}>
-                      <button type="button" onClick={() => showDay(d)}
-                        aria-label={`Abrir ${dateTitle(d)}, ${events.length} citas`} aria-current={key === today ? 'date' : undefined}
-                        className={`flex min-h-11 w-full flex-col items-center justify-center gap-0.5 rounded-lg text-xs font-bold hover:bg-white/80 sm:flex-row sm:justify-between sm:px-1 ${FOCUS}`}>
-                        <span className={`grid size-6 place-items-center rounded-full ${key === today ? 'bg-[#246b55] text-white' : ''}`}>{d.getDate()}</span>
-                        {!!events.length && <span aria-hidden="true" className="rounded-full bg-[#dcecdf] px-1.5 text-[10px] text-[#205d48]">{events.length}</span>}
-                      </button>
-                      <div className="hidden space-y-1.5 lg:block">
-                        {events.slice(0, 2).map(c => eventCard(c, true))}
-                        {events.length > 2 && <button type="button" onClick={() => showDay(d)} className={`rounded px-1 text-xs font-bold text-[#246b55] hover:underline ${FOCUS}`}>+{events.length - 2} más</button>}
+            <div className="overflow-x-auto px-3 pb-5">
+              <div className="min-w-[740px]">
+                <div className="grid grid-cols-7 gap-1.5">{WEEKDAYS.map(d=><div key={d} className="py-2 text-center text-xs font-bold text-[#526d5d]">{d}</div>)}</div>
+                <div className="grid grid-cols-7 gap-1.5">
+                  {range.days.map(d => diaHabilitado(d)
+                    ? <div key={dayKey(d)} className="min-w-0 rounded-xl border border-[#dce7dd] bg-[#f1f6ef] p-1">
+                        <button type="button" onClick={()=>showDay(d)} className="mb-1 flex min-h-9 w-full items-center justify-center rounded-lg text-sm font-extrabold hover:bg-white">{d.getDate()}</button>
+                        {hourlySlots(d,true)}
                       </div>
-                    </div>
-                  )
-                })}
+                    : <div key={dayKey(d)} className="rounded-xl bg-[#edf1ed] p-2 text-center text-xs text-[#8c9b91]">{d.getDate()}<span className="block">Descanso</span></div>)}
+                </div>
               </div>
             </div>
           )}
 
-          {view === 'lista' && visibleDays.length > 0 && (
-            <div className="space-y-4 px-4 pb-5 sm:px-6">
-              {visibleDays.map(d => (
-                <section key={dayKey(d)} {...dropTarget(d)} className={`rounded-2xl bg-[#edf4eb] p-3 sm:p-4 ${dragging ? 'hover:bg-[#dfefe3]' : ''}`}>
-                  <h3 className="mb-3 flex items-center gap-2 text-sm font-extrabold first-letter:uppercase">
-                    <CalendarDays size={16} aria-hidden="true" /> {dateTitle(d)}
-                  </h3>
-                  <div className="grid gap-2 sm:grid-cols-2">{byDay[dayKey(d)].map(c => eventCard(c))}</div>
-                </section>
-              ))}
-            </div>
-          )}
-
-          <footer className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-b-[1.75rem] border-t border-[#dce7dd] bg-[#eff5ed] px-4 py-3 sm:px-6">
-            {Object.entries(STATES).map(([key, status]) => (
-              <span key={key} className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#416458]">
-                <span aria-hidden="true" className={`size-2.5 rounded-full ${status.dot}`} />{status.label}
-              </span>
-            ))}
-            <p className="basis-full text-xs text-[#526d5d]">
-              Abre una cita para editarla. En escritorio, arrástrala a otro día o a una hora en la vista Día.
-            </p>
-          </footer>
-        </section>
-
-        <aside aria-label="Resumen de agenda" className="grid min-w-0 gap-4 md:grid-cols-3 xl:grid-cols-1">
-          <MiniCalendar focus={focus} today={today} onSelect={showDay} diasLaborales={diasLaborales} />
-          <section className={`${PANEL} min-w-0 p-4`}>
-            <h2 className="flex items-center gap-2 text-sm font-extrabold"><Clock3 size={17} aria-hidden="true" /> Próximas citas</h2>
-            <p className="mt-1 mb-3 text-xs text-[#526d5d]">En el periodo visible</p>
-            <div className="space-y-2">{upcoming.slice(0, 3).map(c => (
-              <div key={c._id}>
-                <p className="mb-1 text-xs font-semibold text-[#526d5d] first-letter:uppercase">{dateTitle(new Date(c.inicio))}</p>
-                {eventCard(c, true, false)}
-              </div>
-            ))}</div>
-            {!upcoming.length && <p className="rounded-xl bg-[#eaf2e8] p-3 text-xs text-[#416458]">{loading ? 'Cargando…' : 'Sin próximas citas en esta vista.'}</p>}
-          </section>
-          <section className={`${PANEL} min-w-0 p-4`}>
-            <h2 className="flex items-center gap-2 text-sm font-extrabold"><CalendarDays size={17} aria-hidden="true" /> Google Calendar</h2>
-            <p className="mt-1 text-xs font-medium text-[#526d5d]">{connected ? 'Cuenta conectada' : 'Cuenta sin conectar'}</p>
-            <button type="button" disabled={calendarBusy} onClick={connected ? disconnect : connect} className={`${CONTROL} mt-3 w-full`}>
-              {calendarBusy ? 'Procesando…' : connected ? 'Desconectar' : 'Conectar'}
-            </button>
-          </section>
-        </aside>
-      </div>
-      <dialog ref={dialogRef} aria-labelledby="appointment-title"
-        onCancel={e => { e.preventDefault(); if (!saving) setModal(false) }}
-        onClick={e => { if (e.target === e.currentTarget && !saving) setModal(false) }}
-        className="m-auto max-h-[90dvh] w-[calc(100%-1.5rem)] max-w-xl overflow-y-auto rounded-3xl border border-[#cfe0d6] bg-[#f8fbf6] text-[#173f34] shadow-[0_24px_70px_rgba(16,46,36,.2)] backdrop:bg-[#102e24]/60 backdrop:backdrop-blur-[3px]">
-        <div className="p-5 sm:p-7">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <div>
-              <h2 id="appointment-title" className="text-xl font-extrabold">{editing ? 'Editar cita' : 'Nueva cita'}</h2>
-              <p className="text-sm text-[#526d5d]">Completa los detalles de la consulta.</p>
-            </div>
-            <button type="button" aria-label="Cerrar" onClick={() => setModal(false)} disabled={saving} className={CONTROL}>
-              <X size={19} aria-hidden="true" />
-            </button>
-          </div>
-          {(patientError || error) && <p role="alert" className="mb-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{error || patientError}</p>}
-          <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
-            <label className="grid gap-1.5 text-sm font-semibold sm:col-span-2">
-              Paciente
-              <select autoFocus required className={inputClass} value={form.patient} onChange={e => updateField('patient', e.target.value)}>
-                <option value="">Selecciona un paciente</option>
-                {pacientes.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
-              </select>
-            </label>
-            <label className="grid min-w-0 gap-1.5 text-sm font-semibold">
-              Inicio
-              <input required type="datetime-local" min={localInput(now)} className={inputClass} value={form.inicio} onChange={e => updateStart(e.target.value)} />
-            </label>
-            <p className="self-end rounded-xl bg-[#e5f2eb] px-3 py-3 text-sm font-semibold text-[#246b55]">Duración fija: 1 hora</p>
-            <label className="grid gap-1.5 text-sm font-semibold">
-              Tipo
-              <select className={inputClass} value={form.tipo} onChange={e => updateField('tipo', e.target.value)}>
-                {Object.entries(TYPES).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-              </select>
-            </label>
-            <label className="grid gap-1.5 text-sm font-semibold">
-              Estado
-              <select className={inputClass} value={form.estado} onChange={e => updateField('estado', e.target.value)}>
-                {Object.entries(STATES).map(([key, status]) => <option key={key} value={key}>{status.label}</option>)}
-              </select>
-            </label>
-            <label className="grid gap-1.5 text-sm font-semibold sm:col-span-2">
-              Notas
-              <textarea maxLength={500} rows={2} className={inputClass} value={form.notas} onChange={e => updateField('notas', e.target.value)} placeholder="Opcional" />
-            </label>
-            <div className="flex flex-wrap justify-end gap-2 pt-2 sm:col-span-2">
-              <button type="button" onClick={() => setModal(false)} disabled={saving} className={CONTROL}>Cancelar</button>
-              <button type="submit" disabled={saving} className={`rounded-xl bg-[#246b55] px-5 py-3 text-sm font-bold text-white hover:bg-[#1d5947] disabled:opacity-50 ${FOCUS}`}>
-                {saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Registrar cita'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </dialog>
-    </div>
-  )
-}
