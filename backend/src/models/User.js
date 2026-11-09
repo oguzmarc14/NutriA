@@ -74,6 +74,14 @@ const userSchema = new mongoose.Schema(
       logo: { type: String, default: '' },
     },
 
+    horarioLaboral: {
+      configurado: { type: Boolean, default: false },
+      dias: { type: [Number], default: [1, 2, 3, 4, 5] },
+      inicio: { type: String, default: '09:00' },
+      fin: { type: String, default: '18:00' },
+      zonaHoraria: { type: String, default: 'America/Mexico_City' },
+    },
+
     patient: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Patient',
