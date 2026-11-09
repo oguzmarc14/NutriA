@@ -42,6 +42,7 @@ import CardPacientePlanes from '../components/planes/CardPacientePlanes'
 import RecetasDietasPanel from '../components/planes/RecetasDietasPanel'
 import CardPlanRegistrado from '../components/planes/CardPlanRegistrado'
 import ModalPlanGuardado from '../components/planes/ModalPlanGuardado'
+import { exportarPlanPDF } from '../utils/exportarPlanPDF'
 import TarjetaSelectorComida from '../components/planes/TarjetaSelectorComida'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
@@ -1652,6 +1653,8 @@ function PlanesAlimenticiosPage() {
       )
 
       setAvisoPlanGuardado({
+        plan: data.plan,
+        paciente: pacientes.find((item) => item._id === pacienteId),
         tipo: tipoGuardado,
         mensaje: tipoGuardado === 'editado'
           ? 'Los cambios del plan alimenticio fueron guardados correctamente.'
@@ -1903,6 +1906,14 @@ function PlanesAlimenticiosPage() {
         <ModalPlanGuardado
           tipo={avisoPlanGuardado.tipo}
           mensaje={avisoPlanGuardado.mensaje}
+          onExportarPDF={() => {
+            try {
+              exportarPlanPDF(avisoPlanGuardado.plan, avisoPlanGuardado.paciente)
+              setAvisoPlanGuardado(null)
+            } catch (error) {
+              setError(error.message || 'No fue posible exportar la dieta.')
+            }
+          }}
           onCerrar={() => setAvisoPlanGuardado(null)}
         />
       )}
