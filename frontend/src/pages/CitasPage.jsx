@@ -200,7 +200,6 @@ export default function CitasPage() {
     const data = {
       ...payload,
       inicio: start.toISOString(),
-      fin: new Date(start.getTime() + 60 * 60000).toISOString(),
       zonaHoraria: Intl.DateTimeFormat().resolvedOptions().timeZone,
     }
     return id ? client.put('/citas/' + id, data) : client.post('/citas', data)
