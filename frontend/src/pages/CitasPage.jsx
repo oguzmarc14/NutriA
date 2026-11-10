@@ -182,6 +182,11 @@ export default function CitasPage() {
   const diasLaborales = horario?.configurado ? horario.dias : null
   const diaHabilitado = date => !diasLaborales || diasLaborales.includes(new Date(date).getDay())
   const horasLaborales = horario?.configurado ? { inicio: Number(horario.inicio.slice(0,2)), fin: Number(horario.fin.slice(0,2)) } : {inicio:7,fin:20}
+  const zonaDispositivo = Intl.DateTimeFormat().resolvedOptions().timeZone
+  const zonaDistinta = Boolean(horario?.configurado && horario.zonaHoraria !== zonaDispositivo)
+  const horaOcupada = start => citas.some(c =>
+    c.estado !== 'cancelada' && new Date(c.inicio) < new Date(start.getTime() + 60 * 60 * 1000) && new Date(c.fin) > start
+  )
   const disponible = date => {
     if (!diaHabilitado(date)) return false
     if (!horario?.configurado) return true
@@ -199,7 +204,7 @@ export default function CitasPage() {
       start.setTime(now.getTime())
       start.setMinutes(Math.ceil((start.getMinutes() + 1) / 30) * 30, 0, 0)
       let intentos = 0
-      while (!disponible(start) && intentos < 14 * 48) {
+      while ((!disponible(start) || horaOcupada(start)) && intentos < 14 * 48) {
         start.setMinutes(start.getMinutes() + 30)
         intentos += 1
       }
@@ -207,6 +212,7 @@ export default function CitasPage() {
     }
     if (start <= now) { setError('No puedes programar citas en una fecha u hora pasada.'); return }
     if (!disponible(start)) { setError('Este día u horario no está disponible según tu perfil.'); return }
+    if (horaOcupada(start)) { setError('Ya existe una cita en este horario. Selecciona otro.'); return }
     setForm({...EMPTY,inicio:localInput(start)})
     setEditing('');setOriginalStart('');setError('');setModal(true)
   }
@@ -240,6 +246,8 @@ export default function CitasPage() {
   async function save(e) {
     e.preventDefault()
     if (!form.inicio) {setError('Selecciona una fecha y hora para la cita.');return}
+    if (editing && form.estado === 'cancelada' && citas.find(c => c._id === editing)?.estado !== 'cancelada' &&
+      !window.confirm('¿Cancelar esta consulta? Permanecerá en el historial de NutriA.')) return
     setSaving(true);setError('')
     try {
       const response=await persist(form,editing)
@@ -387,9 +395,7 @@ export default function CitasPage() {
       {slots.map(hour => {
         const start = new Date(date.getFullYear(),date.getMonth(),date.getDate(),hour,0)
         const booked = events.filter(c => new Date(c.inicio).getHours() === hour)
-        const ocupado = citas.some(c =>
-          c.estado !== 'cancelada' && new Date(c.inicio) < new Date(start.getTime() + 60 * 60 * 1000) && new Date(c.fin) > start
-        )
+        const ocupado = horaOcupada(start)
         const enabled = disponible(start) && start > new Date() && !ocupado
         return <div key={hour} {...dropTarget(date,hour)} className="grid min-h-12 grid-cols-[3rem_minmax(0,1fr)] gap-1.5 border-t border-[#d5e4d8] py-1.5 first:border-t-0">
           <span className="pt-2 text-[10px] font-extrabold tabular-nums text-[#527363]">{pad(hour)}:00</span>
@@ -408,6 +414,7 @@ export default function CitasPage() {
   function dayCards(date, mobile = false) {
     const key = dayKey(date)
     return <div key={key} className={`min-w-0 rounded-2xl border p-2 ${key===today?'border-[#a3c6af] bg-[#e7f2e8]':'border-[#dce7dd] bg-[#f1f6ef]'}`}>
+      {!diaHabilitado(date) && <p className="px-2 pt-1 text-[10px] font-bold text-[#607b6c]">Día sin atención · Citas existentes</p>}
       <button type="button" onClick={()=>showDay(date)} className="mb-2 flex min-h-11 w-full items-center justify-between rounded-xl px-2 text-xs font-bold text-[#416458] hover:bg-white/70">
         <span className="first-letter:uppercase">{mobile?dateTitle(date):DAYS[date.getDay()]}</span>
         <span className="rounded-full bg-white px-2 py-1">{date.getDate()}</span>
@@ -423,6 +430,8 @@ export default function CitasPage() {
       <div className="relative space-y-1 px-3 pb-5 sm:px-6">
         {times.map(hour => {
           const booked = events.filter(c => new Date(c.inicio).getHours() === hour)
+          const start = new Date(focus.getFullYear(),focus.getMonth(),focus.getDate(),hour,0)
+          const ocupado = horaOcupada(start)
           const label = `${pad(hour)}:00`
           return (
             <div key={hour} {...dropTarget(focus, hour)}
@@ -430,8 +439,8 @@ export default function CitasPage() {
               <span className="pt-3 text-xs font-bold tabular-nums text-[#526d5d]">{label}</span>
               <div className="min-w-0 space-y-2 border-l-2 border-[#d2e3d6] pl-3">
                 {booked.map(c => eventCard(c))}
-                {!booked.length && (
-                  <button type="button" disabled={!disponible(new Date(focus.getFullYear(),focus.getMonth(),focus.getDate(),hour,0)) || new Date(focus.getFullYear(),focus.getMonth(),focus.getDate(),hour,0) <= new Date()} onClick={() => openNew(focus, hour)}
+                {!ocupado && (
+                  <button type="button" disabled={!disponible(start) || start <= new Date()} onClick={() => openNew(focus, hour)}
                     aria-label={`Nueva cita a las ${label}`}
                     className={`flex min-h-10 w-full items-center gap-2 rounded-xl border border-dashed border-[#c2d6c8] px-3 text-left text-xs font-semibold text-[#416458] hover:bg-[#e6f1e7] ${FOCUS}`}>
                     <Plus size={14} aria-hidden="true" /> {dragging ? `Soltar a las ${label}` : 'Agregar cita'}
@@ -469,6 +478,9 @@ export default function CitasPage() {
       {error && !modal && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
       {loadError && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{loadError}</p>}
       {notice && <p role="status" className="rounded-xl bg-[#e4f2e7] p-3 text-sm text-[#205d48]">{notice}</p>}
+      {zonaDistinta && <p role="status" className="rounded-xl border border-[#e7d6b5] bg-[#fbf2df] p-3 text-xs font-semibold text-[#735b35]">
+        Tu consultorio utiliza {horario.zonaHoraria} y este dispositivo utiliza {zonaDispositivo}. Las horas de la agenda se muestran en la zona del dispositivo; el servidor comprueba el horario del consultorio.
+      </p>
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_15rem] 2xl:grid-cols-[minmax(0,1fr)_17rem]">
         <section aria-label="Calendario de citas" aria-busy={loading} className={`${PANEL} min-w-0`}>
