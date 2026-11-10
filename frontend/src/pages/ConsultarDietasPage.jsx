@@ -152,6 +152,16 @@ export default function ConsultarDietasPage() {
     if (pacienteSolicitado) setPacienteId(pacienteSolicitado)
   }, [pacienteSolicitado])
 
+  // Mantener el encabezado y la navegación del consultorio sincronizados
+  // cuando se abre un enlace directo a la dieta de otro paciente.
+  useEffect(() => {
+    if (!pacienteId || !pacientes.length) return
+    const seleccionado = pacientes.find(item => item._id === pacienteId)
+    if (seleccionado && pacienteTrabajo?.id !== seleccionado._id) {
+      iniciarTrabajo(seleccionado)
+    }
+  }, [pacienteId, pacientes, pacienteTrabajo?.id, iniciarTrabajo])
+
   useEffect(() => {
     if (!pacienteId) { setPlanes([]); return }
     let vigente = true
