@@ -1,5 +1,7 @@
 import { CheckCircle2, Pencil, RefreshCw, Trash2, ArrowUpRight, BriefcaseMedical, Clock3, CheckCheck, UserRound, MessageCircle, CalendarDays, CalendarClock, Activity, TrendingDown } from 'lucide-react'
 import './estilosPaciente.css'
+import { Bell } from 'lucide-react'
+import { obtenerAvisosPaciente } from '../../utils/avisosPacientes'
 
 function enlaceWhatsApp(telefono) {
   const numero = String(telefono || '').replace(/\D/g, '')
@@ -8,7 +10,8 @@ function enlaceWhatsApp(telefono) {
   return null
 }
 
-function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, onDejarTrabajar, trabajando, obtenerSexo, calcularEdad, obtenerInicial, onReenviar, reenviando, eliminando }) {
+function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, onDejarTrabajar, onVerAvisos, trabajando, obtenerSexo, calcularEdad, obtenerInicial, onReenviar, reenviando, eliminando }) {
+  const avisos = obtenerAvisosPaciente(paciente)
   const edad = calcularEdad(paciente.birthDate)
   const whatsapp = enlaceWhatsApp(paciente.phone)
   const mediciones = Array.isArray(paciente.mediciones) ? paciente.mediciones : []
@@ -42,6 +45,13 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, onDejarTraba
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="break-words text-[16px] font-extrabold leading-snug tracking-tight text-[#123c36]">{paciente.name}</h2>
+          {avisos.length > 0 && (
+            <button type="button" onClick={onVerAvisos} aria-label={`Ver ${avisos.length} avisos de ${paciente.name}`}
+              className="nutria-aviso-trigger mt-2 inline-flex min-h-8 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-extrabold transition">
+              <Bell size={13} aria-hidden="true" />
+              <span>{avisos.length} {avisos.length === 1 ? 'aviso' : 'avisos'}</span>
+            </button>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-1 rounded-xl border border-[#e1e9e1] bg-[#f9fbf8] p-1">
           <span tabIndex={0} role="img" title={paciente.accountStatus === 'pending' ? 'Invitación pendiente' : 'Paciente registrado'} aria-label={paciente.accountStatus === 'pending' ? 'Invitación pendiente' : 'Paciente registrado'} className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border ${paciente.accountStatus === 'pending' ? 'border-amber-200 bg-amber-100 text-amber-700' : 'border-[#c8e5d2] bg-[#ddefe3] text-[#23694f]'}`}>

@@ -7,6 +7,8 @@ import CampoPaciente from '../components/pacientes/CampoPaciente'
 import ModalEliminarPaciente from '../components/pacientes/ModalEliminarPaciente'
 import ModalPacienteCreado from '../components/pacientes/ModalPacienteCreado'
 import AlertaTrabajoPaciente from '../components/pacientes/AlertaTrabajoPaciente'
+import AvisosPaciente from '../components/pacientes/AvisosPaciente'
+import { obtenerAvisosPaciente } from '../utils/avisosPacientes'
 import client from '../api/client'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
@@ -26,6 +28,7 @@ function PacientesPage() {
   const [busqueda, setBusqueda] = useState('')
   const [confirmacionTrabajo, setConfirmacionTrabajo] = useState(null)
   const [alertaTrabajo, setAlertaTrabajo] = useState(null)
+  const [pacienteConAvisos, setPacienteConAvisos] = useState(null)
   const [loading, setLoading] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [reenviandoId, setReenviandoId] = useState(null)
@@ -85,7 +88,7 @@ function PacientesPage() {
 
   function confirmarTrabajo() {
     if (!confirmacionTrabajo) return
-    const { tipo, paciente } = confirmacionTrabajo
+    const { tipo, paciente, destino } = confirmacionTrabajo
     setConfirmacionTrabajo(null)
 
     if (tipo === 'dejar') {
@@ -96,7 +99,7 @@ function PacientesPage() {
     // Sólo después de confirmar cambiamos el paciente activo.
     if (tipo === 'iniciar' && paciente?._id) {
       iniciarTrabajo(paciente)
-      setAlertaTrabajo(paciente)
+      setAlertaTrabajo({ ...paciente, destino })
     }
   }
 
@@ -110,7 +113,30 @@ function PacientesPage() {
     if (!alertaTrabajo?._id) return
     const pacienteId = alertaTrabajo._id
     setAlertaTrabajo(null)
-    navigate(`/pacientes/${pacienteId}/expediente`)
+    navigate(alertaTrabajo.destino || `/pacientes/${pacienteId}/expediente`)
+  }
+
+  function atenderAviso(aviso) {
+    const paciente = pacienteConAvisos
+    if (!paciente) return
+    setPacienteConAvisos(null)
+    if (aviso.accion === 'editar') {
+      editarPaciente(paciente)
+      return
+    }
+    const destinos = {
+      expediente: `/pacientes/${paciente._id}/expediente`,
+      plan: '/planes',
+      mediciones: '/mediciones',
+    }
+    const destino = destinos[aviso.accion]
+    if (!destino) return
+    if (pacienteTrabajo?.id === paciente._id) {
+      navigate(destino)
+    } else {
+      // Mantener la confirmación de cambio antes de trabajar con otro paciente.
+      setConfirmacionTrabajo({ tipo: 'iniciar', paciente, destino })
+    }
   }
 
   /*
@@ -707,6 +733,7 @@ function PacientesPage() {
                     setPacienteAEliminar(paciente)
                   }}
                   onTrabajar={() => comenzarTrabajo(paciente)}
+                  onVerAvisos={() => setPacienteConAvisos(paciente)}
                   trabajando={pacienteTrabajo?.id === paciente._id}
                   onDejarTrabajar={() => setConfirmacionTrabajo({ tipo: 'dejar', paciente })}
                   obtenerSexo={
@@ -765,6 +792,13 @@ function PacientesPage() {
           </div>
         </div>
       )}
+
+      <AvisosPaciente
+        paciente={pacienteConAvisos}
+        avisos={obtenerAvisosPaciente(pacienteConAvisos)}
+        onCerrar={() => setPacienteConAvisos(null)}
+        onAccion={atenderAviso}
+      />
 
       <AlertaTrabajoPaciente
         paciente={alertaTrabajo}

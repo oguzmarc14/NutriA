@@ -344,7 +344,7 @@ function DashboardLayout() {
               <NavLink
                 key={label}
                 to={to}
-                end={to === '/'}
+                end={to === '/' || to === '/pacientes'}
                 className={({
                   isActive,
                 }) =>
@@ -469,7 +469,7 @@ function DashboardLayout() {
               <NavLink
                 key={label}
                 to={to}
-                end={to === '/'}
+                end={to === '/' || to === '/pacientes'}
                 className={({
                   isActive,
                 }) =>

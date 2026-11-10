@@ -136,3 +136,69 @@ html[data-theme="dark"] .nutria-trabajo-button:hover {
   .nutria-trabajo-alert { animation: none; }
   .nutria-patient-card { transition: none; }
 }
+
+/* Avisos informativos para el nutriólogo, visibles en claro y oscuro. */
+.nutria-aviso-trigger {
+  color: #245b47;
+  background: #e5f2e9;
+  border-color: #9bcbaa;
+}
+.nutria-aviso-trigger:hover {
+  background: #d5ebdd;
+  border-color: #64a883;
+}
+.nutria-aviso-overlay {
+  background: rgba(13, 38, 27, .57);
+  backdrop-filter: blur(3px);
+}
+.nutria-aviso-dialog {
+  background: #f8fcf8;
+  color: #183f32;
+  border-color: #bedcc8;
+}
+.nutria-aviso-item {
+  background: #eef6ef;
+  border-color: #c8dfcf;
+}
+.nutria-aviso-symbol {
+  background: #daede0;
+  color: #267052;
+}
+.nutria-aviso-close {
+  color: #315d4c;
+  background: #e7f3eb;
+}
+.nutria-aviso-action {
+  color: #fff;
+  background: #287957;
+}
+.nutria-aviso-action:hover { background: #205c45; }
+html[data-theme="dark"] .nutria-aviso-trigger {
+  color: #d2f3dc;
+  background: #315c44;
+  border-color: #79b78e;
+}
+html[data-theme="dark"] .nutria-aviso-trigger:hover { background: #3b6a4e; }
+html[data-theme="dark"] .nutria-aviso-overlay { background: rgba(0, 12, 6, .76); }
+html[data-theme="dark"] .nutria-aviso-dialog {
+  background: #20372b;
+  color: #e5f7ea;
+  border-color: #669a79;
+}
+html[data-theme="dark"] .nutria-aviso-item {
+  background: #2a4636;
+  border-color: #51745d;
+}
+html[data-theme="dark"] .nutria-aviso-symbol {
+  background: #355f46;
+  color: #aee8bb;
+}
+html[data-theme="dark"] .nutria-aviso-close {
+  background: #355744;
+  color: #effaf2;
+}
+html[data-theme="dark"] .nutria-aviso-action {
+  color: #fff;
+  background: #32835c;
+}
+html[data-theme="dark"] .nutria-aviso-action:hover { background: #42946b; }
