@@ -11,6 +11,7 @@ import PacientesPage from "./pages/PacientesPage";
 import ExpedientePage from "./pages/ExpedientePage";
 import MedicionesPage from "./pages/MedicionesPage";
 import PlanesAlimenticiosPage from "./pages/PlanesAlimenticiosPage";
+import ConsultarDietasPage from "./pages/ConsultarDietasPage";
 import UsuariosPage from "./pages/UsuariosPage";
 import ActivarCuentaPage from "./pages/ActivarCuentaPage";
 import MiExpedientePage from "./pages/MiExpedientePage";
@@ -77,6 +78,7 @@ function App() {
             <Route path="calculo-nutricional" element={<CalculoNutricionalPage />} />
 
             <Route path="planes" element={<PlanesAlimenticiosPage />} />
+            <Route path="dietas" element={<ConsultarDietasPage />} />
             <Route path="citas" element={<CitasPage />} />
             <Route path="editar-perfil" element={<EditarPerfilPage />} />
 
