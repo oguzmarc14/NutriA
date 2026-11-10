@@ -8,7 +8,7 @@ import './estilosPaciente.css'
  * Se muestra después de activar el contexto y al aceptar abre su expediente.
  * No utiliza alert() nativo ni agrega dependencias externas.
  */
-function AlertaTrabajoPaciente({ paciente, onAceptar }) {
+function AlertaTrabajoPaciente({ paciente, onAceptar, onCerrar }) {
   useEffect(() => {
     if (!paciente) return undefined
 
@@ -18,7 +18,7 @@ function AlertaTrabajoPaciente({ paciente, onAceptar }) {
     const manejarTecla = (event) => {
       if (event.key === 'Escape') {
         event.preventDefault()
-        onAceptar()
+        onCerrar()
       }
       if (event.key === 'Tab') {
         // El único elemento interactivo es el botón OK.
@@ -32,7 +32,7 @@ function AlertaTrabajoPaciente({ paciente, onAceptar }) {
       document.body.style.overflow = overflowAnterior
       window.removeEventListener('keydown', manejarTecla)
     }
-  }, [paciente, onAceptar])
+  }, [paciente, onCerrar])
 
   if (!paciente) return null
 
