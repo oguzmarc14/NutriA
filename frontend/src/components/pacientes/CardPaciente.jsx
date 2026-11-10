@@ -1,4 +1,5 @@
 import { CheckCircle2, Pencil, RefreshCw, Trash2, ArrowUpRight, BriefcaseMedical, Clock3, CheckCheck, UserRound, MessageCircle, CalendarDays, CalendarClock, Activity, TrendingDown } from 'lucide-react'
+import './estilosPaciente.css'
 
 function enlaceWhatsApp(telefono) {
   const numero = String(telefono || '').replace(/\D/g, '')
@@ -34,7 +35,7 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, onDejarTraba
   ]
 
   return (
-    <article className={`group relative isolate flex h-full min-w-0 flex-col overflow-hidden rounded-[24px] border bg-[#f6f8f3] p-4 shadow-[0_10px_25px_-18px_rgba(25,70,55,.28)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_28px_-17px_rgba(25,70,55,.3)] sm:p-5 ${trabajando ? 'border-[#216a50] ring-[3px] ring-[#368464] shadow-[0_12px_32px_-14px_rgba(22,92,67,.38)]' : 'border-[#e0e8df] hover:border-[#b9d8c8]'}`}>
+    <article className={`nutria-patient-card group relative isolate flex h-full min-w-0 flex-col overflow-hidden rounded-[24px] border p-4 transition-all duration-200 sm:p-5 ${trabajando ? 'nutria-patient-card--active' : ''}`} data-trabajando={trabajando ? 'true' : 'false'}>
       <div className="relative flex min-w-0 items-start gap-3">
         <div className="relative grid h-12 w-12 shrink-0 place-items-center rounded-2xl border-2 border-white bg-[#dcece0] text-xl font-black text-[#205e4d]">
           {obtenerInicial(paciente.name)}
@@ -55,7 +56,7 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, onDejarTraba
           <button type="button" onClick={onEliminar} disabled={eliminando} title="Eliminar paciente" aria-label={`Eliminar a ${paciente.name}`} className="grid h-8 w-8 place-items-center rounded-lg text-[#c65a59] transition hover:bg-red-50 disabled:opacity-50"><Trash2 size={15}/></button>
         </div>
       </div>
-      <div className="relative mt-3 rounded-2xl border border-[#d6e5da] bg-[#eaf2eb] px-3.5 py-3">
+      <div className="nutria-patient-card__info relative mt-3 rounded-2xl border px-3.5 py-3">
         <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.1em] text-[#6f8d7b]">
           <UserRound size={13} />
           Información personal
@@ -75,14 +76,14 @@ function CardPaciente({ paciente, onEditar, onEliminar, onTrabajar, onDejarTraba
 
       <div className="relative mt-4 grid grid-cols-2 gap-2.5">
         {indicadores.map(({titulo,valor,detalle,Icono}) => (
-          <div key={titulo} className="min-w-0 rounded-2xl border border-[#d9e5dc] bg-[#f0f5ef] p-3">
+          <div key={titulo} className="nutria-patient-card__metric min-w-0 rounded-2xl border p-3">
             <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[#728c7d]"><Icono size={13} className="shrink-0"/>{titulo}</p>
             <p className="mt-1.5 break-words text-[15px] font-extrabold text-[#20523e]">{valor}</p>
             <p className="mt-1 text-[10px] leading-snug text-[#819188]">{detalle}</p>
           </div>
         ))}
       </div>
-      <div className="relative mt-3 min-h-[72px] rounded-2xl border border-[#f0d7ca] bg-[#f9eae1] p-3.5">
+      <div className="nutria-patient-card__notes relative mt-3 min-h-[72px] rounded-2xl border p-3.5">
         <p className="text-[10px] font-black uppercase tracking-[.12em] text-[#b16d51]">Objetivo nutricional / notas</p>
         <p className="mt-1 line-clamp-2 break-words text-xs font-semibold leading-relaxed text-[#38524c]">{paciente.notes || 'Sin notas registradas'}</p>
       </div>

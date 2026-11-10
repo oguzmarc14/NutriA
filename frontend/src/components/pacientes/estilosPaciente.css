@@ -1,0 +1,136 @@
+/* Tarjetas de pacientes: contraste suave en claro y oscuro, estado activo destacado. */
+.nutria-patient-card {
+  background: #f5f9f5;
+  border-color: #accfb8;
+  box-shadow: 0 10px 26px -17px rgba(26, 74, 52, 0.23);
+}
+.nutria-patient-card__info {
+  background-color: #ecf5ee;
+  border-color: #c7decf;
+}
+.nutria-patient-card__metric {
+  background-color: #eff6ef;
+  border-color: #c8ddce;
+}
+.nutria-patient-card__notes {
+  background-color: #f9eee5;
+  border-color: #e7d5c4;
+}
+.nutria-patient-card--active {
+  background: linear-gradient(160deg, #f3faf5 0%, #eaf5ed 100%);
+  border-color: #2b996e;
+  box-shadow: 0 0 0 2px rgba(46, 164, 111, .24), 0 17px 34px -18px rgba(15, 84, 53, .37);
+}
+@media (hover: hover) {
+  .nutria-patient-card:hover {
+    transform: translateY(-2px);
+    border-color: #74b58e;
+    box-shadow: 0 16px 31px -17px rgba(26, 74, 52, .3);
+  }
+  .nutria-patient-card--active:hover {
+    border-color: #22845e;
+    box-shadow: 0 0 0 3px rgba(46, 164, 111, .32), 0 17px 34px -18px rgba(15, 84, 53, .4);
+  }
+}
+html[data-theme="dark"] .nutria-patient-card {
+  background: #2a4235;
+  border-color: #709f82;
+  box-shadow: 0 11px 29px -16px rgba(2, 14, 8, .44);
+}
+html[data-theme="dark"] .nutria-patient-card__info {
+  background-color: #263b30;
+  border-color: #597e68;
+}
+html[data-theme="dark"] .nutria-patient-card__metric {
+  background-color: #294033;
+  border-color: #587b65;
+}
+html[data-theme="dark"] .nutria-patient-card__notes {
+  background-color: #3b3c30;
+  border-color: #726c50;
+}
+html[data-theme="dark"] .nutria-patient-card--active {
+  background: linear-gradient(155deg, #304d3d 0%, #294535 100%);
+  border-color: #9ce0b5;
+  box-shadow: 0 0 0 3px rgba(143, 218, 166, .34), 0 20px 38px -18px rgba(0, 0, 0, .65);
+}
+@media (hover: hover) {
+  html[data-theme="dark"] .nutria-patient-card:hover {
+    border-color: #a7d6b3;
+    box-shadow: 0 15px 32px -15px rgba(0, 0, 0, .55);
+  }
+  html[data-theme="dark"] .nutria-patient-card--active:hover {
+    border-color: #b0ebc3;
+    box-shadow: 0 0 0 3px rgba(160, 234, 183, .47), 0 20px 38px -18px rgba(0, 0, 0, .65);
+  }
+}
+
+/* Alerta de selección, basada en el ejemplo del usuario y en la paleta NutriA. */
+.nutria-trabajo-overlay {
+  background: rgba(12, 35, 26, .56);
+  backdrop-filter: blur(4px);
+}
+.nutria-trabajo-alert {
+  background: #fbfefb;
+  border-color: #cce6d3;
+  animation: nutria-alert-in .22s ease-out both;
+}
+.nutria-trabajo-check {
+  color: #6dbb87;
+  border-color: #d2ebd8;
+}
+.nutria-trabajo-title {
+  color: #173f34;
+}
+.nutria-trabajo-description {
+  color: #637a6c;
+}
+.nutria-trabajo-nombre {
+  color: #236b50;
+}
+.nutria-trabajo-button {
+  background: #277a58;
+  color: #fff;
+  box-shadow: 0 5px 14px rgba(36, 107, 85, .2);
+}
+.nutria-trabajo-button:hover {
+  background: #1e6147;
+}
+.nutria-trabajo-button:focus-visible {
+  outline-color: #49a677;
+}
+html[data-theme="dark"] .nutria-trabajo-overlay {
+  background: rgba(4, 15, 10, .72);
+}
+html[data-theme="dark"] .nutria-trabajo-alert {
+  background: #20362b;
+  border-color: #5b936e;
+}
+html[data-theme="dark"] .nutria-trabajo-check {
+  color: #9ee1b1;
+  border-color: #578b69;
+}
+html[data-theme="dark"] .nutria-trabajo-title {
+  color: #ecf9ee;
+}
+html[data-theme="dark"] .nutria-trabajo-description {
+  color: #c0d9c9;
+}
+html[data-theme="dark"] .nutria-trabajo-nombre {
+  color: #9de5b6;
+}
+html[data-theme="dark"] .nutria-trabajo-button {
+  background: #378b62;
+  color: #fff;
+}
+html[data-theme="dark"] .nutria-trabajo-button:hover {
+  background: #429b70;
+}
+@keyframes nutria-alert-in {
+  from { opacity: 0; transform: translateY(9px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nutria-trabajo-alert { animation: none; }
+  .nutria-patient-card { transition: none; }
+}
