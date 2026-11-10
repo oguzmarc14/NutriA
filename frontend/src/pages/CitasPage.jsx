@@ -480,7 +480,7 @@ export default function CitasPage() {
       {notice && <p role="status" className="rounded-xl bg-[#e4f2e7] p-3 text-sm text-[#205d48]">{notice}</p>}
       {zonaDistinta && <p role="status" className="rounded-xl border border-[#e7d6b5] bg-[#fbf2df] p-3 text-xs font-semibold text-[#735b35]">
         Tu consultorio utiliza {horario.zonaHoraria} y este dispositivo utiliza {zonaDispositivo}. Las horas de la agenda se muestran en la zona del dispositivo; el servidor comprueba el horario del consultorio.
-      </p>
+      </p>}
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_15rem] 2xl:grid-cols-[minmax(0,1fr)_17rem]">
         <section aria-label="Calendario de citas" aria-busy={loading} className={`${PANEL} min-w-0`}>
