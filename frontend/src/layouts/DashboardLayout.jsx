@@ -3,6 +3,7 @@ import client from '../api/client'
 import HorarioLaboral from '../components/HorarioLaboral'
 import {
   Apple,
+  FileText,
   CalendarDays,
   BookOpen,
   ShieldCheck,
@@ -136,9 +137,15 @@ function DashboardLayout() {
           },
           {
             icon: Apple,
-            label: 'Planes alimenticios',
-            shortLabel: 'Planes',
+            label: 'Crear dieta',
+            shortLabel: 'Crear',
             to: '/planes',
+          },
+          {
+            icon: FileText,
+            label: 'Consultar dietas',
+            shortLabel: 'Dietas',
+            to: '/dietas',
           },
           {
             icon: BookOpen,
@@ -207,7 +214,8 @@ function DashboardLayout() {
         { icon: ClipboardPlus, label: 'Expediente clínico', shortLabel: 'Expediente', to: `/pacientes/${pacienteTrabajo.id}/expediente` },
         { icon: Ruler, label: 'Mediciones', shortLabel: 'Medidas', to: '/mediciones' },
         { icon: Calculator, label: 'Cálculo nutricional', shortLabel: 'Cálculo', to: '/calculo-nutricional' },
-        { icon: Apple, label: 'Plan alimenticio', shortLabel: 'Planes', to: '/planes' },
+        { icon: Apple, label: 'Crear dieta', shortLabel: 'Crear', to: '/planes' },
+        { icon: FileText, label: 'Consultar dietas', shortLabel: 'Dietas', to: '/dietas' },
         { icon: TrendingUp, label: 'Progreso', shortLabel: 'Progreso', to: '/progreso' },
         { icon: Users, label: 'Pacientes', shortLabel: 'Pacientes', to: '/pacientes' },
         { icon: LayoutDashboard, label: 'Resumen', shortLabel: 'Resumen', to: '/' },
@@ -246,6 +254,7 @@ function DashboardLayout() {
     '/pacientes',
     '/mediciones',
     '/planes',
+    '/dietas',
     '/citas',
     '/community',
     '/community/moderacion',
