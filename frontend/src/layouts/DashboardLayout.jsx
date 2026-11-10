@@ -391,7 +391,7 @@ function DashboardLayout() {
             {user.role === 'nutritionist' && <p className="max-w-[48vw] truncate text-[10px] font-semibold text-[#246b55]">{pacienteTrabajo ? `● ${pacienteTrabajo.name}` : 'Sin paciente activo'}</p>}
           </div>
           <div className="ml-auto flex items-center gap-2">
-            {user.role === 'nutritionist' && <CentroAvisosNutriologo />}
+            {user.role === 'nutritionist' && <CentroAvisosNutriologo modo="movil" />}
             <BotonInstalarApp />
             <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} irAMiClinica={() => navigate('/mi-clinica')} irAEditarPerfil={() => navigate('/editar-perfil')}/>
           </div>
@@ -424,7 +424,7 @@ function DashboardLayout() {
             </div>
           ) : <span className="text-xs font-semibold text-[#648073]">NutriA</span>}
           <div className="flex shrink-0 items-center gap-2">
-            {user.role === 'nutritionist' && <CentroAvisosNutriologo />}
+            {user.role === 'nutritionist' && <CentroAvisosNutriologo modo="escritorio" />}
             <BotonInstalarApp />
             <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} irAMiClinica={() => navigate('/mi-clinica')}/>
           </div>

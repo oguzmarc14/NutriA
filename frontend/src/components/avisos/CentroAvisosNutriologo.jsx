@@ -13,7 +13,7 @@ const filtros = [
   { id: 'citas', texto: 'Citas' },
 ]
 
-export default function CentroAvisosNutriologo() {
+export default function CentroAvisosNutriologo({ modo = 'escritorio' }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [abierto, setAbierto] = useState(false)
@@ -25,8 +25,21 @@ export default function CentroAvisosNutriologo() {
   const [actualizando, setActualizando] = useState(true)
   const [errores, setErrores] = useState([])
   const cierreRef = useRef(null)
+  const [visibleEnPantalla, setVisibleEnPantalla] = useState(() => {
+    const escritorio = window.matchMedia('(min-width: 768px)').matches
+    return modo === 'escritorio' ? escritorio : !escritorio
+  })
 
   useEffect(() => {
+    const media = window.matchMedia('(min-width: 768px)')
+    const actualizar = () => setVisibleEnPantalla(modo === 'escritorio' ? media.matches : !media.matches)
+    actualizar()
+    media.addEventListener('change', actualizar)
+    return () => media.removeEventListener('change', actualizar)
+  }, [modo])
+
+  useEffect(() => {
+    if (!visibleEnPantalla) return undefined
     let activo = true
     async function cargar() {
       setActualizando(true)
@@ -58,7 +71,7 @@ export default function CentroAvisosNutriologo() {
     }
     cargar()
     return () => { activo = false }
-  }, [location.pathname, recargar])
+  }, [location.pathname, recargar, visibleEnPantalla])
 
   useEffect(() => {
     if (!abierto) return undefined
