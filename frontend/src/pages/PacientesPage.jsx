@@ -6,6 +6,7 @@ import CardPaciente from '../components/pacientes/CardPaciente'
 import CampoPaciente from '../components/pacientes/CampoPaciente'
 import ModalEliminarPaciente from '../components/pacientes/ModalEliminarPaciente'
 import ModalPacienteCreado from '../components/pacientes/ModalPacienteCreado'
+import AlertaTrabajoPaciente from '../components/pacientes/AlertaTrabajoPaciente'
 import client from '../api/client'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
@@ -24,6 +25,7 @@ function PacientesPage() {
   const [pacientes, setPacientes] = useState([])
   const [busqueda, setBusqueda] = useState('')
   const [confirmacionTrabajo, setConfirmacionTrabajo] = useState(null)
+  const [alertaTrabajo, setAlertaTrabajo] = useState(null)
   const [loading, setLoading] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [reenviandoId, setReenviandoId] = useState(null)
@@ -83,14 +85,21 @@ function PacientesPage() {
 
   function confirmarTrabajo() {
     if (!confirmacionTrabajo) return
-    const { tipo, paciente } = confirmacionTrabajo
+    cerrarTrabajo()
     setConfirmacionTrabajo(null)
-    if (tipo === 'dejar') {
-      cerrarTrabajo()
-    } else {
-      iniciarTrabajo(paciente)
-      navigate(`/pacientes/${paciente._id}/expediente`)
-    }
+  }
+
+  function comenzarTrabajo(paciente) {
+    if (!paciente?._id) return
+    iniciarTrabajo(paciente)
+    setAlertaTrabajo(paciente)
+  }
+
+  function abrirExpedienteTrasAlerta() {
+    if (!alertaTrabajo?._id) return
+    const pacienteId = alertaTrabajo._id
+    setAlertaTrabajo(null)
+    navigate(`/pacientes/${pacienteId}/expediente`)
   }
 
   /*
@@ -346,8 +355,9 @@ function PacientesPage() {
       <ModalPacienteCreado
         paciente={pacienteCreado}
         onAceptar={() => {
-          iniciarTrabajo(pacienteCreado)
-          navigate(`/pacientes/${pacienteCreado._id}/expediente`)
+          const nuevoPaciente = pacienteCreado
+          setPacienteCreado(null)
+          comenzarTrabajo(nuevoPaciente)
         }}
       />
       <div className="mx-auto w-full max-w-[1480px]">
@@ -685,7 +695,7 @@ function PacientesPage() {
                     setMensaje('')
                     setPacienteAEliminar(paciente)
                   }}
-                  onTrabajar={() => setConfirmacionTrabajo({ tipo: 'iniciar', paciente })}
+                  onTrabajar={() => comenzarTrabajo(paciente)}
                   trabajando={pacienteTrabajo?.id === paciente._id}
                   onDejarTrabajar={() => setConfirmacionTrabajo({ tipo: 'dejar', paciente })}
                   obtenerSexo={
@@ -715,10 +725,10 @@ function PacientesPage() {
                 <BriefcaseMedical size={30} className="text-[#246b55]" aria-hidden="true" />
               </div>
               <h2 id="titulo-confirmacion-trabajo" className="text-xl font-extrabold tracking-tight text-[#173f34]">
-                {confirmacionTrabajo.tipo === 'dejar' ? '¿Dejar de trabajar?' : '¿Comenzar a trabajar?'}
+                ¿Dejar de trabajar?
               </h2>
               <p id="descripcion-confirmacion-trabajo" className="mt-2 text-sm text-[#6b8174]">
-                {confirmacionTrabajo.tipo === 'dejar' ? 'Estás por dejar de trabajar con' : 'Estás por comenzar a trabajar con'}
+                Estás por dejar de trabajar con
               </p>
               <p className="mt-1 break-words text-base font-extrabold text-[#205c45]">{confirmacionTrabajo.paciente.name}</p>
             </div>
@@ -729,6 +739,11 @@ function PacientesPage() {
           </div>
         </div>
       )}
+
+      <AlertaTrabajoPaciente
+        paciente={alertaTrabajo}
+        onAceptar={abrirExpedienteTrasAlerta}
+      />
 
       <ModalEliminarPaciente
         paciente={pacienteAEliminar}

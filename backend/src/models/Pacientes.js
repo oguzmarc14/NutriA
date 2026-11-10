@@ -41,6 +41,11 @@ const patientSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    // Voluntaria y separada de los datos clínicos. El paciente debe optar por participar.
+    gamificacion: {
+      permitidaPorNutriologo: { type: Boolean, default: true },
+      participa: { type: Boolean, default: false },
+    },
   },
   {
     timestamps: true,
