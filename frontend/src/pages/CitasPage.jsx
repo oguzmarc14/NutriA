@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Plus, RefreshCw, X } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Plus, RefreshCw, X, Trash2, Ban, CheckCircle2 } from 'lucide-react'
 import client from '../api/client'
 
 const EMPTY = { patient: '', inicio: '', tipo: 'seguimiento', estado: 'programada', notas: '' }
@@ -44,7 +44,8 @@ function MiniCalendar({ focus, today, onSelect, diasLaborales }) {
           const date = addDays(begin, i)
           const key = dayKey(date)
           const selected = key === dayKey(focus)
-          if (diasLaborales && !diasLaborales.includes(date.getDay())) return <span key={key} aria-label="Día de descanso" className="min-h-9 rounded-lg bg-[#edf1ed]" />
+          // Los días no laborables también deben permitir consultar citas ya existentes.
+          // Sólo se bloquea la programación de citas nuevas.
           return (
             <button key={key} type="button" aria-label={dateTitle(date)}
               aria-current={key === today ? 'date' : undefined} aria-pressed={selected}
@@ -81,6 +82,7 @@ export default function CitasPage() {
   const [saving, setSaving] = useState(false)
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState('')
+  const [originalStart, setOriginalStart] = useState('')
   const [form, setForm] = useState(EMPTY)
   const [error, setError] = useState(() => new URLSearchParams(window.location.search).get('calendar') === 'error'
     ? 'No se pudo autorizar Google Calendar. Revisa la configuración OAuth.'
@@ -180,6 +182,11 @@ export default function CitasPage() {
   const diasLaborales = horario?.configurado ? horario.dias : null
   const diaHabilitado = date => !diasLaborales || diasLaborales.includes(new Date(date).getDay())
   const horasLaborales = horario?.configurado ? { inicio: Number(horario.inicio.slice(0,2)), fin: Number(horario.fin.slice(0,2)) } : {inicio:7,fin:20}
+  const zonaDispositivo = Intl.DateTimeFormat().resolvedOptions().timeZone
+  const zonaDistinta = Boolean(horario?.configurado && horario.zonaHoraria !== zonaDispositivo)
+  const horaOcupada = start => citas.some(c =>
+    c.estado !== 'cancelada' && new Date(c.inicio) < new Date(start.getTime() + 60 * 60 * 1000) && new Date(c.fin) > start
+  )
   const disponible = date => {
     if (!diaHabilitado(date)) return false
     if (!horario?.configurado) return true
@@ -192,18 +199,26 @@ export default function CitasPage() {
   function openNew(date = new Date(), hour) {
     const start = new Date(date.getFullYear(),date.getMonth(),date.getDate(),hour ?? horasLaborales.inicio,0)
     const now = new Date()
-    if (hour === undefined && dayKey(start) === dayKey(now) && start < now) {
-      start.setHours(now.getHours() + 1)
-      if (dayKey(start) !== dayKey(date)) start.setTime(now.getTime())
+    if (hour === undefined && start <= now) {
+      // Buscar el siguiente bloque disponible al pulsar «Nueva cita».
+      start.setTime(now.getTime())
+      start.setMinutes(Math.ceil((start.getMinutes() + 1) / 30) * 30, 0, 0)
+      let intentos = 0
+      while ((!disponible(start) || horaOcupada(start)) && intentos < 14 * 48) {
+        start.setMinutes(start.getMinutes() + 30)
+        intentos += 1
+      }
+      if (intentos >= 14 * 48) { setError('No hay horarios disponibles con tu configuración actual. Revisa los días laborales.'); return }
     }
-    if (start < now) { setError('No puedes programar citas en una fecha u hora pasada.'); return }
+    if (start <= now) { setError('No puedes programar citas en una fecha u hora pasada.'); return }
     if (!disponible(start)) { setError('Este día u horario no está disponible según tu perfil.'); return }
+    if (horaOcupada(start)) { setError('Ya existe una cita en este horario. Selecciona otro.'); return }
     setForm({...EMPTY,inicio:localInput(start)})
-    setEditing('');setError('');setModal(true)
+    setEditing('');setOriginalStart('');setError('');setModal(true)
   }
   function openEdit(c) {
     setForm({patient:c.patient?._id||c.patient||'',inicio:localInput(c.inicio),tipo:c.tipo,estado:c.estado,notas:c.notas||''})
-    setEditing(c._id);setError('');setModal(true)
+    setEditing(c._id);setOriginalStart(c.inicio);setError('');setModal(true)
   }
   function updateField(field, value) {
     setForm(current => ({ ...current, [field]: value }))
@@ -215,20 +230,24 @@ export default function CitasPage() {
 
   async function persist(payload, id) {
     const start = new Date(payload.inicio)
-    if (!Number.isFinite(start.getTime()) || start <= new Date()) {
-      throw new Error('Selecciona una fecha y hora futuras para la cita.')
+    const mismaFecha = Boolean(id && originalStart && start.getTime() === new Date(originalStart).getTime())
+    if (!Number.isFinite(start.getTime()) || (start <= new Date() && !mismaFecha)) {
+      throw new Error('Sólo puedes reprogramar a fechas futuras. Puedes editar notas o estado de citas pasadas sin cambiar su fecha.')
     }
-    if (!disponible(start)) throw new Error('El horario está fuera de tus días u horas de atención.')
+    if (!mismaFecha && !disponible(start)) throw new Error('El horario está fuera de tus días u horas de atención.')
+    if (payload.estado === 'completada' && start > new Date()) throw new Error('La cita aún no puede marcarse completada.')
     const data = {
       ...payload,
       inicio: start.toISOString(),
-      zonaHoraria: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      zonaHoraria: horario?.zonaHoraria || Intl.DateTimeFormat().resolvedOptions().timeZone,
     }
     return id ? client.put('/citas/' + id, data) : client.post('/citas', data)
   }
   async function save(e) {
     e.preventDefault()
-    if (!form.inicio || new Date(form.inicio) <= new Date()) {setError('Selecciona una fecha y hora futuras para la cita.');return}
+    if (!form.inicio) {setError('Selecciona una fecha y hora para la cita.');return}
+    if (editing && form.estado === 'cancelada' && citas.find(c => c._id === editing)?.estado !== 'cancelada' &&
+      !window.confirm('¿Cancelar esta consulta? Permanecerá en el historial de NutriA.')) return
     setSaving(true);setError('')
     try {
       const response=await persist(form,editing)
@@ -237,8 +256,44 @@ export default function CitasPage() {
     } catch(e) {setError(e.response?.data?.message||e.message||'No se pudo guardar la cita')}
     finally {setSaving(false)}
   }
+  async function cambiarEstadoCita(estado) {
+    if (!editing || saving) return
+    if (estado === 'cancelada' && !window.confirm('¿Cancelar esta cita? Permanecerá en el historial y se retirará de Google Calendar si está sincronizada.')) return
+    setSaving(true);setError('')
+    try {
+      const {data} = await client.patch('/citas/' + editing + '/estado', { estado })
+      setModal(false)
+      setNotice(estado === 'cancelada' ? 'Cita cancelada. Se conserva en el historial.' : 'Estado de cita actualizado.' )
+      if (connected && data.calendarSynced === false) setNotice('Estado actualizado en NutriA, pero no se sincronizó con Google Calendar.')
+      load()
+    } catch (e) {
+      setError(e.response?.data?.message || 'No se pudo cambiar el estado de la cita.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function eliminarCita() {
+    if (!editing || saving) return
+    const actual = citas.find(c => c._id === editing)
+    if (!window.confirm(`¿Eliminar definitivamente la cita de ${actual?.patient?.name || 'este paciente'}? Esta acción no se puede deshacer. Para mantener el historial, utiliza «Cancelar cita».`)) return
+    setSaving(true);setError('')
+    try {
+      const {data} = await client.delete('/citas/' + editing)
+      setModal(false)
+      setNotice(data.calendarSynced === false
+        ? 'Cita eliminada en NutriA. No se pudo verificar su eliminación en Google Calendar porque no hay conexión activa.'
+        : 'Cita eliminada definitivamente.')
+      load()
+    } catch (e) {
+      setError(e.response?.data?.message || 'No se pudo eliminar la cita.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function moveAppointment(c, date, hour) {
-    if (saving || c.estado === 'cancelada') return
+    if (saving || ['cancelada', 'completada'].includes(c.estado) || new Date(c.inicio) <= new Date()) return
     const oldStart=new Date(c.inicio)
     const start=new Date(date.getFullYear(),date.getMonth(),date.getDate(),hour??oldStart.getHours(),hour===undefined?oldStart.getMinutes():0)
     if (start <= new Date()) { setError('No puedes reprogramar una cita al pasado.'); return }
@@ -274,7 +329,7 @@ export default function CitasPage() {
 
   const upcoming = filtered.filter(c => Date.parse(c.inicio) > now.getTime() && !['cancelada', 'completada'].includes(c.estado))
   const focusKey = dayKey(focus)
-  const visibleDays = range.days.filter(d => diaHabilitado(d))
+  const visibleDays = range.days
   const period = view === 'mes' ? formatMonth(focus) : view === 'dia' ? dateTitle(focus) : weekTitle(range.begin, addDays(range.end, -1))
   const hours = Array.from({ length: Math.max(1, horasLaborales.fin-horasLaborales.inicio) }, (_, i) => i + horasLaborales.inicio)
 
@@ -309,7 +364,7 @@ export default function CitasPage() {
     return (
       <button key={c._id} type="button"
         aria-label={`Editar cita de ${patient}, ${dateTitle(new Date(c.inicio))}, ${time}, ${status.label}`}
-        draggable={draggable && !saving && c.estado !== 'cancelada'}
+        draggable={draggable && !saving && ['programada', 'confirmada'].includes(c.estado) && new Date(c.inicio) > now}
         onDragStart={e => {
           e.dataTransfer.effectAllowed = 'move'
           e.dataTransfer.setData('text/plain', c._id)
@@ -340,11 +395,12 @@ export default function CitasPage() {
       {slots.map(hour => {
         const start = new Date(date.getFullYear(),date.getMonth(),date.getDate(),hour,0)
         const booked = events.filter(c => new Date(c.inicio).getHours() === hour)
-        const enabled = disponible(start) && start > new Date()
+        const ocupado = horaOcupada(start)
+        const enabled = disponible(start) && start > new Date() && !ocupado
         return <div key={hour} {...dropTarget(date,hour)} className="grid min-h-12 grid-cols-[3rem_minmax(0,1fr)] gap-1.5 border-t border-[#d5e4d8] py-1.5 first:border-t-0">
           <span className="pt-2 text-[10px] font-extrabold tabular-nums text-[#527363]">{pad(hour)}:00</span>
           <div className="min-w-0 space-y-1">{booked.map(c=>eventCard(c,true))}
-            {!booked.length && <button type="button" disabled={!enabled} onClick={()=>openNew(date,hour)}
+            {!ocupado && <button type="button" disabled={!enabled} onClick={()=>openNew(date,hour)}
               aria-label={`Agendar a las ${pad(hour)}:00`}
               className={`min-h-9 w-full rounded-lg border border-dashed px-1 text-left text-[11px] font-semibold ${enabled?'border-[#b6d1bf] text-[#397359] hover:bg-white':'border-transparent text-[#a4b2a8]'}`}>
               {enabled?'+ Disponible':'—'}
@@ -358,6 +414,7 @@ export default function CitasPage() {
   function dayCards(date, mobile = false) {
     const key = dayKey(date)
     return <div key={key} className={`min-w-0 rounded-2xl border p-2 ${key===today?'border-[#a3c6af] bg-[#e7f2e8]':'border-[#dce7dd] bg-[#f1f6ef]'}`}>
+      {!diaHabilitado(date) && <p className="px-2 pt-1 text-[10px] font-bold text-[#607b6c]">Día sin atención · Citas existentes</p>}
       <button type="button" onClick={()=>showDay(date)} className="mb-2 flex min-h-11 w-full items-center justify-between rounded-xl px-2 text-xs font-bold text-[#416458] hover:bg-white/70">
         <span className="first-letter:uppercase">{mobile?dateTitle(date):DAYS[date.getDay()]}</span>
         <span className="rounded-full bg-white px-2 py-1">{date.getDate()}</span>
@@ -373,6 +430,8 @@ export default function CitasPage() {
       <div className="relative space-y-1 px-3 pb-5 sm:px-6">
         {times.map(hour => {
           const booked = events.filter(c => new Date(c.inicio).getHours() === hour)
+          const start = new Date(focus.getFullYear(),focus.getMonth(),focus.getDate(),hour,0)
+          const ocupado = horaOcupada(start)
           const label = `${pad(hour)}:00`
           return (
             <div key={hour} {...dropTarget(focus, hour)}
@@ -380,8 +439,8 @@ export default function CitasPage() {
               <span className="pt-3 text-xs font-bold tabular-nums text-[#526d5d]">{label}</span>
               <div className="min-w-0 space-y-2 border-l-2 border-[#d2e3d6] pl-3">
                 {booked.map(c => eventCard(c))}
-                {!booked.length && (
-                  <button type="button" onClick={() => openNew(focus, hour)}
+                {!ocupado && (
+                  <button type="button" disabled={!disponible(start) || start <= new Date()} onClick={() => openNew(focus, hour)}
                     aria-label={`Nueva cita a las ${label}`}
                     className={`flex min-h-10 w-full items-center gap-2 rounded-xl border border-dashed border-[#c2d6c8] px-3 text-left text-xs font-semibold text-[#416458] hover:bg-[#e6f1e7] ${FOCUS}`}>
                     <Plus size={14} aria-hidden="true" /> {dragging ? `Soltar a las ${label}` : 'Agregar cita'}
@@ -409,7 +468,7 @@ export default function CitasPage() {
             <h1 className="text-3xl leading-tight font-black tracking-tight sm:text-4xl">Agenda de citas</h1>
             <p className="mt-2 text-sm text-[#d9eddd]">Organiza tus consultas y haz espacio para tu próxima cita.</p>
           </div>
-          <button type="button" onClick={() => openNew(focus)}
+          <button type="button" onClick={() => openNew(new Date())}
             className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#dcefcf] px-5 py-3 text-sm font-extrabold text-[#173f34] shadow-sm hover:bg-[#eef8e8] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:w-auto">
             <Plus size={18} aria-hidden="true" /> Nueva cita
           </button>
@@ -419,6 +478,9 @@ export default function CitasPage() {
       {error && !modal && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
       {loadError && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{loadError}</p>}
       {notice && <p role="status" className="rounded-xl bg-[#e4f2e7] p-3 text-sm text-[#205d48]">{notice}</p>}
+      {zonaDistinta && <p role="status" className="rounded-xl border border-[#e7d6b5] bg-[#fbf2df] p-3 text-xs font-semibold text-[#735b35]">
+        Tu consultorio utiliza {horario.zonaHoraria} y este dispositivo utiliza {zonaDispositivo}. Las horas de la agenda se muestran en la zona del dispositivo; el servidor comprueba el horario del consultorio.
+      </p>}
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_15rem] 2xl:grid-cols-[minmax(0,1fr)_17rem]">
         <section aria-label="Calendario de citas" aria-busy={loading} className={`${PANEL} min-w-0`}>
@@ -452,7 +514,7 @@ export default function CitasPage() {
               </select>
             </div>
             {loading && <p role="status" className="text-xs font-semibold text-[#526d5d]">Cargando citas…</p>}
-            {!loading && !loadError && !visibleDays.length && (
+            {!loading && !loadError && !filtered.length && (
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#e7f1e6] px-4 py-3 text-sm">
                 <p className="font-semibold">{filter === 'todas' ? 'No hay citas en este periodo.' : 'No hay citas con este estado.'}</p>
                 <button type="button" onClick={filter === 'todas' ? () => openNew(focus) : () => setFilter('todas')} className={CONTROL}>
@@ -464,10 +526,10 @@ export default function CitasPage() {
 
           {view === 'semana' && (
             <div className="px-3 pb-5 sm:px-4">
-              <div className="hidden grid-cols-7 gap-1.5 xl:grid">{range.days.map(d => diaHabilitado(d) ? dayCards(d) : <div key={dayKey(d)} className="rounded-xl bg-[#edf1ed] p-3 text-center text-xs text-[#8c9b91]">Descanso</div>)}</div>
+              <div className="hidden grid-cols-7 gap-1.5 xl:grid">{range.days.map(d => dayCards(d))}</div>
               <div className="space-y-3 xl:hidden">
                 <div role="group" aria-label="Día de la semana" className="grid grid-cols-7 gap-1">
-                  {range.days.filter(diaHabilitado).map(d => (
+                  {range.days.map(d => (
                     <button key={dayKey(d)} type="button" onClick={() => setFocus(d)}
                       aria-label={dateTitle(d)} aria-current={dayKey(d) === today ? 'date' : undefined} aria-pressed={dayKey(d) === focusKey}
                       className={`min-h-12 rounded-xl px-0.5 py-1 text-xs font-bold ${FOCUS} ${dayKey(d) === focusKey ? 'bg-[#246b55] text-white' : 'bg-[#e8f1e7] text-[#315d4d] hover:bg-[#dcecdf]'}`}>
@@ -475,24 +537,23 @@ export default function CitasPage() {
                     </button>
                   ))}
                 </div>
-                {diaHabilitado(focus) ? dayCards(focus, true) : <p className="rounded-xl bg-[#edf1ed] p-4 text-sm">Día de descanso. Selecciona un día laboral.</p>}
+                {dayCards(focus, true)}
               </div>
             </div>
           )}
 
-          {view === 'dia' && (diaHabilitado(focus) ? dayTimeline() : <p className="p-6 text-sm text-[#607b6c]">Este día está marcado como descanso en tu perfil.</p>)}
+          {view === 'dia' && dayTimeline()}
 
           {view === 'mes' && (
             <div className="overflow-x-auto px-3 pb-5">
               <div className="min-w-[740px]">
                 <div className="grid grid-cols-7 gap-1.5">{WEEKDAYS.map(d=><div key={d} className="py-2 text-center text-xs font-bold text-[#526d5d]">{d}</div>)}</div>
                 <div className="grid grid-cols-7 gap-1.5">
-                  {range.days.map(d => diaHabilitado(d)
-                    ? <div key={dayKey(d)} className="min-w-0 rounded-xl border border-[#dce7dd] bg-[#f1f6ef] p-1">
-                        <button type="button" onClick={()=>showDay(d)} className="mb-1 flex min-h-9 w-full items-center justify-center rounded-lg text-sm font-extrabold hover:bg-white">{d.getDate()}</button>
-                        {hourlySlots(d,true)}
-                      </div>
-                    : <div key={dayKey(d)} className="rounded-xl bg-[#edf1ed] p-2 text-center text-xs text-[#8c9b91]">{d.getDate()}<span className="block">Descanso</span></div>)}
+                  {range.days.map(d =>
+                    <div key={dayKey(d)} className="min-w-0 rounded-xl border border-[#dce7dd] bg-[#f1f6ef] p-1">
+                      <button type="button" onClick={()=>showDay(d)} className="mb-1 flex min-h-9 w-full items-center justify-center rounded-lg text-sm font-extrabold hover:bg-white">{d.getDate()}</button>
+                      {hourlySlots(d,true)}
+                    </div>)}
                 </div>
               </div>
             </div>
@@ -570,7 +631,7 @@ export default function CitasPage() {
             </label>
             <label className="grid min-w-0 gap-1.5 text-sm font-semibold">
               Inicio
-              <input required type="datetime-local" min={localInput(now)} className={inputClass} value={form.inicio} onChange={e => updateStart(e.target.value)} />
+              <input required type="datetime-local" min={editing && new Date(originalStart) <= now ? undefined : localInput(now)} className={inputClass} value={form.inicio} onChange={e => updateStart(e.target.value)} />
             </label>
             <p className="self-end rounded-xl bg-[#e5f2eb] px-3 py-3 text-sm font-semibold text-[#246b55]">Duración fija: 1 hora</p>
             <label className="grid gap-1.5 text-sm font-semibold">
@@ -582,15 +643,33 @@ export default function CitasPage() {
             <label className="grid gap-1.5 text-sm font-semibold">
               Estado
               <select className={inputClass} value={form.estado} onChange={e => updateField('estado', e.target.value)}>
-                {Object.entries(STATES).map(([key, status]) => <option key={key} value={key}>{status.label}</option>)}
+                {Object.entries(STATES).filter(([key]) => editing || ['programada','confirmada'].includes(key)).map(([key, status]) => <option key={key} value={key}>{status.label}</option>)}
               </select>
             </label>
             <label className="grid gap-1.5 text-sm font-semibold sm:col-span-2">
               Notas
               <textarea maxLength={500} rows={2} className={inputClass} value={form.notas} onChange={e => updateField('notas', e.target.value)} placeholder="Opcional" />
             </label>
+            {editing && (
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#d2e2d6] pt-4 sm:col-span-2">
+                <div className="flex flex-wrap gap-2">
+                  {form.estado !== 'cancelada' && form.estado !== 'completada' && (
+                    <button type="button" onClick={() => cambiarEstadoCita('cancelada')} disabled={saving}
+                      className={`${CONTROL} gap-1.5 text-amber-800`}><Ban size={16}/>Cancelar cita</button>
+                  )}
+                  {new Date(originalStart) <= now && form.estado !== 'completada' && form.estado !== 'cancelada' && (
+                    <button type="button" onClick={() => cambiarEstadoCita('completada')} disabled={saving}
+                      className={`${CONTROL} gap-1.5`}><CheckCircle2 size={16}/>Marcar completada</button>
+                  )}
+                </div>
+                <button type="button" onClick={eliminarCita} disabled={saving}
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 text-xs font-bold text-red-700 hover:bg-red-100 disabled:opacity-50">
+                  <Trash2 size={16}/>Eliminar definitivamente
+                </button>
+              </div>
+            )}
             <div className="flex flex-wrap justify-end gap-2 pt-2 sm:col-span-2">
-              <button type="button" onClick={() => setModal(false)} disabled={saving} className={CONTROL}>Cancelar</button>
+              <button type="button" onClick={() => setModal(false)} disabled={saving} className={CONTROL}>Cerrar</button>
               <button type="submit" disabled={saving} className={`rounded-xl bg-[#246b55] px-5 py-3 text-sm font-bold text-white hover:bg-[#1d5947] disabled:opacity-50 ${FOCUS}`}>
                 {saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Registrar cita'}
               </button>
