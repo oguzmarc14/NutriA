@@ -1,0 +1,38 @@
+/* Centro de atención: estilos acotados para el tema claro y oscuro de NutriA. */
+.nutria-centro-trigger {
+  background: #e3f1e6;
+  border-color: #adccb8;
+  color: #246b55;
+}
+.nutria-centro-trigger:hover { background: #d5e9dc; border-color: #75b58e; }
+.nutria-centro-count { background: #276e51; color: #fff; }
+.nutria-centro-overlay { background: rgba(9, 32, 21, .63); backdrop-filter: blur(4px); }
+.nutria-centro-dialog { background: #f7fbf7; border-color: #b8d9c2; color: #173f34; }
+.nutria-centro-icon { background: #dceee2; color: #2a7857; }
+.nutria-centro-item { background: #f0f7f1; border-color: #c8dfce; }
+.nutria-centro-primary { background: #2b7454; color: #fff; }
+.nutria-centro-primary:hover { background: #215e45; }
+.nutria-centro-secondary { background: #eaf4ed; border-color: #c1d8c9; color: #315a48; }
+.nutria-centro-secondary:hover { background: #dceee2; }
+.nutria-centro-filter { background: #eef6f0; border-color: #c7ddce; color: #3c664f; }
+.nutria-centro-filter--active { background: #287454; color: #fff; border-color: #287454; }
+.nutria-centro-search input { background: #fff; border-color: #bbd5c4; color: #173f34; }
+.nutria-centro-search input::placeholder { color: #708d7b; }
+.nutria-centro-error { background: #fff4ed; border-color: #e6c5b8; color: #854b40; }
+
+html[data-theme="dark"] .nutria-centro-trigger { background: #2b4b39; border-color: #6ca080; color: #dbf8e3; }
+html[data-theme="dark"] .nutria-centro-trigger:hover { background: #39634b; }
+html[data-theme="dark"] .nutria-centro-count { background: #8cdbab; color: #143725; }
+html[data-theme="dark"] .nutria-centro-overlay { background: rgba(2, 12, 7, .78); }
+html[data-theme="dark"] .nutria-centro-dialog { background: #21392b; border-color: #5e8f6f; color: #e8f7ed; }
+html[data-theme="dark"] .nutria-centro-icon { background: #335d45; color: #a6e6bd; }
+html[data-theme="dark"] .nutria-centro-item { background: #2b4737; border-color: #517a5e; }
+html[data-theme="dark"] .nutria-centro-primary { background: #3c9166; color: #fff; }
+html[data-theme="dark"] .nutria-centro-primary:hover { background: #47a877; }
+html[data-theme="dark"] .nutria-centro-secondary { background: #30513c; border-color: #577e62; color: #e4f7e9; }
+html[data-theme="dark"] .nutria-centro-secondary:hover { background: #3b654c; }
+html[data-theme="dark"] .nutria-centro-filter { background: #2c4a38; border-color: #5c8069; color: #d8f2e0; }
+html[data-theme="dark"] .nutria-centro-filter--active { background: #398e63; color: #fff; border-color: #8bd4a4; }
+html[data-theme="dark"] .nutria-centro-search input { background: #192c22; border-color: #5d8969; color: #eef9f0; }
+html[data-theme="dark"] .nutria-centro-search input::placeholder { color: #a2bca9; }
+html[data-theme="dark"] .nutria-centro-error { background: #482f2e; border-color: #855b50; color: #ffdbcd; }

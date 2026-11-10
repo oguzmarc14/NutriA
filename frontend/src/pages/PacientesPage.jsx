@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Plus, RefreshCw, Search, UserRound, X, BriefcaseMedical, Check } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import CardPaciente from '../components/pacientes/CardPaciente'
 import CampoPaciente from '../components/pacientes/CampoPaciente'
@@ -23,6 +23,7 @@ const formularioInicial = {
 
 function PacientesPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { cerrarTrabajo, iniciarTrabajo, pacienteTrabajo } = usePacienteTrabajo()
   const [pacientes, setPacientes] = useState([])
   const [busqueda, setBusqueda] = useState('')
@@ -76,6 +77,16 @@ function PacientesPage() {
   useEffect(() => {
     cargarPacientes()
   }, [])
+
+  // El Centro de atención puede abrir los avisos de un paciente sin seleccionarlo
+  // para trabajar ni exponer datos del expediente en la URL.
+  useEffect(() => {
+    const id = location.state?.abrirAvisosPacienteId
+    if (!id || loading) return
+    const encontrado = pacientes.find((paciente) => paciente._id === id)
+    if (encontrado) setPacienteConAvisos(encontrado)
+    navigate(location.pathname, { replace: true, state: null })
+  }, [location.state, location.pathname, loading, pacientes, navigate])
 
   useEffect(() => {
     if (!confirmacionTrabajo) return undefined
