@@ -51,6 +51,12 @@ test('rutas REST incluyen consultar, crear, editar, cambiar estado y eliminar', 
     assert.ok(rutas.includes(endpoint), 'Falta '+endpoint)
   }
 })
+test('edición y cambio de estado respetan la misma regla de reactivación', () => {
+  assert.ok(rutas.includes("['programada', 'confirmada'].includes(data.estado)"))
+  assert.ok(rutas.includes('!estadoPermitidoEnFecha(data.estado, inicio)'))
+  assert.ok(rutas.includes('const reactivacion = Boolean('))
+})
+
 test('eliminación se restringe al propietario y primero limpia Google Calendar', () => {
   assert.match(rutas, /nutritionist: req\.user\._id/)
   assert.ok(rutas.indexOf('await deleteAppointment(cita)') < rutas.indexOf('await cita.deleteOne()'))

@@ -58,6 +58,14 @@ async function validar(req, res, original = null) {
     res.status(400).json({ message: 'Las citas nuevas deben estar programadas o confirmadas' })
     return null
   }
+  // PUT tampoco puede reactivar como futura una consulta que ya pasó.
+  // No basta con proteger PATCH: ambos caminos deben aplicar la misma regla.
+  if (original && data.estado !== original.estado &&
+      ['programada', 'confirmada'].includes(data.estado) &&
+      !estadoPermitidoEnFecha(data.estado, inicio)) {
+    res.status(400).json({ message: 'Una cita pasada no puede reactivarse como próxima' })
+    return null
+  }
   const fin = new Date(inicio.getTime() + 60 * 60 * 1000)
   const nutricionista = await User.findById(req.user._id).select('horarioLaboral').lean()
   const horario = nutricionista?.horarioLaboral
@@ -71,7 +79,9 @@ async function validar(req, res, original = null) {
 
   // Si solo cambia el estado o las notas, no exigir que la cita histórica
   // coincida con los horarios laborales que el nutriólogo configuró después.
-  if (seCambioFecha && data.estado !== 'cancelada' && !cumpleHorario(horario, inicio)) {
+  const reactivacion = Boolean(original && original.estado === 'cancelada' &&
+    ['programada','confirmada'].includes(data.estado))
+  if ((seCambioFecha || reactivacion) && data.estado !== 'cancelada' && !cumpleHorario(horario, inicio)) {
     res.status(400).json({ message:'La cita debe estar dentro de tus días y horas laborales. Modifica tu horario desde Editar perfil.' })
     return null
   }
