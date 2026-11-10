@@ -85,14 +85,25 @@ function PacientesPage() {
 
   function confirmarTrabajo() {
     if (!confirmacionTrabajo) return
-    cerrarTrabajo()
+    const { tipo, paciente } = confirmacionTrabajo
     setConfirmacionTrabajo(null)
+
+    if (tipo === 'dejar') {
+      cerrarTrabajo()
+      return
+    }
+
+    // Sólo después de confirmar cambiamos el paciente activo.
+    if (tipo === 'iniciar' && paciente?._id) {
+      iniciarTrabajo(paciente)
+      setAlertaTrabajo(paciente)
+    }
   }
 
   function comenzarTrabajo(paciente) {
-    if (!paciente?._id) return
-    iniciarTrabajo(paciente)
-    setAlertaTrabajo(paciente)
+    if (!paciente?._id || pacienteTrabajo?.id === paciente._id) return
+    // Primer paso: preguntar. Aún no modificamos el contexto.
+    setConfirmacionTrabajo({ tipo: 'iniciar', paciente })
   }
 
   function abrirExpedienteTrasAlerta() {
@@ -725,12 +736,27 @@ function PacientesPage() {
                 <BriefcaseMedical size={30} className="text-[#246b55]" aria-hidden="true" />
               </div>
               <h2 id="titulo-confirmacion-trabajo" className="text-xl font-extrabold tracking-tight text-[#173f34]">
-                ¿Dejar de trabajar?
+                {confirmacionTrabajo.tipo === 'dejar'
+                  ? '¿Dejar de trabajar?'
+                  : pacienteTrabajo?.id && pacienteTrabajo.id !== confirmacionTrabajo.paciente._id
+                    ? '¿Cambiar de paciente?'
+                    : '¿Quieres trabajar con este paciente?'}
               </h2>
               <p id="descripcion-confirmacion-trabajo" className="mt-2 text-sm text-[#6b8174]">
-                Estás por dejar de trabajar con
+                {confirmacionTrabajo.tipo === 'dejar'
+                  ? '¿Confirmas que deseas dejar de trabajar con'
+                  : '¿Confirmas que deseas comenzar a trabajar con'}
+                {' '}
+                <strong className="block mt-1 break-words text-base font-extrabold text-[#205c45]">
+                  {confirmacionTrabajo.paciente.name}
+                </strong>
+                ?
               </p>
-              <p className="mt-1 break-words text-base font-extrabold text-[#205c45]">{confirmacionTrabajo.paciente.name}</p>
+              {confirmacionTrabajo.tipo === 'iniciar' && pacienteTrabajo?.id && pacienteTrabajo.id !== confirmacionTrabajo.paciente._id && (
+                <p className="mt-3 rounded-xl border border-[#cfe0d6] bg-[#edf5ee] px-3 py-2 text-xs leading-5 text-[#526d5d]">
+                  Cambiarás desde <strong>{pacienteTrabajo.name}</strong> al paciente seleccionado. No se eliminarán registros ni expedientes.
+                </p>
+              )}
             </div>
             <div className="mt-5 grid grid-cols-2 gap-2 border-t border-[#e5eee7] pt-4">
               <button type="button" autoFocus onClick={() => setConfirmacionTrabajo(null)} className="min-h-11 rounded-xl border border-[#dce6de] bg-[#f5f7f5] px-3 text-sm font-bold text-[#526d5d] transition hover:bg-[#eaf0eb] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#246b55]">Cancelar</button>
@@ -743,6 +769,7 @@ function PacientesPage() {
       <AlertaTrabajoPaciente
         paciente={alertaTrabajo}
         onAceptar={abrirExpedienteTrasAlerta}
+        onCerrar={() => setAlertaTrabajo(null)}
       />
 
       <ModalEliminarPaciente
