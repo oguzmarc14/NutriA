@@ -47,7 +47,7 @@ const rutas = fs.readFileSync(path.join(__dirname,'../src/routes/citas.routes.js
 const calendar = fs.readFileSync(path.join(__dirname,'../src/services/calendar.service.js'),'utf8')
 
 test('rutas REST incluyen consultar, crear, editar, cambiar estado y eliminar', () => {
-  for(const endpoint of ["router.get('/')","router.post('/')","router.put('/:id')","router.patch('/:id/estado')","router.delete('/:id')"]) {
+  for(const endpoint of ["router.get('/'","router.post('/'","router.put('/:id'","router.patch('/:id/estado'","router.delete('/:id'"]) {
     assert.ok(rutas.includes(endpoint), 'Falta '+endpoint)
   }
 })
