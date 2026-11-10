@@ -8,7 +8,9 @@ const nutrimentos = alimentos => alimentos.reduce((suma, a) => {
 
 export function exportarPlanPDF(plan, paciente) {
   if (!plan) throw new Error('No hay un plan alimenticio para exportar.')
-  const comidas = Array.isArray(plan.comidas) ? plan.comidas : []
+  const comidas = Array.isArray(plan.comidas)
+    ? [...plan.comidas].sort((a, b) => (a.hora || '99:99').localeCompare(b.hora || '99:99'))
+    : []
   if (!comidas.length) throw new Error('Este plan no contiene comidas para exportar.')
   const ventana = window.open('', '_blank')
   if (!ventana) throw new Error('Activa las ventanas emergentes para imprimir o guardar la dieta como PDF.')
