@@ -1,7 +1,9 @@
 /* Tarjetas de pacientes: contraste suave en claro y oscuro, estado activo destacado. */
 .nutria-patient-card {
   background: #f5f9f5;
-  border-color: #accfb8;
+  border-width: 2px;
+  border-style: solid;
+  border-color: #91c6a4;
   box-shadow: 0 10px 26px -17px rgba(26, 74, 52, 0.23);
 }
 .nutria-patient-card__info {
@@ -18,8 +20,8 @@
 }
 .nutria-patient-card--active {
   background: linear-gradient(160deg, #f3faf5 0%, #eaf5ed 100%);
-  border-color: #2b996e;
-  box-shadow: 0 0 0 2px rgba(46, 164, 111, .24), 0 17px 34px -18px rgba(15, 84, 53, .37);
+  border-color: #278c62;
+  box-shadow: 0 0 0 3px rgba(46, 164, 111, .28), 0 17px 34px -18px rgba(15, 84, 53, .37);
 }
 @media (hover: hover) {
   .nutria-patient-card:hover {
@@ -34,7 +36,7 @@
 }
 html[data-theme="dark"] .nutria-patient-card {
   background: #2a4235;
-  border-color: #709f82;
+  border-color: #88c4a0;
   box-shadow: 0 11px 29px -16px rgba(2, 14, 8, .44);
 }
 html[data-theme="dark"] .nutria-patient-card__info {
@@ -51,8 +53,8 @@ html[data-theme="dark"] .nutria-patient-card__notes {
 }
 html[data-theme="dark"] .nutria-patient-card--active {
   background: linear-gradient(155deg, #304d3d 0%, #294535 100%);
-  border-color: #9ce0b5;
-  box-shadow: 0 0 0 3px rgba(143, 218, 166, .34), 0 20px 38px -18px rgba(0, 0, 0, .65);
+  border-color: #abeec3;
+  box-shadow: 0 0 0 4px rgba(143, 218, 166, .40), 0 20px 38px -18px rgba(0, 0, 0, .65);
 }
 @media (hover: hover) {
   html[data-theme="dark"] .nutria-patient-card:hover {
