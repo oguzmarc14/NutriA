@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { CalendarDays, Clock3, History } from 'lucide-react'
+import { CalendarDays, Clock3, Download, History, X } from 'lucide-react'
+import { exportarPlanPDF } from '../utils/exportarPlanPDF'
 import CardPlanPaciente from '../components/paciente/CardPlanPaciente'
 import EstadoCargaPaciente from '../components/paciente/EstadoCargaPaciente'
 import usePerfilPaciente from '../hooks/usePerfilPaciente'
@@ -20,6 +21,7 @@ function MiPlanPage() {
   const { perfil, loading, error, recargar } = usePerfilPaciente()
   const planes = perfil?.planes || []
   const [fechaSeleccionada, setFechaSeleccionada] = useState(hoyLocal)
+  const [errorExportacion, setErrorExportacion] = useState('')
 
   // fechaInicio define desde qué día se puede consultar cada plan.
   // No exigimos igualdad exacta: de otro modo la dieta desaparecía al día siguiente.
@@ -30,6 +32,12 @@ function MiPlanPage() {
     ), [planes])
   const planDelDia = planesOrdenados.find(plan => fechaInicio(plan) && fechaInicio(plan) <= fechaSeleccionada)
   const tienePlanes = planesOrdenados.length > 0
+
+  function guardarPDF() {
+    if (!planDelDia) return
+    try { exportarPlanPDF(planDelDia, perfil?.paciente) }
+    catch (err) { setErrorExportacion(err.message || 'No se pudo generar la dieta para imprimir.') }
+  }
 
   return (
     <section className="mx-auto min-w-0 max-w-[1480px] overflow-x-hidden p-4 sm:p-5 md:p-8">
@@ -58,12 +66,24 @@ function MiPlanPage() {
           </button>)}
         </div>
       </details>}
+      {errorExportacion && <div className="fixed inset-0 z-[160] flex items-center justify-center bg-[#173f34]/60 p-4" role="presentation">
+        <div role="alertdialog" aria-modal="true" aria-labelledby="error-pdf-paciente" className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+          <div className="mb-3 flex items-center gap-2 text-[#9f4f29]"><X size={22}/><h2 id="error-pdf-paciente" className="text-lg font-extrabold">No se pudo abrir el PDF</h2></div>
+          <p className="text-sm text-[#5e7468]">{errorExportacion}</p>
+          <button type="button" autoFocus onClick={() => setErrorExportacion('')} className="mt-5 w-full rounded-xl bg-[#246b55] px-5 py-3 text-sm font-bold text-white">Entendido</button>
+        </div>
+      </div>}
       <EstadoCargaPaciente loading={loading} error={error} vacio={!loading && !error && !tienePlanes}>
         {planDelDia
           ? <div className="space-y-4">
-              <p className="flex flex-wrap items-center gap-2 rounded-xl border border-[#cfe2d5] bg-[#edf6ee] px-4 py-3 text-xs font-semibold text-[#416d52]">
-                <Clock3 size={16}/>Dieta aplicable desde el {fechaLegible(fechaInicio(planDelDia))}. Las horas de cada comida aparecen debajo.
-              </p>
+              <div className="flex flex-col gap-3 rounded-2xl border border-[#cfe2d5] bg-[#edf6ee] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="flex min-w-0 items-center gap-2 text-xs font-semibold text-[#416d52]">
+                  <Clock3 size={16} className="shrink-0"/>Dieta aplicable desde el {fechaLegible(fechaInicio(planDelDia))}. Las horas de cada comida aparecen debajo.
+                </p>
+                <button type="button" onClick={guardarPDF} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#246b55] px-4 py-2.5 text-sm font-extrabold text-white hover:bg-[#1c5a45]">
+                  <Download size={17}/>Guardar / imprimir PDF
+                </button>
+              </div>
               <CardPlanPaciente key={planDelDia._id} fecha={fechaSeleccionada} plan={planDelDia}
                 seguimientos={perfil?.seguimientosComida || []} onSeguimientoGuardado={recargar}/>
             </div>
