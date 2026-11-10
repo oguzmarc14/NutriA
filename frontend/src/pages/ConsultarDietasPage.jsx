@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Apple, ArrowRight, CalendarDays, ChevronDown, ChevronUp, Clock3,
   Download, FileText, LoaderCircle, Pencil, Plus, Search, UserRound,
-  Utensils, RefreshCw,
+  Utensils, RefreshCw, Trash2,
 } from 'lucide-react'
 import client from '../api/client'
 import { exportarPlanPDF } from '../utils/exportarPlanPDF'
@@ -34,7 +34,7 @@ function totales(alimentos = []) {
   }, { kcal: 0, proteina: 0, carbohidratos: 0, grasas: 0 })
 }
 
-function TarjetaDieta({ plan, paciente, onEditar, onError }) {
+function TarjetaDieta({ plan, paciente, onEditar, onEliminar, onError }) {
   const [abierta, setAbierta] = useState(false)
   const comidas = useMemo(() =>
     [...(plan.comidas || [])].sort((a, b) => (a.hora || '99:99').localeCompare(b.hora || '99:99')),
@@ -60,6 +60,7 @@ function TarjetaDieta({ plan, paciente, onEditar, onError }) {
           <div className="flex items-center gap-2">
             <button type="button" onClick={exportar} title="Exportar a PDF" aria-label="Exportar dieta a PDF" className="grid size-10 place-items-center rounded-xl border border-[#d3e6d8] bg-[#f0f8f2] text-[#246b55] hover:bg-[#e0f0e6]"><Download size={18}/></button>
             <button type="button" onClick={() => onEditar(plan)} title="Editar dieta" aria-label="Editar dieta" className="grid size-10 place-items-center rounded-xl border border-[#d3e6d8] bg-[#f0f8f2] text-[#246b55] hover:bg-[#e0f0e6]"><Pencil size={17}/></button>
+            <button type="button" onClick={() => onEliminar(plan)} title="Eliminar dieta" aria-label="Eliminar dieta" className="grid size-10 place-items-center rounded-xl border border-red-100 bg-red-50 text-red-600 hover:bg-red-100"><Trash2 size={17}/></button>
           </div>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -125,6 +126,8 @@ export default function ConsultarDietasPage() {
   const [busquedaDieta, setBusquedaDieta] = useState('')
   const [filtro, setFiltro] = useState('todos')
   const [revision, setRevision] = useState(0)
+  const [eliminarPendiente, setEliminarPendiente] = useState(null)
+  const [borrando, setBorrando] = useState(false)
 
   useEffect(() => {
     let vigente = true
@@ -171,6 +174,20 @@ export default function ConsultarDietasPage() {
   }
   function editar(plan) {
     navigate('/planes?paciente=' + encodeURIComponent(pacienteId) + '&editar=' + encodeURIComponent(plan._id))
+  }
+  async function confirmarEliminacion() {
+    if (!eliminarPendiente || !pacienteId || borrando) return
+    setBorrando(true)
+    setError('')
+    try {
+      await client.delete('/planes/' + pacienteId + '/' + eliminarPendiente._id)
+      setPlanes(actuales => actuales.filter(plan => plan._id !== eliminarPendiente._id))
+      setEliminarPendiente(null)
+    } catch (err) {
+      setError(err.response?.data?.message || 'No fue posible eliminar la dieta.')
+    } finally {
+      setBorrando(false)
+    }
   }
   return <main className="mx-auto w-full max-w-[1500px] space-y-6 p-4 sm:p-6 lg:p-8">
     <header className="rounded-[2rem] bg-gradient-to-br from-[#173f34] via-[#246b55] to-[#3e8064] p-5 text-white shadow-[0_16px_40px_rgba(22,70,52,.15)] sm:p-8">
@@ -225,9 +242,20 @@ export default function ConsultarDietasPage() {
           </div>
           {loadingPlanes ? <div className="rounded-3xl border border-[#d1e2d7] bg-white p-12 text-center text-sm text-[#647e70]"><LoaderCircle size={26} className="mx-auto mb-3 animate-spin text-[#246b55]"/>Cargando dietas…</div>
             : !dietasFiltradas.length ? <div className="rounded-3xl border border-dashed border-[#bdd7c8] bg-white p-8 text-center"><Apple size={34} className="mx-auto mb-3 text-[#6d987d]"/><h3 className="font-extrabold text-[#173f34]">{planes.length ? 'No hay dietas con estos filtros' : 'Este paciente todavía no tiene dietas'}</h3><p className="mt-1 text-sm text-[#647e70]">Puedes crear una dieta nueva en el editor alimenticio.</p><button type="button" onClick={irACrear} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#246b55] px-4 py-3 text-sm font-bold text-white"><Plus size={16}/>Crear dieta</button></div>
-            : <div className="space-y-4">{dietasFiltradas.map(plan => <TarjetaDieta key={plan._id} plan={plan} paciente={paciente} onEditar={editar} onError={setError}/>)}</div>}
+            : <div className="space-y-4">{dietasFiltradas.map(plan => <TarjetaDieta key={plan._id} plan={plan} paciente={paciente} onEditar={editar} onEliminar={setEliminarPendiente} onError={setError}/>)}</div>}
         </>}
       </section>
     </div>
+    {eliminarPendiente && <div className="fixed inset-0 z-[150] flex items-center justify-center bg-[#153528]/70 p-4" role="presentation">
+      <div role="alertdialog" aria-modal="true" aria-labelledby="eliminar-dieta-titulo" className="w-full max-w-md rounded-3xl border border-[#ebd2d2] bg-white p-6 shadow-2xl">
+        <div className="mb-4 inline-flex size-12 items-center justify-center rounded-2xl bg-red-50 text-red-600"><Trash2 size={23}/></div>
+        <h2 id="eliminar-dieta-titulo" className="text-xl font-black text-[#173f34]">¿Eliminar esta dieta?</h2>
+        <p className="mt-2 break-words text-sm leading-6 text-[#5b7366]">Se eliminará permanentemente «{eliminarPendiente.nombre}». Esta acción no se puede deshacer.</p>
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button type="button" disabled={borrando} onClick={() => setEliminarPendiente(null)} className="rounded-xl border border-[#d4e4d8] px-4 py-3 text-sm font-bold text-[#246b55] disabled:opacity-60">Cancelar</button>
+          <button type="button" disabled={borrando} onClick={confirmarEliminacion} className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-extrabold text-white disabled:opacity-60">{borrando ? 'Eliminando…' : 'Sí, eliminar dieta'}</button>
+        </div>
+      </div>
+    </div>}
   </main>
 }
