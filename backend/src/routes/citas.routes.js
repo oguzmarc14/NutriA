@@ -5,9 +5,9 @@ const { requireAuth, allowRoles } = require('../middleware/auth.middleware')
 const Patient = require('../models/Pacientes')
 const Cita = require('../models/Cita')
 const User = require('../models/User')
-const { syncAppointment } = require('../services/calendar.service')
+const { syncAppointment, deleteAppointment } = require('../services/calendar.service')
 async function intentarSincronizar(cita) {
-  try { await syncAppointment(cita); return true }
+  try { return Boolean(await syncAppointment(cita)) }
   catch (error) { console.error('Error de sincronización Calendar:', error.message); return false }
 }
 const router = express.Router()
@@ -27,16 +27,30 @@ async function conflicto(nutritionist, inicio, fin, excluir) {
     inicio: { $lt: fin }, fin: { $gt: inicio },
     ...(excluir ? { _id: { $ne: excluir } } : {}) })
 }
-async function validar(req, res) {
+async function validar(req, res, original = null) {
   const parsed = input.safeParse(req.body)
   if (!parsed.success) { res.status(400).json({ message: 'Datos de cita inválidos', issues: parsed.error.issues }); return null }
   const data = parsed.data
   const inicio = new Date(data.inicio)
-  if (inicio <= new Date()) { res.status(400).json({ message: 'No se permiten citas en fechas u horas pasadas' }); return null }
+  const seCambioFecha = !original || inicio.getTime() !== new Date(original.inicio).getTime()
+  if (seCambioFecha && inicio <= new Date()) {
+    res.status(400).json({ message: 'No se permite crear o reprogramar citas en fechas pasadas' })
+    return null
+  }
+  if (data.estado === 'completada' && inicio > new Date()) {
+    res.status(400).json({ message: 'Una cita solo puede marcarse completada después de su horario' })
+    return null
+  }
+  if (!original && ['cancelada', 'completada'].includes(data.estado)) {
+    res.status(400).json({ message: 'Las citas nuevas deben estar programadas o confirmadas' })
+    return null
+  }
   const fin = new Date(inicio.getTime() + 60 * 60 * 1000)
   const nutricionista = await User.findById(req.user._id).select('horarioLaboral').lean()
   const horario = nutricionista?.horarioLaboral
-  if (horario?.configurado) {
+  // Si solo cambia el estado o las notas de una cita anterior, no exigir
+  // que siga coincidiendo con el horario laboral configurado hoy.
+  if (seCambioFecha && horario?.configurado && data.estado !== 'cancelada') {
     const partes = fecha => Object.fromEntries(new Intl.DateTimeFormat('en-GB', {
       timeZone: horario.zonaHoraria, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
     }).formatToParts(fecha).filter(p => ['weekday','hour','minute'].includes(p.type)).map(p => [p.type,p.value]))
@@ -74,11 +88,47 @@ router.post('/', async (req,res,next) => {
 router.put('/:id', async (req,res,next) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ message: 'ID inválido' })
-    const data = await validar(req,res); if (!data) return
     const cita = await Cita.findOne({ _id: req.params.id, nutritionist: req.user._id })
     if (!cita) return res.status(404).json({ message: 'Cita no encontrada' })
-    if (data.estado !== 'cancelada' && await conflicto(req.user._id, data.inicio, data.fin, cita._id)) return res.status(409).json({ message: 'Ya existe una cita en ese horario' })
+    const data = await validar(req,res,cita); if (!data) return
+    if (data.estado !== 'cancelada' && await conflicto(req.user._id, data.inicio, data.fin, cita._id))
+      return res.status(409).json({ message: 'Ya existe una cita en ese horario' })
+
+    const cambioDeInicio = cita.inicio.getTime() !== data.inicio.getTime()
+    const cambioDeEstado = cita.estado !== data.estado
     Object.assign(cita, data)
+    if (cambioDeInicio || cambioDeEstado) {
+      cita.recordatorio24hEnviado = null
+      cita.recordatorio2hEnviado = null
+    }
+    await cita.save()
+    const calendarSynced = await intentarSincronizar(cita)
+    res.json({ ...cita.toObject(), calendarSynced })
+  } catch(e) { next(e) }
+})
+
+const cambioEstadoSchema = z.object({
+  estado: z.enum(['programada', 'confirmada', 'cancelada', 'completada']),
+}).strict()
+
+// Cambiar solo el estado no exige mover una cita pasada y no altera sus datos clínicos.
+router.patch('/:id/estado', async (req,res,next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ message: 'ID inválido' })
+    const parsed = cambioEstadoSchema.safeParse(req.body)
+    if (!parsed.success) return res.status(400).json({ message: 'Estado de cita inválido' })
+    const cita = await Cita.findOne({ _id: req.params.id, nutritionist: req.user._id })
+    if (!cita) return res.status(404).json({ message: 'Cita no encontrada' })
+    const estado = parsed.data.estado
+    if (estado === cita.estado) return res.json({ ...cita.toObject(), calendarSynced: true })
+    const now = new Date()
+    if (estado === 'completada' && cita.inicio > now)
+      return res.status(400).json({ message: 'La cita todavía no puede marcarse completada' })
+    if (['programada','confirmada'].includes(estado) && cita.inicio <= now)
+      return res.status(400).json({ message: 'Una cita pasada no puede reactivarse como próxima' })
+    if (['programada','confirmada'].includes(estado) && await conflicto(req.user._id,cita.inicio,cita.fin,cita._id))
+      return res.status(409).json({ message: 'Ya existe una cita en ese horario' })
+    cita.estado = estado
     cita.recordatorio24hEnviado = null
     cita.recordatorio2hEnviado = null
     await cita.save()
@@ -86,4 +136,29 @@ router.put('/:id', async (req,res,next) => {
     res.json({ ...cita.toObject(), calendarSynced })
   } catch(e) { next(e) }
 })
+
+// Eliminar de forma definitiva con confirmación del cliente y propietario verificado.
+router.delete('/:id', async (req,res,next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ message: 'ID inválido' })
+    const cita = await Cita.findOne({ _id: req.params.id, nutritionist: req.user._id }).select('+calendarEventId')
+    if (!cita) return res.status(404).json({ message: 'Cita no encontrada' })
+
+    let calendarSynced
+    try {
+      calendarSynced = await deleteAppointment(cita)
+    } catch (error) {
+      console.error('No se pudo retirar la cita de Google Calendar:', error.message)
+      return res.status(502).json({
+        message: 'Google Calendar no permitió eliminar la cita. No se eliminó en NutriA para evitar inconsistencias.',
+      })
+    }
+    await cita.deleteOne()
+    return res.json({
+      message: 'Cita eliminada correctamente',
+      calendarSynced,
+    })
+  } catch(e) { next(e) }
+})
+
 module.exports = router
