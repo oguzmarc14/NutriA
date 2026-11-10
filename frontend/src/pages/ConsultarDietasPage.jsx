@@ -34,7 +34,7 @@ function totales(alimentos = []) {
   }, { kcal: 0, proteina: 0, carbohidratos: 0, grasas: 0 })
 }
 
-function TarjetaDieta({ plan, paciente, onEditar, onEliminar, onError }) {
+function TarjetaDieta({ plan, paciente, esReciente, onEditar, onEliminar, onError }) {
   const [abierta, setAbierta] = useState(false)
   const comidas = useMemo(() =>
     [...(plan.comidas || [])].sort((a, b) => (a.hora || '99:99').localeCompare(b.hora || '99:99')),
@@ -52,7 +52,7 @@ function TarjetaDieta({ plan, paciente, onEditar, onEliminar, onError }) {
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1 rounded-full bg-[#ecf5ed] px-3 py-1 text-xs font-bold text-[#426b55]"><CalendarDays size={13}/>{formatoFecha(plan.fechaInicio || plan.createdAt)}</span>
-              <span className={'rounded-full px-3 py-1 text-xs font-bold ' + (plan.activo ? 'bg-[#e1f1e6] text-[#246b55]' : 'bg-[#f0ece7] text-[#746d66]')}>{plan.activo ? 'Activo' : 'Anterior'}</span>
+              <span className={'rounded-full px-3 py-1 text-xs font-bold ' + (esReciente ? 'bg-[#e1f1e6] text-[#246b55]' : 'bg-[#f0ece7] text-[#746d66]')}>{esReciente ? 'Más reciente' : 'Histórico'}</span>
             </div>
             <h3 className="break-words text-xl font-black text-[#173f34]">{plan.nombre || 'Plan sin nombre'}</h3>
             {plan.objetivo && <p className="mt-1 break-words text-sm text-[#647e70]">{plan.objetivo}</p>}
@@ -89,7 +89,12 @@ function TarjetaDieta({ plan, paciente, onEditar, onEliminar, onError }) {
                       <span className="flex h-10 shrink-0 items-center gap-1 rounded-xl bg-[#d8ebe0] px-2 text-xs font-black text-[#246b55]"><Clock3 size={15}/>{formatoHora(comida.hora)}</span>
                       <div className="min-w-0"><p className="text-sm font-extrabold text-[#173f34]">{comida.nombre || 'Comida ' + (indice + 1)}</p>{comida.platillo && <p className="break-words text-xs text-[#617e6d]">{comida.platillo}</p>}</div>
                     </div>
-                    <span className="rounded-lg bg-white px-2.5 py-1.5 text-xs font-extrabold text-[#246b55]">{formatoNumero(subtotal.kcal, 0)} kcal</span>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-extrabold text-[#246b55]">
+                      <span className="rounded-lg bg-white px-2.5 py-1.5">{formatoNumero(subtotal.kcal, 0)} kcal</span>
+                      <span>P: {formatoNumero(subtotal.proteina)} g</span>
+                      <span>C: {formatoNumero(subtotal.carbohidratos)} g</span>
+                      <span>G: {formatoNumero(subtotal.grasas)} g</span>
+                    </div>
                   </div>
                   <div className="space-y-2 p-3 sm:p-4">
                     {(comida.alimentos || []).length ? comida.alimentos.map((alimento, i) =>
@@ -101,6 +106,11 @@ function TarjetaDieta({ plan, paciente, onEditar, onEliminar, onError }) {
                         <span className="text-xs font-bold text-[#416c54]">{formatoNumero((Number(alimento.nutrimentos?.kcal) || 0) * (Number(alimento.cantidad) || 0), 0)} kcal</span>
                       </div>
                     ) : <p className="text-sm text-[#74897c]">Sin alimentos individualizados.</p>}
+                    {(comida.preparaciones || []).some(item => item.nombre?.trim()) && <div className="rounded-xl border border-[#e0eae2] bg-[#fbfdfb] p-3">
+                      <p className="mb-2 text-xs font-extrabold text-[#416d52]">Preparaciones y bebidas</p>
+                      <ul className="space-y-1 text-xs text-[#607c6a]">{comida.preparaciones.filter(item => item.nombre?.trim()).map((item, i) => <li key={item.id || i} className="flex flex-wrap gap-2"><span className="font-bold">{item.tipo === 'bebida' ? 'Bebida' : 'Platillo'}:</span>{item.nombre}</li>)}</ul>
+                    </div>}
+                    {(comida.alimentos || []).some(item => item.notas) && <div className="space-y-1">{comida.alimentos.filter(item => item.notas).map((item,i)=><p key={item._id || i} className="text-xs text-[#607c6a]"><strong>{item.nombre}:</strong> {item.notas}</p>)}</div>}
                     {comida.descripcion && <p className="rounded-lg border-l-2 border-[#8cb79b] pl-3 text-xs text-[#647e70]">{comida.descripcion}</p>}
                   </div>
                 </li>
@@ -157,16 +167,22 @@ export default function ConsultarDietasPage() {
 
   const paciente = pacientes.find(item => item._id === pacienteId)
   const encontrados = pacientes.filter(item => (item.name || '').toLocaleLowerCase('es-MX').includes(busquedaPaciente.toLocaleLowerCase('es-MX')))
+  const planesOrdenados = useMemo(() => [...planes].sort((a,b)=>
+    new Date(b.fechaInicio || b.createdAt).getTime() - new Date(a.fechaInicio || a.createdAt).getTime()
+  ), [planes])
   const dietasFiltradas = useMemo(() => planes.filter(plan => {
     const coincide = (plan.nombre + ' ' + (plan.objetivo || '')).toLocaleLowerCase('es-MX').includes(busquedaDieta.toLocaleLowerCase('es-MX'))
-    return coincide && (filtro === 'todos' || (filtro === 'activos' ? plan.activo : !plan.activo))
-  }).sort((a,b)=>new Date(b.fechaInicio || b.createdAt).getTime()-new Date(a.fechaInicio || a.createdAt).getTime()), [planes, busquedaDieta, filtro])
+    return coincide
+  }).sort((a,b)=>new Date(b.fechaInicio || b.createdAt).getTime()-new Date(a.fechaInicio || a.createdAt).getTime())
+    .filter((plan, indice, resultado) => filtro === 'todos' || (filtro === 'reciente' ? plan._id === planesOrdenados[0]?._id : plan._id !== planesOrdenados[0]?._id)),
+  [planes, planesOrdenados, busquedaDieta, filtro])
 
   function seleccionarPaciente(item) {
     setPacienteId(item._id)
     setError('')
     setBusquedaDieta('')
     setFiltro('todos')
+    setEliminarPendiente(null)
     iniciarTrabajo(item)
   }
   function irACrear() {
@@ -229,7 +245,7 @@ export default function ConsultarDietasPage() {
             <div className="min-w-0">
               <p className="text-xs font-bold uppercase tracking-widest text-[#5b9272]">Dietas del paciente</p>
               <h2 className="mt-1 break-words text-xl font-extrabold text-[#173f34]">{paciente?.name || 'Paciente seleccionado'}</h2>
-              <p className="text-xs text-[#698373]">{planes.length} {planes.length === 1 ? 'plan registrado' : 'planes registrados'} · {planes.filter(plan => plan.activo).length} activos</p>
+              <p className="text-xs text-[#698373]">{planes.length} {planes.length === 1 ? 'plan registrado' : 'planes registrados'}</p>
             </div>
             <button type="button" onClick={() => setRevision(n => n + 1)} disabled={loadingPlanes} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#cfe0d5] px-3 text-sm font-bold text-[#246b55] hover:bg-[#eef6f0] disabled:opacity-60"><RefreshCw size={16} className={loadingPlanes ? 'animate-spin' : ''}/>Actualizar</button>
           </div>
@@ -238,11 +254,11 @@ export default function ConsultarDietasPage() {
               <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#789484]"/>
               <input type="search" value={busquedaDieta} onChange={e => setBusquedaDieta(e.target.value)} placeholder="Buscar por nombre u objetivo..." aria-label="Buscar dietas" className="w-full rounded-xl border border-[#d1e2d7] bg-white py-3 pl-10 pr-3 text-sm text-[#173f34] outline-none focus:border-[#549a73]"/>
             </label>
-            <select aria-label="Filtrar planes" value={filtro} onChange={e => setFiltro(e.target.value)} className="min-h-11 rounded-xl border border-[#d1e2d7] bg-white px-4 text-sm font-bold text-[#246b55]"><option value="todos">Todas las dietas</option><option value="activos">Activas</option><option value="anteriores">Anteriores</option></select>
+            <select aria-label="Filtrar planes" value={filtro} onChange={e => setFiltro(e.target.value)} className="min-h-11 rounded-xl border border-[#d1e2d7] bg-white px-4 text-sm font-bold text-[#246b55]"><option value="todos">Todas las dietas</option><option value="reciente">Más reciente</option><option value="historial">Historial</option></select>
           </div>
           {loadingPlanes ? <div className="rounded-3xl border border-[#d1e2d7] bg-white p-12 text-center text-sm text-[#647e70]"><LoaderCircle size={26} className="mx-auto mb-3 animate-spin text-[#246b55]"/>Cargando dietas…</div>
             : !dietasFiltradas.length ? <div className="rounded-3xl border border-dashed border-[#bdd7c8] bg-white p-8 text-center"><Apple size={34} className="mx-auto mb-3 text-[#6d987d]"/><h3 className="font-extrabold text-[#173f34]">{planes.length ? 'No hay dietas con estos filtros' : 'Este paciente todavía no tiene dietas'}</h3><p className="mt-1 text-sm text-[#647e70]">Puedes crear una dieta nueva en el editor alimenticio.</p><button type="button" onClick={irACrear} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#246b55] px-4 py-3 text-sm font-bold text-white"><Plus size={16}/>Crear dieta</button></div>
-            : <div className="space-y-4">{dietasFiltradas.map(plan => <TarjetaDieta key={plan._id} plan={plan} paciente={paciente} onEditar={editar} onEliminar={setEliminarPendiente} onError={setError}/>)}</div>}
+            : <div className="space-y-4">{dietasFiltradas.map(plan => <TarjetaDieta key={plan._id} plan={plan} paciente={paciente} esReciente={plan._id === planesOrdenados[0]?._id} onEditar={editar} onEliminar={setEliminarPendiente} onError={setError}/>)}</div>}
         </>}
       </section>
     </div>
