@@ -6,6 +6,7 @@ const Patient = require('../models/Pacientes')
 const Cita = require('../models/Cita')
 const User = require('../models/User')
 const { syncAppointment, deleteAppointment } = require('../services/calendar.service')
+const { fechaProgramable, requiereReiniciarRecordatorios, estadoPermitidoEnFecha } = require('../utils/citas.utils')
 async function intentarSincronizar(cita) {
   try { return Boolean(await syncAppointment(cita)) }
   catch (error) { console.error('Error de sincronización Calendar:', error.message); return false }
@@ -33,7 +34,7 @@ async function validar(req, res, original = null) {
   const data = parsed.data
   const inicio = new Date(data.inicio)
   const seCambioFecha = !original || inicio.getTime() !== new Date(original.inicio).getTime()
-  if (seCambioFecha && inicio <= new Date()) {
+  if (!fechaProgramable(inicio, original?.inicio)) {
     res.status(400).json({ message: 'No se permite crear o reprogramar citas en fechas pasadas' })
     return null
   }
@@ -94,10 +95,9 @@ router.put('/:id', async (req,res,next) => {
     if (data.estado !== 'cancelada' && await conflicto(req.user._id, data.inicio, data.fin, cita._id))
       return res.status(409).json({ message: 'Ya existe una cita en ese horario' })
 
-    const cambioDeInicio = cita.inicio.getTime() !== data.inicio.getTime()
-    const cambioDeEstado = cita.estado !== data.estado
+    const reiniciarRecordatorios = requiereReiniciarRecordatorios(cita, data)
     Object.assign(cita, data)
-    if (cambioDeInicio || cambioDeEstado) {
+    if (reiniciarRecordatorios) {
       cita.recordatorio24hEnviado = null
       cita.recordatorio2hEnviado = null
     }
@@ -122,10 +122,12 @@ router.patch('/:id/estado', async (req,res,next) => {
     const estado = parsed.data.estado
     if (estado === cita.estado) return res.json({ ...cita.toObject(), calendarSynced: true })
     const now = new Date()
-    if (estado === 'completada' && cita.inicio > now)
-      return res.status(400).json({ message: 'La cita todavía no puede marcarse completada' })
-    if (['programada','confirmada'].includes(estado) && cita.inicio <= now)
-      return res.status(400).json({ message: 'Una cita pasada no puede reactivarse como próxima' })
+    if (!estadoPermitidoEnFecha(estado, cita.inicio, now))
+      return res.status(400).json({
+        message: estado === 'completada'
+          ? 'La cita todavía no puede marcarse completada'
+          : 'Una cita pasada no puede reactivarse como próxima',
+      })
     if (['programada','confirmada'].includes(estado) && await conflicto(req.user._id,cita.inicio,cita.fin,cita._id))
       return res.status(409).json({ message: 'Ya existe una cita en ese horario' })
     cita.estado = estado
