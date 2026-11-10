@@ -498,3 +498,106 @@ export default function CitasPage() {
             </div>
           )}
 
+          {view === 'lista' && visibleDays.length > 0 && (
+            <div className="space-y-4 px-4 pb-5 sm:px-6">
+              {visibleDays.map(d => (
+                <section key={dayKey(d)} {...dropTarget(d)} className={`rounded-2xl bg-[#edf4eb] p-3 sm:p-4 ${dragging ? 'hover:bg-[#dfefe3]' : ''}`}>
+                  <h3 className="mb-3 flex items-center gap-2 text-sm font-extrabold first-letter:uppercase">
+                    <CalendarDays size={16} aria-hidden="true" /> {dateTitle(d)}
+                  </h3>
+                  {hourlySlots(d)}
+                </section>
+              ))}
+            </div>
+          )}
+
+          <footer className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-b-[1.75rem] border-t border-[#dce7dd] bg-[#eff5ed] px-4 py-3 sm:px-6">
+            {Object.entries(STATES).map(([key, status]) => (
+              <span key={key} className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#416458]">
+                <span aria-hidden="true" className={`size-2.5 rounded-full ${status.dot}`} />{status.label}
+              </span>
+            ))}
+            <p className="basis-full text-xs text-[#526d5d]">
+              Abre una cita para editarla. En escritorio, arrástrala a otro día o a una hora en la vista Día.
+            </p>
+          </footer>
+        </section>
+
+        <aside aria-label="Resumen de agenda" className="grid min-w-0 gap-4 md:grid-cols-3 xl:grid-cols-1">
+          <MiniCalendar focus={focus} today={today} onSelect={showDay} diasLaborales={diasLaborales} />
+          <section className={`${PANEL} min-w-0 p-4`}>
+            <h2 className="flex items-center gap-2 text-sm font-extrabold"><Clock3 size={17} aria-hidden="true" /> Próximas citas</h2>
+            <p className="mt-1 mb-3 text-xs text-[#526d5d]">En el periodo visible</p>
+            <div className="space-y-2">{upcoming.slice(0, 3).map(c => (
+              <div key={c._id}>
+                <p className="mb-1 text-xs font-semibold text-[#526d5d] first-letter:uppercase">{dateTitle(new Date(c.inicio))}</p>
+                {eventCard(c, true, false)}
+              </div>
+            ))}</div>
+            {!upcoming.length && <p className="rounded-xl bg-[#eaf2e8] p-3 text-xs text-[#416458]">{loading ? 'Cargando…' : 'Sin próximas citas en esta vista.'}</p>}
+          </section>
+          <section className={`${PANEL} min-w-0 p-4`}>
+            <h2 className="flex items-center gap-2 text-sm font-extrabold"><CalendarDays size={17} aria-hidden="true" /> Google Calendar</h2>
+            <p className="mt-1 text-xs font-medium text-[#526d5d]">{connected ? 'Cuenta conectada' : 'Cuenta sin conectar'}</p>
+            <button type="button" disabled={calendarBusy} onClick={connected ? disconnect : connect} className={`${CONTROL} mt-3 w-full`}>
+              {calendarBusy ? 'Procesando…' : connected ? 'Desconectar' : 'Conectar'}
+            </button>
+          </section>
+        </aside>
+      </div>
+      <dialog ref={dialogRef} aria-labelledby="appointment-title"
+        onCancel={e => { e.preventDefault(); if (!saving) setModal(false) }}
+        onClick={e => { if (e.target === e.currentTarget && !saving) setModal(false) }}
+        className="m-auto max-h-[90dvh] w-[calc(100%-1.5rem)] max-w-xl overflow-y-auto rounded-3xl border border-[#cfe0d6] bg-[#f8fbf6] text-[#173f34] shadow-[0_24px_70px_rgba(16,46,36,.2)] backdrop:bg-[#102e24]/60 backdrop:backdrop-blur-[3px]">
+        <div className="p-5 sm:p-7">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div>
+              <h2 id="appointment-title" className="text-xl font-extrabold">{editing ? 'Editar cita' : 'Nueva cita'}</h2>
+              <p className="text-sm text-[#526d5d]">Completa los detalles de la consulta.</p>
+            </div>
+            <button type="button" aria-label="Cerrar" onClick={() => setModal(false)} disabled={saving} className={CONTROL}>
+              <X size={19} aria-hidden="true" />
+            </button>
+          </div>
+          {(patientError || error) && <p role="alert" className="mb-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{error || patientError}</p>}
+          <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
+            <label className="grid gap-1.5 text-sm font-semibold sm:col-span-2">
+              Paciente
+              <select autoFocus required className={inputClass} value={form.patient} onChange={e => updateField('patient', e.target.value)}>
+                <option value="">Selecciona un paciente</option>
+                {pacientes.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
+              </select>
+            </label>
+            <label className="grid min-w-0 gap-1.5 text-sm font-semibold">
+              Inicio
+              <input required type="datetime-local" min={localInput(now)} className={inputClass} value={form.inicio} onChange={e => updateStart(e.target.value)} />
+            </label>
+            <p className="self-end rounded-xl bg-[#e5f2eb] px-3 py-3 text-sm font-semibold text-[#246b55]">Duración fija: 1 hora</p>
+            <label className="grid gap-1.5 text-sm font-semibold">
+              Tipo
+              <select className={inputClass} value={form.tipo} onChange={e => updateField('tipo', e.target.value)}>
+                {Object.entries(TYPES).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+              </select>
+            </label>
+            <label className="grid gap-1.5 text-sm font-semibold">
+              Estado
+              <select className={inputClass} value={form.estado} onChange={e => updateField('estado', e.target.value)}>
+                {Object.entries(STATES).map(([key, status]) => <option key={key} value={key}>{status.label}</option>)}
+              </select>
+            </label>
+            <label className="grid gap-1.5 text-sm font-semibold sm:col-span-2">
+              Notas
+              <textarea maxLength={500} rows={2} className={inputClass} value={form.notas} onChange={e => updateField('notas', e.target.value)} placeholder="Opcional" />
+            </label>
+            <div className="flex flex-wrap justify-end gap-2 pt-2 sm:col-span-2">
+              <button type="button" onClick={() => setModal(false)} disabled={saving} className={CONTROL}>Cancelar</button>
+              <button type="submit" disabled={saving} className={`rounded-xl bg-[#246b55] px-5 py-3 text-sm font-bold text-white hover:bg-[#1d5947] disabled:opacity-50 ${FOCUS}`}>
+                {saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Registrar cita'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </dialog>
+    </div>
+  )
+}
