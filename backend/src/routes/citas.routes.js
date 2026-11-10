@@ -28,6 +28,18 @@ async function conflicto(nutritionist, inicio, fin, excluir) {
     inicio: { $lt: fin }, fin: { $gt: inicio },
     ...(excluir ? { _id: { $ne: excluir } } : {}) })
 }
+function cumpleHorario(horario, inicio) {
+  if (!horario?.configurado) return true
+  const partes = Object.fromEntries(new Intl.DateTimeFormat('en-GB', {
+    timeZone: horario.zonaHoraria, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(inicio).filter(p => ['weekday','hour','minute'].includes(p.type)).map(p => [p.type,p.value]))
+  const dia = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 }[partes.weekday]
+  const minutos = Number(partes.hour)*60 + Number(partes.minute)
+  const [hi,mi] = horario.inicio.split(':').map(Number)
+  const [hf,mf] = horario.fin.split(':').map(Number)
+  return horario.dias.includes(dia) && minutos >= hi*60+mi && minutos+60 <= hf*60+mf
+}
+
 async function validar(req, res, original = null) {
   const parsed = input.safeParse(req.body)
   if (!parsed.success) { res.status(400).json({ message: 'Datos de cita inválidos', issues: parsed.error.issues }); return null }
@@ -49,21 +61,19 @@ async function validar(req, res, original = null) {
   const fin = new Date(inicio.getTime() + 60 * 60 * 1000)
   const nutricionista = await User.findById(req.user._id).select('horarioLaboral').lean()
   const horario = nutricionista?.horarioLaboral
-  // Si solo cambia el estado o las notas de una cita anterior, no exigir
-  // que siga coincidiendo con el horario laboral configurado hoy.
-  if (seCambioFecha && horario?.configurado && data.estado !== 'cancelada') {
-    const partes = fecha => Object.fromEntries(new Intl.DateTimeFormat('en-GB', {
-      timeZone: horario.zonaHoraria, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
-    }).formatToParts(fecha).filter(p => ['weekday','hour','minute'].includes(p.type)).map(p => [p.type,p.value]))
-    const local = partes(inicio)
-    const dia = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 }[local.weekday]
-    const minutos = Number(local.hour)*60 + Number(local.minute)
-    const [hi,mi] = horario.inicio.split(':').map(Number)
-    const [hf,mf] = horario.fin.split(':').map(Number)
-    if (!horario.dias.includes(dia) || minutos < hi*60+mi || minutos+60 > hf*60+mf) {
-      res.status(400).json({ message:'La cita debe estar dentro de tus días y horas laborales. Modifica tu horario desde Editar perfil.' })
-      return null
-    }
+  // Preservar la zona histórica al editar notas/estado sin mover la fecha.
+  // Para fechas nuevas la zona autoritativa es la configurada por el nutriólogo.
+  data.zonaHoraria = original && !seCambioFecha
+    ? original.zonaHoraria
+    : horario?.configurado ? horario.zonaHoraria : data.zonaHoraria
+  try { new Intl.DateTimeFormat('es-MX', { timeZone: data.zonaHoraria }) }
+  catch { res.status(400).json({ message: 'Zona horaria inválida' }); return null }
+
+  // Si solo cambia el estado o las notas, no exigir que la cita histórica
+  // coincida con los horarios laborales que el nutriólogo configuró después.
+  if (seCambioFecha && data.estado !== 'cancelada' && !cumpleHorario(horario, inicio)) {
+    res.status(400).json({ message:'La cita debe estar dentro de tus días y horas laborales. Modifica tu horario desde Editar perfil.' })
+    return null
   }
   const paciente = await Patient.exists({ _id: data.patient, nutritionist: req.user._id, active: true })
   if (!paciente) { res.status(404).json({ message: 'Paciente no encontrado' }); return null }
@@ -128,6 +138,11 @@ router.patch('/:id/estado', async (req,res,next) => {
           ? 'La cita todavía no puede marcarse completada'
           : 'Una cita pasada no puede reactivarse como próxima',
       })
+    if (['programada','confirmada'].includes(estado) && cita.estado === 'cancelada') {
+      const nutricionista = await User.findById(req.user._id).select('horarioLaboral').lean()
+      if (!cumpleHorario(nutricionista?.horarioLaboral, cita.inicio))
+        return res.status(400).json({ message: 'El horario original ya no está disponible; reprograma esta cita antes de activarla.' })
+    }
     if (['programada','confirmada'].includes(estado) && await conflicto(req.user._id,cita.inicio,cita.fin,cita._id))
       return res.status(409).json({ message: 'Ya existe una cita en ese horario' })
     cita.estado = estado
