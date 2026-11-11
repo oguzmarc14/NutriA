@@ -3,7 +3,8 @@ const { z } = require('zod')
 const User = require('../models/User')
 const { requireAuth, allowRoles } = require('../middleware/auth.middleware')
 const router = express.Router()
-const { minutos, franjaDentroHorario } = require('../utils/agenda-publica.utils')
+const { minutos, franjaDentroHorario, fechaLocalAhora, sumarDias, construirDisponibilidad } = require('../utils/agenda-publica.utils')
+const Cita = require('../models/Cita')
 router.use(requireAuth, allowRoles('nutritionist'))
 const schema = z.object({
   dias: z.array(z.number().int().min(0).max(6)).min(1).max(7).refine(d => new Set(d).size === d.length),
@@ -46,6 +47,34 @@ const horarioCitasSchema = z.object({
       ctx.addIssue({ code:'custom', message:'Los bloques de un mismo día no deben superponerse', path:['franjas',i] })
     }
   }
+})
+
+// Disponibilidad privada: permite al nutriólogo crear citas aunque no haya
+// publicado su calendario para pacientes.
+router.get('/disponibilidad', async (req,res,next) => {
+  try {
+    const user = await User.findById(req.user._id).select('horarioCitas horarioLaboral').lean()
+    if(!user?.horarioCitas?.configurado || !user?.horarioLaboral?.configurado)
+      return res.status(409).json({message:'Configura los bloques de citas para ver espacios disponibles.'})
+    const zona=user.horarioLaboral.zonaHoraria
+    const hoy=fechaLocalAhora(zona)
+    const desde=String(req.query.desde || hoy)
+    const dias=Number(req.query.dias || 14)
+    if(!Number.isInteger(dias)||dias<1||dias>21||!/^\d{4}-\d{2}-\d{2}$/.test(desde)||
+       !Number.isFinite(new Date(desde+'T12:00:00Z').getTime())||
+       new Date(desde+'T12:00:00Z').toISOString().slice(0,10)!==desde||
+       desde<hoy||desde>sumarDias(hoy,30))
+      return res.status(400).json({message:'Rango de fechas inválido'})
+    const from=new Date(desde+'T00:00:00Z')
+    const to=new Date(sumarDias(desde,dias)+'T00:00:00Z')
+    const booked=await Cita.find({nutritionist:req.user._id,estado:{$ne:'cancelada'},
+      inicio:{$lt:new Date(to.getTime()+2*86400000)},fin:{$gt:new Date(from.getTime()-2*86400000)}})
+      .select('inicio fin -_id').lean()
+    return res.json({zonaHoraria:zona,desde,dias:Array.from({length:dias},(_,i)=>{
+      const fecha=sumarDias(desde,i)
+      return {fecha,espacios:construirDisponibilidad(fecha,user.horarioCitas,user.horarioLaboral,booked)}
+    })})
+  } catch(e){next(e)}
 })
 
 router.get('/citas', async (req,res,next) => {
