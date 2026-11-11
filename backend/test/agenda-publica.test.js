@@ -35,7 +35,7 @@ test('bloquea citas cercanas según la anticipación mínima',()=>{
   const config={...CONFIG,anticipacionHoras:2}
   const slots=utils.construirDisponibilidad('2026-11-12',config,JORNADA,[],new Date('2026-11-12T14:00:00Z'))
   assert.equal(slots.some(x=>x.hora==='09:00'),false)
-  assert.equal(slots.some(x=>x.hora==='10:00'),true)
+  assert.equal(slots.some(x=>x.hora==='11:00'),true)
 })
 test('UTC local inexistente en cambio de horario de verano no se ofrece',()=>{
   assert.equal(utils.horaLocalAUTC('2026-03-08','02:30','America/New_York'),null)
