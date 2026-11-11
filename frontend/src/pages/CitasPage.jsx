@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Plus, RefreshCw, X, Trash2, Ban, CheckCircle2 } from 'lucide-react'
 import client from '../api/client'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { Settings2 } from 'lucide-react'
+import ConfiguracionCitas from '../components/citas/ConfiguracionCitas'
+import ResumenCitas from '../components/citas/ResumenCitas'
 
 const EMPTY = { patient: '', inicio: '', tipo: 'seguimiento', estado: 'programada', notas: '' }
 const NO_APPOINTMENTS = []
@@ -61,6 +65,10 @@ function MiniCalendar({ focus, today, onSelect, diasLaborales }) {
 }
 
 export default function CitasPage() {
+  const routerNavigate = useNavigate()
+  const location = useLocation()
+  const [configAbierta,setConfigAbierta] = useState(Boolean(location.state?.abrirConfiguracion))
+  const [horarioCitas,setHorarioCitas] = useState(null)
   const [view, setView] = useState('semana')
   const [focus, setFocus] = useState(new Date())
   const [result, setResult] = useState(null)
@@ -68,6 +76,15 @@ export default function CitasPage() {
   const [pacientes, setPacientes] = useState([])
   const [connected, setConnected] = useState(false)
   const [horario, setHorario] = useState(null)
+  useEffect(()=>{
+    let activo=true
+    const cargar=()=>client.get('/horario/citas').then(({data})=>{
+      if(activo)setHorarioCitas(data.horarioCitas)
+    }).catch(()=>{})
+    cargar()
+    window.addEventListener('nutria-horario-citas-actualizado',cargar)
+    return ()=>{activo=false;window.removeEventListener('nutria-horario-citas-actualizado',cargar)}
+  },[])
   useEffect(() => {
     let active = true
     const loadHorario = () => client.get('/horario').then(({data}) => {if(active)setHorario(data.horario)}).catch(()=>{})
@@ -179,9 +196,19 @@ export default function CitasPage() {
     return map
   },[filtered])
   const today = dayKey(now)
-  const diasLaborales = horario?.configurado ? horario.dias : null
+  const diasLaborales = horarioCitas?.configurado
+    ? [...new Set(horarioCitas.franjas.map(f=>f.dia))]
+    : horario?.configurado ? horario.dias : null
   const diaHabilitado = date => !diasLaborales || diasLaborales.includes(new Date(date).getDay())
   const horasLaborales = horario?.configurado ? { inicio: Number(horario.inicio.slice(0,2)), fin: Number(horario.fin.slice(0,2)) } : {inicio:7,fin:20}
+  const minHora = v => Number(v.slice(0,2))*60+Number(v.slice(3,5))
+  const horasDia = date => {
+    if(!horarioCitas?.configurado)return Array.from({length:Math.max(1,horasLaborales.fin-horasLaborales.inicio)},(_,i)=>i+horasLaborales.inicio)
+    return [...new Set(horarioCitas.franjas.filter(f=>f.dia===new Date(date).getDay()).flatMap(f=>{
+      const first=minHora(f.inicio),last=minHora(f.fin)
+      return Array.from({length:Math.max(0,Math.floor((last-first-60)/60)+1)},(_,i)=>Math.floor((first+i*60)/60))
+    }))].sort((a,b)=>a-b)
+  }
   const zonaDispositivo = Intl.DateTimeFormat().resolvedOptions().timeZone
   const zonaDistinta = Boolean(horario?.configurado && horario.zonaHoraria !== zonaDispositivo)
   const horaOcupada = start => citas.some(c =>
@@ -193,29 +220,29 @@ export default function CitasPage() {
     const minutos = date.getHours()*60+date.getMinutes()
     const [hi,mi] = horario.inicio.split(':').map(Number)
     const [hf,mf] = horario.fin.split(':').map(Number)
-    return minutos >= hi*60+mi && minutos+60 <= hf*60+mf
+    if (!(minutos >= hi*60+mi && minutos+60 <= hf*60+mf))return false
+    if(horarioCitas?.configurado)return horarioCitas.franjas.some(f=>
+      f.dia===date.getDay()&&minutos>=minHora(f.inicio)&&minutos+60<=minHora(f.fin))
+    return true
   }
 
   function openNew(date = new Date(), hour) {
-    const start = new Date(date.getFullYear(),date.getMonth(),date.getDate(),hour ?? horasLaborales.inicio,0)
-    const now = new Date()
-    if (hour === undefined && start <= now) {
-      // Buscar el siguiente bloque disponible al pulsar «Nueva cita».
-      start.setTime(now.getTime())
-      start.setMinutes(Math.ceil((start.getMinutes() + 1) / 30) * 30, 0, 0)
-      let intentos = 0
-      while ((!disponible(start) || horaOcupada(start)) && intentos < 14 * 48) {
-        start.setMinutes(start.getMinutes() + 30)
-        intentos += 1
-      }
-      if (intentos >= 14 * 48) { setError('No hay horarios disponibles con tu configuración actual. Revisa los días laborales.'); return }
+    if (hour === undefined) {routerNavigate('/citas/nueva');return}
+    const inicio = new Date(date.getFullYear(),date.getMonth(),date.getDate(),hour,0)
+    if(inicio <= new Date() || !disponible(inicio) || horaOcupada(inicio)){
+      setError('Ese horario no está disponible. Elige otro desde Crear cita.')
+      return
     }
-    if (start <= now) { setError('No puedes programar citas en una fecha u hora pasada.'); return }
-    if (!disponible(start)) { setError('Este día u horario no está disponible según tu perfil.'); return }
-    if (horaOcupada(start)) { setError('Ya existe una cita en este horario. Selecciona otro.'); return }
-    setForm({...EMPTY,inicio:localInput(start)})
-    setEditing('');setOriginalStart('');setError('');setModal(true)
+    routerNavigate('/citas/nueva',{state:{inicio:inicio.toISOString(),fecha:dayKey(inicio)}})
   }
+
+  function abrirDesdeResumen(c) {
+    const fecha=new Date(c.inicio)
+    setFocus(fecha)
+    setView('dia')
+    openEdit(c)
+  }
+
   function openEdit(c) {
     setForm({patient:c.patient?._id||c.patient||'',inicio:localInput(c.inicio),tipo:c.tipo,estado:c.estado,notas:c.notas||''})
     setEditing(c._id);setOriginalStart(c.inicio);setError('');setModal(true)
@@ -327,9 +354,9 @@ export default function CitasPage() {
 
   const upcoming = filtered.filter(c => Date.parse(c.inicio) > now.getTime() && !['cancelada', 'completada'].includes(c.estado))
   const focusKey = dayKey(focus)
-  const visibleDays = range.days
+  const visibleDays = range.days.filter(d=>horasDia(d).length>0 || (byDay[dayKey(d)]||[]).length>0)
   const period = view === 'mes' ? formatMonth(focus) : view === 'dia' ? dateTitle(focus) : weekTitle(range.begin, addDays(range.end, -1))
-  const hours = Array.from({ length: Math.max(1, horasLaborales.fin-horasLaborales.inicio) }, (_, i) => i + horasLaborales.inicio)
+  const hours = horasDia(focus)
 
   function showDay(date) {
     setFocus(date)
@@ -388,7 +415,7 @@ export default function CitasPage() {
   function hourlySlots(date, compact = false) {
     const key = dayKey(date)
     const events = byDay[key] || []
-    const slots = [...new Set([...hours, ...events.map(c => new Date(c.inicio).getHours())])].sort((a,b)=>a-b)
+    const slots = [...new Set([...horasDia(date), ...events.map(c => new Date(c.inicio).getHours())])].sort((a,b)=>a-b)
     return <div className="space-y-1">
       {slots.map(hour => {
         const start = new Date(date.getFullYear(),date.getMonth(),date.getDate(),hour,0)
@@ -423,7 +450,7 @@ export default function CitasPage() {
 
   function dayTimeline() {
     const events = byDay[focusKey] || []
-    const times = [...new Set([...hours, ...events.map(c => new Date(c.inicio).getHours())])].sort((a, b) => a - b)
+    const times = [...new Set([...horasDia(focus), ...events.map(c => new Date(c.inicio).getHours())])].sort((a, b) => a - b)
     return (
       <div className="relative space-y-1 px-3 pb-5 sm:px-6">
         {times.map(hour => {
@@ -463,15 +490,24 @@ export default function CitasPage() {
             <p className="mb-3 flex items-center gap-2 text-xs font-bold tracking-widest text-[#d0e9d3] uppercase">
               <CalendarDays size={16} aria-hidden="true" /> NutriA · Consultorio
             </p>
-            <h1 className="text-3xl leading-tight font-black tracking-tight sm:text-4xl">Agenda de citas</h1>
+            <h1 className="text-3xl leading-tight font-black tracking-tight sm:text-4xl">Ver citas</h1>
             <p className="mt-2 text-sm text-[#d9eddd]">Organiza tus consultas y haz espacio para tu próxima cita.</p>
           </div>
-          <button type="button" onClick={() => openNew(new Date())}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#dcefcf] px-5 py-3 text-sm font-extrabold text-[#173f34] shadow-sm hover:bg-[#eef8e8] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:w-auto">
-            <Plus size={18} aria-hidden="true" /> Nueva cita
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => setConfigAbierta(v=>!v)}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/30 px-4 py-3 text-xs font-extrabold text-white hover:bg-white/15">
+              <Settings2 size={17}/>{configAbierta?'Ocultar configuración':'Configurar agenda'}
+            </button>
+            <button type="button" onClick={() => routerNavigate('/citas/nueva')}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#dcefcf] px-5 py-3 text-sm font-extrabold text-[#173f34] shadow-sm hover:bg-[#eef8e8]">
+              <Plus size={18} aria-hidden="true" /> Crear cita
+            </button>
+          </div>
         </div>
       </header>
+
+      {configAbierta && <ConfiguracionCitas onSave={setHorarioCitas}/>}
+      <ResumenCitas revision={reload} onAbrir={abrirDesdeResumen}/>
 
       {error && !modal && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
       {loadError && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{loadError}</p>}
@@ -550,7 +586,7 @@ export default function CitasPage() {
                   {range.days.map(d =>
                     <div key={dayKey(d)} className="min-w-0 rounded-xl border border-[#dce7dd] bg-[#f1f6ef] p-1">
                       <button type="button" onClick={()=>showDay(d)} className="mb-1 flex min-h-9 w-full items-center justify-center rounded-lg text-sm font-extrabold hover:bg-white">{d.getDate()}</button>
-                      {hourlySlots(d,true)}
+                      <div className="space-y-1">{(byDay[dayKey(d)]||[]).map(c=>eventCard(c,true,false))}</div>
                     </div>)}
                 </div>
               </div>

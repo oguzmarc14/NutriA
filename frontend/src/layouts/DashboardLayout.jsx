@@ -5,6 +5,7 @@ import {
   Apple,
   FileText,
   CalendarDays,
+  CalendarPlus,
   BookOpen,
   ShieldCheck,
   ArrowLeft,
@@ -132,9 +133,15 @@ function DashboardLayout() {
 
           {
             icon: CalendarDays,
-            label: 'Citas',
-            shortLabel: 'Citas',
+            label: 'Ver citas',
+            shortLabel: 'Ver citas',
             to: '/citas',
+          },
+          {
+            icon: CalendarPlus,
+            label: 'Crear cita',
+            shortLabel: 'Crear cita',
+            to: '/citas/nueva',
           },
           {
             icon: Apple,
@@ -257,6 +264,7 @@ function DashboardLayout() {
     '/planes',
     '/dietas',
     '/citas',
+    '/citas/nueva',
     '/community',
     '/community/moderacion',
     '/calculo-nutricional',
@@ -345,7 +353,7 @@ function DashboardLayout() {
               <NavLink
                 key={label}
                 to={to}
-                end={to === '/' || to === '/pacientes'}
+                end={to === '/' || to === '/pacientes' || to === '/citas'}
                 className={({
                   isActive,
                 }) =>
@@ -472,7 +480,7 @@ function DashboardLayout() {
               <NavLink
                 key={label}
                 to={to}
-                end={to === '/' || to === '/pacientes'}
+                end={to === '/' || to === '/pacientes' || to === '/citas'}
                 className={({
                   isActive,
                 }) =>
