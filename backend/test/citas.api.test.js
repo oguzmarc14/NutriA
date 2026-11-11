@@ -81,6 +81,7 @@ function fixture({ calendarSync = true, deleteError = null, existing = true, ini
       },
     },
     '../utils/citas.utils': utils,
+    '../utils/agenda-publica.utils': { horarioAdmite: () => true },
   }
   const scope = {
     require(specifier) {
