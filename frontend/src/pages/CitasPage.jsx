@@ -281,9 +281,7 @@ export default function CitasPage() {
     try {
       const {data} = await client.delete('/citas/' + editing)
       setModal(false)
-      setNotice(data.calendarSynced === false
-        ? 'Cita eliminada en NutriA. No se pudo verificar su eliminación en Google Calendar porque no hay conexión activa.'
-        : 'Cita eliminada definitivamente.')
+      setNotice('Cita eliminada definitivamente en NutriA y, si correspondía, en Google Calendar.')
       load()
     } catch (e) {
       setError(e.response?.data?.message || 'No se pudo eliminar la cita.')
