@@ -7,6 +7,7 @@ const Cita = require('../models/Cita')
 const User = require('../models/User')
 const { syncAppointment, deleteAppointment } = require('../services/calendar.service')
 const { fechaProgramable, requiereReiniciarRecordatorios, estadoPermitidoEnFecha } = require('../utils/citas.utils')
+const { horarioAdmite } = require('../utils/agenda-publica.utils')
 async function intentarSincronizar(cita) {
   try { return Boolean(await syncAppointment(cita)) }
   catch (error) { console.error('Error de sincronización Calendar:', error.message); return false }
@@ -67,7 +68,7 @@ async function validar(req, res, original = null) {
     return null
   }
   const fin = new Date(inicio.getTime() + 60 * 60 * 1000)
-  const nutricionista = await User.findById(req.user._id).select('horarioLaboral').lean()
+  const nutricionista = await User.findById(req.user._id).select('horarioLaboral horarioCitas').lean()
   const horario = nutricionista?.horarioLaboral
   // Preservar la zona histórica al editar notas/estado sin mover la fecha.
   // Para fechas nuevas la zona autoritativa es la configurada por el nutriólogo.
@@ -83,6 +84,11 @@ async function validar(req, res, original = null) {
     ['programada','confirmada'].includes(data.estado))
   if ((seCambioFecha || reactivacion) && data.estado !== 'cancelada' && !cumpleHorario(horario, inicio)) {
     res.status(400).json({ message:'La cita debe estar dentro de tus días y horas laborales. Modifica tu horario desde Editar perfil.' })
+    return null
+  }
+  if ((seCambioFecha || reactivacion) && data.estado !== 'cancelada' && nutricionista?.horarioCitas?.configurado &&
+      !horarioAdmite({...nutricionista.horarioCitas,zonaHoraria:horario.zonaHoraria},inicio)) {
+    res.status(400).json({message:'Ese espacio está fuera de los bloques configurados para consultas.'})
     return null
   }
   const paciente = await Patient.exists({ _id: data.patient, nutritionist: req.user._id, active: true })
@@ -149,8 +155,10 @@ router.patch('/:id/estado', async (req,res,next) => {
           : 'Una cita pasada no puede reactivarse como próxima',
       })
     if (['programada','confirmada'].includes(estado) && cita.estado === 'cancelada') {
-      const nutricionista = await User.findById(req.user._id).select('horarioLaboral').lean()
-      if (!cumpleHorario(nutricionista?.horarioLaboral, cita.inicio))
+      const nutricionista = await User.findById(req.user._id).select('horarioLaboral horarioCitas').lean()
+      if (!cumpleHorario(nutricionista?.horarioLaboral, cita.inicio) ||
+        (nutricionista?.horarioCitas?.configurado &&
+          !horarioAdmite({...nutricionista.horarioCitas,zonaHoraria:nutricionista.horarioLaboral.zonaHoraria},cita.inicio)))
         return res.status(400).json({ message: 'El horario original ya no está disponible; reprograma esta cita antes de activarla.' })
     }
     if (['programada','confirmada'].includes(estado) && await conflicto(req.user._id,cita.inicio,cita.fin,cita._id))

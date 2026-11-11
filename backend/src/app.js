@@ -19,6 +19,7 @@ const asistenteEquivalentesRoutes = require('./routes/asistenteEquivalentes.rout
 const communityRoutes = require('./routes/community.routes')
 const citasRoutes = require('./routes/citas.routes')
 const horarioRoutes = require('./routes/horario.routes')
+const agendaPublicaRoutes = require('./routes/agendaPublica.routes')
 const calendarRoutes = require('./routes/calendar.routes')
 const recordatoriosRoutes = require('./routes/recordatorios.routes')
 
@@ -129,6 +130,7 @@ app.use(
 app.use('/api/community', communityRoutes)
 app.use('/api/citas', citasRoutes)
 app.use('/api/horario', horarioRoutes)
+app.use('/api/agenda-publica', agendaPublicaRoutes)
 app.use('/api/calendar', calendarRoutes)
 app.use('/api/recordatorios', recordatoriosRoutes)
 
