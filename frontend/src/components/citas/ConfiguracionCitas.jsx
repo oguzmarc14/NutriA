@@ -25,6 +25,7 @@ export default function ConfiguracionCitas({ onSave }) {
   const [error,setError]=useState('')
   const [exito,setExito]=useState('')
   const [guardado,setGuardado]=useState(false)
+  const [publicadoGuardado,setPublicadoGuardado]=useState(false)
   const [copiado,setCopiado]=useState(false)
 
   useEffect(()=>{
@@ -34,6 +35,7 @@ export default function ConfiguracionCitas({ onSave }) {
       setLaboral(data.horarioLaboral)
       const existente=data.horarioCitas
       setGuardado(Boolean(existente?.configurado))
+      setPublicadoGuardado(Boolean(existente?.publicado))
       setForm({
         franjas:existente?.configurado ? existente.franjas.map(f=>({dia:f.dia,inicio:f.inicio,fin:f.fin})) : plantilla(data.horarioLaboral),
         publicado:Boolean(existente?.publicado),
@@ -97,7 +99,8 @@ export default function ConfiguracionCitas({ onSave }) {
       const {data}=await client.put('/horario/citas',payload)
       setForm({franjas:data.horarioCitas.franjas.map(f=>({dia:f.dia,inicio:f.inicio,fin:f.fin})),
         publicado:data.horarioCitas.publicado,anticipacionHoras:data.horarioCitas.anticipacionHoras})
-      setGuardado(true);setExito('Horarios de consulta guardados correctamente.')
+      setGuardado(true);setPublicadoGuardado(Boolean(data.horarioCitas.publicado))
+      setExito('Horarios de consulta guardados correctamente.')
       window.dispatchEvent(new Event('nutria-horario-citas-actualizado'))
       onSave?.(data.horarioCitas)
     }catch(err){setError(err.response?.data?.message||'No se pudieron guardar los bloques de consulta.')}
@@ -118,7 +121,7 @@ export default function ConfiguracionCitas({ onSave }) {
           <p className="mt-1 max-w-xl text-sm opacity-75">Elige los bloques en los que realmente ofreces consultas. Las pausas y los días sin atención no aparecerán en el calendario compartido.</p>
         </div>
       </div>
-      {guardado && <span className="nutria-agenda-pill rounded-full px-3 py-1 text-xs font-bold">{form.publicado?'Calendario público activo':'Enlace público desactivado'}</span>}
+      {guardado && <span className="nutria-agenda-pill rounded-full px-3 py-1 text-xs font-bold">{publicadoGuardado?'Calendario público activo':'Enlace público desactivado'}</span>}
     </div>
 
     {cargando ? <p className="mt-5 text-sm">Cargando horarios...</p> :
@@ -175,7 +178,7 @@ export default function ConfiguracionCitas({ onSave }) {
        </button>
      </form>}
 
-    {guardado && form.publicado && <div className="nutria-agenda-day mt-6 space-y-3 rounded-2xl border p-4">
+    {guardado && publicadoGuardado && <div className="nutria-agenda-day mt-6 space-y-3 rounded-2xl border p-4">
       <h3 className="flex items-center gap-2 text-sm font-extrabold"><Share2 size={17}/> Enlace para tus pacientes</h3>
       <p className="text-xs opacity-75">Comparte el enlace por WhatsApp o correo. Solo enseña espacios disponibles, no permite ver información clínica ni confirma reservas automáticamente.</p>
       <div className="flex flex-col gap-2 sm:flex-row">

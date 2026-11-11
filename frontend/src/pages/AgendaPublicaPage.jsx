@@ -35,7 +35,7 @@ export default function AgendaPublicaPage() {
     catch{setError('No se pudo copiar el mensaje. Revisa los permisos del navegador.')}
   }
 
-  return <main className="min-h-dvh bg-[#e9f2ea] p-3 text-[#173f34] sm:p-8 dark:bg-[#182c21]">
+  return <main className="nutria-agenda-publica min-h-dvh p-3 sm:p-8">
     <div className="mx-auto max-w-[850px] space-y-5">
       <header className="overflow-hidden rounded-[28px] bg-linear-to-br from-[#143c30] via-[#245c43] to-[#367555] p-6 text-[#f5fff7] sm:p-9">
         <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[#c6ecd1]"><Leaf size={19}/>NutriA</div>

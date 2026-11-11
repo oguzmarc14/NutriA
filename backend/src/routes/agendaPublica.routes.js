@@ -23,6 +23,7 @@ router.get('/:nutritionistId', async (req,res,next) => {
     const desde = String(req.query.desde || hoy)
     if(!Number.isInteger(dias) || dias<1 || dias>21 ||
        !/^\d{4}-\d{2}-\d{2}$/.test(desde) ||
+       !Number.isFinite(new Date(desde+'T12:00:00Z').getTime()) ||
        new Date(desde+'T12:00:00Z').toISOString().slice(0,10)!==desde ||
        desde<hoy || desde>sumarDias(hoy,30))
       return res.status(400).json({message:'Rango de fechas inválido'})

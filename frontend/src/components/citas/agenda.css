@@ -36,3 +36,6 @@ html[data-theme="dark"] .nutria-agenda-slot:hover{background:#427353}
 html[data-theme="dark"] .nutria-agenda-slot[aria-pressed="true"]{background:#7cc399;color:#102d20;border-color:#a4edbb}
 html[data-theme="dark"] .nutria-agenda-tab{color:#bbd3c3}
 html[data-theme="dark"] .nutria-agenda-tab[aria-selected="true"],html[data-theme="dark"] .nutria-agenda-tab[aria-pressed="true"]{background:#499b70;color:#fff}
+
+.nutria-agenda-publica{background:#e9f2ea;color:#173f34}
+html[data-theme="dark"] .nutria-agenda-publica{background:#172b20;color:#e8f8ee}
