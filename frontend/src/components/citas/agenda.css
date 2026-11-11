@@ -1,0 +1,41 @@
+/* Agenda NutriA: mismos tonos salvia en light/dark, sin fondos blancos obligatorios */
+.nutria-agenda-panel{background:#f5faf5;color:#173f34;border-color:#b7d5c1}
+.nutria-agenda-icon{background:#deeee3;color:#2a7958}
+.nutria-agenda-pill{background:#e0eee5;color:#2b6d50}
+.nutria-agenda-day,.nutria-agenda-card{background:#eef6ef;border-color:#d0e1d3}
+.nutria-agenda-input{background:#f9fcf9;color:#1d4735;border-color:#bfd7c7}
+.nutria-agenda-input:focus{outline:2px solid #6bb08b;outline-offset:1px}
+.nutria-agenda-secondary{background:#e5f1e7;color:#316b50;border-color:#c4d9cc}
+.nutria-agenda-secondary:hover{background:#d5e9da}
+.nutria-agenda-primary{background:#287553;color:white}
+.nutria-agenda-primary:hover{background:#206045}
+.nutria-agenda-text{color:#276b4b}
+.nutria-agenda-muted{color:#547260}
+.nutria-agenda-error{background:#fbebe7;border-color:#e6bcae;color:#8a4337}
+.nutria-agenda-success{background:#dfefe3;color:#246648}
+.nutria-agenda-slot{background:#e3f1e5;color:#276448;border-color:#a7cbb4}
+.nutria-agenda-slot:hover{background:#d4eadb;border-color:#77ab8a}
+.nutria-agenda-slot[aria-pressed="true"]{background:#277554;border-color:#277554;color:white;box-shadow:0 0 0 2px #9cd0b0}
+.nutria-agenda-tab{background:transparent;color:#547260}
+.nutria-agenda-tab[aria-selected="true"],.nutria-agenda-tab[aria-pressed="true"]{background:#277554;color:white}
+html[data-theme="dark"] .nutria-agenda-panel{background:#213a2c;color:#e9f8ee;border-color:#608d6f}
+html[data-theme="dark"] .nutria-agenda-icon{background:#365f47;color:#c1efcb}
+html[data-theme="dark"] .nutria-agenda-pill{background:#355d44;color:#d5f3dc}
+html[data-theme="dark"] .nutria-agenda-day,html[data-theme="dark"] .nutria-agenda-card{background:#2c4836;border-color:#5a8065}
+html[data-theme="dark"] .nutria-agenda-input{background:#1c3225;color:#e7f9eb;border-color:#668d71}
+html[data-theme="dark"] .nutria-agenda-secondary{background:#355b43;color:#e0f6e7;border-color:#5a8467}
+html[data-theme="dark"] .nutria-agenda-secondary:hover{background:#416c50}
+html[data-theme="dark"] .nutria-agenda-primary{background:#3c9167;color:#fff}
+html[data-theme="dark"] .nutria-agenda-primary:hover{background:#48a475}
+html[data-theme="dark"] .nutria-agenda-text{color:#aee2bc}
+html[data-theme="dark"] .nutria-agenda-muted{color:#b7d2bf}
+html[data-theme="dark"] .nutria-agenda-error{background:#563532;color:#ffe0d3;border-color:#98685a}
+html[data-theme="dark"] .nutria-agenda-success{background:#346348;color:#d8f3e1}
+html[data-theme="dark"] .nutria-agenda-slot{background:#315942;color:#e6f7e9;border-color:#659a73}
+html[data-theme="dark"] .nutria-agenda-slot:hover{background:#427353}
+html[data-theme="dark"] .nutria-agenda-slot[aria-pressed="true"]{background:#7cc399;color:#102d20;border-color:#a4edbb}
+html[data-theme="dark"] .nutria-agenda-tab{color:#bbd3c3}
+html[data-theme="dark"] .nutria-agenda-tab[aria-selected="true"],html[data-theme="dark"] .nutria-agenda-tab[aria-pressed="true"]{background:#499b70;color:#fff}
+
+.nutria-agenda-publica{background:#e9f2ea;color:#173f34}
+html[data-theme="dark"] .nutria-agenda-publica{background:#172b20;color:#e8f8ee}
