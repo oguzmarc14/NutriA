@@ -62,3 +62,10 @@ test('eliminación se restringe al propietario y primero limpia Google Calendar'
   assert.ok(rutas.indexOf('await deleteAppointment(cita)') < rutas.indexOf('await cita.deleteOne()'))
   assert.match(calendar, /async function deleteAppointment\(cita\)/)
 })
+
+test('si Calendar está desconectado y existe evento vinculado, no se borra la cita local', () => {
+  assert.ok(rutas.includes('if (!calendarSynced) {'))
+  assert.ok(rutas.indexOf('if (!calendarSynced) {') < rutas.indexOf('await cita.deleteOne()'))
+  assert.match(rutas, /Reconecta Calendar y vuelve a intentar la eliminación/)
+  assert.match(calendar, /return Boolean\(result\.connected\)/)
+})

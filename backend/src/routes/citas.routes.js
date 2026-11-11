@@ -180,10 +180,18 @@ router.delete('/:id', async (req,res,next) => {
         message: 'Google Calendar no permitió eliminar la cita. No se eliminó en NutriA para evitar inconsistencias.',
       })
     }
+    if (!calendarSynced) {
+      // La cita todavía está vinculada con un evento remoto, pero no existe
+      // una conexión activa para retirarlo. No dejar el evento huérfano.
+      return res.status(409).json({
+        message: 'La cita sigue vinculada con Google Calendar. Reconecta Calendar y vuelve a intentar la eliminación; no se borró en NutriA.',
+        calendarSynced: false,
+      })
+    }
     await cita.deleteOne()
     return res.json({
       message: 'Cita eliminada correctamente',
-      calendarSynced,
+      calendarSynced: true,
     })
   } catch(e) { next(e) }
 })
