@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowLeft, CalendarPlus2, CheckCircle2, ClipboardList } from 'lucide-react'
+import { ArrowLeft, CalendarPlus2, CheckCircle2, ClipboardList, RefreshCw } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import client from '../api/client'
 import SelectorDisponibilidad from '../components/citas/SelectorDisponibilidad'
@@ -32,8 +32,9 @@ export default function CitasCrearPage(){
         setData(available.value.data)
         const desired=location.state?.inicio
         if(desired){
-          const match=available.value.data.dias.flatMap(x=>x.espacios).find(e=>e.inicio===desired)
-          if(match)setSeleccion({...match,fecha:location.state?.fecha})
+          const dia=available.value.data.dias.find(x=>x.espacios.some(e=>e.inicio===desired))
+          const match=dia?.espacios.find(e=>e.inicio===desired)
+          if(match)setSeleccion({...match,fecha:dia.fecha})
         }
       }else{
         setData(null)
@@ -61,8 +62,7 @@ export default function CitasCrearPage(){
       setOk('Cita registrada correctamente.' + (res.data.calendarSynced===false?' Google Calendar no confirmó la sincronización.':''))
       setSeleccion(null);setNotas('');setReload(n=>n+1)
     }catch(e){
-      setError(e.response?.data?.message||'No se pudo registrar la consulta. Intenta actualizar la disponibilidad.')
-      setReload(n=>n+1)
+      setError(e.response?.data?.message||'No se pudo registrar la consulta. Actualiza la disponibilidad y elige otro horario.')
     }finally{setSaving(false)}
   }
   return <main className="mx-auto max-w-[1240px] space-y-5 p-4 pb-16 md:p-8">
@@ -70,6 +70,9 @@ export default function CitasCrearPage(){
       <Link to="/citas" className="inline-flex min-h-9 items-center gap-2 text-sm font-bold text-[#dbf4e1]"><ArrowLeft size={17}/>Volver a ver citas</Link>
       <div className="mt-3 flex items-center gap-3"><CalendarPlus2 size={30}/><h1 className="text-2xl font-black sm:text-3xl">Crear cita</h1></div>
       <p className="mt-2 text-sm text-[#d1eada]">Elige un paciente y uno de los espacios disponibles de tu consultorio.</p>
+      <button type="button" onClick={()=>setReload(n=>n+1)} className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-xl border border-white/30 px-3 text-xs font-bold hover:bg-white/15">
+        <RefreshCw size={15}/>Actualizar espacios
+      </button>
     </header>
     {error && <div role="alert" className="nutria-agenda-error rounded-xl border p-4 text-sm font-semibold">{error}</div>}
     {ok && <div role="status" className="nutria-agenda-success flex items-center gap-2 rounded-xl p-4 text-sm font-bold"><CheckCircle2 size={18}/>{ok}</div>}
