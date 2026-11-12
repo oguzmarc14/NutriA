@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  ArrowUpRight, Bell, BriefcaseMedical, CalendarDays, CalendarClock,
-  CheckCircle2, ChevronRight, Clock3, EllipsisVertical, MessageCircle,
+  ArrowUpRight, Bell, Hammer, CalendarDays, CalendarClock,
+  CheckCircle2, ChevronRight, Clock3, EllipsisVertical,
   Pencil, RefreshCw, Trash2, TrendingDown, Activity, FileText,
   CircleCheck, CircleAlert,
 } from 'lucide-react'
 import { obtenerAvisosPaciente } from '../../utils/avisosPacientes'
 import { avisoDestacado } from '../../utils/cardPaciente'
+import IconoWhatsApp from './IconoWhatsApp'
 import './estilosPaciente.css'
 
 function enlaceWhatsApp(telefono) {
@@ -16,17 +17,21 @@ function enlaceWhatsApp(telefono) {
   return null
 }
 
-function fechaCorta(valor) {
+function fechaCorta(valor, zonaHoraria) {
   if (!valor) return null
   const fecha = new Date(valor)
   return Number.isNaN(fecha.getTime())
     ? null
-    : new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }).format(fecha)
+    : new Intl.DateTimeFormat('es-MX', {
+      day: 'numeric', month: 'short', year: 'numeric',
+      ...(zonaHoraria ? {timeZone:zonaHoraria} : {}),
+    }).format(fecha)
 }
 
 export default function CardPaciente({
   paciente, onEditar, onEliminar, onTrabajar, onDejarTrabajar, onVerAvisos,
   trabajando, obtenerSexo, calcularEdad, obtenerInicial, onReenviar, reenviando, eliminando,
+  configSeguimiento, hoySeguimiento, zonaHorariaSeguimiento,
 }) {
   const [menuAbierto, setMenuAbierto] = useState(false)
   const [notasAbiertas, setNotasAbiertas] = useState(false)
@@ -50,7 +55,7 @@ export default function CardPaciente({
     }
   }, [menuAbierto])
 
-  const avisos = obtenerAvisosPaciente(paciente)
+  const avisos = obtenerAvisosPaciente(paciente,configSeguimiento,hoySeguimiento,zonaHorariaSeguimiento)
   const destacado = avisoDestacado(avisos)
   const estadoPendiente = paciente.accountStatus === 'pending'
   const edad = calcularEdad(paciente.birthDate)
@@ -77,13 +82,13 @@ export default function CardPaciente({
     },
     {
       titulo:'Última consulta',
-      valor:fechaCorta(paciente.ultimaConsulta?.fecha ?? paciente.ultimaConsulta?.inicio ?? paciente.fechaUltimaConsulta) || 'Sin registrar',
+      valor:fechaCorta(paciente.ultimaConsulta?.inicio,zonaHorariaSeguimiento) || 'Sin consulta completada',
       Icono:CalendarDays,
     },
     { titulo:'IMC actual', valor:imc === null ? 'Sin medición' : imc.toFixed(1), Icono:Activity },
     {
       titulo:'Próxima consulta',
-      valor:fechaCorta(paciente.proximaConsulta?.fecha ?? paciente.proximaConsulta?.inicio ?? paciente.fechaProximaConsulta) || 'Por programar',
+      valor:fechaCorta(paciente.proximaConsulta?.inicio,zonaHorariaSeguimiento) || 'Por programar',
       Icono:CalendarClock,
     },
   ]
@@ -222,7 +227,7 @@ export default function CardPaciente({
           aria-label={trabajando ? 'Dejar de trabajar con ' + paciente.name : 'Trabajar con ' + paciente.name}
           className={'nutria-patient-card__work inline-flex min-h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl px-2.5 text-[13px] font-extrabold transition ' +
             (trabajando ? 'nutria-patient-card__work--active' : '')}>
-          <BriefcaseMedical size={17} className="shrink-0" aria-hidden="true"/>
+          <Hammer size={17} className="shrink-0" aria-hidden="true"/>
           <span className="text-center">{trabajando ? 'Dejar de trabajar' : 'Trabajar con paciente'}</span>
           {trabajando ? <CheckCircle2 size={16} className="shrink-0"/> : <ArrowUpRight size={16} className="shrink-0"/>}
         </button>
@@ -230,13 +235,13 @@ export default function CardPaciente({
           <a href={whatsapp} target="_blank" rel="noopener noreferrer"
             title="Enviar mensaje por WhatsApp" aria-label={'Enviar WhatsApp a ' + paciente.name}
             className="nutria-patient-card__whatsapp grid h-12 w-12 shrink-0 place-items-center rounded-xl border">
-            <MessageCircle size={21} aria-hidden="true"/>
+            <IconoWhatsApp size={23}/>
           </a>
         ) : (
           <button type="button" disabled title="Agrega un teléfono válido para usar WhatsApp"
             aria-label="WhatsApp no disponible: falta un teléfono válido"
             className="nutria-patient-card__whatsapp grid h-12 w-12 shrink-0 cursor-not-allowed place-items-center rounded-xl border opacity-45">
-            <MessageCircle size={21} aria-hidden="true"/>
+            <IconoWhatsApp size={23}/>
           </button>
         )}
       </footer>
