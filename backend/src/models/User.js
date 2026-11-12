@@ -74,6 +74,31 @@ const userSchema = new mongoose.Schema(
       logo: { type: String, default: '' },
     },
 
+    horarioLaboral: {
+      configurado: { type: Boolean, default: false },
+      dias: { type: [Number], default: [1, 2, 3, 4, 5] },
+      inicio: { type: String, default: '09:00' },
+      fin: { type: String, default: '18:00' },
+      zonaHoraria: { type: String, default: 'America/Mexico_City' },
+    },
+
+    // Horarios específicos de citas. Son independientes de la jornada laboral:
+    // pueden ofrecer únicamente algunos bloques y ocultar descansos.
+    horarioCitas: {
+      configurado: { type: Boolean, default: false },
+      publicado: { type: Boolean, default: false },
+      anticipacionHoras: { type: Number, default: 2, min: 0, max: 72 },
+      franjas: {
+        type: [{
+          _id: false,
+          dia: { type: Number, min: 0, max: 6, required: true },
+          inicio: { type: String, required: true },
+          fin: { type: String, required: true },
+        }],
+        default: [],
+      },
+    },
+
     patient: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Patient',

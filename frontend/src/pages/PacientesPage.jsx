@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Plus, RefreshCw, Search, UserRound, X, BriefcaseMedical, Check } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import CardPaciente from '../components/pacientes/CardPaciente'
 import CampoPaciente from '../components/pacientes/CampoPaciente'
 import ModalEliminarPaciente from '../components/pacientes/ModalEliminarPaciente'
 import ModalPacienteCreado from '../components/pacientes/ModalPacienteCreado'
+import AlertaTrabajoPaciente from '../components/pacientes/AlertaTrabajoPaciente'
+import AvisosPaciente from '../components/pacientes/AvisosPaciente'
+import { obtenerAvisosPaciente } from '../utils/avisosPacientes'
 import client from '../api/client'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
@@ -20,10 +23,13 @@ const formularioInicial = {
 
 function PacientesPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { cerrarTrabajo, iniciarTrabajo, pacienteTrabajo } = usePacienteTrabajo()
   const [pacientes, setPacientes] = useState([])
   const [busqueda, setBusqueda] = useState('')
   const [confirmacionTrabajo, setConfirmacionTrabajo] = useState(null)
+  const [alertaTrabajo, setAlertaTrabajo] = useState(null)
+  const [pacienteConAvisos, setPacienteConAvisos] = useState(null)
   const [loading, setLoading] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [reenviandoId, setReenviandoId] = useState(null)
@@ -72,6 +78,16 @@ function PacientesPage() {
     cargarPacientes()
   }, [])
 
+  // El Centro de atención puede abrir los avisos de un paciente sin seleccionarlo
+  // para trabajar ni exponer datos del expediente en la URL.
+  useEffect(() => {
+    const id = location.state?.abrirAvisosPacienteId
+    if (!id || loading) return
+    const encontrado = pacientes.find((paciente) => paciente._id === id)
+    if (encontrado) setPacienteConAvisos(encontrado)
+    navigate(location.pathname, { replace: true, state: null })
+  }, [location.state, location.pathname, loading, pacientes, navigate])
+
   useEffect(() => {
     if (!confirmacionTrabajo) return undefined
     const manejarEscape = (event) => {
@@ -83,13 +99,54 @@ function PacientesPage() {
 
   function confirmarTrabajo() {
     if (!confirmacionTrabajo) return
-    const { tipo, paciente } = confirmacionTrabajo
+    const { tipo, paciente, destino } = confirmacionTrabajo
     setConfirmacionTrabajo(null)
+
     if (tipo === 'dejar') {
       cerrarTrabajo()
-    } else {
+      return
+    }
+
+    // Sólo después de confirmar cambiamos el paciente activo.
+    if (tipo === 'iniciar' && paciente?._id) {
       iniciarTrabajo(paciente)
-      navigate(`/pacientes/${paciente._id}/expediente`)
+      setAlertaTrabajo({ ...paciente, destino })
+    }
+  }
+
+  function comenzarTrabajo(paciente) {
+    if (!paciente?._id || pacienteTrabajo?.id === paciente._id) return
+    // Primer paso: preguntar. Aún no modificamos el contexto.
+    setConfirmacionTrabajo({ tipo: 'iniciar', paciente })
+  }
+
+  function abrirExpedienteTrasAlerta() {
+    if (!alertaTrabajo?._id) return
+    const pacienteId = alertaTrabajo._id
+    setAlertaTrabajo(null)
+    navigate(alertaTrabajo.destino || `/pacientes/${pacienteId}/expediente`)
+  }
+
+  function atenderAviso(aviso) {
+    const paciente = pacienteConAvisos
+    if (!paciente) return
+    setPacienteConAvisos(null)
+    if (aviso.accion === 'editar') {
+      editarPaciente(paciente)
+      return
+    }
+    const destinos = {
+      expediente: `/pacientes/${paciente._id}/expediente`,
+      plan: '/planes',
+      mediciones: '/mediciones',
+    }
+    const destino = destinos[aviso.accion]
+    if (!destino) return
+    if (pacienteTrabajo?.id === paciente._id) {
+      navigate(destino)
+    } else {
+      // Mantener la confirmación de cambio antes de trabajar con otro paciente.
+      setConfirmacionTrabajo({ tipo: 'iniciar', paciente, destino })
     }
   }
 
@@ -346,8 +403,9 @@ function PacientesPage() {
       <ModalPacienteCreado
         paciente={pacienteCreado}
         onAceptar={() => {
-          iniciarTrabajo(pacienteCreado)
-          navigate(`/pacientes/${pacienteCreado._id}/expediente`)
+          const nuevoPaciente = pacienteCreado
+          setPacienteCreado(null)
+          comenzarTrabajo(nuevoPaciente)
         }}
       />
       <div className="mx-auto w-full max-w-[1480px]">
@@ -685,7 +743,8 @@ function PacientesPage() {
                     setMensaje('')
                     setPacienteAEliminar(paciente)
                   }}
-                  onTrabajar={() => setConfirmacionTrabajo({ tipo: 'iniciar', paciente })}
+                  onTrabajar={() => comenzarTrabajo(paciente)}
+                  onVerAvisos={() => setPacienteConAvisos(paciente)}
                   trabajando={pacienteTrabajo?.id === paciente._id}
                   onDejarTrabajar={() => setConfirmacionTrabajo({ tipo: 'dejar', paciente })}
                   obtenerSexo={
@@ -715,12 +774,27 @@ function PacientesPage() {
                 <BriefcaseMedical size={30} className="text-[#246b55]" aria-hidden="true" />
               </div>
               <h2 id="titulo-confirmacion-trabajo" className="text-xl font-extrabold tracking-tight text-[#173f34]">
-                {confirmacionTrabajo.tipo === 'dejar' ? '¿Dejar de trabajar?' : '¿Comenzar a trabajar?'}
+                {confirmacionTrabajo.tipo === 'dejar'
+                  ? '¿Dejar de trabajar?'
+                  : pacienteTrabajo?.id && pacienteTrabajo.id !== confirmacionTrabajo.paciente._id
+                    ? '¿Cambiar de paciente?'
+                    : '¿Quieres trabajar con este paciente?'}
               </h2>
               <p id="descripcion-confirmacion-trabajo" className="mt-2 text-sm text-[#6b8174]">
-                {confirmacionTrabajo.tipo === 'dejar' ? 'Estás por dejar de trabajar con' : 'Estás por comenzar a trabajar con'}
+                {confirmacionTrabajo.tipo === 'dejar'
+                  ? '¿Confirmas que deseas dejar de trabajar con'
+                  : '¿Confirmas que deseas comenzar a trabajar con'}
+                {' '}
+                <strong className="block mt-1 break-words text-base font-extrabold text-[#205c45]">
+                  {confirmacionTrabajo.paciente.name}
+                </strong>
+                ?
               </p>
-              <p className="mt-1 break-words text-base font-extrabold text-[#205c45]">{confirmacionTrabajo.paciente.name}</p>
+              {confirmacionTrabajo.tipo === 'iniciar' && pacienteTrabajo?.id && pacienteTrabajo.id !== confirmacionTrabajo.paciente._id && (
+                <p className="mt-3 rounded-xl border border-[#cfe0d6] bg-[#edf5ee] px-3 py-2 text-xs leading-5 text-[#526d5d]">
+                  Cambiarás desde <strong>{pacienteTrabajo.name}</strong> al paciente seleccionado. No se eliminarán registros ni expedientes.
+                </p>
+              )}
             </div>
             <div className="mt-5 grid grid-cols-2 gap-2 border-t border-[#e5eee7] pt-4">
               <button type="button" autoFocus onClick={() => setConfirmacionTrabajo(null)} className="min-h-11 rounded-xl border border-[#dce6de] bg-[#f5f7f5] px-3 text-sm font-bold text-[#526d5d] transition hover:bg-[#eaf0eb] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#246b55]">Cancelar</button>
@@ -729,6 +803,19 @@ function PacientesPage() {
           </div>
         </div>
       )}
+
+      <AvisosPaciente
+        paciente={pacienteConAvisos}
+        avisos={obtenerAvisosPaciente(pacienteConAvisos)}
+        onCerrar={() => setPacienteConAvisos(null)}
+        onAccion={atenderAviso}
+      />
+
+      <AlertaTrabajoPaciente
+        paciente={alertaTrabajo}
+        onAceptar={abrirExpedienteTrasAlerta}
+        onCerrar={() => setAlertaTrabajo(null)}
+      />
 
       <ModalEliminarPaciente
         paciente={pacienteAEliminar}

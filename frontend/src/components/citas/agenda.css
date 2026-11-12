@@ -1,0 +1,142 @@
+/* Agenda NutriA: mismos tonos salvia en light/dark, sin fondos blancos obligatorios */
+.nutria-agenda-panel{background:#f5faf5;color:#173f34;border-color:#b7d5c1}
+.nutria-agenda-icon{background:#deeee3;color:#2a7958}
+.nutria-agenda-pill{background:#e0eee5;color:#2b6d50}
+.nutria-agenda-day,.nutria-agenda-card{background:#eef6ef;border-color:#d0e1d3}
+.nutria-agenda-input{background:#f9fcf9;color:#1d4735;border-color:#bfd7c7}
+.nutria-agenda-input:focus{outline:2px solid #6bb08b;outline-offset:1px}
+.nutria-agenda-secondary{background:#e5f1e7;color:#316b50;border-color:#c4d9cc}
+.nutria-agenda-secondary:hover{background:#d5e9da}
+.nutria-agenda-primary{background:#287553;color:white}
+.nutria-agenda-primary:hover{background:#206045}
+.nutria-agenda-text{color:#276b4b}
+.nutria-agenda-muted{color:#547260}
+.nutria-agenda-error{background:#fbebe7;border-color:#e6bcae;color:#8a4337}
+.nutria-agenda-success{background:#dfefe3;color:#246648}
+.nutria-agenda-slot{background:#e3f1e5;color:#276448;border-color:#a7cbb4}
+.nutria-agenda-slot:hover{background:#d4eadb;border-color:#77ab8a}
+.nutria-agenda-slot[aria-pressed="true"]{background:#277554;border-color:#277554;color:white;box-shadow:0 0 0 2px #9cd0b0}
+.nutria-agenda-tab{background:transparent;color:#547260}
+.nutria-agenda-tab[aria-selected="true"],.nutria-agenda-tab[aria-pressed="true"]{background:#277554;color:white}
+html[data-theme="dark"] .nutria-agenda-panel{background:#213a2c;color:#e9f8ee;border-color:#608d6f}
+html[data-theme="dark"] .nutria-agenda-icon{background:#365f47;color:#c1efcb}
+html[data-theme="dark"] .nutria-agenda-pill{background:#355d44;color:#d5f3dc}
+html[data-theme="dark"] .nutria-agenda-day,html[data-theme="dark"] .nutria-agenda-card{background:#2c4836;border-color:#5a8065}
+html[data-theme="dark"] .nutria-agenda-input{background:#1c3225;color:#e7f9eb;border-color:#668d71}
+html[data-theme="dark"] .nutria-agenda-secondary{background:#355b43;color:#e0f6e7;border-color:#5a8467}
+html[data-theme="dark"] .nutria-agenda-secondary:hover{background:#416c50}
+html[data-theme="dark"] .nutria-agenda-primary{background:#3c9167;color:#fff}
+html[data-theme="dark"] .nutria-agenda-primary:hover{background:#48a475}
+html[data-theme="dark"] .nutria-agenda-text{color:#aee2bc}
+html[data-theme="dark"] .nutria-agenda-muted{color:#b7d2bf}
+html[data-theme="dark"] .nutria-agenda-error{background:#563532;color:#ffe0d3;border-color:#98685a}
+html[data-theme="dark"] .nutria-agenda-success{background:#346348;color:#d8f3e1}
+html[data-theme="dark"] .nutria-agenda-slot{background:#315942;color:#e6f7e9;border-color:#659a73}
+html[data-theme="dark"] .nutria-agenda-slot:hover{background:#427353}
+html[data-theme="dark"] .nutria-agenda-slot[aria-pressed="true"]{background:#7cc399;color:#102d20;border-color:#a4edbb}
+html[data-theme="dark"] .nutria-agenda-tab{color:#bbd3c3}
+html[data-theme="dark"] .nutria-agenda-tab[aria-selected="true"],html[data-theme="dark"] .nutria-agenda-tab[aria-pressed="true"]{background:#499b70;color:#fff}
+
+.nutria-agenda-publica{background:#e9f2ea;color:#173f34}
+html[data-theme="dark"] .nutria-agenda-publica{background:#172b20;color:#e8f8ee}
+
+/* Alerta de configuración de citas, en el estilo de confirmaciones NutriA */
+.nutria-citas-aviso-overlay{background:rgba(16,46,36,.60);backdrop-filter:blur(4px)}
+.nutria-citas-aviso{background:#fbfefb;color:#173f34;border-color:#cce5d4;animation:nutria-citas-alert-in .2s ease-out}
+.nutria-citas-aviso-icon{background:#e0f0e5;color:#297857;box-shadow:0 0 0 4px #d0e9d9}
+.nutria-citas-aviso-cancel{background:#f1f6f2;border-color:#c9dbcf;color:#496752}
+.nutria-citas-aviso-cancel:hover{background:#e5f0e8}
+.nutria-citas-aviso-go{background:#287757;color:#fff}
+.nutria-citas-aviso-go:hover{background:#206346}
+html[data-theme="dark"] .nutria-citas-aviso-overlay{background:rgba(2,12,7,.78)}
+html[data-theme="dark"] .nutria-citas-aviso{background:#20382b;color:#e7f7ec;border-color:#628c70}
+html[data-theme="dark"] .nutria-citas-aviso-icon{background:#365e45;color:#b5e8c4;box-shadow:0 0 0 4px #3e6d50}
+html[data-theme="dark"] .nutria-citas-aviso-cancel{background:#325240;color:#dfefe5;border-color:#60866b}
+html[data-theme="dark"] .nutria-citas-aviso-cancel:hover{background:#41664d}
+html[data-theme="dark"] .nutria-citas-aviso-go{background:#3b9164;color:#fff}
+html[data-theme="dark"] .nutria-citas-aviso-go:hover{background:#46a876}
+@keyframes nutria-citas-alert-in{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(prefers-reduced-motion:reduce){.nutria-citas-aviso{animation:none}}
+
+/* Fix PWA: el carrusel horizontal no debe ensanchar el grid de horas. */
+.nutria-agenda-panel,.nutria-agenda-selector,.nutria-agenda-day{min-width:0;max-width:100%}
+.nutria-agenda-selector{width:100%;overflow:clip}
+.nutria-agenda-dias{
+  display:flex;width:100%;max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;
+  overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;
+  scrollbar-width:thin;scroll-padding-inline:4px
+}
+.nutria-agenda-date-button{flex:0 0 auto;white-space:nowrap}
+.nutria-agenda-horas{
+  display:grid;width:100%;max-width:100%;min-width:0;
+  grid-template-columns:repeat(2,minmax(0,1fr));gap:10px
+}
+.nutria-agenda-hora{
+  display:flex;align-items:center;justify-content:center;
+  min-width:0;max-width:100%;width:100%;min-height:48px;
+  padding:10px 6px;text-align:center;font-size:15px;font-weight:800;
+  line-height:1.3;color:#245b44
+}
+.nutria-agenda-hora-text{
+  display:block;min-width:0;white-space:nowrap;font-variant-numeric:tabular-nums;
+  color:inherit;opacity:1;visibility:visible
+}
+html[data-theme="dark"] .nutria-agenda-hora{color:#e6f8eb}
+html[data-theme="dark"] .nutria-agenda-hora[aria-pressed="true"]{color:#142d21}
+@media(min-width:640px){.nutria-agenda-horas{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:1024px){.nutria-agenda-horas{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* Vistas de creación: día por defecto, semana y mes (sin desbordes en PWA móvil). */
+.nutria-agenda-vistas{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;
+  min-width:0;max-width:100%;padding:4px;border-radius:14px;
+  background:#e8f1ea;border:1px solid #bed8c5;
+}
+.nutria-agenda-vista-boton{
+  min-height:42px;min-width:0;border-radius:10px;padding:8px 4px;
+  font-size:13px;font-weight:800;color:#4b7059;
+}
+.nutria-agenda-vista-boton:hover{background:#d8e9de}
+.nutria-agenda-vista-boton[aria-pressed="true"]{background:#287553;color:#fff;box-shadow:0 3px 9px rgba(22,82,49,.19)}
+.nutria-agenda-navegacion{display:flex;align-items:center;justify-content:space-between;gap:7px;min-width:0}
+.nutria-agenda-navegar,.nutria-agenda-hoy{
+  display:grid;place-items:center;min-width:34px;height:40px;
+  border:1px solid #c1d7c8;border-radius:11px;padding:0 4px;
+}
+.nutria-agenda-hoy{min-width:43px;font-size:12px;font-weight:800}
+.nutria-agenda-navegar:disabled{opacity:.35;cursor:not-allowed}
+.nutria-agenda-semana,.nutria-agenda-mes{
+  display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;
+  min-width:0;max-width:100%;width:100%;
+}
+.nutria-agenda-mes-cabecera{text-align:center;font-size:10px;font-weight:800;padding:4px 0;color:#577966}
+.nutria-agenda-cal-dia{
+  display:flex;min-width:0;max-width:100%;width:100%;flex-direction:column;
+  justify-content:center;align-items:center;gap:3px;border:1px solid #aacdb5;
+  border-radius:11px;padding:5px 1px;line-height:1.15;
+}
+.nutria-agenda-cal-dia--semana{min-height:66px}
+.nutria-agenda-cal-dia--mes{min-height:49px}
+.nutria-agenda-cal-dia--fuera{opacity:.56}
+.nutria-agenda-cal-dia:disabled{background:#edf1ec;border-color:#d8e3d9;color:#82968a;cursor:not-allowed;box-shadow:none}
+.nutria-agenda-cal-semana-nombre{font-size:10px;line-height:1.2;text-transform:capitalize}
+.nutria-agenda-cal-numero{font-size:14px;font-weight:900;font-variant-numeric:tabular-nums}
+.nutria-agenda-cal-total{font-size:9px;line-height:1.1;white-space:nowrap;font-weight:800}
+.nutria-agenda-cal-sin{font-size:10px;opacity:.55}
+.nutria-agenda-cal-vacio{background:#e8f1e9;border-color:#c5decd}
+html[data-theme="dark"] .nutria-agenda-vistas{background:#2d4b38;border-color:#577c60}
+html[data-theme="dark"] .nutria-agenda-vista-boton{color:#c1e0c9}
+html[data-theme="dark"] .nutria-agenda-vista-boton:hover{background:#3a5e46}
+html[data-theme="dark"] .nutria-agenda-vista-boton[aria-pressed="true"]{background:#50a577;color:#102b1e}
+html[data-theme="dark"] .nutria-agenda-navegar,
+html[data-theme="dark"] .nutria-agenda-hoy{border-color:#64886c}
+html[data-theme="dark"] .nutria-agenda-mes-cabecera{color:#b6d4bd}
+html[data-theme="dark"] .nutria-agenda-cal-dia:disabled{background:#2a3b30;border-color:#415a48;color:#849c8b}
+html[data-theme="dark"] .nutria-agenda-cal-vacio{background:#2a4836;border-color:#60836a}
+@media(min-width:640px){
+  .nutria-agenda-semana,.nutria-agenda-mes{gap:7px}
+  .nutria-agenda-cal-dia--mes{min-height:65px}
+  .nutria-agenda-cal-numero{font-size:16px}
+  .nutria-agenda-cal-total{font-size:10px}
+  .nutria-agenda-navegar{min-width:42px}
+}

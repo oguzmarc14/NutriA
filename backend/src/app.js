@@ -10,6 +10,7 @@ const usuariosRoutes = require('./routes/usuarios.routes')
 const alimentosRoutes = require('./routes/alimentos.routes')
 const perfilPacienteRoutes = require('./routes/perfilPaciente.routes')
 const seguimientoComidaRoutes = require('./routes/seguimientoComida.routes')
+const gamificacionRoutes = require('./routes/gamificacion.routes')
 
 const clinicaRoutes = require('./routes/clinica.routes')
 const calculoNutricionalRoutes = require('./routes/calculoNutricional.routes')
@@ -17,6 +18,8 @@ const asistenteEquivalentesRoutes = require('./routes/asistenteEquivalentes.rout
 
 const communityRoutes = require('./routes/community.routes')
 const citasRoutes = require('./routes/citas.routes')
+const horarioRoutes = require('./routes/horario.routes')
+const agendaPublicaRoutes = require('./routes/agendaPublica.routes')
 const calendarRoutes = require('./routes/calendar.routes')
 const recordatoriosRoutes = require('./routes/recordatorios.routes')
 
@@ -105,6 +108,8 @@ app.use(
   seguimientoComidaRoutes,
 )
 
+app.use('/api/gamificacion', gamificacionRoutes)
+
 /*
  * ----------------------------------------------------
  * CATÁLOGO DE ALIMENTOS
@@ -124,6 +129,8 @@ app.use(
 
 app.use('/api/community', communityRoutes)
 app.use('/api/citas', citasRoutes)
+app.use('/api/horario', horarioRoutes)
+app.use('/api/agenda-publica', agendaPublicaRoutes)
 app.use('/api/calendar', calendarRoutes)
 app.use('/api/recordatorios', recordatoriosRoutes)
 

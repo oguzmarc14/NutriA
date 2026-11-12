@@ -1,0 +1,36 @@
+name: CI - Build and Checks
+on:
+  push:
+    branches: [react-mvp, automatizacion, main]
+  pull_request:
+    branches: [react-mvp, main]
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+      - name: Install backend
+        working-directory: backend
+        run: npm ci
+      - name: Backend syntax checks
+        working-directory: backend
+        run: npm run check
+      - name: Appointment workflow unit tests
+        working-directory: backend
+        run: npm run test:citas
+      - name: Install frontend
+        working-directory: frontend
+        run: npm ci
+      - name: Mobile navigation regression tests
+        working-directory: frontend
+        run: npm run test:menu
+      - name: Frontend build
+        working-directory: frontend
+        run: npm run build

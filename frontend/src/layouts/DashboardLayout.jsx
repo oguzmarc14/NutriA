@@ -1,7 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import client from '../api/client'
+import HorarioLaboral from '../components/HorarioLaboral'
 import {
   Apple,
+  FileText,
   CalendarDays,
+  CalendarPlus,
   BookOpen,
   ShieldCheck,
   ArrowLeft,
@@ -25,6 +29,7 @@ import {
   Calculator,
   PanelLeftOpen,
   PanelLeftClose,
+  Menu,
 } from 'lucide-react'
 
 import {
@@ -37,9 +42,12 @@ import {
 import { useAuth } from '../context/auth'
 import ThemeSelector from '../components/theme/ThemeSelector'
 import BotonInstalarApp from '../components/pwa/BotonInstalarApp'
+import CentroAvisosNutriologo from '../components/avisos/CentroAvisosNutriologo'
+import MenuMovil from '../components/navigation/MenuMovil'
+import ActualizacionPWA from '../components/pwa/ActualizacionPWA'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
-function PerfilMenu({ user, roleLabel, cerrarSesion, irAMiClinica }) {
+function PerfilMenu({ user, roleLabel, cerrarSesion, irAMiClinica, irAEditarPerfil }) {
   return (
     <details className="group relative">
       <summary aria-label="Abrir menú de perfil" className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-[#bcd8c7] bg-[#e3f0e7] text-[#246b55] shadow-sm transition hover:bg-[#d5e8db] [&::-webkit-details-marker]:hidden">
@@ -52,9 +60,7 @@ function PerfilMenu({ user, roleLabel, cerrarSesion, irAMiClinica }) {
           {user.email && <p className="mt-1 break-all text-[11px] text-[#82928a]">{user.email}</p>}
         </div>
         {user.role === 'nutritionist' && <button type="button" onClick={irAMiClinica} className="my-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#246b55] hover:bg-[#eef5f1]"><Building2 size={16}/>Mi clínica</button>}
-        <div className="my-1 flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-[#8b9b92]" title="Próximamente: edición de perfil">
-          <UserPen size={16}/> Editar perfil · Próximamente
-        </div>
+        {user.role === 'nutritionist' && <button type="button" onClick={irAEditarPerfil} className="my-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#246b55] hover:bg-[#eef5f1]"><UserPen size={16}/>Editar perfil y horario</button>}
         <div className="my-1 flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-[#8b9b92]" title="Próximamente: configuración">
           <Settings size={16}/> Configuración · Próximamente
         </div>
@@ -76,6 +82,14 @@ function DashboardLayout() {
   const navigate = useNavigate()
   const enEditorPlanes = user.role === 'nutritionist' && location.pathname === '/planes'
   const [sidebarPlanesVisible, setSidebarPlanesVisible] = useState(false)
+  const [configurarHorario, setConfigurarHorario] = useState(false)
+  const [menuMovilAbierto, setMenuMovilAbierto] = useState(false)
+  useEffect(() => {
+    if (user.role !== 'nutritionist') return
+    let active = true
+    client.get('/horario').then(({data}) => {if(active && !data.horario?.configurado)setConfigurarHorario(true)}).catch(()=>{})
+    return ()=>{active=false}
+  }, [user.role, user._id])
 
   /*
    * ----------------------------------------------------
@@ -123,15 +137,27 @@ function DashboardLayout() {
 
           {
             icon: CalendarDays,
-            label: 'Citas',
-            shortLabel: 'Citas',
+            label: 'Ver citas',
+            shortLabel: 'Ver citas',
             to: '/citas',
           },
           {
+            icon: CalendarPlus,
+            label: 'Crear cita',
+            shortLabel: 'Crear cita',
+            to: '/citas/nueva',
+          },
+          {
             icon: Apple,
-            label: 'Planes alimenticios',
-            shortLabel: 'Planes',
+            label: 'Crear dieta',
+            shortLabel: 'Crear',
             to: '/planes',
+          },
+          {
+            icon: FileText,
+            label: 'Consultar dietas',
+            shortLabel: 'Dietas',
+            to: '/dietas',
           },
           {
             icon: BookOpen,
@@ -195,23 +221,6 @@ function DashboardLayout() {
       : []),
   ]
 
-  const navegacionMovil = user.role === 'nutritionist' && pacienteTrabajo
-    ? [
-        { icon: ClipboardPlus, label: 'Expediente clínico', shortLabel: 'Expediente', to: `/pacientes/${pacienteTrabajo.id}/expediente` },
-        { icon: Ruler, label: 'Mediciones', shortLabel: 'Medidas', to: '/mediciones' },
-        { icon: Calculator, label: 'Cálculo nutricional', shortLabel: 'Cálculo', to: '/calculo-nutricional' },
-        { icon: Apple, label: 'Plan alimenticio', shortLabel: 'Planes', to: '/planes' },
-        { icon: TrendingUp, label: 'Progreso', shortLabel: 'Progreso', to: '/progreso' },
-        { icon: Users, label: 'Pacientes', shortLabel: 'Pacientes', to: '/pacientes' },
-        { icon: LayoutDashboard, label: 'Resumen', shortLabel: 'Resumen', to: '/' },
-      ]
-    : navigationVisible
-
-  const navegacionConMarca = [
-    { icon: Leaf, label: 'NutriA', shortLabel: 'NutriA', to: '/', marca: true },
-    ...navegacionMovil.filter(item => item.to !== '/'),
-  ]
-
   /*
    * ----------------------------------------------------
    * ROL
@@ -239,7 +248,9 @@ function DashboardLayout() {
     '/pacientes',
     '/mediciones',
     '/planes',
+    '/dietas',
     '/citas',
+    '/citas/nueva',
     '/community',
     '/community/moderacion',
     '/calculo-nutricional',
@@ -328,7 +339,7 @@ function DashboardLayout() {
               <NavLink
                 key={label}
                 to={to}
-                end={to === '/'}
+                end={to === '/' || to === '/pacientes' || to === '/citas'}
                 className={({
                   isActive,
                 }) =>
@@ -363,7 +374,12 @@ function DashboardLayout() {
             HEADER
         ============================================ */}
 
-        <header className="sticky top-0 z-40 flex min-h-[56px] items-center border-b border-[#c8dbd0] bg-[#fbfdfb]/95 px-4 md:backdrop-blur-md md:hidden">
+        <header className="sticky top-0 z-40 flex min-h-[56px] items-center border-b border-[#c8dbd0] bg-[#fbfdfb]/95 px-3 md:backdrop-blur-md md:hidden">
+          <button type="button" onClick={() => setMenuMovilAbierto(true)}
+            aria-label="Abrir todos los apartados" aria-haspopup="dialog" aria-expanded={menuMovilAbierto}
+            className="mr-1 grid h-9 w-9 shrink-0 place-items-center rounded-xl text-[#246b55] hover:bg-[#e6f0e9]">
+            <Menu size={20} aria-hidden="true"/>
+          </button>
           {mostrarAtras && (
             <button type="button" onClick={regresar} aria-label="Volver" className="mr-2 grid h-9 w-9 place-items-center rounded-xl text-[#246b55] hover:bg-[#e6f0e9]">
               <ArrowLeft size={19}/>
@@ -374,8 +390,9 @@ function DashboardLayout() {
             {user.role === 'nutritionist' && <p className="max-w-[48vw] truncate text-[10px] font-semibold text-[#246b55]">{pacienteTrabajo ? `● ${pacienteTrabajo.name}` : 'Sin paciente activo'}</p>}
           </div>
           <div className="ml-auto flex items-center gap-2">
+            {user.role === 'nutritionist' && <CentroAvisosNutriologo modo="movil" />}
             <BotonInstalarApp />
-            <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} irAMiClinica={() => navigate('/mi-clinica')}/>
+            <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} irAMiClinica={() => navigate('/mi-clinica')} irAEditarPerfil={() => navigate('/editar-perfil')}/>
           </div>
         </header>
         <div className="sticky top-0 z-40 hidden h-[52px] items-center justify-between gap-3 border-b border-[#c8dbd0] bg-[#eaf0e9]/95 px-5 text-[#173f34] backdrop-blur-md md:flex">
@@ -406,6 +423,7 @@ function DashboardLayout() {
             </div>
           ) : <span className="text-xs font-semibold text-[#648073]">NutriA</span>}
           <div className="flex shrink-0 items-center gap-2">
+            {user.role === 'nutritionist' && <CentroAvisosNutriologo modo="escritorio" />}
             <BotonInstalarApp />
             <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} irAMiClinica={() => navigate('/mi-clinica')}/>
           </div>
@@ -435,62 +453,10 @@ function DashboardLayout() {
         </div>
       </main>
 
-      {/* ============================================
-          NAVEGACIÓN MÓVIL
-      ============================================ */}
-
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t-2 border-[#a9cbb6] bg-[#f5faf6]/98 px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_30px_rgba(31,72,57,0.08)] md:backdrop-blur-xl md:hidden">
-        <div className="mx-auto flex max-w-lg snap-x snap-mandatory gap-1.5 overflow-x-auto overscroll-x-contain touch-pan-x pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {navegacionConMarca.map(
-            ({
-              icon: Icon,
-              shortLabel,
-              label,
-              to,
-              marca,
-            }) => (
-              <NavLink
-                key={label}
-                to={to}
-                end={to === '/'}
-                className={({
-                  isActive,
-                }) =>
-                  `flex min-w-[76px] flex-1 shrink-0 snap-start flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 transition-all ${
-                    isActive
-                      ? 'bg-[#d5e9dc] text-[#174b38] shadow-[inset_0_0_0_1px_#b4d4bf]'
-                      : 'text-[#356c55] hover:bg-[#e7f1e9] active:bg-[#dbece1]'
-                  }`
-                }
-              >
-                {({
-                  isActive,
-                }) => (
-                  <>
-                    <div
-                      className={`grid h-8 w-8 place-items-center rounded-xl transition ${
-                        isActive || marca
-                          ? 'bg-[#246b55] text-white shadow-[0_5px_14px_rgba(36,107,85,0.22)]'
-                          : 'bg-[#e2efe6] text-[#246b55]'
-                      }`}
-                    >
-                      <Icon
-                        size={18}
-                      />
-                    </div>
-
-                    <span className="max-w-full truncate text-[10px] font-extrabold sm:text-[11px]">
-                      {
-                        shortLabel
-                      }
-                    </span>
-                  </>
-                )}
-              </NavLink>
-            ),
-          )}
-        </div>
-      </nav>
+      {configurarHorario && <div className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto bg-[#102d26]/70 p-3 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Configuración inicial del horario"><div className="my-auto w-full max-w-2xl"><HorarioLaboral primerIngreso onSaved={()=>setConfigurarHorario(false)}/></div></div>}
+      <MenuMovil enlaces={navigationVisible} rol={user.role} pacienteTrabajo={pacienteTrabajo}
+        abierto={menuMovilAbierto} setAbierto={setMenuMovilAbierto} />
+      <ActualizacionPWA />
     </div>
   )
 }

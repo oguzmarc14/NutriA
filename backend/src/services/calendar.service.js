@@ -60,7 +60,7 @@ async function syncAppointment(cita) {
   if (!populated) return
   const id = populated.calendarEventId
   const canceled = populated.estado === 'cancelada'
-  if (canceled && !id) return
+  if (canceled && !id) return true
   const body = {
     summary: 'Consulta NutriA',
     description: 'Cita administrada desde NutriA. Revisa los detalles en la aplicación.',
@@ -75,5 +75,31 @@ async function syncAppointment(cita) {
     else populated.calendarEventId = result.data.id
     await populated.save()
   }
+  return Boolean(result.connected)
 }
-module.exports = { authorizationUrl, connect, syncAppointment, calendarRequest }
+
+// Se ejecuta ANTES de borrar la cita local. Si falla Google, el endpoint no
+// elimina la cita de MongoDB y se puede reintentar de forma segura.
+async function deleteAppointment(cita) {
+  if (!cita.calendarEventId) return true
+  try {
+    const result = await calendarRequest(
+      cita.nutritionist,
+      'DELETE',
+      '/' + encodeURIComponent(cita.calendarEventId),
+    )
+    return Boolean(result.connected)
+  } catch (error) {
+    // Si ya se eliminó directamente en Google, el borrado es idempotente.
+    if (error.message === 'Google Calendar respondió 404') return true
+    throw error
+  }
+}
+
+module.exports = {
+  authorizationUrl,
+  connect,
+  syncAppointment,
+  calendarRequest,
+  deleteAppointment,
+}

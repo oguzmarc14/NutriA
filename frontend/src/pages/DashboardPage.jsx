@@ -3,6 +3,7 @@ import client from '../api/client'
 import {
   Building2, Pencil, TrendingUp, UserRoundPlus, CalendarClock,
   Apple,
+  FileText,
   ClipboardPlus,
   Ruler,
   ShieldCheck,
@@ -35,10 +36,16 @@ const nutritionistModules = [
     to: '/mediciones',
   },
   {
-    description: 'Crea planes básicos con comidas e indicaciones.',
+    description: 'Diseña dietas personalizadas con comidas, horarios y nutrientes.',
     icon: Apple,
-    name: 'Planes alimenticios',
+    name: 'Crear dieta',
     to: '/planes',
+  },
+  {
+    description: 'Consulta los planes guardados, sus horarios y el historial del paciente.',
+    icon: FileText,
+    name: 'Consultar dietas',
+    to: '/dietas',
   },
 ]
 

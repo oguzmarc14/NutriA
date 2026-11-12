@@ -40,8 +40,8 @@ import {
 import client from '../api/client'
 import CardPacientePlanes from '../components/planes/CardPacientePlanes'
 import RecetasDietasPanel from '../components/planes/RecetasDietasPanel'
-import CardPlanRegistrado from '../components/planes/CardPlanRegistrado'
 import ModalPlanGuardado from '../components/planes/ModalPlanGuardado'
+import { exportarPlanPDF } from '../utils/exportarPlanPDF'
 import TarjetaSelectorComida from '../components/planes/TarjetaSelectorComida'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
@@ -213,6 +213,8 @@ function PlanesAlimenticiosPage() {
   const { cerrarTrabajo, iniciarTrabajo, pacienteTrabajo } =
     usePacienteTrabajo()
   const pacienteSolicitado = searchParams.get('paciente') || ''
+  const planSolicitado = searchParams.get('editar') || ''
+  const planCargadoDesdeUrl = useRef('')
   /*
    * PACIENTES
    */
@@ -344,6 +346,8 @@ function PlanesAlimenticiosPage() {
 
   const [error, setError] =
     useState('')
+  const [alertaVisible, setAlertaVisible] = useState('')
+  useEffect(() => { if (error) setAlertaVisible(error) }, [error])
 
   const [mensaje, setMensaje] =
     useState('')
@@ -441,6 +445,18 @@ function PlanesAlimenticiosPage() {
 
     cargarPlanes()
   }, [pacienteId])
+  // Al abrir una dieta desde «Consultar dietas», cargamos ese plan directamente
+  // en el editor sin duplicar los formularios existentes.
+  useEffect(() => {
+    if (!planSolicitado || !pacienteId || pacienteId !== pacienteSolicitado || cargandoPlanes) return
+    const clave = pacienteId + ':' + planSolicitado
+    if (planCargadoDesdeUrl.current === clave) return
+    const plan = planes.find(item => item._id === planSolicitado)
+    if (!plan) return
+    planCargadoDesdeUrl.current = clave
+    editarPlan(plan)
+  }, [pacienteId, pacienteSolicitado, planSolicitado, planes, cargandoPlanes])
+
 
   useEffect(() => {
     if (!pacienteId) { setReferenciaNutricional(null); setErrorReferencia(''); return }
@@ -1652,6 +1668,8 @@ function PlanesAlimenticiosPage() {
       )
 
       setAvisoPlanGuardado({
+        plan: data.plan,
+        paciente: pacientes.find((item) => item._id === pacienteId),
         tipo: tipoGuardado,
         mensaje: tipoGuardado === 'editado'
           ? 'Los cambios del plan alimenticio fueron guardados correctamente.'
@@ -1903,10 +1921,32 @@ function PlanesAlimenticiosPage() {
         <ModalPlanGuardado
           tipo={avisoPlanGuardado.tipo}
           mensaje={avisoPlanGuardado.mensaje}
+          onExportarPDF={() => {
+            try {
+              exportarPlanPDF(avisoPlanGuardado.plan, avisoPlanGuardado.paciente)
+              setAvisoPlanGuardado(null)
+            } catch (error) {
+              setError(error.message || 'No fue posible exportar la dieta.')
+            }
+          }}
           onCerrar={() => setAvisoPlanGuardado(null)}
         />
       )}
 
+      {alertaVisible && (
+        <div className="fixed inset-0 z-[160] flex items-center justify-center bg-[#102d26]/60 p-4 backdrop-blur-sm" role="presentation">
+          <div role="alertdialog" aria-modal="true" aria-labelledby="titulo-alerta-plan" aria-describedby="detalle-alerta-plan" className="w-full max-w-md rounded-3xl border border-[#f4d7c6] bg-white p-6 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-50 text-amber-700"><X size={22} /></span>
+              <div className="min-w-0 flex-1">
+                <h2 id="titulo-alerta-plan" className="text-lg font-extrabold text-[#173f34]">Revisa la información</h2>
+                <p id="detalle-alerta-plan" className="mt-2 text-sm leading-6 text-slate-600">{alertaVisible}</p>
+              </div>
+            </div>
+            <button type="button" autoFocus onClick={() => { setAlertaVisible(''); setError('') }} className="mt-6 w-full rounded-xl bg-[#246b55] px-4 py-3 text-sm font-extrabold text-white hover:bg-[#1d5947]">Entendido</button>
+          </div>
+        </div>
+      )}
       <div className="mx-auto w-full max-w-[1800px]">
         {/* ============================================
             SELECCIÓN DE PACIENTE
@@ -2154,6 +2194,7 @@ function PlanesAlimenticiosPage() {
               onSubmit={
                 guardarPlan
               }
+              noValidate
               className="mb-7 rounded-3xl border border-[#cfe0d6] bg-gradient-to-br from-[#f8fbf8] to-[#edf5f0] p-4 shadow-[0_14px_40px_rgba(32,78,64,0.08)] sm:p-5 md:p-6"
             >
               <div className="mb-6 flex items-start gap-3">
@@ -2961,91 +3002,16 @@ function PlanesAlimenticiosPage() {
               </aside>}
             </div>
 
-            {/* ============================================
-                PLANES REGISTRADOS
-            ============================================ */}
-
-            <div className={`rounded-3xl border border-[#eadfc8] bg-gradient-to-br from-[#fffaf1] to-[#f7efdf] p-4 shadow-[0_14px_40px_rgba(94,76,48,0.07)] sm:p-5 md:p-6 ${panelBalanceVisible ? "xl:mr-[330px] 2xl:mr-[370px]" : ""}`}>
-              <div className="mb-6 flex items-center gap-3">
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#efe2c6] text-[#8a6840]">
-                  <Apple
-                    size={19}
-                  />
-                </div>
-
-                <div>
-                  <h2 className="text-xl font-extrabold text-[#173f34]">
-                    Planes
-                    registrados
-                  </h2>
-
-                  <p className="text-sm text-slate-500">
-                    Historial de
-                    planes del
-                    paciente.
-                  </p>
-                </div>
+            {/* Consulta e historial separados del editor para mantenerlo enfocado. */}
+            <div className={`flex flex-col gap-4 rounded-3xl border border-[#cfe1d4] bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6 ${panelBalanceVisible ? 'xl:mr-[330px] 2xl:mr-[370px]' : ''}`}>
+              <div className="min-w-0">
+                <h2 className="text-lg font-extrabold text-[#173f34]">¿Quieres revisar las dietas guardadas?</h2>
+                <p className="mt-1 text-sm text-[#638070]">Consulta el historial, las horas de cada comida y las opciones para editar o exportar. {cargandoPlanes ? 'Cargando…' : planes.length + ' plan(es) registrados.'}</p>
               </div>
-
-              {cargandoPlanes ? (
-                <div className="py-8 text-center">
-                  <LoaderCircle
-                    size={28}
-                    className="mx-auto mb-3 animate-spin text-[#8a6840]"
-                  />
-
-                  <p className="text-sm text-slate-500">
-                    Cargando
-                    planes...
-                  </p>
-                </div>
-              ) : planes.length ===
-                0 ? (
-                <div className="rounded-2xl border border-dashed border-[#dacdb2] bg-white/45 p-8 text-center">
-                  <Apple
-                    className="mx-auto mb-3 text-[#9a7446]"
-                    size={32}
-                  />
-
-                  <p className="font-bold text-[#173f34]">
-                    Sin planes
-                    registrados
-                  </p>
-
-                  <p className="mt-1 text-sm text-slate-500">
-                    Crea el primer
-                    plan
-                    alimenticio
-                    del paciente.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid gap-4 xl:grid-cols-2">
-                  {planes.map(
-                    (plan) => (
-                      <CardPlanRegistrado
-                        key={
-                          plan._id
-                        }
-                        plan={
-                          plan
-                        }
-                        formatearFecha={
-                          formatearFecha
-                        }
-                        numero={
-                          numero
-                        }
-                        calcularTotales={
-                          calcularTotales
-                        }
-                        onEditar={editarPlan}
-                        onEliminar={eliminarPlan}
-                      />
-                    ),
-                  )}
-                </div>
-              )}
+              <button type="button" onClick={() => navigate('/dietas?paciente=' + encodeURIComponent(pacienteId))} className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-[#246b55] px-5 py-3 text-sm font-extrabold text-white transition hover:bg-[#1e5b44]">
+                Consultar dietas
+                <ArrowLeft size={17} className="ml-2 rotate-180"/>
+              </button>
             </div>
           </>
         )}

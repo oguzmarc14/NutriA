@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Plus, RefreshCw, X } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Plus, RefreshCw, X, Trash2, Ban, CheckCircle2 } from 'lucide-react'
 import client from '../api/client'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { Settings2 } from 'lucide-react'
+import ConfiguracionCitas from '../components/citas/ConfiguracionCitas'
+import ResumenCitas from '../components/citas/ResumenCitas'
 
-const EMPTY = { patient: '', inicio: '', fin: '', tipo: 'seguimiento', estado: 'programada', notas: '' }
+const EMPTY = { patient: '', inicio: '', tipo: 'seguimiento', estado: 'programada', notas: '' }
 const NO_APPOINTMENTS = []
 const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 const WEEKDAYS = [...DAYS.slice(1), DAYS[0]]
@@ -29,7 +33,7 @@ const dateTitle = d => new Intl.DateTimeFormat('es-MX', { weekday:'long', day:'n
 const shortDate = new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
 const weekTitle = (start, end) => shortDate.formatRange(start, end)
 
-function MiniCalendar({ focus, today, onSelect }) {
+function MiniCalendar({ focus, today, onSelect, diasLaborales }) {
   const first = new Date(focus.getFullYear(), focus.getMonth(), 1)
   const begin = startWeek(first)
   const monthLength = new Date(focus.getFullYear(), focus.getMonth() + 1, 0).getDate()
@@ -44,6 +48,8 @@ function MiniCalendar({ focus, today, onSelect }) {
           const date = addDays(begin, i)
           const key = dayKey(date)
           const selected = key === dayKey(focus)
+          // Los días no laborables también deben permitir consultar citas ya existentes.
+          // Sólo se bloquea la programación de citas nuevas.
           return (
             <button key={key} type="button" aria-label={dateTitle(date)}
               aria-current={key === today ? 'date' : undefined} aria-pressed={selected}
@@ -59,12 +65,39 @@ function MiniCalendar({ focus, today, onSelect }) {
 }
 
 export default function CitasPage() {
+  const routerNavigate = useNavigate()
+  const location = useLocation()
+  const [configAbierta,setConfigAbierta] = useState(Boolean(location.state?.abrirConfiguracion))
+  useEffect(() => {
+    // Permite abrir Configurar agenda desde «Más», incluso si ya estamos en /citas.
+    if (!location.state?.abrirConfiguracion) return
+    setConfigAbierta(true)
+    routerNavigate(location.pathname, { replace: true, state: null })
+  }, [location.pathname, location.state, routerNavigate])
+  const [horarioCitas,setHorarioCitas] = useState(null)
   const [view, setView] = useState('semana')
   const [focus, setFocus] = useState(new Date())
   const [result, setResult] = useState(null)
   const [now, setNow] = useState(() => new Date())
   const [pacientes, setPacientes] = useState([])
   const [connected, setConnected] = useState(false)
+  const [horario, setHorario] = useState(null)
+  useEffect(()=>{
+    let activo=true
+    const cargar=()=>client.get('/horario/citas').then(({data})=>{
+      if(activo)setHorarioCitas(data.horarioCitas)
+    }).catch(()=>{})
+    cargar()
+    window.addEventListener('nutria-horario-citas-actualizado',cargar)
+    return ()=>{activo=false;window.removeEventListener('nutria-horario-citas-actualizado',cargar)}
+  },[])
+  useEffect(() => {
+    let active = true
+    const loadHorario = () => client.get('/horario').then(({data}) => {if(active)setHorario(data.horario)}).catch(()=>{})
+    loadHorario()
+    window.addEventListener('nutria-horario-actualizado',loadHorario)
+    return ()=>{active=false;window.removeEventListener('nutria-horario-actualizado',loadHorario)}
+  }, [])
   const [reload, setReload] = useState(0)
   const [patientError, setPatientError] = useState('')
   const [calendarBusy, setCalendarBusy] = useState(false)
@@ -72,6 +105,7 @@ export default function CitasPage() {
   const [saving, setSaving] = useState(false)
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState('')
+  const [originalStart, setOriginalStart] = useState('')
   const [form, setForm] = useState(EMPTY)
   const [error, setError] = useState(() => new URLSearchParams(window.location.search).get('calendar') === 'error'
     ? 'No se pudo autorizar Google Calendar. Revisa la configuración OAuth.'
@@ -168,62 +202,140 @@ export default function CitasPage() {
     return map
   },[filtered])
   const today = dayKey(now)
+  const diasLaborales = horarioCitas?.configurado
+    ? [...new Set(horarioCitas.franjas.map(f=>f.dia))]
+    : horario?.configurado ? horario.dias : null
+  const diaHabilitado = date => !diasLaborales || diasLaborales.includes(new Date(date).getDay())
+  const horasLaborales = horario?.configurado ? { inicio: Number(horario.inicio.slice(0,2)), fin: Number(horario.fin.slice(0,2)) } : {inicio:7,fin:20}
+  const minHora = v => Number(v.slice(0,2))*60+Number(v.slice(3,5))
+  const horasDia = date => {
+    if(!horarioCitas?.configurado)return Array.from({length:Math.max(1,horasLaborales.fin-horasLaborales.inicio)},(_,i)=>i+horasLaborales.inicio)
+    return [...new Set(horarioCitas.franjas.filter(f=>f.dia===new Date(date).getDay()).flatMap(f=>{
+      const first=minHora(f.inicio),last=minHora(f.fin)
+      return Array.from({length:Math.max(0,Math.floor((last-first-60)/60)+1)},(_,i)=>Math.floor((first+i*60)/60))
+    }))].sort((a,b)=>a-b)
+  }
+  const zonaDispositivo = Intl.DateTimeFormat().resolvedOptions().timeZone
+  const zonaDistinta = Boolean(horario?.configurado && horario.zonaHoraria !== zonaDispositivo)
+  const horaOcupada = start => citas.some(c =>
+    c.estado !== 'cancelada' && new Date(c.inicio) < new Date(start.getTime() + 60 * 60 * 1000) && new Date(c.fin) > start
+  )
+  const disponible = date => {
+    if (!diaHabilitado(date)) return false
+    if (!horario?.configurado) return true
+    const minutos = date.getHours()*60+date.getMinutes()
+    const [hi,mi] = horario.inicio.split(':').map(Number)
+    const [hf,mf] = horario.fin.split(':').map(Number)
+    if (!(minutos >= hi*60+mi && minutos+60 <= hf*60+mf))return false
+    if(horarioCitas?.configurado)return horarioCitas.franjas.some(f=>
+      f.dia===date.getDay()&&minutos>=minHora(f.inicio)&&minutos+60<=minHora(f.fin))
+    return true
+  }
 
   function openNew(date = new Date(), hour) {
-    const start = new Date(date.getFullYear(),date.getMonth(),date.getDate(),hour ?? 9,0)
-    const now = new Date()
-    if (hour === undefined && dayKey(start) === dayKey(now) && start < now) {
-      start.setHours(now.getHours() + 1)
-      if (dayKey(start) !== dayKey(date)) start.setTime(now.getTime())
+    if (hour === undefined) {routerNavigate('/citas/nueva');return}
+    const inicio = new Date(date.getFullYear(),date.getMonth(),date.getDate(),hour,0)
+    if(inicio <= new Date() || !disponible(inicio) || horaOcupada(inicio)){
+      setError('Ese horario no está disponible. Elige otro desde Crear cita.')
+      return
     }
-    const end = new Date(start.getTime()+60*60000)
-    setForm({...EMPTY,inicio:localInput(start),fin:localInput(end)})
-    setEditing('');setError('');setModal(true)
+    routerNavigate('/citas/nueva',{state:{inicio:inicio.toISOString(),fecha:dayKey(inicio)}})
   }
+
+  function abrirDesdeResumen(c) {
+    const fecha=new Date(c.inicio)
+    setFocus(fecha)
+    setView('dia')
+    openEdit(c)
+  }
+
   function openEdit(c) {
-    setForm({patient:c.patient?._id||c.patient||'',inicio:localInput(c.inicio),fin:localInput(c.fin),tipo:c.tipo,estado:c.estado,notas:c.notas||''})
-    setEditing(c._id);setError('');setModal(true)
+    setForm({patient:c.patient?._id||c.patient||'',inicio:localInput(c.inicio),tipo:c.tipo,estado:c.estado,notas:c.notas||''})
+    setEditing(c._id);setOriginalStart(c.inicio);setError('');setModal(true)
   }
   function updateField(field, value) {
     setForm(current => ({ ...current, [field]: value }))
   }
 
   function updateStart(inicio) {
-    setForm(current => {
-      const start = Date.parse(inicio)
-      const needsEnd = Number.isFinite(start) && (!current.fin || Date.parse(current.fin) <= start)
-      return { ...current, inicio, fin: needsEnd ? localInput(new Date(start + 3600000)) : current.fin }
-    })
+    setForm(current => ({ ...current, inicio }))
   }
 
   async function persist(payload, id) {
-    const data={...payload,inicio:new Date(payload.inicio).toISOString(),fin:new Date(payload.fin).toISOString(),zonaHoraria:Intl.DateTimeFormat().resolvedOptions().timeZone}
-    return id ? client.put('/citas/'+id,data) : client.post('/citas',data)
+    const start = new Date(payload.inicio)
+    const mismaFecha = Boolean(id && originalStart && start.getTime() === new Date(originalStart).getTime())
+    if (!Number.isFinite(start.getTime()) || (start <= new Date() && !mismaFecha)) {
+      throw new Error('Sólo puedes reprogramar a fechas futuras. Puedes editar notas o estado de citas pasadas sin cambiar su fecha.')
+    }
+    if (!mismaFecha && !disponible(start)) throw new Error('El horario está fuera de tus días u horas de atención.')
+    if (payload.estado === 'completada' && start > new Date()) throw new Error('La cita aún no puede marcarse completada.')
+    const data = {
+      ...payload,
+      inicio: start.toISOString(),
+      zonaHoraria: horario?.zonaHoraria || Intl.DateTimeFormat().resolvedOptions().timeZone,
+    }
+    return id ? client.put('/citas/' + id, data) : client.post('/citas', data)
   }
   async function save(e) {
     e.preventDefault()
-    if (new Date(form.fin)<=new Date(form.inicio)) {setError('La hora final debe ser posterior al inicio');return}
+    if (!form.inicio) {setError('Selecciona una fecha y hora para la cita.');return}
+    if (editing && form.estado === 'cancelada' && citas.find(c => c._id === editing)?.estado !== 'cancelada' &&
+      !window.confirm('¿Cancelar esta consulta? Permanecerá en el historial de NutriA.')) return
     setSaving(true);setError('')
     try {
       const response=await persist(form,editing)
       setModal(false);setNotice((editing?'Cita actualizada':'Cita registrada')+(connected&&!response.data.calendarSynced?' · No se sincronizó con Google Calendar':''))
       load()
-    } catch(e) {setError(e.response?.data?.message||'No se pudo guardar la cita')}
+    } catch(e) {setError(e.response?.data?.message||e.message||'No se pudo guardar la cita')}
     finally {setSaving(false)}
   }
+  async function cambiarEstadoCita(estado) {
+    if (!editing || saving) return
+    if (estado === 'cancelada' && !window.confirm('¿Cancelar esta cita? Permanecerá en el historial y se retirará de Google Calendar si está sincronizada.')) return
+    setSaving(true);setError('')
+    try {
+      const {data} = await client.patch('/citas/' + editing + '/estado', { estado })
+      setModal(false)
+      setNotice(estado === 'cancelada' ? 'Cita cancelada. Se conserva en el historial.' : 'Estado de cita actualizado.' )
+      if (connected && data.calendarSynced === false) setNotice('Estado actualizado en NutriA, pero no se sincronizó con Google Calendar.')
+      load()
+    } catch (e) {
+      setError(e.response?.data?.message || 'No se pudo cambiar el estado de la cita.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function eliminarCita() {
+    if (!editing || saving) return
+    const actual = citas.find(c => c._id === editing)
+    if (!window.confirm(`¿Eliminar definitivamente la cita de ${actual?.patient?.name || 'este paciente'}? Esta acción no se puede deshacer. Para mantener el historial, utiliza «Cancelar cita».`)) return
+    setSaving(true);setError('')
+    try {
+      const {data} = await client.delete('/citas/' + editing)
+      setModal(false)
+      setNotice('Cita eliminada definitivamente en NutriA y, si correspondía, en Google Calendar.')
+      load()
+    } catch (e) {
+      setError(e.response?.data?.message || 'No se pudo eliminar la cita.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function moveAppointment(c, date, hour) {
-    if (saving || c.estado === 'cancelada') return
-    const oldStart=new Date(c.inicio),oldEnd=new Date(c.fin)
+    if (saving || ['cancelada', 'completada'].includes(c.estado) || new Date(c.inicio) <= new Date()) return
+    const oldStart=new Date(c.inicio)
     const start=new Date(date.getFullYear(),date.getMonth(),date.getDate(),hour??oldStart.getHours(),hour===undefined?oldStart.getMinutes():0)
-    const end=new Date(start.getTime()+(oldEnd-oldStart))
+    if (start <= new Date()) { setError('No puedes reprogramar una cita al pasado.'); return }
     if (start.getTime()===oldStart.getTime()) return
     if (!window.confirm(`¿Reprogramar la cita de ${c.patient?.name||'este paciente'} al ${dateTitle(start)} a las ${formatTime(start)}?`)) return
     setSaving(true);setError('')
     try {
-      const response=await persist({patient:c.patient?._id||c.patient,inicio:localInput(start),fin:localInput(end),tipo:c.tipo,estado:c.estado,notas:c.notas||''},c._id)
+      const response=await persist({patient:c.patient?._id||c.patient,inicio:localInput(start),tipo:c.tipo,estado:c.estado,notas:c.notas||''},c._id)
       setNotice('Cita reprogramada'+(connected&&!response.data.calendarSynced?' · No se sincronizó con Google Calendar':''))
       load()
-    } catch(e){setError(e.response?.data?.message||'No se pudo reprogramar la cita')}
+    } catch(e){setError(e.response?.data?.message||e.message||'No se pudo reprogramar la cita')}
     finally{setSaving(false);setDragging('')}
   }
   async function connect() {
@@ -248,9 +360,9 @@ export default function CitasPage() {
 
   const upcoming = filtered.filter(c => Date.parse(c.inicio) > now.getTime() && !['cancelada', 'completada'].includes(c.estado))
   const focusKey = dayKey(focus)
-  const visibleDays = range.days.filter(d => byDay[dayKey(d)]?.length)
+  const visibleDays = range.days.filter(d=>horasDia(d).length>0 || (byDay[dayKey(d)]||[]).length>0)
   const period = view === 'mes' ? formatMonth(focus) : view === 'dia' ? dateTitle(focus) : weekTitle(range.begin, addDays(range.end, -1))
-  const hours = Array.from({ length: 13 }, (_, i) => i + 7)
+  const hours = horasDia(focus)
 
   function showDay(date) {
     setFocus(date)
@@ -283,7 +395,7 @@ export default function CitasPage() {
     return (
       <button key={c._id} type="button"
         aria-label={`Editar cita de ${patient}, ${dateTitle(new Date(c.inicio))}, ${time}, ${status.label}`}
-        draggable={draggable && !saving && c.estado !== 'cancelada'}
+        draggable={draggable && !saving && ['programada', 'confirmada'].includes(c.estado) && new Date(c.inicio) > now}
         onDragStart={e => {
           e.dataTransfer.effectAllowed = 'move'
           e.dataTransfer.setData('text/plain', c._id)
@@ -306,35 +418,51 @@ export default function CitasPage() {
     )
   }
 
-  function dayCards(date, mobile = false) {
+  function hourlySlots(date, compact = false) {
     const key = dayKey(date)
     const events = byDay[key] || []
-    return (
-      <div key={key} {...dropTarget(date)}
-        className={`flex min-w-0 flex-col gap-2 rounded-2xl border p-2 ${mobile ? 'min-h-36' : 'min-h-64'} ${key === today ? 'border-[#a3c6af] bg-[#e7f2e8]' : 'border-[#dce7dd] bg-[#f1f6ef]'} ${dragging ? 'hover:border-[#246b55] hover:bg-[#dfefe3]' : ''}`}>
-        <button type="button" onClick={() => showDay(date)}
-          aria-label={`Abrir ${dateTitle(date)}`} aria-current={key === today ? 'date' : undefined}
-          className={`flex min-h-11 items-center justify-between gap-1 rounded-xl px-1.5 text-xs font-bold text-[#416458] hover:bg-white/70 ${FOCUS}`}>
-          <span className="first-letter:uppercase">{mobile ? dateTitle(date) : DAYS[date.getDay()]}</span>
-          <span className={`grid size-7 shrink-0 place-items-center rounded-full text-sm ${key === today ? 'bg-[#246b55] text-white' : 'bg-white/75 text-[#173f34]'}`}>{date.getDate()}</span>
-        </button>
-        {events.map(c => eventCard(c))}
-        {!events.length && <p className="px-1 py-3 text-xs text-[#526d5d]">Sin citas</p>}
-        <button type="button" onClick={() => openNew(date)} aria-label={`Nueva cita el ${dateTitle(date)}`}
-          className={`mt-auto grid min-h-10 place-items-center rounded-xl border border-dashed border-[#adc5b6] text-[#246b55] hover:bg-white ${FOCUS}`}>
-          <Plus size={17} aria-hidden="true" />
-        </button>
-      </div>
-    )
+    const slots = [...new Set([...horasDia(date), ...events.map(c => new Date(c.inicio).getHours())])].sort((a,b)=>a-b)
+    return <div className="space-y-1">
+      {slots.map(hour => {
+        const start = new Date(date.getFullYear(),date.getMonth(),date.getDate(),hour,0)
+        const booked = events.filter(c => new Date(c.inicio).getHours() === hour)
+        const ocupado = horaOcupada(start)
+        const enabled = disponible(start) && start > new Date() && !ocupado
+        return <div key={hour} {...dropTarget(date,hour)} className="grid min-h-12 grid-cols-[3rem_minmax(0,1fr)] gap-1.5 border-t border-[#d5e4d8] py-1.5 first:border-t-0">
+          <span className="pt-2 text-[10px] font-extrabold tabular-nums text-[#527363]">{pad(hour)}:00</span>
+          <div className="min-w-0 space-y-1">{booked.map(c=>eventCard(c,true))}
+            {!ocupado && <button type="button" disabled={!enabled} onClick={()=>openNew(date,hour)}
+              aria-label={`Agendar a las ${pad(hour)}:00`}
+              className={`min-h-9 w-full rounded-lg border border-dashed px-1 text-left text-[11px] font-semibold ${enabled?'border-[#b6d1bf] text-[#397359] hover:bg-white':'border-transparent text-[#a4b2a8]'}`}>
+              {enabled?'+ Disponible':'—'}
+            </button>}
+          </div>
+        </div>
+      })}
+    </div>
+  }
+
+  function dayCards(date, mobile = false) {
+    const key = dayKey(date)
+    return <div key={key} className={`min-w-0 rounded-2xl border p-2 ${key===today?'border-[#a3c6af] bg-[#e7f2e8]':'border-[#dce7dd] bg-[#f1f6ef]'}`}>
+      {!diaHabilitado(date) && <p className="px-2 pt-1 text-[10px] font-bold text-[#607b6c]">Día sin atención · Citas existentes</p>}
+      <button type="button" onClick={()=>showDay(date)} className="mb-2 flex min-h-11 w-full items-center justify-between rounded-xl px-2 text-xs font-bold text-[#416458] hover:bg-white/70">
+        <span className="first-letter:uppercase">{mobile?dateTitle(date):DAYS[date.getDay()]}</span>
+        <span className="rounded-full bg-white px-2 py-1">{date.getDate()}</span>
+      </button>
+      {hourlySlots(date,true)}
+    </div>
   }
 
   function dayTimeline() {
     const events = byDay[focusKey] || []
-    const times = [...new Set([...hours, ...events.map(c => new Date(c.inicio).getHours())])].sort((a, b) => a - b)
+    const times = [...new Set([...horasDia(focus), ...events.map(c => new Date(c.inicio).getHours())])].sort((a, b) => a - b)
     return (
       <div className="relative space-y-1 px-3 pb-5 sm:px-6">
         {times.map(hour => {
           const booked = events.filter(c => new Date(c.inicio).getHours() === hour)
+          const start = new Date(focus.getFullYear(),focus.getMonth(),focus.getDate(),hour,0)
+          const ocupado = horaOcupada(start)
           const label = `${pad(hour)}:00`
           return (
             <div key={hour} {...dropTarget(focus, hour)}
@@ -342,8 +470,8 @@ export default function CitasPage() {
               <span className="pt-3 text-xs font-bold tabular-nums text-[#526d5d]">{label}</span>
               <div className="min-w-0 space-y-2 border-l-2 border-[#d2e3d6] pl-3">
                 {booked.map(c => eventCard(c))}
-                {!booked.length && (
-                  <button type="button" onClick={() => openNew(focus, hour)}
+                {!ocupado && (
+                  <button type="button" disabled={!disponible(start) || start <= new Date()} onClick={() => openNew(focus, hour)}
                     aria-label={`Nueva cita a las ${label}`}
                     className={`flex min-h-10 w-full items-center gap-2 rounded-xl border border-dashed border-[#c2d6c8] px-3 text-left text-xs font-semibold text-[#416458] hover:bg-[#e6f1e7] ${FOCUS}`}>
                     <Plus size={14} aria-hidden="true" /> {dragging ? `Soltar a las ${label}` : 'Agregar cita'}
@@ -368,19 +496,31 @@ export default function CitasPage() {
             <p className="mb-3 flex items-center gap-2 text-xs font-bold tracking-widest text-[#d0e9d3] uppercase">
               <CalendarDays size={16} aria-hidden="true" /> NutriA · Consultorio
             </p>
-            <h1 className="text-3xl leading-tight font-black tracking-tight sm:text-4xl">Agenda de citas</h1>
+            <h1 className="text-3xl leading-tight font-black tracking-tight sm:text-4xl">Ver citas</h1>
             <p className="mt-2 text-sm text-[#d9eddd]">Organiza tus consultas y haz espacio para tu próxima cita.</p>
           </div>
-          <button type="button" onClick={() => openNew(focus)}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#dcefcf] px-5 py-3 text-sm font-extrabold text-[#173f34] shadow-sm hover:bg-[#eef8e8] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:w-auto">
-            <Plus size={18} aria-hidden="true" /> Nueva cita
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => setConfigAbierta(v=>!v)}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/30 px-4 py-3 text-xs font-extrabold text-white hover:bg-white/15">
+              <Settings2 size={17}/>{configAbierta?'Ocultar configuración':'Configurar agenda'}
+            </button>
+            <button type="button" onClick={() => routerNavigate('/citas/nueva')}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#dcefcf] px-5 py-3 text-sm font-extrabold text-[#173f34] shadow-sm hover:bg-[#eef8e8]">
+              <Plus size={18} aria-hidden="true" /> Crear cita
+            </button>
+          </div>
         </div>
       </header>
+
+      {configAbierta && <ConfiguracionCitas onSave={setHorarioCitas}/>}
+      <ResumenCitas revision={reload} onAbrir={abrirDesdeResumen}/>
 
       {error && !modal && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
       {loadError && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{loadError}</p>}
       {notice && <p role="status" className="rounded-xl bg-[#e4f2e7] p-3 text-sm text-[#205d48]">{notice}</p>}
+      {zonaDistinta && <p role="status" className="rounded-xl border border-[#e7d6b5] bg-[#fbf2df] p-3 text-xs font-semibold text-[#735b35]">
+        Tu consultorio utiliza {horario.zonaHoraria} y este dispositivo utiliza {zonaDispositivo}. Las horas de la agenda se muestran en la zona del dispositivo; el servidor comprueba el horario del consultorio.
+      </p>}
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_15rem] 2xl:grid-cols-[minmax(0,1fr)_17rem]">
         <section aria-label="Calendario de citas" aria-busy={loading} className={`${PANEL} min-w-0`}>
@@ -414,7 +554,7 @@ export default function CitasPage() {
               </select>
             </div>
             {loading && <p role="status" className="text-xs font-semibold text-[#526d5d]">Cargando citas…</p>}
-            {!loading && !loadError && !visibleDays.length && (
+            {!loading && !loadError && !filtered.length && (
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#e7f1e6] px-4 py-3 text-sm">
                 <p className="font-semibold">{filter === 'todas' ? 'No hay citas en este periodo.' : 'No hay citas con este estado.'}</p>
                 <button type="button" onClick={filter === 'todas' ? () => openNew(focus) : () => setFilter('todas')} className={CONTROL}>
@@ -445,28 +585,16 @@ export default function CitasPage() {
           {view === 'dia' && dayTimeline()}
 
           {view === 'mes' && (
-            <div className="px-2 pb-5 sm:px-4">
-              <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
-                {WEEKDAYS.map(d => <div key={d} className="py-1 text-center text-xs font-bold text-[#526d5d]">{d}</div>)}
-                {range.days.map(d => {
-                  const key = dayKey(d)
-                  const events = byDay[key] || []
-                  return (
-                    <div key={key} {...dropTarget(d)}
-                      className={`min-h-12 min-w-0 rounded-xl border p-0.5 sm:min-h-24 sm:p-1.5 ${key === today ? 'border-[#a3c6af] bg-[#e3f0e4]' : 'border-[#e0e9de] bg-[#f1f6ef]'} ${d.getMonth() !== focus.getMonth() ? 'text-[#526d5d]' : ''} ${dragging ? 'hover:border-[#246b55] hover:bg-[#dfefe3]' : ''}`}>
-                      <button type="button" onClick={() => showDay(d)}
-                        aria-label={`Abrir ${dateTitle(d)}, ${events.length} citas`} aria-current={key === today ? 'date' : undefined}
-                        className={`flex min-h-11 w-full flex-col items-center justify-center gap-0.5 rounded-lg text-xs font-bold hover:bg-white/80 sm:flex-row sm:justify-between sm:px-1 ${FOCUS}`}>
-                        <span className={`grid size-6 place-items-center rounded-full ${key === today ? 'bg-[#246b55] text-white' : ''}`}>{d.getDate()}</span>
-                        {!!events.length && <span aria-hidden="true" className="rounded-full bg-[#dcecdf] px-1.5 text-[10px] text-[#205d48]">{events.length}</span>}
-                      </button>
-                      <div className="hidden space-y-1.5 lg:block">
-                        {events.slice(0, 2).map(c => eventCard(c, true))}
-                        {events.length > 2 && <button type="button" onClick={() => showDay(d)} className={`rounded px-1 text-xs font-bold text-[#246b55] hover:underline ${FOCUS}`}>+{events.length - 2} más</button>}
-                      </div>
-                    </div>
-                  )
-                })}
+            <div className="overflow-x-auto px-3 pb-5">
+              <div className="min-w-[740px]">
+                <div className="grid grid-cols-7 gap-1.5">{WEEKDAYS.map(d=><div key={d} className="py-2 text-center text-xs font-bold text-[#526d5d]">{d}</div>)}</div>
+                <div className="grid grid-cols-7 gap-1.5">
+                  {range.days.map(d =>
+                    <div key={dayKey(d)} className="min-w-0 rounded-xl border border-[#dce7dd] bg-[#f1f6ef] p-1">
+                      <button type="button" onClick={()=>showDay(d)} className="mb-1 flex min-h-9 w-full items-center justify-center rounded-lg text-sm font-extrabold hover:bg-white">{d.getDate()}</button>
+                      <div className="space-y-1">{(byDay[dayKey(d)]||[]).map(c=>eventCard(c,true,false))}</div>
+                    </div>)}
+                </div>
               </div>
             </div>
           )}
@@ -478,7 +606,7 @@ export default function CitasPage() {
                   <h3 className="mb-3 flex items-center gap-2 text-sm font-extrabold first-letter:uppercase">
                     <CalendarDays size={16} aria-hidden="true" /> {dateTitle(d)}
                   </h3>
-                  <div className="grid gap-2 sm:grid-cols-2">{byDay[dayKey(d)].map(c => eventCard(c))}</div>
+                  {hourlySlots(d)}
                 </section>
               ))}
             </div>
@@ -497,7 +625,7 @@ export default function CitasPage() {
         </section>
 
         <aside aria-label="Resumen de agenda" className="grid min-w-0 gap-4 md:grid-cols-3 xl:grid-cols-1">
-          <MiniCalendar focus={focus} today={today} onSelect={showDay} />
+          <MiniCalendar focus={focus} today={today} onSelect={showDay} diasLaborales={diasLaborales} />
           <section className={`${PANEL} min-w-0 p-4`}>
             <h2 className="flex items-center gap-2 text-sm font-extrabold"><Clock3 size={17} aria-hidden="true" /> Próximas citas</h2>
             <p className="mt-1 mb-3 text-xs text-[#526d5d]">En el periodo visible</p>
@@ -543,12 +671,9 @@ export default function CitasPage() {
             </label>
             <label className="grid min-w-0 gap-1.5 text-sm font-semibold">
               Inicio
-              <input required type="datetime-local" className={inputClass} value={form.inicio} onChange={e => updateStart(e.target.value)} />
+              <input required type="datetime-local" min={editing && new Date(originalStart) <= now ? undefined : localInput(now)} className={inputClass} value={form.inicio} onChange={e => updateStart(e.target.value)} />
             </label>
-            <label className="grid min-w-0 gap-1.5 text-sm font-semibold">
-              Fin
-              <input required type="datetime-local" className={inputClass} value={form.fin} onChange={e => updateField('fin', e.target.value)} />
-            </label>
+            <p className="self-end rounded-xl bg-[#e5f2eb] px-3 py-3 text-sm font-semibold text-[#246b55]">Duración fija: 1 hora</p>
             <label className="grid gap-1.5 text-sm font-semibold">
               Tipo
               <select className={inputClass} value={form.tipo} onChange={e => updateField('tipo', e.target.value)}>
@@ -558,15 +683,33 @@ export default function CitasPage() {
             <label className="grid gap-1.5 text-sm font-semibold">
               Estado
               <select className={inputClass} value={form.estado} onChange={e => updateField('estado', e.target.value)}>
-                {Object.entries(STATES).map(([key, status]) => <option key={key} value={key}>{status.label}</option>)}
+                {Object.entries(STATES).filter(([key]) => editing || ['programada','confirmada'].includes(key)).map(([key, status]) => <option key={key} value={key}>{status.label}</option>)}
               </select>
             </label>
             <label className="grid gap-1.5 text-sm font-semibold sm:col-span-2">
               Notas
               <textarea maxLength={500} rows={2} className={inputClass} value={form.notas} onChange={e => updateField('notas', e.target.value)} placeholder="Opcional" />
             </label>
+            {editing && (
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#d2e2d6] pt-4 sm:col-span-2">
+                <div className="flex flex-wrap gap-2">
+                  {form.estado !== 'cancelada' && form.estado !== 'completada' && (
+                    <button type="button" onClick={() => cambiarEstadoCita('cancelada')} disabled={saving}
+                      className={`${CONTROL} gap-1.5 text-amber-800`}><Ban size={16}/>Cancelar cita</button>
+                  )}
+                  {new Date(originalStart) <= now && form.estado !== 'completada' && form.estado !== 'cancelada' && (
+                    <button type="button" onClick={() => cambiarEstadoCita('completada')} disabled={saving}
+                      className={`${CONTROL} gap-1.5`}><CheckCircle2 size={16}/>Marcar completada</button>
+                  )}
+                </div>
+                <button type="button" onClick={eliminarCita} disabled={saving}
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 text-xs font-bold text-red-700 hover:bg-red-100 disabled:opacity-50">
+                  <Trash2 size={16}/>Eliminar definitivamente
+                </button>
+              </div>
+            )}
             <div className="flex flex-wrap justify-end gap-2 pt-2 sm:col-span-2">
-              <button type="button" onClick={() => setModal(false)} disabled={saving} className={CONTROL}>Cancelar</button>
+              <button type="button" onClick={() => setModal(false)} disabled={saving} className={CONTROL}>Cerrar</button>
               <button type="submit" disabled={saving} className={`rounded-xl bg-[#246b55] px-5 py-3 text-sm font-bold text-white hover:bg-[#1d5947] disabled:opacity-50 ${FOCUS}`}>
                 {saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Registrar cita'}
               </button>

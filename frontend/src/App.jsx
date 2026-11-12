@@ -11,6 +11,7 @@ import PacientesPage from "./pages/PacientesPage";
 import ExpedientePage from "./pages/ExpedientePage";
 import MedicionesPage from "./pages/MedicionesPage";
 import PlanesAlimenticiosPage from "./pages/PlanesAlimenticiosPage";
+import ConsultarDietasPage from "./pages/ConsultarDietasPage";
 import UsuariosPage from "./pages/UsuariosPage";
 import ActivarCuentaPage from "./pages/ActivarCuentaPage";
 import MiExpedientePage from "./pages/MiExpedientePage";
@@ -24,6 +25,9 @@ import PrivacidadPage from "./pages/PrivacidadPage";
 import TerminosPage from "./pages/TerminosPage";
 import CommunityPage from "./pages/CommunityPage";
 import CitasPage from "./pages/CitasPage";
+import CitasCrearPage from "./pages/CitasCrearPage";
+import AgendaPublicaPage from "./pages/AgendaPublicaPage";
+import EditarPerfilPage from "./pages/EditarPerfilPage";
 import CommunityModeracionPage from "./pages/CommunityModeracionPage";
 
 function App() {
@@ -38,6 +42,7 @@ function App() {
       <Route path="/privacidad" element={<PrivacidadPage />} />
 
       <Route path="/terminos" element={<TerminosPage />} />
+      <Route path="/agenda/:nutritionistId" element={<AgendaPublicaPage />} />
 
       {/* RUTAS PROTEGIDAS */}
 
@@ -76,7 +81,10 @@ function App() {
             <Route path="calculo-nutricional" element={<CalculoNutricionalPage />} />
 
             <Route path="planes" element={<PlanesAlimenticiosPage />} />
+            <Route path="dietas" element={<ConsultarDietasPage />} />
             <Route path="citas" element={<CitasPage />} />
+            <Route path="citas/nueva" element={<CitasCrearPage />} />
+            <Route path="editar-perfil" element={<EditarPerfilPage />} />
 
             <Route path="community" element={<CommunityPage />} />
             <Route path="progreso" element={<ProgresoPacientePage />} />

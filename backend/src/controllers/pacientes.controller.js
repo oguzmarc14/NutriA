@@ -178,10 +178,21 @@ async function obtenerPacientes(
      * solamente su medición más reciente.
      */
 
-    const usuariosPaciente = await User.find({
-      patient: { $in: pacientes.map((paciente) => paciente._id) },
-      role: 'patient',
-    }).select('patient accountStatus').lean()
+    const ids = pacientes.map((paciente) => paciente._id)
+    const [usuariosPaciente, expedientesExistentes, pacientesConPlan] = await Promise.all([
+      User.find({ patient: { $in: ids }, role: 'patient' })
+        .select('patient accountStatus').lean(),
+      ExpedienteClinico.find({
+        paciente: { $in: ids },
+        nutritionist: req.user.id,
+      }).select('paciente').lean(),
+      PlanAlimenticio.distinct('paciente', {
+        paciente: { $in: ids },
+        nutritionist: req.user.id,
+      }),
+    ])
+    const idsConExpediente = new Set(expedientesExistentes.map((item) => String(item.paciente)))
+    const idsConPlan = new Set(pacientesConPlan.map(String))
 
     const estadosPorPaciente = new Map(
       usuariosPaciente.map((usuario) => [
@@ -220,6 +231,10 @@ async function obtenerPacientes(
               ultimaMedicion:
                 ultimaMedicion ||
                 null,
+
+              // Únicamente indicadores de existencia; nunca exponer datos clínicos en avisos.
+              tieneExpediente: idsConExpediente.has(String(paciente._id)),
+              tienePlan: idsConPlan.has(String(paciente._id)),
             }
           },
         ),
