@@ -62,3 +62,12 @@ test('la cuadrícula semanal y mensual caben en pantallas pequeñas', () => {
   assert.match(selector,/nutria-agenda-cal-dia--mes/)
   assert.match(selector,/disabled=\{pasado \|\| sinEspacios\}/)
 })
+
+test('crear cita elimina el banner superior redundante y mantiene actualización discreta', () => {
+  assert.doesNotMatch(pagina, /bg-linear-to-r from-\[#194735\]/)
+  assert.doesNotMatch(pagina, /Consulta la disponibilidad por día, semana o mes y registra un espacio libre/)
+  assert.match(pagina, /Volver a ver citas/)
+  assert.match(pagina, /1\. Selecciona fecha y hora/)
+  assert.match(pagina, /Actualizar horarios disponibles/)
+  assert.match(pagina, /onClick=\{\(\) => setReload\(n => n \+ 1\)\}/)
+})

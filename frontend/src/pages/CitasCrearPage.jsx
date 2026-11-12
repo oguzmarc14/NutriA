@@ -142,22 +142,9 @@ export default function CitasCrearPage() {
 
   return (
     <main className="mx-auto w-full min-w-0 max-w-[1240px] space-y-5 overflow-x-clip p-4 pb-28 md:p-8">
-      <header className="rounded-[27px] bg-linear-to-r from-[#194735] to-[#2b7553] p-6 text-white sm:p-8">
-        <Link to="/citas" className="inline-flex min-h-9 items-center gap-2 text-sm font-bold text-[#dbf4e1]">
-          <ArrowLeft size={17}/>Volver a ver citas
-        </Link>
-        <div className="mt-3 flex items-center gap-3">
-          <CalendarPlus2 size={30}/>
-          <h1 className="text-2xl font-black sm:text-3xl">Crear cita</h1>
-        </div>
-        <p className="mt-2 text-sm text-[#d1eada]">
-          Consulta la disponibilidad por día, semana o mes y registra un espacio libre.
-        </p>
-        <button type="button" onClick={() => setReload(n => n + 1)}
-          className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-xl border border-white/30 px-3 text-xs font-bold hover:bg-white/15">
-          <RefreshCw size={15}/>Actualizar espacios
-        </button>
-      </header>
+      <Link to="/citas" className="nutria-agenda-text inline-flex min-h-10 w-fit items-center gap-2 rounded-xl px-1 text-sm font-bold">
+        <ArrowLeft size={17} aria-hidden="true"/>Volver a ver citas
+      </Link>
 
       {error && <div role="alert" className="nutria-agenda-error rounded-xl border p-4 text-sm font-semibold">{error}</div>}
       {errorPacientes && <div role="alert" className="nutria-agenda-error rounded-xl border p-4 text-sm font-semibold">{errorPacientes}</div>}
@@ -186,7 +173,15 @@ export default function CitasCrearPage() {
         <form onSubmit={registrar}
           className="grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] items-start gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
           <section className="nutria-agenda-panel w-full min-w-0 max-w-full rounded-[24px] border p-3 sm:p-6">
-            <h2 className="mb-4 text-lg font-extrabold">1. Selecciona fecha y hora</h2>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <h1 className="text-lg font-extrabold">1. Selecciona fecha y hora</h1>
+              <button type="button" onClick={() => setReload(n => n + 1)}
+                aria-label="Actualizar horarios disponibles"
+                title="Actualizar horarios disponibles"
+                className="nutria-agenda-secondary inline-flex min-h-10 items-center gap-1.5 rounded-xl border px-3 text-xs font-bold">
+                <RefreshCw size={16} aria-hidden="true"/>Actualizar
+              </button>
+            </div>
             {loading || !data ? (
               <p role="status" className="nutria-agenda-muted rounded-xl p-5 text-center text-sm">
                 Cargando disponibilidad {vista === 'dia' ? 'diaria' : vista === 'semana' ? 'semanal' : 'mensual'}...
