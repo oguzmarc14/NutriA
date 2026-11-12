@@ -38,3 +38,10 @@ test('configuración de agenda y clínicas también son accesibles desde Más', 
   assert.match(source,/Editar perfil y horario laboral/)
   assert.match(source,/Mi clínica/)
 })
+
+test('el menú del nutriólogo conserva los módulos de citas y dietas',()=>{
+  for (const title of ["label: 'Ver citas'","label: 'Crear cita'","label: 'Crear dieta'","label: 'Consultar dietas'","label: 'Cálculo nutricional'"]) {
+    assert.ok(layout.includes(title),'Falta apartado '+title)
+  }
+  assert.match(source,/Buscar actualización y recargar NutriA/)
+})

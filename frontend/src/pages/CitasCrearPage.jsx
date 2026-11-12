@@ -3,6 +3,7 @@ import { ArrowLeft, CalendarPlus2, CheckCircle2, ClipboardList, RefreshCw } from
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import client from '../api/client'
 import SelectorDisponibilidad from '../components/citas/SelectorDisponibilidad'
+import AvisoConfigurarCitas from '../components/citas/AvisoConfigurarCitas'
 import '../components/citas/agenda.css'
 
 const TIPOS=[['primera','Primera consulta'],['seguimiento','Seguimiento'],['otra','Otra consulta']]
@@ -20,6 +21,8 @@ export default function CitasCrearPage(){
   const [error,setError]=useState('')
   const [ok,setOk]=useState('')
   const [reload,setReload]=useState(0)
+  const [sinConfiguracion,setSinConfiguracion]=useState(false)
+  const [mostrarAviso,setMostrarAviso]=useState(false)
   useEffect(()=>{
     let active=true
     setLoading(true);setError('')
@@ -29,6 +32,8 @@ export default function CitasCrearPage(){
     ]).then(([available,people])=>{
       if(!active)return
       if(available.status==='fulfilled'){
+        setSinConfiguracion(false)
+        setMostrarAviso(false)
         setData(available.value.data)
         const desired=location.state?.inicio
         if(desired){
@@ -38,7 +43,14 @@ export default function CitasCrearPage(){
         }
       }else{
         setData(null)
-        setError(available.reason.response?.data?.message||'No fue posible consultar horarios disponibles.')
+        const mensaje = available.reason.response?.data?.message || ''
+        const requiereConfigurar = available.reason.response?.status === 409 &&
+          /configur|bloques de citas|horarios/i.test(mensaje)
+        setSinConfiguracion(requiereConfigurar)
+        setMostrarAviso(requiereConfigurar)
+        if (!requiereConfigurar) {
+          setError(mensaje || 'No fue posible consultar horarios disponibles.')
+        }
       }
       if(people.status==='fulfilled'){
         const body=people.value.data
@@ -78,9 +90,18 @@ export default function CitasCrearPage(){
     {ok && <div role="status" className="nutria-agenda-success flex items-center gap-2 rounded-xl p-4 text-sm font-bold"><CheckCircle2 size={18}/>{ok}</div>}
     {loading?<p role="status" className="nutria-agenda-muted text-sm">Consultando horarios y pacientes...</p>:
       !data?<div className="nutria-agenda-panel rounded-[24px] border p-6">
-        <h2 className="text-xl font-extrabold">Primero configura los horarios de consulta</h2>
-        <p className="mt-2 text-sm opacity-80">Para no mostrar horarios que no trabajas, necesitas definir cuándo ofreces consultas desde Ver citas.</p>
-        <Link to="/citas" state={{abrirConfiguracion:true}} className="nutria-agenda-primary mt-4 inline-flex min-h-11 items-center rounded-xl px-5 text-sm font-bold">Ir a configuración</Link>
+        <h2 className="text-xl font-extrabold">
+          {sinConfiguracion ? 'Primero configura los horarios de consulta' : 'No se pudieron mostrar los espacios'}
+        </h2>
+        <p className="mt-2 text-sm opacity-80">
+          {sinConfiguracion
+            ? 'Define los bloques de consulta para mostrar solamente los horarios en los que atiendes.'
+            : 'Actualiza la disponibilidad o revisa tu conexión.'}
+        </p>
+        {sinConfiguracion && <button type="button" onClick={()=>setMostrarAviso(true)}
+          className="nutria-agenda-primary mt-4 inline-flex min-h-11 items-center rounded-xl px-5 text-sm font-bold">
+          Configurar bloques de citas
+        </button>}
       </div>:
       <form onSubmit={registrar} className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
         <section className="nutria-agenda-panel rounded-[24px] border p-4 sm:p-6">
@@ -116,5 +137,10 @@ export default function CitasCrearPage(){
         </section>
       </form>
     }
+    <AvisoConfigurarCitas
+      abierto={mostrarAviso}
+      onIr={()=>navigate('/citas',{state:{abrirConfiguracion:true}})}
+      onCancelar={()=>setMostrarAviso(false)}
+    />
   </main>
 }

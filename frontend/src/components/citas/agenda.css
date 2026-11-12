@@ -39,3 +39,21 @@ html[data-theme="dark"] .nutria-agenda-tab[aria-selected="true"],html[data-theme
 
 .nutria-agenda-publica{background:#e9f2ea;color:#173f34}
 html[data-theme="dark"] .nutria-agenda-publica{background:#172b20;color:#e8f8ee}
+
+/* Alerta de configuración de citas, en el estilo de confirmaciones NutriA */
+.nutria-citas-aviso-overlay{background:rgba(16,46,36,.60);backdrop-filter:blur(4px)}
+.nutria-citas-aviso{background:#fbfefb;color:#173f34;border-color:#cce5d4;animation:nutria-citas-alert-in .2s ease-out}
+.nutria-citas-aviso-icon{background:#e0f0e5;color:#297857;box-shadow:0 0 0 4px #d0e9d9}
+.nutria-citas-aviso-cancel{background:#f1f6f2;border-color:#c9dbcf;color:#496752}
+.nutria-citas-aviso-cancel:hover{background:#e5f0e8}
+.nutria-citas-aviso-go{background:#287757;color:#fff}
+.nutria-citas-aviso-go:hover{background:#206346}
+html[data-theme="dark"] .nutria-citas-aviso-overlay{background:rgba(2,12,7,.78)}
+html[data-theme="dark"] .nutria-citas-aviso{background:#20382b;color:#e7f7ec;border-color:#628c70}
+html[data-theme="dark"] .nutria-citas-aviso-icon{background:#365e45;color:#b5e8c4;box-shadow:0 0 0 4px #3e6d50}
+html[data-theme="dark"] .nutria-citas-aviso-cancel{background:#325240;color:#dfefe5;border-color:#60866b}
+html[data-theme="dark"] .nutria-citas-aviso-cancel:hover{background:#41664d}
+html[data-theme="dark"] .nutria-citas-aviso-go{background:#3b9164;color:#fff}
+html[data-theme="dark"] .nutria-citas-aviso-go:hover{background:#46a876}
+@keyframes nutria-citas-alert-in{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(prefers-reduced-motion:reduce){.nutria-citas-aviso{animation:none}}
