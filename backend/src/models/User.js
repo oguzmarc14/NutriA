@@ -108,6 +108,14 @@ const userSchema = new mongoose.Schema(
       },
     },
 
+    // Preferencias del nutriólogo: fechas sugeridas tras citas completadas,
+    // nunca vencimientos clínicos declarados del plan alimenticio.
+    recordatoriosSeguimiento: {
+      activo: { type: Boolean, default: true },
+      cicloDias: { type: Number, default: 30, min: 7, max: 90 },
+      anticipacionDias: { type: Number, default: 5, min: 0, max: 30 },
+    },
+
     patient: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Patient',
