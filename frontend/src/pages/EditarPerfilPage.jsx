@@ -25,7 +25,7 @@ export default function EditarPerfilPage() {
   }, [location.hash, location.state, versionHorario])
 
   return (
-    <main className="mx-auto w-full max-w-4xl space-y-5 p-4 pb-28 sm:p-8">
+    <main className="mx-auto w-full min-w-0 max-w-4xl space-y-5 overflow-x-clip p-3 pb-28 sm:p-8">
       <div>
         <h1 className="text-2xl font-black text-[#173f34] sm:text-3xl dark:text-[#e6f6eb]">
           Editar perfil y horario
@@ -34,10 +34,10 @@ export default function EditarPerfilPage() {
           Controla desde aquí cuándo trabajas, los descansos especiales y los espacios que ofreces a tus pacientes.
         </p>
       </div>
-      <nav aria-label="Secciones de horarios" className="flex flex-wrap gap-2">
+      <nav aria-label="Secciones de horarios" className="flex min-w-0 flex-wrap gap-2">
         {SECCIONES.map(({id,titulo,Icono}) => (
           <a href={'#'+id} key={id}
-            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#a6cbb4] bg-[#e4f1e8] px-3 text-xs font-extrabold text-[#246b55] hover:bg-[#d1e8d9] dark:border-[#6b997a] dark:bg-[#325340] dark:text-[#dbf3e2]">
+            className="inline-flex min-h-10 max-w-full items-center gap-2 break-words rounded-xl border border-[#a6cbb4] bg-[#e4f1e8] px-3 text-xs font-extrabold text-[#246b55] hover:bg-[#d1e8d9] dark:border-[#6b997a] dark:bg-[#325340] dark:text-[#dbf3e2]">
             <Icono size={16} aria-hidden="true"/>{titulo}
           </a>
         ))}
