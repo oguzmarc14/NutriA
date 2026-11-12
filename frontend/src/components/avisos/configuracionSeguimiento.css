@@ -17,3 +17,10 @@ html[data-theme="dark"] .nutria-seguimiento-input{background:#1a3625;border-colo
 html[data-theme="dark"] .nutria-seguimiento-save{background:#419465}
 html[data-theme="dark"] .nutria-seguimiento-error{background:#6b3833;border-color:#a97165;color:#ffddd1}
 html[data-theme="dark"] .nutria-seguimiento-success{background:#345f44;color:#e4f7e7}
+/* Recordatorios y etiquetas: encapsular medidas en PWA de 320px+. */
+.nutria-seguimiento-config,.nutria-seguimiento-config form,
+.nutria-seguimiento-config label{min-width:0;max-width:100%}
+.nutria-seguimiento-config h2,.nutria-seguimiento-config label span{overflow-wrap:anywhere}
+.nutria-seguimiento-config label{min-width:0}
+.nutria-seguimiento-input{box-sizing:border-box;display:block;max-width:100%;min-width:0}
+.nutria-seguimiento-config .nutria-seguimiento-card>span{min-width:0;flex:1}
