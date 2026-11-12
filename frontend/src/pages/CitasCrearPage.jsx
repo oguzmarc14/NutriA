@@ -77,7 +77,7 @@ export default function CitasCrearPage(){
       setError(e.response?.data?.message||'No se pudo registrar la consulta. Actualiza la disponibilidad y elige otro horario.')
     }finally{setSaving(false)}
   }
-  return <main className="mx-auto max-w-[1240px] space-y-5 p-4 pb-16 md:p-8">
+  return <main className="mx-auto w-full min-w-0 max-w-[1240px] space-y-5 overflow-x-clip p-4 pb-28 md:p-8">
     <header className="rounded-[27px] bg-linear-to-r from-[#194735] to-[#2b7553] p-6 text-white sm:p-8">
       <Link to="/citas" className="inline-flex min-h-9 items-center gap-2 text-sm font-bold text-[#dbf4e1]"><ArrowLeft size={17}/>Volver a ver citas</Link>
       <div className="mt-3 flex items-center gap-3"><CalendarPlus2 size={30}/><h1 className="text-2xl font-black sm:text-3xl">Crear cita</h1></div>
@@ -103,12 +103,12 @@ export default function CitasCrearPage(){
           Configurar bloques de citas
         </button>}
       </div>:
-      <form onSubmit={registrar} className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
-        <section className="nutria-agenda-panel rounded-[24px] border p-4 sm:p-6">
+      <form onSubmit={registrar} className="grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] items-start gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
+        <section className="nutria-agenda-panel w-full min-w-0 max-w-full rounded-[24px] border p-3 sm:p-6">
           <h2 className="mb-4 text-lg font-extrabold">1. Selecciona fecha y hora</h2>
           <SelectorDisponibilidad dias={data.dias} seleccion={seleccion} onSelect={setSeleccion} zonaHoraria={data.zonaHoraria}/>
         </section>
-        <section className="nutria-agenda-panel rounded-[24px] border p-4 sm:p-6">
+        <section className="nutria-agenda-panel w-full min-w-0 max-w-full rounded-[24px] border p-4 sm:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-extrabold"><ClipboardList size={19}/>2. Datos de la cita</h2>
           <div className="space-y-4">
             <label className="grid gap-2 text-sm font-bold">Paciente
