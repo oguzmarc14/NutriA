@@ -32,13 +32,17 @@ async function conflicto(nutritionist, inicio, fin, excluir) {
 function cumpleHorario(horario, inicio) {
   if (!horario?.configurado) return true
   const partes = Object.fromEntries(new Intl.DateTimeFormat('en-GB', {
-    timeZone: horario.zonaHoraria, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
-  }).formatToParts(inicio).filter(p => ['weekday','hour','minute'].includes(p.type)).map(p => [p.type,p.value]))
+    timeZone: horario.zonaHoraria, weekday: 'short', year:'numeric', month:'2-digit', day:'2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(inicio).filter(p => ['weekday','year','month','day','hour','minute'].includes(p.type)).map(p => [p.type,p.value]))
   const dia = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 }[partes.weekday]
   const minutos = Number(partes.hour)*60 + Number(partes.minute)
   const [hi,mi] = horario.inicio.split(':').map(Number)
   const [hf,mf] = horario.fin.split(':').map(Number)
-  return horario.dias.includes(dia) && minutos >= hi*60+mi && minutos+60 <= hf*60+mf
+  const fechaLocal = partes.year + '-' + partes.month + '-' + partes.day
+  const fechaBloqueada = horario.diasNoLaborables?.some(d => d?.fecha === fechaLocal)
+  return horario.dias.includes(dia) && !fechaBloqueada &&
+    minutos >= hi*60+mi && minutos+60 <= hf*60+mf
 }
 
 async function validar(req, res, original = null) {

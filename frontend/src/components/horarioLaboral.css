@@ -1,0 +1,30 @@
+/* Agenda laboral NutriA: superficie salvia, adaptada a móvil y modo oscuro. */
+.nutria-horario-panel{background:#f5faf5;color:#173f34;border-color:#b7d5c1}
+.nutria-horario-icon{background:#deeee3;color:#2a7958}
+.nutria-horario-muted{color:#547260}
+.nutria-horario-dia{background:#edf5ee;color:#57715f;border-color:#cfdfd2}
+.nutria-horario-dia--on{background:#d6ecdf;color:#205941;border-color:#68ae84}
+.nutria-horario-input{background:#f9fcf9;color:#1d4735;border-color:#bfd7c7}
+.nutria-horario-input:focus{outline:2px solid #6bb08b;outline-offset:2px}
+.nutria-horario-excepciones{background:#ebf4ec;border-color:#c6dccb}
+.nutria-horario-excepcion{background:#f5faf5;border-color:#c9dfd0}
+.nutria-horario-secondary{background:#e5f1e7;color:#316b50;border-color:#c4d9cc}
+.nutria-horario-secondary:hover{background:#d5e9da}
+.nutria-horario-primary{background:#287553;color:#fff}
+.nutria-horario-primary:hover{background:#206045}
+.nutria-horario-error{background:#fbebe7;border-color:#e6bcae;color:#8a4337}
+.nutria-horario-success{background:#dfefe3;color:#246648}
+html[data-theme="dark"] .nutria-horario-panel{background:#213a2c;color:#e9f8ee;border-color:#608d6f}
+html[data-theme="dark"] .nutria-horario-icon{background:#365f47;color:#c1efcb}
+html[data-theme="dark"] .nutria-horario-muted{color:#b7d2bf}
+html[data-theme="dark"] .nutria-horario-dia{background:#2c4836;color:#bed6c3;border-color:#537862}
+html[data-theme="dark"] .nutria-horario-dia--on{background:#386d4e;color:#f0fff3;border-color:#78b990}
+html[data-theme="dark"] .nutria-horario-input{background:#1c3225;color:#e7f9eb;border-color:#668d71}
+html[data-theme="dark"] .nutria-horario-excepciones{background:#294734;border-color:#5a8065}
+html[data-theme="dark"] .nutria-horario-excepcion{background:#345640;border-color:#60856b}
+html[data-theme="dark"] .nutria-horario-secondary{background:#355b43;color:#e0f6e7;border-color:#5a8467}
+html[data-theme="dark"] .nutria-horario-secondary:hover{background:#416c50}
+html[data-theme="dark"] .nutria-horario-primary{background:#3c9167;color:#fff}
+html[data-theme="dark"] .nutria-horario-primary:hover{background:#48a475}
+html[data-theme="dark"] .nutria-horario-error{background:#563532;color:#ffe0d3;border-color:#98685a}
+html[data-theme="dark"] .nutria-horario-success{background:#346348;color:#d8f3e1}

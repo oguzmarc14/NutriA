@@ -16,7 +16,8 @@ const ISO = () => new Date(Date.now() + 72 * 3600_000).toISOString()
 const ORIGEN = () => new Date(Date.now() - 72 * 3600_000).toISOString()
 
 function fixture({ calendarSync = true, deleteError = null, existing = true, inicio = ISO(),
-                   estado = 'confirmada', conEvento = true, conflicto = false } = {}) {
+                   estado = 'confirmada', conEvento = true, conflicto = false,
+                   horarioLaboral = {configurado:false} } = {}) {
   const handlers = new Map()
   const calls = { deleted: false, saved: false, scoped: false, synced: false, created: false, reminderReset: false }
 
@@ -70,7 +71,7 @@ function fixture({ calendarSync = true, deleteError = null, existing = true, ini
     '../models/Cita': Cita,
     '../models/User': {
       findById: () => ({ select: () => ({ lean: async () => ({
-        horarioLaboral: { configurado: false },
+        horarioLaboral,
       }) }) }),
     },
     '../services/calendar.service': {
@@ -191,4 +192,22 @@ test('POST bloquea horarios ocupados y no crea duplicados', async () => {
   const ok = await free.invoke('POST', '/', { body })
   assert.equal(ok.statusCode, 201)
   assert.equal(free.calls.created, true)
+})
+
+test('POST impide registrar citas en vacaciones del consultorio', async () => {
+  const f = fixture({
+    horarioLaboral:{
+      configurado:true, dias:[0,1,2,3,4,5,6],
+      inicio:'08:00',fin:'18:00',zonaHoraria:'America/Mexico_City',
+      diasNoLaborables:[{fecha:'2027-03-15',motivo:'Vacaciones'}],
+    },
+  })
+  const response=await f.invoke('POST','/',{body:{
+    patient:PID,inicio:'2027-03-15T15:00:00.000Z',
+    zonaHoraria:'America/Mexico_City',tipo:'seguimiento',
+    estado:'programada',notas:'',
+  }})
+  assert.equal(response.statusCode,400)
+  assert.equal(f.calls.created,false)
+  assert.match(response.body.message,/días y horas laborales/)
 })

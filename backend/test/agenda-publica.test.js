@@ -95,3 +95,13 @@ test('parámetros abusivos o fechas inválidas no generan consultas ilimitadas',
   assert.equal((await query({dias:1000})).statusCode,400)
   assert.equal((await query({desde:'2026-99-99'})).statusCode,400)
 })
+
+test('festivos y vacaciones excluyen todos los horarios públicos de esa fecha', () => {
+  const vacaciones={...JORNADA,diasNoLaborables:[{fecha:'2026-11-12',motivo:'Día festivo'}]}
+  assert.equal(utils.esDiaNoLaborable(vacaciones,'2026-11-12'),true)
+  assert.equal(utils.esDiaNoLaborable(vacaciones,'2026-11-13'),false)
+  assert.deepEqual(utils.construirDisponibilidad('2026-11-12',CONFIG,vacaciones,[],
+    new Date('2026-11-10T12:00:00Z')),[])
+  assert.equal(utils.construirDisponibilidad('2026-11-12',CONFIG,JORNADA,[],
+    new Date('2026-11-10T12:00:00Z')).length,6)
+})

@@ -425,7 +425,7 @@ function DashboardLayout() {
           <div className="flex shrink-0 items-center gap-2">
             {user.role === 'nutritionist' && <CentroAvisosNutriologo modo="escritorio" />}
             <BotonInstalarApp />
-            <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} irAMiClinica={() => navigate('/mi-clinica')}/>
+            <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} irAMiClinica={() => navigate('/mi-clinica')} irAEditarPerfil={() => navigate('/editar-perfil')}/>
           </div>
         </div>
 

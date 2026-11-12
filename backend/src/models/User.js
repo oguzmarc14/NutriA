@@ -80,6 +80,15 @@ const userSchema = new mongoose.Schema(
       inicio: { type: String, default: '09:00' },
       fin: { type: String, default: '18:00' },
       zonaHoraria: { type: String, default: 'America/Mexico_City' },
+      // Excepciones por fecha local del consultorio (festivos, vacaciones o cierres).
+      diasNoLaborables: {
+        type: [{
+          _id: false,
+          fecha: { type: String, required: true },
+          motivo: { type: String, default: '', maxlength: 80 },
+        }],
+        default: [],
+      },
     },
 
     // Horarios específicos de citas. Son independientes de la jornada laboral:

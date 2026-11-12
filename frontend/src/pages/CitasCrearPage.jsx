@@ -252,7 +252,7 @@ export default function CitasCrearPage() {
 
       <AvisoConfigurarCitas
         abierto={mostrarAviso}
-        onIr={() => navigate('/citas', { state:{ abrirConfiguracion:true } })}
+        onIr={() => navigate('/editar-perfil#horarios-citas')}
         onCancelar={() => setMostrarAviso(false)}
       />
     </main>
