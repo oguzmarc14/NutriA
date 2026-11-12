@@ -1,5 +1,6 @@
+import { confirmarAccion } from '../utils/alertasAccion'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, CalendarPlus2, CheckCircle2, ClipboardList, RefreshCw } from 'lucide-react'
+import { ArrowLeft, CalendarPlus2, CheckCircle2, ClipboardList } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import client from '../api/client'
 import SelectorCrearCita from '../components/citas/SelectorCrearCita'
@@ -32,6 +33,7 @@ export default function CitasCrearPage() {
   const [error, setError] = useState('')
   const [errorPacientes, setErrorPacientes] = useState('')
   const [ok, setOk] = useState('')
+  const [conflicto, setConflicto] = useState('')
   const [reload, setReload] = useState(0)
   const [sinConfiguracion, setSinConfiguracion] = useState(false)
   const [mostrarAviso, setMostrarAviso] = useState(false)
@@ -113,10 +115,12 @@ export default function CitasCrearPage() {
     event.preventDefault()
     setError('')
     setOk('')
+    setConflicto('')
     if (!paciente || !seleccion) {
       setError('Selecciona un paciente y un horario disponible.')
       return
     }
+    if (!(await confirmarAccion('¿Agendar esta cita?'))) return
     setGuardando(true)
     try {
       const respuesta = await client.post('/citas', {
@@ -133,6 +137,12 @@ export default function CitasCrearPage() {
       setNotas('')
       setReload(n => n + 1)
     } catch (err) {
+      if (err.response?.status === 409) {
+        setSeleccion(null)
+        setConflicto(err.response.data?.message || 'El horario se ocupó. Selecciona otro espacio.')
+        setReload(n => n + 1)
+        return
+      }
       setError(err.response?.data?.message ||
         'No se pudo registrar la consulta. Actualiza la disponibilidad y elige otro horario.')
     } finally {
@@ -142,24 +152,7 @@ export default function CitasCrearPage() {
 
   return (
     <main className="mx-auto w-full min-w-0 max-w-[1240px] space-y-5 overflow-x-clip p-4 pb-28 md:p-8">
-      <header className="rounded-[27px] bg-linear-to-r from-[#194735] to-[#2b7553] p-6 text-white sm:p-8">
-        <Link to="/citas" className="inline-flex min-h-9 items-center gap-2 text-sm font-bold text-[#dbf4e1]">
-          <ArrowLeft size={17}/>Volver a ver citas
-        </Link>
-        <div className="mt-3 flex items-center gap-3">
-          <CalendarPlus2 size={30}/>
-          <h1 className="text-2xl font-black sm:text-3xl">Crear cita</h1>
-        </div>
-        <p className="mt-2 text-sm text-[#d1eada]">
-          Consulta la disponibilidad por día, semana o mes y registra un espacio libre.
-        </p>
-        <button type="button" onClick={() => setReload(n => n + 1)}
-          className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-xl border border-white/30 px-3 text-xs font-bold hover:bg-white/15">
-          <RefreshCw size={15}/>Actualizar espacios
-        </button>
-      </header>
-
-      {error && <div role="alert" className="nutria-agenda-error rounded-xl border p-4 text-sm font-semibold">{error}</div>}
+      {(error || conflicto) && <div role="alert" className="nutria-agenda-error rounded-xl border p-4 text-sm font-semibold">{error || conflicto}</div>}
       {errorPacientes && <div role="alert" className="nutria-agenda-error rounded-xl border p-4 text-sm font-semibold">{errorPacientes}</div>}
       {ok && <div role="status" className="nutria-agenda-success flex items-center gap-2 rounded-xl p-4 text-sm font-bold">
         <CheckCircle2 size={18}/>{ok}
@@ -175,6 +168,8 @@ export default function CitasCrearPage() {
               ? 'Define los bloques para mostrar solamente los horarios en los que atiendes.'
               : 'Actualiza la disponibilidad o revisa tu conexión.'}
           </p>
+          {!sinConfiguracion && <button type="button" onClick={() => setReload(n => n + 1)}
+            className="nutria-agenda-secondary mt-4 min-h-11 rounded-xl border px-4 text-sm font-bold">Reintentar</button>}
           {sinConfiguracion && (
             <button type="button" onClick={() => setMostrarAviso(true)}
               className="nutria-agenda-primary mt-4 inline-flex min-h-11 items-center rounded-xl px-5 text-sm font-bold">
@@ -186,7 +181,11 @@ export default function CitasCrearPage() {
         <form onSubmit={registrar}
           className="grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] items-start gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
           <section className="nutria-agenda-panel w-full min-w-0 max-w-full rounded-[24px] border p-3 sm:p-6">
-            <h2 className="mb-4 text-lg font-extrabold">1. Selecciona fecha y hora</h2>
+            <div className="mb-4 flex items-center gap-3">
+              <Link to="/citas" aria-label="Volver a Mis citas"
+                className="nutria-agenda-secondary grid size-11 shrink-0 place-items-center rounded-xl border"><ArrowLeft size={19} aria-hidden="true" /></Link>
+              <h1 className="text-lg font-extrabold">Selecciona fecha y hora</h1>
+            </div>
             {loading || !data ? (
               <p role="status" className="nutria-agenda-muted rounded-xl p-5 text-center text-sm">
                 Cargando disponibilidad {vista === 'dia' ? 'diaria' : vista === 'semana' ? 'semanal' : 'mensual'}...
@@ -196,7 +195,7 @@ export default function CitasCrearPage() {
                 vista={vista} onVista={setVista}
                 foco={fechaFoco} onFoco={setFechaFoco}
                 hoy={hoy || data.hoy}
-                dias={data.dias} seleccion={seleccion} onSelect={setSeleccion}
+                dias={data.dias} seleccion={seleccion} onSelect={valor => { setSeleccion(valor); setConflicto('') }}
                 zonaHoraria={data.zonaHoraria}
               />
             )}

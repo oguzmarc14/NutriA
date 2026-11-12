@@ -9,7 +9,7 @@ const tabs=[
   {id:'todas',label:'Todas las citas',icon:CalendarDays},
   {id:'historial',label:'Historial',icon:CalendarCheck},
 ]
-export default function ResumenCitas({revision=0,onAbrir}) {
+export default function ResumenCitas({revision=0,onAbrir,acciones}) {
   const [data,setData]=useState([])
   const [loading,setLoading]=useState(true)
   const [error,setError]=useState('')
@@ -43,8 +43,8 @@ export default function ResumenCitas({revision=0,onAbrir}) {
   const formatear=iso=>new Intl.DateTimeFormat('es-MX',{dateStyle:'medium',timeStyle:'short'}).format(new Date(iso))
   return <section className="nutria-agenda-panel rounded-[25px] border p-4 sm:p-6" aria-label="Resumen de citas">
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <div><h2 className="text-lg font-black">Mis citas</h2><p className="text-xs opacity-75">Resumen de los últimos 120 y próximos 180 días</p></div>
-      <span className="nutria-agenda-pill rounded-full px-3 py-1 text-xs font-bold">{data.length} registradas en el periodo</span>
+      <div><h1 className="text-xl font-black">Mis citas</h1><p className="text-xs opacity-75">Resumen de los últimos 120 y próximos 180 días</p></div>
+      {acciones}
     </div>
     <div className="mt-4 grid grid-cols-3 gap-2" role="tablist" aria-label="Tipo de cita">
       {tabs.map(item=>{

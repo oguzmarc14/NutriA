@@ -1,3 +1,4 @@
+import { confirmarAccion } from '../utils/alertasAccion'
 import { useEffect, useMemo, useState } from 'react'
 import { BookOpen, Plus, Search, Send, ShieldCheck, X } from 'lucide-react'
 import client from '../api/client'
@@ -35,6 +36,7 @@ export default function CommunityPage() {
     e.preventDefault()
     setError('')
     setAviso('')
+    if (!(await confirmarAccion('¿Guardar esta receta?'))) return
     try {
       await client.post('/community', {
         ...form,
@@ -51,6 +53,7 @@ export default function CommunityPage() {
   }
 
   async function publicar(id) {
+    if (!(await confirmarAccion('¿Enviar la receta a revisión?'))) return
     try {
       const { data } = await client.post('/community/' + id + '/publicar')
       setAviso(data.estado === 'publicada' ? 'Receta publicada en la comunidad.' : 'Receta enviada a revisión.')

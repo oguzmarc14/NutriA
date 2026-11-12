@@ -46,7 +46,7 @@ export default function AvisosPaciente({ paciente, avisos = [], onCerrar, onAcci
 
   return createPortal(
     <div className="nutria-aviso-overlay fixed inset-0 z-[120] grid place-items-center p-3 sm:p-5"
-      onMouseDown={(event) => { if (event.target === event.currentTarget) onCerrar() }}>
+      onClick={(event) => { if (event.target === event.currentTarget) onCerrar() }}>
       <section id="nutria-aviso-dialog" role="dialog" aria-modal="true"
         aria-labelledby="nutria-aviso-titulo" aria-describedby="nutria-aviso-descripcion"
         className="nutria-aviso-dialog flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-[24px] border shadow-2xl">

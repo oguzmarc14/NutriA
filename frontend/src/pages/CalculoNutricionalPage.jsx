@@ -1,3 +1,4 @@
+import { confirmarAccion } from '../utils/alertasAccion'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Activity, Calculator, ChevronRight, ClipboardList, Save, UserRound, AlertCircle } from 'lucide-react'
@@ -76,6 +77,7 @@ export default function CalculoNutricionalPage() {
   async function guardar(e) {
     e.preventDefault()
     if (!valido || !pacienteTrabajo?.id || !medicionId) return
+    if (!(await confirmarAccion('¿Guardar el cálculo nutricional?'))) return
     setGuardando(true); setError(''); setExito('')
     try {
       const { data } = await client.post('/calculo-nutricional/' + pacienteTrabajo.id, {

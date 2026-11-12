@@ -1,3 +1,4 @@
+import { confirmarAccion } from '../utils/alertasAccion'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
@@ -315,6 +316,7 @@ function MedicionesPage() {
       return
     }
 
+    if (!(await confirmarAccion('¿Guardar esta medición?'))) return
     try {
       const editando = Boolean(medicionEditandoId)
 

@@ -1,3 +1,4 @@
+import { confirmarAccion } from '../utils/alertasAccion'
 import { useEffect, useState } from 'react'
 import { Building2, Camera, Save, ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -33,6 +34,7 @@ export default function MiClinicaPage() {
   }
   async function guardar(e) {
     e.preventDefault()
+    if (!(await confirmarAccion('¿Guardar los datos de la clínica?'))) return
     setGuardando(true);setMensaje('');setError('')
     try {
       const {data} = await client.put('/clinica',form)

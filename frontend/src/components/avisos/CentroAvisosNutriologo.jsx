@@ -25,6 +25,7 @@ export default function CentroAvisosNutriologo({ modo = 'escritorio' }) {
   const [actualizando, setActualizando] = useState(true)
   const [errores, setErrores] = useState([])
   const cierreRef = useRef(null)
+  const triggerRef = useRef(null)
   const [visibleEnPantalla, setVisibleEnPantalla] = useState(() => {
     const escritorio = window.matchMedia('(min-width: 768px)').matches
     return modo === 'escritorio' ? escritorio : !escritorio
@@ -73,9 +74,12 @@ export default function CentroAvisosNutriologo({ modo = 'escritorio' }) {
     return () => { activo = false }
   }, [location.pathname, recargar, visibleEnPantalla])
 
+  useEffect(() => { setAbierto(false) }, [location.key, visibleEnPantalla])
+
   useEffect(() => {
     if (!abierto) return undefined
     const original = document.body.style.overflow
+    const trigger = triggerRef.current
     document.body.style.overflow = 'hidden'
     cierreRef.current?.focus()
 
@@ -103,6 +107,7 @@ export default function CentroAvisosNutriologo({ modo = 'escritorio' }) {
     return () => {
       window.removeEventListener('keydown', teclado)
       document.body.style.overflow = original
+      if (trigger?.isConnected) trigger.focus()
     }
   }, [abierto])
 
@@ -138,7 +143,7 @@ export default function CentroAvisosNutriologo({ modo = 'escritorio' }) {
 
   return (
     <>
-      <button type="button" onClick={abrir} title="Centro de atención" aria-label={`Centro de atención: ${numero} avisos por revisar`}
+      <button ref={triggerRef} type="button" onClick={abrir} aria-haspopup="dialog" aria-expanded={abierto} title="Centro de atención" aria-label={`Centro de atención: ${numero} avisos por revisar`}
         className="nutria-centro-trigger relative grid h-10 w-10 shrink-0 place-items-center rounded-xl border transition" >
         <Bell size={19} aria-hidden="true"/>
         {!actualizando && !errores.length && numero > 0 && (
@@ -148,7 +153,7 @@ export default function CentroAvisosNutriologo({ modo = 'escritorio' }) {
 
       {abierto && createPortal(
         <div className="nutria-centro-overlay fixed inset-0 z-[180] grid place-items-center p-3 sm:p-6"
-          onMouseDown={(event) => { if (event.target === event.currentTarget) setAbierto(false) }}>
+          onClick={(event) => { if (event.target === event.currentTarget) setAbierto(false) }}>
           <section id="nutria-centro-aviso-dialog" role="dialog" aria-modal="true"
             aria-labelledby="nutria-centro-titulo" aria-describedby="nutria-centro-descripcion"
             className="nutria-centro-dialog flex max-h-[min(90dvh,800px)] w-full max-w-2xl flex-col overflow-hidden rounded-[24px] border shadow-2xl">

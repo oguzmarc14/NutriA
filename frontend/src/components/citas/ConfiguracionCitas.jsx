@@ -1,3 +1,4 @@
+import { confirmarAccion } from '../../utils/alertasAccion'
 import { useEffect, useMemo, useState } from 'react'
 import { CalendarClock, Check, Copy, Eye, EyeOff, Plus, Save, Share2, Trash2 } from 'lucide-react'
 import { useAuth } from '../../context/auth'
@@ -93,6 +94,7 @@ export default function ConfiguracionCitas({ onSave }) {
     e.preventDefault();setError('');setExito('')
     if(!laboral?.configurado) {setError('Primero configura tu horario laboral desde Editar perfil.');return}
     if(!form.franjas.length){setError('Selecciona al menos un bloque de consulta.');return}
+    if (!(await confirmarAccion('¿Guardar los bloques de citas?'))) return
     setGuardando(true)
     try{
       const payload={...form,franjas:[...form.franjas].sort((a,b)=>a.dia-b.dia||a.inicio.localeCompare(b.inicio))}

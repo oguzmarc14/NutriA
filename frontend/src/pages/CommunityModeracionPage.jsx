@@ -1,3 +1,4 @@
+import { confirmarAccion } from '../utils/alertasAccion'
 import { useEffect, useState } from 'react'
 import client from '../api/client'
 
@@ -14,6 +15,7 @@ export default function CommunityModeracionPage() {
     const motivo = aprobar ? '' : window.prompt('Motivo del rechazo (obligatorio):')
     if (!aprobar && !motivo?.trim()) return
     setOcupado(receta._id)
+    if (!(await confirmarAccion(aprobar ? '¿Aprobar esta receta?' : '¿Rechazar esta receta?'))) return
     try { await client.patch('/community/' + receta._id + '/moderar', { aprobar, motivo }); await cargar() }
     catch (e) { setError(e.response?.data?.message || 'No se pudo moderar la receta') }
     finally { setOcupado('') }

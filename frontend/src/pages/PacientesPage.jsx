@@ -1,3 +1,4 @@
+import { avisarAccion, confirmarAccion } from '../utils/alertasAccion'
 import { useEffect, useState } from 'react'
 import { Plus, RefreshCw, Search, UserRound, X, BriefcaseMedical, Check } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -104,6 +105,7 @@ function PacientesPage() {
 
     if (tipo === 'dejar') {
       cerrarTrabajo()
+      avisarAccion('Selección de paciente finalizada.')
       return
     }
 
@@ -219,6 +221,7 @@ function PacientesPage() {
   async function guardarPaciente(event) {
     event.preventDefault()
 
+    if (!(await confirmarAccion('¿Guardar los datos del paciente?'))) return
     try {
       setGuardando(true)
       setError('')
@@ -288,6 +291,7 @@ function PacientesPage() {
   }
 
   async function reenviarInvitacion(paciente) {
+    if (!(await confirmarAccion('¿Reenviar la invitación a este paciente?'))) return
     try {
       setReenviandoId(paciente._id)
       setError('')

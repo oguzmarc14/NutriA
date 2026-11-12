@@ -1,3 +1,4 @@
+import { confirmarAccion } from '../utils/alertasAccion'
 import { useEffect, useState } from 'react'
 import {
   Activity,
@@ -346,6 +347,7 @@ function ExpedientePage() {
   async function guardarExpediente(event) {
     event.preventDefault()
 
+    if (!(await confirmarAccion('¿Guardar los cambios del expediente?'))) return
     try {
       setGuardando(true)
       setError('')
