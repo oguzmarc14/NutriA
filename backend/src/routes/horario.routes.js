@@ -59,7 +59,7 @@ router.get('/disponibilidad', async (req,res,next) => {
     const zona=user.horarioLaboral.zonaHoraria
     const hoy=fechaLocalAhora(zona)
     const desde=String(req.query.desde || hoy)
-    const dias=Number(req.query.dias || 14)
+    const dias=req.query.dias === undefined ? 14 : Number(req.query.dias)
     if(!Number.isInteger(dias)||dias<1||dias>42||!/^\d{4}-\d{2}-\d{2}$/.test(desde)||
        !Number.isFinite(new Date(desde+'T12:00:00Z').getTime())||
        new Date(desde+'T12:00:00Z').toISOString().slice(0,10)!==desde||
