@@ -1,3 +1,6 @@
+import { router } from 'expo-router'
+import { appointmentPath, dateTime, type Appointment } from '../../src/clinic'
+import { Shortcut } from '../../src/clinic-ui'
 import { useState } from 'react'
 import { Text, View } from 'react-native'
 import { Button, Page, styles } from '../../src/ui'
@@ -5,28 +8,19 @@ import { ListState } from '../../src/list-state'
 import { useList } from '../../src/use-list'
 import { period, type View as AgendaView } from '../../src/agenda'
 
-type Appointment = {
-  _id: string
-  inicio: string
-  fin: string
-  estado: string
-  tipo: string
-  patient: { name: string } | null
-}
-
 const views: AgendaView[] = ['Día', 'Semana', 'Mes']
 const dateFormat = new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium' })
-const timeFormat = new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeStyle: 'short' })
 
 export default function Appointments() {
   const [view, setView] = useState<AgendaView>('Día')
   const [date, setDate] = useState(() => new Date())
   const [start, end] = period(date, view)
-  const query = new URLSearchParams({ desde: start.toISOString(), hasta: end.toISOString() })
-  const { rows, loading, error, reload } = useList<Appointment>(`/citas?${query}`)
+  const { rows, loading, error, reload } = useList<Appointment>(appointmentPath(start, end))
   const lastDay = new Date(end.getTime() - 1)
   return (
     <Page>
+      <Shortcut primary icon="calendar-outline" title="Agendar cita"
+        detail="Elige paciente y horario" onPress={() => router.push('/agendar')} />
       <View style={styles.row}>
         {views.map(item => <Button key={item} expand label={item} selected={item === view} onPress={() => setView(item)} />)}
       </View>
@@ -41,12 +35,9 @@ export default function Appointments() {
       <ListState loading={loading} error={error} reload={reload}
         empty={rows.length ? undefined : 'No hay citas en este periodo.'} />
       {rows.map(item => (
-        <View key={item._id} style={styles.card}>
-          <Text style={styles.cardTitle}>{item.patient?.name ?? 'Paciente'}</Text>
-          <Text style={styles.body}>{timeFormat.format(new Date(item.inicio))}</Text>
-          <Text style={styles.body}>Fin {timeFormat.format(new Date(item.fin))}</Text>
-          <Text style={styles.body}>{item.tipo} · {item.estado}</Text>
-        </View>
+        <Shortcut key={item._id} icon="time-outline" title={item.patient?.name ?? 'Consulta'}
+          detail={dateTime.format(new Date(item.inicio)) + ' · ' + item.estado}
+          onPress={() => router.push({ pathname: '/consulta', params: { id: item._id, start: item.inicio } })} />
       ))}
     </Page>
   )

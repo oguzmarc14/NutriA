@@ -38,10 +38,10 @@ export const styles = StyleSheet.create({
   },
 })
 
-export function Page({ title, children }: { title?: string; children: ReactNode }) {
+export function Page({ title, children, bottomInset }: { title?: string; children: ReactNode; bottomInset?: boolean }) {
   return (
-    <SafeAreaView style={styles.safe} edges={title ? ['top', 'bottom', 'left', 'right'] : ['left', 'right']}>
-      <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
+    <SafeAreaView style={styles.safe} edges={title ? ['top', 'bottom', 'left', 'right'] : bottomInset ? ['bottom', 'left', 'right'] : ['left', 'right']}>
+      <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         {title && <Text accessibilityRole="header" style={styles.title}>{title}</Text>}
         {children}
       </ScrollView>
@@ -66,11 +66,11 @@ export function Button({ label, onPress, disabled, selected, expand }: {
   )
 }
 
-export function BackButton({ onPress }: { onPress: () => void }) {
+export function BackButton({ onPress, label = 'Volver a Inicio' }: { onPress: () => void; label?: string }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel="Volver a Inicio"
+      accessibilityLabel={label}
       onPress={onPress}
       style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
     >

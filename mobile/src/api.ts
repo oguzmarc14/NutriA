@@ -19,6 +19,7 @@ export class ApiError extends Error {
 export async function request<T>(path: string, options: {
   token?: string
   body?: object
+  method?: 'POST' | 'PATCH' | 'PUT'
   signal?: AbortSignal
 } = {}): Promise<T> {
   const base = process.env.EXPO_PUBLIC_API_URL?.trim().replace(/\/+$/, '')
@@ -29,7 +30,7 @@ export async function request<T>(path: string, options: {
   if (options.token) headers.Authorization = `Bearer ${options.token}`
   if (options.body) headers['Content-Type'] = 'application/json'
   const response = await fetch(base + path, {
-    method: options.body ? 'POST' : 'GET',
+    method: options.method ?? (options.body ? 'POST' : 'GET'),
     body: options.body ? JSON.stringify(options.body) : undefined,
     headers,
     signal: options.signal,

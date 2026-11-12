@@ -19,7 +19,7 @@ En Windows, usa una ruta corta para el proyecto, por ejemplo C:/dev/NutriA, y de
 - Paciente activo con contraseña: `POST /auth/paciente/login` recibe `email` y `password`.
 - Administrador y nutriólogo con cuenta autorizada: `POST /auth/google` recibe `credential`, el ID token de Google emitido para el cliente web. El primer inicio exitoso puede vincular la cuenta en el servidor.
 - El JWT se guarda en SecureStore y `GET /auth/me` valida la sesión al reiniciar. Las consultas usan Bearer y un 401 cierra la sesión local.
-- Solo Nutriólogo ve Pacientes y Citas, según los permisos de `GET /pacientes` y `GET /citas`. La agenda empieza en Día, con rangos de Semana y Mes calculados en la zona horaria del dispositivo. Ambas pantallas son de consulta.
+- Solo Nutriólogo ve Pacientes y Citas, según los permisos de `GET /pacientes` y `GET /citas`. La agenda empieza en Día, con rangos de Semana y Mes calculados en la zona horaria del dispositivo. Desde Inicio, Citas y la ficha del paciente se puede agendar. La disponibilidad se consulta en GET /horario/disponibilidad, que requiere horario laboral y bloques de citas configurados en la web. La app usa POST /citas para crear, PATCH /citas/:id/estado para confirmar y PUT /citas/:id para reprogramar. Las operaciones reales pueden sincronizarse con Google Calendar según la configuración del backend.
 - Admin y Paciente tienen un dashboard de cuenta con su rol y cierre de sesión.
 
 ## Verificación

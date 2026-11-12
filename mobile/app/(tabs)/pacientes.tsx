@@ -1,22 +1,29 @@
-import { Text, View } from 'react-native'
+import { useState } from 'react'
+import { router } from 'expo-router'
+import { Text, TextInput } from 'react-native'
+import { matchesPatient, type Patient } from '../../src/clinic'
+import { Shortcut } from '../../src/clinic-ui'
 import { Page, styles } from '../../src/ui'
 import { useList } from '../../src/use-list'
 import { ListState } from '../../src/list-state'
 
-type Patient = { _id: string; name: string; email?: string }
-
 export default function Patients() {
-  const { rows, loading, error, reload } = useList<Patient>('/pacientes', 'pacientes')
+  const list = useList<Patient>('/pacientes', 'pacientes')
+  const [search, setSearch] = useState('')
+  const results = list.rows.filter(item => matchesPatient(item, search))
+
   return (
     <Page>
-      <ListState loading={loading} error={error} reload={reload}
-        empty={rows.length ? undefined : 'No hay pacientes activos.'} />
-      {rows.map(patient => (
-        <View key={patient._id} style={styles.card}>
-          <Text style={styles.cardTitle}>{patient.name}</Text>
-          {!!patient.email && <Text style={styles.body}>{patient.email}</Text>}
-        </View>
-      ))}
+      <TextInput accessibilityLabel="Buscar pacientes" placeholder="Buscar por nombre o correo"
+        style={styles.input} value={search} onChangeText={setSearch} autoCorrect={false}
+        returnKeyType="search" />
+      {list.loading || list.error || !list.rows.length ? (
+        <ListState {...list} empty="No hay pacientes activos." />
+      ) : !results.length ? <Text style={styles.body}>No encontramos pacientes con esa búsqueda.</Text> :
+        results.map(patient => (
+          <Shortcut key={patient._id} icon="person-outline" title={patient.name} detail={patient.email}
+            onPress={() => router.push({ pathname: '/paciente', params: { id: patient._id } })} />
+        ))}
     </Page>
   )
 }
