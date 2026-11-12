@@ -20,7 +20,8 @@ test('nutriólogo con paciente activo conserva Ver y Crear citas', () => {
   assert.ok(rutas.includes('/pacientes'))
 })
 test('navegación de paciente y administrador conserva apartados de su rol', () => {
-  assert.ok(rutasRapidas('patient',null).includes('/mi-expediente'))
+  assert.ok(rutasRapidas('patient',null).includes('/mis-citas'))
+  assert.match(layout,/label: 'Mi expediente'/)
   assert.ok(rutasRapidas('patient',null).includes('/mi-plan'))
   assert.ok(rutasRapidas('admin',null).includes('/usuarios'))
   assert.ok(rutasRapidas('admin',null).includes('/community/moderacion'))
