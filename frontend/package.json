@@ -8,7 +8,7 @@
     "build": "node scripts/prepare-pwa.mjs && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test:menu": "node --test test/menuMovil.test.js test/pwa.test.js test/avisoCitas.test.js test/horariosResponsive.test.js"
+    "test:menu": "node --test test/menuMovil.test.js test/pwa.test.js test/avisoCitas.test.js test/horariosResponsive.test.js test/cardPaciente.test.js"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",

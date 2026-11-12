@@ -202,3 +202,58 @@ html[data-theme="dark"] .nutria-aviso-action {
   background: #32835c;
 }
 html[data-theme="dark"] .nutria-aviso-action:hover { background: #42946b; }
+
+/* Patient card v3: focus one actionable notice, keep actions under the three-dot menu. */
+.nutria-patient-card{overflow:visible;color:#183f32}
+.nutria-patient-card__avatar{background:#d8e9df;color:#225d45}
+.nutria-patient-card__status,.nutria-patient-card__details,.nutria-patient-card__muted{color:#667b6b}
+.nutria-patient-card__bell{background:#f0f7f1;border-color:#c9dbce;color:#315f49}
+.nutria-patient-card__bell:hover{background:#dfede3;border-color:#8fbea0}
+.nutria-patient-card__count{background:#287958;color:#fff}
+.nutria-patient-card__menu-trigger{color:#526f5c}
+.nutria-patient-card__menu-trigger:hover{background:#e3f0e7}
+.nutria-patient-card__dropdown{background:#f7fcf8;border-color:#a9cbb5;color:#244e37}
+.nutria-patient-card__menuitem:hover,.nutria-patient-card__menuitem:focus-visible{background:#e4f2e8}
+.nutria-patient-card__delete{color:#ad4541}
+.nutria-patient-card__delete:hover{background:#fff0ec}
+.nutria-patient-card__highlight{background:#f0f4ef;border-color:#cdddcf;color:#294a3a}
+.nutria-patient-card__highlight h3{color:#4c4934}
+.nutria-patient-card__tag{background:#fae6d6;color:#9b562d}
+.nutria-patient-card__see{color:#266849}
+.nutria-patient-card__see:hover{background:#e0eae0}
+.nutria-patient-card__metric-title{color:#677e6e}
+.nutria-patient-card__metric-value{color:#1d4a36}
+.nutria-patient-card__notes{color:#64553f}
+.nutria-patient-card__clear{color:#3c8563}
+.nutria-patient-card__work{background:#d1e7d8;border:1px solid #acd0b7;color:#215f44}
+.nutria-patient-card__work:hover{background:#bde0c9}
+.nutria-patient-card__work--active{background:#287657;border-color:#226448;color:#fff}
+.nutria-patient-card__work--active:hover{background:#1e6046}
+.nutria-patient-card__whatsapp{background:#e8f5e8;border-color:#c4dec9;color:#287451}
+.nutria-patient-card__whatsapp:not(:disabled):hover{background:#d7eddd;border-color:#96c9a7}
+html[data-theme="dark"] .nutria-patient-card{color:#e7f7ed}
+html[data-theme="dark"] .nutria-patient-card__avatar{background:#395c47;color:#d8f4df}
+html[data-theme="dark"] .nutria-patient-card__status,html[data-theme="dark"] .nutria-patient-card__details,html[data-theme="dark"] .nutria-patient-card__muted{color:#b7d1bd}
+html[data-theme="dark"] .nutria-patient-card__bell{background:#2f4d3b;border-color:#729c7c;color:#d4f2df}
+html[data-theme="dark"] .nutria-patient-card__bell:hover{background:#3e624b}
+html[data-theme="dark"] .nutria-patient-card__count{background:#72c999;color:#153826}
+html[data-theme="dark"] .nutria-patient-card__menu-trigger{color:#d1e9d9}
+html[data-theme="dark"] .nutria-patient-card__menu-trigger:hover{background:#3a644b}
+html[data-theme="dark"] .nutria-patient-card__dropdown{background:#253f30;border-color:#699678;color:#e9f7ed}
+html[data-theme="dark"] .nutria-patient-card__menuitem:hover,html[data-theme="dark"] .nutria-patient-card__menuitem:focus-visible{background:#3c5f48}
+html[data-theme="dark"] .nutria-patient-card__delete{color:#ffb6a5}
+html[data-theme="dark"] .nutria-patient-card__delete:hover{background:#694640}
+html[data-theme="dark"] .nutria-patient-card__highlight{background:#324839;border-color:#668772;color:#e4f2e8}
+html[data-theme="dark"] .nutria-patient-card__highlight h3{color:#f0d9b8}
+html[data-theme="dark"] .nutria-patient-card__tag{background:#614a3b;color:#ffdebb}
+html[data-theme="dark"] .nutria-patient-card__see{color:#b8edc9}
+html[data-theme="dark"] .nutria-patient-card__see:hover{background:#3d604a}
+html[data-theme="dark"] .nutria-patient-card__metric-title{color:#b7ceb9}
+html[data-theme="dark"] .nutria-patient-card__metric-value{color:#ecf9ee}
+html[data-theme="dark"] .nutria-patient-card__notes{color:#f0e7c9}
+html[data-theme="dark"] .nutria-patient-card__clear{color:#b4e7c3}
+html[data-theme="dark"] .nutria-patient-card__work{background:#416d50;border-color:#729f7e;color:#f0fff5}
+html[data-theme="dark"] .nutria-patient-card__work:hover{background:#4e805e}
+html[data-theme="dark"] .nutria-patient-card__work--active{background:#49956c;border-color:#92d3aa;color:#fff}
+html[data-theme="dark"] .nutria-patient-card__work--active:hover{background:#34845a}
+html[data-theme="dark"] .nutria-patient-card__whatsapp{background:#385f46;border-color:#6d9976;color:#e9f7ed}
