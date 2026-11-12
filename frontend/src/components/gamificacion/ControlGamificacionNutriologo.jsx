@@ -1,3 +1,4 @@
+import { confirmarAccion } from '../../utils/alertasAccion'
 import { useEffect, useState } from 'react'
 import { HeartHandshake, PauseCircle, PlayCircle } from 'lucide-react'
 import client from '../../api/client'
@@ -32,6 +33,7 @@ export default function ControlGamificacionNutriologo({ pacienteId }) {
 
   async function cambiarPermiso() {
     if (!preferencias || guardando) return
+    if (!(await confirmarAccion('¿Cambiar el acceso al seguimiento de logros?'))) return
     setGuardando(true)
     setError('')
     try {

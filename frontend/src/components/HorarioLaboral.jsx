@@ -1,3 +1,4 @@
+import { confirmarAccion } from '../utils/alertasAccion'
 import { useEffect, useState } from 'react'
 import { CalendarDays, Clock3, Save } from 'lucide-react'
 import client from '../api/client'
@@ -24,6 +25,7 @@ export default function HorarioLaboral({ primerIngreso = false, onSaved }) {
     if (!form.dias.length) {setError('Selecciona al menos un día laboral.');return}
     if (form.fin <= form.inicio) {setError('La hora de salida debe ser posterior a la de entrada.');return}
     setSaving(true)
+    if (!(await confirmarAccion('¿Guardar el horario laboral?'))) return
     try {
       const {data}=await client.put('/horario',form)
       setSuccess('Tu horario se guardó correctamente.')

@@ -1,3 +1,4 @@
+import { confirmarAccion } from '../../utils/alertasAccion'
 import { useState } from 'react'
 import { CheckCircle2, LoaderCircle, MessageCircle, ThumbsUp, X } from 'lucide-react'
 import client from '../../api/client'
@@ -25,6 +26,7 @@ function ModalSeguimientoComida({ comida, fecha, onCerrar, onGuardado, plan, reg
   if (!comida) return null
 
   async function guardar() {
+    if (!(await confirmarAccion('¿Guardar este registro de comida?'))) return
     try {
       setGuardando(true)
       setError('')

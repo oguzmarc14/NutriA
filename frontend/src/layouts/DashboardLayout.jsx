@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react'
+import { confirmarAccion, avisarAccion } from '../utils/alertasAccion'
+import { useCerrarAlSalir } from '../utils/useCerrarAlSalir'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import client from '../api/client'
 import HorarioLaboral from '../components/HorarioLaboral'
 import {
@@ -48,8 +50,13 @@ import ActualizacionPWA from '../components/pwa/ActualizacionPWA'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
 function PerfilMenu({ user, roleLabel, cerrarSesion, irAMiClinica, irAEditarPerfil }) {
+  const menu = useRef(null)
+  const { key } = useLocation()
+  const cerrar = useCallback(() => { if (menu.current?.open) menu.current.open = false }, [])
+  useCerrarAlSalir(menu, cerrar)
+  useEffect(cerrar, [cerrar, key])
   return (
-    <details className="group relative">
+    <details ref={menu} className="group relative">
       <summary aria-label="Abrir menú de perfil" className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-[#bcd8c7] bg-[#e3f0e7] text-[#246b55] shadow-sm transition hover:bg-[#d5e8db] [&::-webkit-details-marker]:hidden">
         <UserRound size={20}/>
       </summary>
@@ -59,14 +66,14 @@ function PerfilMenu({ user, roleLabel, cerrarSesion, irAMiClinica, irAEditarPerf
           <p className="text-xs text-[#74897d]">{roleLabel}</p>
           {user.email && <p className="mt-1 break-all text-[11px] text-[#82928a]">{user.email}</p>}
         </div>
-        {user.role === 'nutritionist' && <button type="button" onClick={irAMiClinica} className="my-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#246b55] hover:bg-[#eef5f1]"><Building2 size={16}/>Mi clínica</button>}
-        {user.role === 'nutritionist' && <button type="button" onClick={irAEditarPerfil} className="my-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#246b55] hover:bg-[#eef5f1]"><UserPen size={16}/>Editar perfil y horario</button>}
+        {user.role === 'nutritionist' && <button type="button" onClick={() => { cerrar(); irAMiClinica() }} className="my-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#246b55] hover:bg-[#eef5f1]"><Building2 size={16}/>Mi clínica</button>}
+        {user.role === 'nutritionist' && <button type="button" onClick={() => { cerrar(); irAEditarPerfil() }} className="my-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#246b55] hover:bg-[#eef5f1]"><UserPen size={16}/>Editar perfil y horario</button>}
         <div className="my-1 flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-[#8b9b92]" title="Próximamente: configuración">
           <Settings size={16}/> Configuración · Próximamente
         </div>
         <ThemeSelector />
         <div className="my-2 border-t border-[#e7eee8]"/>
-        <button type="button" onClick={cerrarSesion} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-[#b94d4d] transition hover:bg-red-50">
+        <button type="button" onClick={() => { cerrar(); cerrarSesion() }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-[#b94d4d] transition hover:bg-red-50">
           <LogOut size={16}/> Cerrar sesión
         </button>
       </div>
@@ -297,8 +304,10 @@ function DashboardLayout() {
    * ----------------------------------------------------
    */
 
-  function cerrarSesion() {
+  async function cerrarSesion() {
+    if (!(await confirmarAccion('¿Cerrar sesión?'))) return
     logout()
+    avisarAccion('Sesión cerrada.')
   }
 
   return (
@@ -412,7 +421,7 @@ function DashboardLayout() {
                   <span className="max-w-[min(42vw,480px)] truncate text-xs font-bold text-[#173f34]">{pacienteTrabajo.name}</span>
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#62a881]" title="Paciente activo" />
                   <button type="button" onClick={() => navigate('/pacientes')} aria-label="Cambiar paciente" title="Cambiar paciente" className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[#4d816f] transition hover:bg-[#e1f0e7] hover:text-[#173f34]"><ArrowLeftRight size={16}/></button>
-                  <button type="button" onClick={() => { if (window.confirm('¿Dejar de trabajar con este paciente?')) cerrarTrabajo() }} aria-label="Dejar de trabajar con el paciente" title="Finalizar trabajo con paciente" className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[#789286] transition hover:bg-red-50 hover:text-red-600"><X size={16}/></button>
+                  <button type="button" onClick={async () => { if (await confirmarAccion('¿Dejar de trabajar con este paciente?')) { cerrarTrabajo(); avisarAccion('Selección de paciente finalizada.') } }} aria-label="Dejar de trabajar con el paciente" title="Finalizar trabajo con paciente" className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[#789286] transition hover:bg-red-50 hover:text-red-600"><X size={16}/></button>
                 </>
               ) : (
                 <>

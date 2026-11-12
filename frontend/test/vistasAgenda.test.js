@@ -51,7 +51,7 @@ test('todas las vistas mantienen las horas, la selección y la duración', () =>
   assert.match(selector,/aria-pressed=\{seleccion\?\.inicio === espacio\.inicio\}/)
   assert.match(selector,/Cada cita dura 60 minutos/)
   assert.match(pagina,/params: \{ desde: rango.desde, dias: rango.dias \}/)
-  assert.match(pagina,/onSelect=\{setSeleccion\}/)
+  assert.match(pagina,/onSelect=\{valor => \{ setSeleccion\(valor\); setConflicto\(''\) \}\}/)
   assert.match(pagina,/setSeleccion\(null\)/)
   assert.match(publico,/SelectorDisponibilidad/)
 })

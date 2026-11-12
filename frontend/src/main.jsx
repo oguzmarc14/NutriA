@@ -6,6 +6,7 @@ import './index.css'
 import './theme/dark.css'
 import { ThemeProvider } from './theme/ThemeProvider'
 import App from './App.jsx'
+import AlertasAccion from './components/AlertasAccion'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -13,6 +14,7 @@ createRoot(document.getElementById('root')).render(
       <ThemeProvider>
         <AuthProvider>
           <App />
+          <AlertasAccion />
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

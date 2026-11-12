@@ -1,3 +1,4 @@
+import { confirmarAccion } from '../utils/alertasAccion'
 import { useEffect, useState } from 'react'
 import {
   LoaderCircle,
@@ -78,6 +79,7 @@ function UsuariosPage() {
       return
     }
 
+    if (!(await confirmarAccion('¿Autorizar el acceso de este usuario?'))) return
     try {
       setGuardando(true)
 
@@ -113,6 +115,7 @@ function UsuariosPage() {
   }
 
   async function cambiarEstado(usuario) {
+    if (!(await confirmarAccion(usuario.active ? '¿Desactivar a este usuario?' : '¿Activar a este usuario?'))) return
     try {
       setActualizandoId(usuario.id)
       setError('')

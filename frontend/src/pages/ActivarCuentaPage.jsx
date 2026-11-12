@@ -1,3 +1,4 @@
+import { confirmarAccion } from '../utils/alertasAccion'
 import { Leaf, LoaderCircle } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -34,6 +35,7 @@ function ActivarCuentaPage() {
       return
     }
 
+    if (!(await confirmarAccion('¿Activar tu cuenta?'))) return
     try {
       setLoading(true)
       await client.post('/auth/paciente/activar', { token, password })

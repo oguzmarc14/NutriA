@@ -1,3 +1,4 @@
+import { confirmarAccion } from '../../utils/alertasAccion'
 import { useEffect, useState } from 'react'
 import { Award, Heart, Leaf, MessageCircle, PauseCircle, PlayCircle, Sparkles, Sun } from 'lucide-react'
 import client from '../../api/client'
@@ -37,6 +38,7 @@ export default function MiCaminoNutriA() {
 
   async function cambiarParticipacion() {
     if (guardando || !preferencias?.permitidaPorNutriologo) return
+    if (!(await confirmarAccion('¿Cambiar tu participación en Mi Camino?'))) return
     setGuardando(true)
     setError('')
     try {

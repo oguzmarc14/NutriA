@@ -85,7 +85,7 @@ export default function MenuMovil({ enlaces, rol, pacienteTrabajo, abierto, setA
     </nav>
     {abierto && createPortal(
       <div className="nutria-menu-fondo fixed inset-0 z-[220] flex items-end justify-center md:hidden"
-        onMouseDown={e=>{if(e.target===e.currentTarget)setAbierto(false)}}>
+        onClick={e=>{if(e.target===e.currentTarget)setAbierto(false)}}>
         <section id="nutria-menu-movil-panel" role="dialog" aria-modal="true"
           aria-labelledby="nutria-menu-movil-titulo"
           className="nutria-menu-panel flex max-h-[min(88dvh,780px)] w-full max-w-lg flex-col rounded-t-[28px] border-x border-t shadow-2xl">

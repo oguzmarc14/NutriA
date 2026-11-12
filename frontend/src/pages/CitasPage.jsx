@@ -1,3 +1,4 @@
+import { confirmarAccion } from '../utils/alertasAccion'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Plus, RefreshCw, X, Trash2, Ban, CheckCircle2 } from 'lucide-react'
 import client from '../api/client'
@@ -279,8 +280,10 @@ export default function CitasPage() {
   async function save(e) {
     e.preventDefault()
     if (!form.inicio) {setError('Selecciona una fecha y hora para la cita.');return}
-    if (editing && form.estado === 'cancelada' && citas.find(c => c._id === editing)?.estado !== 'cancelada' &&
-      !window.confirm('¿Cancelar esta consulta? Permanecerá en el historial de NutriA.')) return
+    if (saving) return
+    const cancelando = editing && form.estado === 'cancelada' && citas.find(c => c._id === editing)?.estado !== 'cancelada'
+    if (!(await confirmarAccion(cancelando ? '¿Cancelar esta cita?' : editing ? '¿Guardar los cambios?' : '¿Registrar esta cita?',
+      cancelando ? 'La cita permanecerá en el historial de NutriA.' : '', !!cancelando))) return
     setSaving(true);setError('')
     try {
       const response=await persist(form,editing)
@@ -291,7 +294,9 @@ export default function CitasPage() {
   }
   async function cambiarEstadoCita(estado) {
     if (!editing || saving) return
-    if (estado === 'cancelada' && !window.confirm('¿Cancelar esta cita? Permanecerá en el historial y se retirará de Google Calendar si está sincronizada.')) return
+    const cancelar = estado === 'cancelada'
+    if (!(await confirmarAccion(cancelar ? '¿Cancelar esta cita?' : '¿Marcar la cita como completada?',
+      cancelar ? 'La cita se conserva en el historial y se retira de Google Calendar si está sincronizada.' : '', cancelar))) return
     setSaving(true);setError('')
     try {
       const {data} = await client.patch('/citas/' + editing + '/estado', { estado })
@@ -309,10 +314,10 @@ export default function CitasPage() {
   async function eliminarCita() {
     if (!editing || saving) return
     const actual = citas.find(c => c._id === editing)
-    if (!window.confirm(`¿Eliminar definitivamente la cita de ${actual?.patient?.name || 'este paciente'}? Esta acción no se puede deshacer. Para mantener el historial, utiliza «Cancelar cita».`)) return
+    if (!(await confirmarAccion(`¿Eliminar la cita de ${actual?.patient?.name || 'este paciente'}?`, 'Se eliminará definitivamente. Para conservar el historial, usa Cancelar cita.', true))) return
     setSaving(true);setError('')
     try {
-      const {data} = await client.delete('/citas/' + editing)
+      await client.delete('/citas/' + editing)
       setModal(false)
       setNotice('Cita eliminada definitivamente en NutriA y, si correspondía, en Google Calendar.')
       load()
@@ -329,7 +334,7 @@ export default function CitasPage() {
     const start=new Date(date.getFullYear(),date.getMonth(),date.getDate(),hour??oldStart.getHours(),hour===undefined?oldStart.getMinutes():0)
     if (start <= new Date()) { setError('No puedes reprogramar una cita al pasado.'); return }
     if (start.getTime()===oldStart.getTime()) return
-    if (!window.confirm(`¿Reprogramar la cita de ${c.patient?.name||'este paciente'} al ${dateTitle(start)} a las ${formatTime(start)}?`)) return
+    if (!(await confirmarAccion('¿Reprogramar esta cita?', `${c.patient?.name || 'Paciente'} · ${dateTitle(start)} · ${formatTime(start)}`))) return
     setSaving(true);setError('')
     try {
       const response=await persist({patient:c.patient?._id||c.patient,inicio:localInput(start),tipo:c.tipo,estado:c.estado,notas:c.notas||''},c._id)
@@ -339,12 +344,13 @@ export default function CitasPage() {
     finally{setSaving(false);setDragging('')}
   }
   async function connect() {
+    if (!(await confirmarAccion('¿Conectar Google Calendar?', 'Se abrirá Google para autorizar la conexión.'))) return
     setCalendarBusy(true)
     try {const {data}=await client.get('/calendar/connect');window.location.assign(data.url)}
     catch(e){setError(e.response?.data?.message||'No se pudo conectar Google Calendar');setCalendarBusy(false)}
   }
   async function disconnect() {
-    if(!window.confirm('¿Desconectar Google Calendar? Las citas permanecerán en NutriA.'))return
+    if (!(await confirmarAccion('¿Desconectar Google Calendar?', 'Las citas permanecerán en NutriA.'))) return
     setCalendarBusy(true)
     try {await client.delete('/calendar/disconnect');setConnected(false);setNotice('Google Calendar desconectado')}
     catch(e){setError(e.response?.data?.message||'No se pudo desconectar')}
@@ -489,31 +495,17 @@ export default function CitasPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1480px] space-y-5 px-4 py-6 pb-16 text-[#173f34] sm:px-5 md:px-8 md:py-8">
-      <header className="relative isolate overflow-hidden rounded-[2rem] bg-linear-to-br from-[#173f34] via-[#205343] to-[#246b55] p-5 text-[#f1f8ee] shadow-[0_16px_36px_rgba(23,63,52,.19)] sm:p-8">
-        <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-36 -z-10 size-96 rounded-full border-[32px] border-white/5 ring-[30px] ring-white/5" />
-        <div className="flex flex-wrap items-end justify-between gap-5">
-          <div>
-            <p className="mb-3 flex items-center gap-2 text-xs font-bold tracking-widest text-[#d0e9d3] uppercase">
-              <CalendarDays size={16} aria-hidden="true" /> NutriA · Consultorio
-            </p>
-            <h1 className="text-3xl leading-tight font-black tracking-tight sm:text-4xl">Ver citas</h1>
-            <p className="mt-2 text-sm text-[#d9eddd]">Organiza tus consultas y haz espacio para tu próxima cita.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => setConfigAbierta(v=>!v)}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/30 px-4 py-3 text-xs font-extrabold text-white hover:bg-white/15">
-              <Settings2 size={17}/>{configAbierta?'Ocultar configuración':'Configurar agenda'}
-            </button>
-            <button type="button" onClick={() => routerNavigate('/citas/nueva')}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#dcefcf] px-5 py-3 text-sm font-extrabold text-[#173f34] shadow-sm hover:bg-[#eef8e8]">
-              <Plus size={18} aria-hidden="true" /> Crear cita
-            </button>
-          </div>
+      <ResumenCitas revision={reload} onAbrir={abrirDesdeResumen} acciones={
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => setConfigAbierta(value => !value)} aria-expanded={configAbierta}
+            className={CONTROL}><Settings2 size={17} aria-hidden="true" />Configurar agenda</button>
+          <button type="button" onClick={() => routerNavigate('/citas/nueva')}
+            className={`inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#246b55] px-3 text-sm font-bold text-white hover:bg-[#1d5947] ${FOCUS}`}>
+            <Plus size={17} aria-hidden="true" /> Crear cita
+          </button>
         </div>
-      </header>
-
+      } />
       {configAbierta && <ConfiguracionCitas onSave={setHorarioCitas}/>}
-      <ResumenCitas revision={reload} onAbrir={abrirDesdeResumen}/>
 
       {error && !modal && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
       {loadError && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{loadError}</p>}
@@ -691,20 +683,20 @@ export default function CitasPage() {
               <textarea maxLength={500} rows={2} className={inputClass} value={form.notas} onChange={e => updateField('notas', e.target.value)} placeholder="Opcional" />
             </label>
             {editing && (
-              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#d2e2d6] pt-4 sm:col-span-2">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[#d2e2d6] pt-2 sm:col-span-2">
                 <div className="flex flex-wrap gap-2">
                   {form.estado !== 'cancelada' && form.estado !== 'completada' && (
                     <button type="button" onClick={() => cambiarEstadoCita('cancelada')} disabled={saving}
-                      className={`${CONTROL} gap-1.5 text-amber-800`}><Ban size={16}/>Cancelar cita</button>
+                      className={`inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-amber-800 hover:bg-amber-50 disabled:opacity-50 ${FOCUS}`}><Ban size={16}/>Cancelar cita</button>
                   )}
                   {new Date(originalStart) <= now && form.estado !== 'completada' && form.estado !== 'cancelada' && (
                     <button type="button" onClick={() => cambiarEstadoCita('completada')} disabled={saving}
-                      className={`${CONTROL} gap-1.5`}><CheckCircle2 size={16}/>Marcar completada</button>
+                      className={`inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-[#246b55] hover:bg-[#e9f3ed] disabled:opacity-50 ${FOCUS}`}><CheckCircle2 size={16}/>Completar</button>
                   )}
                 </div>
                 <button type="button" onClick={eliminarCita} disabled={saving}
-                  className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 text-xs font-bold text-red-700 hover:bg-red-100 disabled:opacity-50">
-                  <Trash2 size={16}/>Eliminar definitivamente
+                  className={`inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 ${FOCUS}`}>
+                  <Trash2 size={16}/>Eliminar
                 </button>
               </div>
             )}
