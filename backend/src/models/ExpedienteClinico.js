@@ -16,6 +16,14 @@ const expedienteClinicoSchema =
         required: true,
       },
 
+      // Controles Sí/No de texto opcional: se guarda incluso el Sí sin descripción.
+      // Valores existentes sin bandera siguen visibles por compatibilidad.
+      camposConDetalle: {
+        type: [String],
+        enum: ["antecedentesPersonales","antecedentesFamiliares","alergias","enfermedades","medicamentos","cirugias","lesionesActuales","padecimientos","nutricion.comidaFavorita","nutricion.comidaDisgusta","nutricion.cafePorDia","nutricion.bebidasEnergeticasSemana","nutricion.bebidasAzucaradasSemana","nutricion.intoleranciasAlimentarias","deporte.ejercicioRealizar","observaciones"],
+        default: [],
+      },
+
       /*
        * ==========================================
        * ANTECEDENTES PERSONALES PATOLÓGICOS

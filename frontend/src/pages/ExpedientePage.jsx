@@ -27,6 +27,7 @@ import {
 
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import AvisoExpedienteGuardado from '../components/expediente/AvisoExpedienteGuardado'
+import { camposActivosDesdeExpediente } from '../utils/camposCondicionalesExpediente'
 import client from '../api/client'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
@@ -106,6 +107,7 @@ function ExpedientePage() {
 
   const [expediente, setExpediente] =
     useState(expedienteInicial)
+  const [camposConDetalle, setCamposConDetalle] = useState([])
 
   const [loading, setLoading] = useState(true)
   const [guardando, setGuardando] = useState(false)
@@ -134,6 +136,8 @@ function ExpedientePage() {
         setUltimaMedicion(data.ultimaMedicion || null)
 
         if (data.expediente) {
+          // Respetar todos los detalles existentes y recuperar Sí sin texto.
+          setCamposConDetalle(camposActivosDesdeExpediente(data.expediente))
           setExpediente({
             antecedentesPersonales:
               data.expediente.antecedentesPersonales || '',
@@ -299,6 +303,9 @@ function ExpedientePage() {
             observaciones:
               data.expediente.observaciones || '',
           })
+        } else {
+          setExpediente(expedienteInicial)
+          setCamposConDetalle([])
         }
       } catch (err) {
         setError(
@@ -327,14 +334,35 @@ function ExpedientePage() {
   }
 
   function manejarGrupo(grupo, campo, valor) {
-    setExpediente((actual) => ({
+    const detalles = {
+      tratamientoFarmacologico: ['usa','descripcion'],
+      tabaquismo: ['fuma','frecuenciaSemanal'],
+      alcohol: ['consume','frecuencia'],
+      drogas: ['consume','descripcion'],
+      anabolicos: ['consume','descripcion'],
+      suplementos: ['consume','descripcion'],
+    }
+    setExpediente(actual => ({
       ...actual,
-
       [grupo]: {
         ...actual[grupo],
-        [campo]: valor,
+        [campo]:valor,
+        // Si selecciona No, no conservar detalles clínicos escondidos.
+        ...(valor === false && detalles[grupo]?.[0] === campo
+          ? { [detalles[grupo][1]]:'' } : {}),
       },
     }))
+  }
+
+  function actualizarCampoOpcional(id, activo) {
+    setCamposConDetalle(actual => activo
+      ? Array.from(new Set([...actual,id]))
+      : actual.filter(campo => campo !== id))
+    if (!activo) {
+      const [grupo,campo] = id.split('.')
+      if (campo) manejarGrupo(grupo,campo,'')
+      else manejarCampo(grupo,'')
+    }
   }
 
   /*
@@ -353,6 +381,7 @@ function ExpedientePage() {
 
       const payload = {
         ...expediente,
+        camposConDetalle,
 
         nutricion: {
           ...expediente.nutricion,
@@ -375,6 +404,19 @@ function ExpedientePage() {
                   expediente.deporte.diasPorSemana,
                 ),
         },
+      }
+
+      // Nunca enviar una descripción invisible bajo un No.
+      const flags = {
+        tratamientoFarmacologico: ['usa','descripcion'],
+        tabaquismo: ['fuma','frecuenciaSemanal'],
+        alcohol: ['consume','frecuencia'],
+        drogas: ['consume','descripcion'],
+        anabolicos: ['consume','descripcion'],
+        suplementos: ['consume','descripcion'],
+      }
+      for (const [grupo,[activo,detalle]] of Object.entries(flags)) {
+        if (!payload[grupo]?.[activo]) payload[grupo] = { ...payload[grupo], [detalle]:'' }
       }
 
       const { data } = await client.put(
@@ -714,6 +756,8 @@ function ExpedientePage() {
             <div className="grid gap-5 md:grid-cols-2">
               <CampoTexto
                 label="Antecedentes personales"
+                activo={camposConDetalle.includes('antecedentesPersonales')}
+                onActivo={(valor) => actualizarCampoOpcional('antecedentesPersonales',valor)}
                 value={expediente.antecedentesPersonales}
                 onChange={(valor) =>
                   manejarCampo(
@@ -726,6 +770,8 @@ function ExpedientePage() {
 
               <CampoTexto
                 label="Antecedentes familiares"
+                activo={camposConDetalle.includes('antecedentesFamiliares')}
+                onActivo={(valor) => actualizarCampoOpcional('antecedentesFamiliares',valor)}
                 value={expediente.antecedentesFamiliares}
                 onChange={(valor) =>
                   manejarCampo(
@@ -738,6 +784,8 @@ function ExpedientePage() {
 
               <CampoTexto
                 label="Alergias"
+                activo={camposConDetalle.includes('alergias')}
+                onActivo={(valor) => actualizarCampoOpcional('alergias',valor)}
                 value={expediente.alergias}
                 onChange={(valor) =>
                   manejarCampo('alergias', valor)
@@ -747,6 +795,8 @@ function ExpedientePage() {
 
               <CampoTexto
                 label="Enfermedades actuales"
+                activo={camposConDetalle.includes('enfermedades')}
+                onActivo={(valor) => actualizarCampoOpcional('enfermedades',valor)}
                 value={expediente.enfermedades}
                 onChange={(valor) =>
                   manejarCampo(
@@ -759,6 +809,8 @@ function ExpedientePage() {
 
               <CampoTexto
                 label="Medicamentos"
+                activo={camposConDetalle.includes('medicamentos')}
+                onActivo={(valor) => actualizarCampoOpcional('medicamentos',valor)}
                 value={expediente.medicamentos}
                 onChange={(valor) =>
                   manejarCampo(
@@ -771,6 +823,8 @@ function ExpedientePage() {
 
               <CampoTexto
                 label="Cirugías"
+                activo={camposConDetalle.includes('cirugias')}
+                onActivo={(valor) => actualizarCampoOpcional('cirugias',valor)}
                 value={expediente.cirugias}
                 onChange={(valor) =>
                   manejarCampo('cirugias', valor)
@@ -780,6 +834,8 @@ function ExpedientePage() {
 
               <CampoTexto
                 label="Lesiones actuales"
+                activo={camposConDetalle.includes('lesionesActuales')}
+                onActivo={(valor) => actualizarCampoOpcional('lesionesActuales',valor)}
                 value={expediente.lesionesActuales}
                 onChange={(valor) =>
                   manejarCampo(
@@ -792,6 +848,8 @@ function ExpedientePage() {
 
               <CampoTexto
                 label="Otros padecimientos"
+                activo={camposConDetalle.includes('padecimientos')}
+                onActivo={(valor) => actualizarCampoOpcional('padecimientos',valor)}
                 value={expediente.padecimientos}
                 onChange={(valor) =>
                   manejarCampo(
@@ -1008,6 +1066,8 @@ function ExpedientePage() {
 
               <CampoInput
                 label="Comida favorita"
+                activo={camposConDetalle.includes('nutricion.comidaFavorita')}
+                onActivo={(valor) => actualizarCampoOpcional('nutricion.comidaFavorita',valor)}
                 value={
                   expediente.nutricion.comidaFavorita
                 }
@@ -1023,6 +1083,8 @@ function ExpedientePage() {
 
               <CampoInput
                 label="Comida que le disgusta"
+                activo={camposConDetalle.includes('nutricion.comidaDisgusta')}
+                onActivo={(valor) => actualizarCampoOpcional('nutricion.comidaDisgusta',valor)}
                 value={
                   expediente.nutricion.comidaDisgusta
                 }
@@ -1055,6 +1117,8 @@ function ExpedientePage() {
 
               <CampoInput
                 label="Café por día"
+                activo={camposConDetalle.includes('nutricion.cafePorDia')}
+                onActivo={(valor) => actualizarCampoOpcional('nutricion.cafePorDia',valor)}
                 icon={Coffee}
                 value={
                   expediente.nutricion.cafePorDia
@@ -1071,6 +1135,8 @@ function ExpedientePage() {
 
               <CampoInput
                 label="Bebidas energéticas por semana"
+                activo={camposConDetalle.includes('nutricion.bebidasEnergeticasSemana')}
+                onActivo={(valor) => actualizarCampoOpcional('nutricion.bebidasEnergeticasSemana',valor)}
                 value={
                   expediente.nutricion
                     .bebidasEnergeticasSemana
@@ -1087,6 +1153,8 @@ function ExpedientePage() {
 
               <CampoInput
                 label="Refrescos / bebidas azucaradas por semana"
+                activo={camposConDetalle.includes('nutricion.bebidasAzucaradasSemana')}
+                onActivo={(valor) => actualizarCampoOpcional('nutricion.bebidasAzucaradasSemana',valor)}
                 value={
                   expediente.nutricion
                     .bebidasAzucaradasSemana
@@ -1104,6 +1172,8 @@ function ExpedientePage() {
               <div className="md:col-span-2">
                 <CampoTexto
                   label="Intolerancias alimentarias"
+                activo={camposConDetalle.includes('nutricion.intoleranciasAlimentarias')}
+                onActivo={(valor) => actualizarCampoOpcional('nutricion.intoleranciasAlimentarias',valor)}
                   value={
                     expediente.nutricion
                       .intoleranciasAlimentarias
@@ -1178,6 +1248,7 @@ function ExpedientePage() {
                 <div className="mt-4">
                   <CampoInput
                     label="Describe el objetivo"
+                    siempreVisible
                     value={
                       expediente.nutricion.objetivoOtro
                     }
@@ -1254,6 +1325,7 @@ function ExpedientePage() {
                 'otro' && (
                 <CampoInput
                   label="Otro lugar"
+                    siempreVisible
                   value={
                     expediente.deporte.lugarOtro
                   }
@@ -1288,6 +1360,8 @@ function ExpedientePage() {
 
               <CampoInput
                 label="Ejercicio a realizar"
+                activo={camposConDetalle.includes('deporte.ejercicioRealizar')}
+                onActivo={(valor) => actualizarCampoOpcional('deporte.ejercicioRealizar',valor)}
                 value={
                   expediente.deporte
                     .ejercicioRealizar
@@ -1381,17 +1455,14 @@ function ExpedientePage() {
               color="azul"
             />
 
-            <textarea
+            <CampoTexto
+              label="Observaciones"
+              activo={camposConDetalle.includes('observaciones')}
+              onActivo={(valor) => actualizarCampoOpcional('observaciones',valor)}
               value={expediente.observaciones}
-              onChange={(event) =>
-                manejarCampo(
-                  'observaciones',
-                  event.target.value,
-                )
-              }
-              rows="4"
-              className="w-full resize-none rounded-2xl border border-[#d1dddd] bg-white/75 px-4 py-3 outline-none transition focus:border-[#4d816f]"
+              onChange={(valor) => manejarCampo('observaciones',valor)}
               placeholder="Añade aquí cualquier observación adicional..."
+              rows={4}
             />
           </article>
 
@@ -1516,27 +1587,21 @@ function CampoTexto({
   onChange,
   placeholder,
   rows = 3,
+  activo = false,
+  onActivo,
 }) {
   return (
-    <label className="space-y-2">
-      <span className="flex items-center justify-between gap-3 text-sm font-semibold text-slate-700">
-        {label}
-
-        <span className="text-xs font-normal text-slate-400">
-          Opcional
-        </span>
-      </span>
-
-      <textarea
-        value={value}
-        onChange={(event) =>
-          onChange(event.target.value)
-        }
-        rows={rows}
-        className="w-full resize-none rounded-xl border border-[#dfd1c8] bg-white/75 px-4 py-3 outline-none transition focus:border-[#a87552] focus:bg-white"
-        placeholder={placeholder}
-      />
-    </label>
+    <CampoCondicional
+      icon={ClipboardPlus}
+      titulo={label}
+      activo={activo}
+      onActivo={onActivo}
+      valor={value || ''}
+      onValor={onChange}
+      placeholder={placeholder}
+      multilinea
+      rows={rows}
+    />
   )
 }
 
@@ -1549,28 +1614,38 @@ function CampoInput({
   min,
   max,
   icon: Icon,
+  activo = false,
+  onActivo,
+  siempreVisible = false,
 }) {
+  if (!siempreVisible && type === 'text') {
+    return (
+      <CampoCondicional
+        icon={Icon || ClipboardPlus}
+        titulo={label}
+        activo={activo}
+        onActivo={onActivo}
+        valor={value || ''}
+        onValor={onChange}
+        placeholder={placeholder}
+      />
+    )
+  }
+  // Controles estructurados (horas, cantidades y campos condicionados
+  // por un objetivo o un lugar ya seleccionados) siguen siempre visibles.
   return (
     <label className="block min-w-0 max-w-full space-y-2 overflow-hidden">
       <span className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-        {Icon && <Icon size={16} />}
-
+        {Icon && <Icon size={16} aria-hidden="true"/>}
         {label}
-
-        <span className="ml-auto text-xs font-normal text-slate-400">
-          Opcional
-        </span>
       </span>
-
       <input
         type={type}
         min={min}
         max={max}
-        value={value}
-        onChange={(event) =>
-          onChange(event.target.value)
-        }
-        className="block min-w-0 max-w-full w-full rounded-xl border border-[#d4ddd8] bg-white/80 px-4 py-3 outline-none transition focus:border-[#4d816f] focus:bg-white"
+        value={value ?? ''}
+        onChange={(event) => onChange(event.target.value)}
+        className="block w-full min-w-0 max-w-full rounded-xl border border-[#d4ddd8] bg-white/80 px-4 py-3 outline-none transition focus:border-[#4d816f] focus:bg-white"
         placeholder={placeholder}
       />
     </label>
@@ -1585,23 +1660,26 @@ function CampoCondicional({
   valor,
   onValor,
   placeholder,
+  multilinea = false,
+  rows = 3,
 }) {
   return (
-    <div className="rounded-2xl border border-[#d6e3dc] bg-white/60 p-4 shadow-sm">
-      <div className="flex items-center gap-3">
+    <div className="min-w-0 rounded-2xl border border-[#d6e3dc] bg-white/60 p-4 shadow-sm">
+      <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
         <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#e5f0ea] text-[#246b55]">
           <Icon size={17} />
         </div>
 
-        <p className="flex-1 text-sm font-bold text-[#173f34]">
+        <p className="min-w-0 flex-1 break-words text-sm font-bold text-[#173f34]">
           {titulo}
         </p>
 
-        <div className="flex rounded-xl bg-[#edf2ef] p-1">
+        <div className="ml-auto flex shrink-0 rounded-xl bg-[#edf2ef] p-1" role="group" aria-label={'¿'+titulo+'?'}>
           <button
             type="button"
             onClick={() => onActivo(false)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+            aria-pressed={!activo}
+            className={`min-h-10 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
               !activo
                 ? 'bg-white text-[#173f34] shadow-sm'
                 : 'text-slate-400'
@@ -1613,7 +1691,8 @@ function CampoCondicional({
           <button
             type="button"
             onClick={() => onActivo(true)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+            aria-pressed={activo}
+            className={`min-h-10 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
               activo
                 ? 'bg-[#246b55] text-white shadow-sm'
                 : 'text-slate-400'
@@ -1625,15 +1704,23 @@ function CampoCondicional({
       </div>
 
       {activo && (
-        <input
-          type="text"
-          value={valor}
-          onChange={(event) =>
-            onValor(event.target.value)
-          }
-          placeholder={placeholder}
-          className="mt-4 w-full rounded-xl border border-[#d4ddd8] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#4d816f]"
-        />
+        multilinea
+          ? <textarea
+              aria-label={'Detalle de '+titulo}
+              value={valor}
+              onChange={(event) => onValor(event.target.value)}
+              placeholder={placeholder}
+              rows={rows}
+              className="mt-4 w-full min-w-0 resize-y rounded-xl border border-[#d4ddd8] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#4d816f]"
+            />
+          : <input
+              type="text"
+              aria-label={'Detalle de '+titulo}
+              value={valor}
+              onChange={(event) => onValor(event.target.value)}
+              placeholder={placeholder}
+              className="mt-4 w-full min-w-0 rounded-xl border border-[#d4ddd8] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#4d816f]"
+            />
       )}
     </div>
   )
