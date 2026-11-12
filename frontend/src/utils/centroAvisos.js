@@ -1,4 +1,4 @@
-import { obtenerAvisosPaciente } from './avisosPacientes'
+import { obtenerAvisosPaciente } from './avisosPacientes.js'
 
 // Prepara avisos sin inferir diagnósticos, faltas del paciente ni supuestos de adhesión.
 // El recuento corresponde a asuntos por revisar, no a notificaciones sin leer.
