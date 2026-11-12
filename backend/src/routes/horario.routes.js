@@ -58,11 +58,34 @@ const franja = z.object({
 }).strict().refine(f => minutos(f.fin)-minutos(f.inicio)>=60, {
   message: 'Cada bloque debe permitir una consulta de 60 minutos',
 })
+const intervaloBloqueado = z.object({
+  inicio:hora, fin:hora,
+}).refine(b => minutos(b.fin) > minutos(b.inicio), {
+  path:['fin'],message:'La hora final debe ser posterior a la inicial',
+})
+const bloqueoRecurrente = intervaloBloqueado.extend({
+  dia:z.number().int().min(0).max(6),
+}).strict()
+const bloqueoFecha = intervaloBloqueado.extend({
+  fecha:fechaNoLaborable,
+  motivo:z.string().trim().max(80).default(''),
+}).strict()
 const horarioCitasSchema = z.object({
   franjas: z.array(franja).min(1).max(21),
   publicado: z.boolean().default(false),
   anticipacionHoras: z.number().int().min(0).max(72).default(2),
+  // Opcionales: clientes PWA anteriores no sobrescriben bloqueos guardados.
+  bloqueos:z.array(bloqueoRecurrente).max(35).optional(),
+  bloqueosPorFecha:z.array(bloqueoFecha).max(100).optional(),
 }).strict().superRefine((data, ctx) => {
+  for(const [campo,lista] of [['bloqueos',data.bloqueos || []],['bloqueosPorFecha',data.bloqueosPorFecha || []]]) {
+    for(const [i,actual] of lista.entries()) {
+      const iguales = lista.some((otro,j) => j!==i &&
+        (campo==='bloqueos' ? otro.dia===actual.dia : otro.fecha===actual.fecha) &&
+        actual.inicio < otro.fin && actual.fin > otro.inicio)
+      if(iguales) ctx.addIssue({code:'custom',path:[campo,i],message:'Los bloqueos no pueden superponerse'})
+    }
+  }
   for(const [i,actual] of data.franjas.entries()){
     if(data.franjas.some((otro,j)=>j!==i && actual.dia===otro.dia &&
       actual.inicio < otro.fin && actual.fin > otro.inicio)){
@@ -150,7 +173,18 @@ router.put('/citas', async (req,res,next) => {
     if(!u)return res.status(404).json({message:'Nutriólogo no encontrado'})
     if(!franjaDentroHorario(parsed.data.franjas,u.horarioLaboral))
       return res.status(400).json({message:'Los bloques de citas deben estar dentro de los días y horas de trabajo configurados.'})
-    u.horarioCitas = {...parsed.data,configurado:true}
+    const bloqueos = parsed.data.bloqueos ?? u.horarioCitas?.bloqueos ?? []
+    const bloqueosPorFecha = parsed.data.bloqueosPorFecha ?? u.horarioCitas?.bloqueosPorFecha ?? []
+    if(!bloqueos.every(x =>
+      u.horarioLaboral.dias.includes(x.dia) &&
+      minutos(x.inicio) >= minutos(u.horarioLaboral.inicio) &&
+      minutos(x.fin) <= minutos(u.horarioLaboral.fin)) ||
+      !bloqueosPorFecha.every(x =>
+        minutos(x.inicio) >= minutos(u.horarioLaboral.inicio) &&
+        minutos(x.fin) <= minutos(u.horarioLaboral.fin))) {
+      return res.status(400).json({message:'Las horas bloqueadas deben quedar dentro del horario laboral.'})
+    }
+    u.horarioCitas = {...parsed.data,bloqueos,bloqueosPorFecha,configurado:true}
     await u.save()
     res.json({horarioCitas:u.horarioCitas})
   } catch(e){next(e)}

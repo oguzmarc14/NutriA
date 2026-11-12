@@ -106,6 +106,24 @@ const userSchema = new mongoose.Schema(
         }],
         default: [],
       },
+      // Excepciones que retiran horas disponibles sin alterar la jornada.
+      bloqueos: {
+        type: [{
+          _id: false,
+          dia: { type: Number, min: 0, max: 6, required: true },
+          inicio: { type: String, required: true },
+          fin: { type: String, required: true },
+        }],default:[],
+      },
+      bloqueosPorFecha: {
+        type: [{
+          _id: false,
+          fecha: { type: String, required: true },
+          inicio: { type: String, required: true },
+          fin: { type: String, required: true },
+          motivo: { type: String, default: '', maxlength: 80 },
+        }],default:[],
+      },
     },
 
     // Preferencias del nutriólogo: fechas sugeridas tras citas completadas,
