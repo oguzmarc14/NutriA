@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
-import { CalendarClock, CalendarDays, CalendarOff } from 'lucide-react'
+import { BellRing, CalendarClock, CalendarDays, CalendarOff } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import HorarioLaboral from '../components/HorarioLaboral'
 import ConfiguracionCitas from '../components/citas/ConfiguracionCitas'
+import ConfiguracionSeguimiento from '../components/avisos/ConfiguracionSeguimiento'
 
 const SECCIONES = [
   {id:'horario-laboral',titulo:'Horario laboral',Icono:CalendarDays},
   {id:'dias-no-laborables',titulo:'Días no laborables',Icono:CalendarOff},
   {id:'horarios-citas',titulo:'Horarios de consulta',Icono:CalendarClock},
+  {id:'recordatorios-seguimiento',titulo:'Recordatorios',Icono:BellRing},
 ]
 
 export default function EditarPerfilPage() {
@@ -44,6 +46,7 @@ export default function EditarPerfilPage() {
       <div id="horarios-citas" className="scroll-mt-20">
         <ConfiguracionCitas key={versionHorario}/>
       </div>
+      <ConfiguracionSeguimiento/>
     </main>
   )
 }

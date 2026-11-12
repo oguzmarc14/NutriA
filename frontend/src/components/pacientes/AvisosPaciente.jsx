@@ -42,7 +42,8 @@ export default function AvisosPaciente({ paciente, avisos = [], onCerrar, onAcci
 
   if (!paciente) return null
 
-  const acciones = { editar: 'Editar datos', expediente: 'Abrir expediente', plan: 'Preparar plan', mediciones: 'Ver mediciones' }
+  const acciones = { editar: 'Editar datos', expediente: 'Abrir expediente',
+    plan: 'Preparar plan', mediciones: 'Ver mediciones', cita: 'Programar seguimiento' }
 
   return createPortal(
     <div className="nutria-aviso-overlay fixed inset-0 z-[120] grid place-items-center p-3 sm:p-5"

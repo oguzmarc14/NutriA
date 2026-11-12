@@ -21,6 +21,9 @@ export default function CentroAvisosNutriologo({ modo = 'escritorio' }) {
   const [busqueda, setBusqueda] = useState('')
   const [pacientes, setPacientes] = useState([])
   const [citas, setCitas] = useState([])
+  const [configSeguimiento, setConfigSeguimiento] = useState(null)
+  const [hoySeguimiento, setHoySeguimiento] = useState(null)
+  const [zonaSeguimiento, setZonaSeguimiento] = useState(null)
   const [recargar, setRecargar] = useState(0)
   const [actualizando, setActualizando] = useState(true)
   const [errores, setErrores] = useState([])
@@ -50,6 +53,7 @@ export default function CentroAvisosNutriologo({ modo = 'escritorio' }) {
       const respuestas = await Promise.allSettled([
         client.get('/pacientes'),
         client.get('/citas', { params: { desde: ahora.toISOString(), hasta: hasta.toISOString() } }),
+        client.get('/horario/seguimiento'),
       ])
       if (!activo) return
 
@@ -66,12 +70,37 @@ export default function CentroAvisosNutriologo({ modo = 'escritorio' }) {
         setCitas([])
         fallos.push('No se pudo consultar la agenda.')
       }
+      if (respuestas[2].status === 'fulfilled') {
+        setConfigSeguimiento(respuestas[2].value.data.configuracion)
+        setHoySeguimiento(respuestas[2].value.data.hoy)
+        setZonaSeguimiento(respuestas[2].value.data.zonaHoraria)
+      } else {
+        setConfigSeguimiento(null)
+        fallos.push('No se pudo cargar la configuración de seguimiento.')
+      }
       setErrores(fallos)
       setActualizando(false)
     }
     cargar()
     return () => { activo = false }
   }, [location.pathname, recargar, visibleEnPantalla])
+
+  useEffect(() => {
+    const actualizar = () => setRecargar(n => n + 1)
+    const volver = () => {
+      if (document.visibilityState === 'visible') actualizar()
+    }
+    window.addEventListener('nutria-seguimiento-actualizado', actualizar)
+    window.addEventListener('nutria-horario-actualizado', actualizar)
+    document.addEventListener('visibilitychange', volver)
+    const intervalo = window.setInterval(actualizar, 5 * 60 * 1000)
+    return () => {
+      window.removeEventListener('nutria-seguimiento-actualizado', actualizar)
+      window.removeEventListener('nutria-horario-actualizado', actualizar)
+      document.removeEventListener('visibilitychange', volver)
+      window.clearInterval(intervalo)
+    }
+  }, [])
 
   useEffect(() => {
     if (!abierto) return undefined
@@ -106,7 +135,9 @@ export default function CentroAvisosNutriologo({ modo = 'escritorio' }) {
     }
   }, [abierto])
 
-  const avisos = useMemo(() => reunirAvisos(pacientes, citas), [pacientes, citas])
+  const avisos = useMemo(() => reunirAvisos(pacientes,citas,new Date(),
+    configSeguimiento,hoySeguimiento,zonaSeguimiento),
+    [pacientes,citas,configSeguimiento,hoySeguimiento,zonaSeguimiento])
   const visibles = useMemo(() => {
     const termino = busqueda.trim().toLocaleLowerCase('es')
     return avisos.filter((aviso) =>
@@ -226,7 +257,7 @@ export default function CentroAvisosNutriologo({ modo = 'escritorio' }) {
               </div>
             </div>
             <footer className="flex items-center justify-between gap-2 border-t border-current/10 px-4 py-3 sm:px-6">
-              <p className="text-[11px] opacity-70">Citas de los próximos 7 días · No son avisos de urgencia</p>
+              <p className="text-[11px] opacity-70">Citas próximas y seguimientos configurados · No son alertas clínicas</p>
               <button type="button" onClick={() => setAbierto(false)} className="nutria-centro-secondary min-h-9 rounded-lg border px-4 text-xs font-bold">Cerrar</button>
             </footer>
           </section>

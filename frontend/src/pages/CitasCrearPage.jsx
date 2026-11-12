@@ -23,7 +23,7 @@ export default function CitasCrearPage() {
   const [data, setData] = useState(null)
   const [pacientes, setPacientes] = useState([])
   const [seleccion, setSeleccion] = useState(null)
-  const [paciente, setPaciente] = useState('')
+  const [paciente, setPaciente] = useState(location.state?.pacienteId || '')
   const [tipo, setTipo] = useState('seguimiento')
   const [notas, setNotas] = useState('')
   const [loading, setLoading] = useState(true)

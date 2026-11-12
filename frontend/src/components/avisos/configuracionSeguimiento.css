@@ -1,0 +1,19 @@
+.nutria-seguimiento-config{background:#f4faf5;color:#1a4937;border-color:#afd2bc}
+.nutria-seguimiento-icon{background:#d9eee0;color:#267956}
+.nutria-seguimiento-muted{color:#5a7865}
+.nutria-seguimiento-card,.nutria-seguimiento-example{background:#e8f2eb;border-color:#c5ddcd}
+.nutria-seguimiento-input{background:#fbfefa;border-color:#b6d4be;color:#204a37}
+.nutria-seguimiento-input:focus{outline:2px solid #74b38b;outline-offset:2px}
+.nutria-seguimiento-save{background:#287553;color:white}
+.nutria-seguimiento-save:hover{background:#226345}
+.nutria-seguimiento-error{background:#f9e8e5;color:#943c32;border-color:#eab5ab}
+.nutria-seguimiento-success{background:#dcf1e1;color:#256546}
+html[data-theme="dark"] .nutria-seguimiento-config{background:#223d2d;color:#ecf8ef;border-color:#618c6e}
+html[data-theme="dark"] .nutria-seguimiento-icon{background:#355e45;color:#c2eacc}
+html[data-theme="dark"] .nutria-seguimiento-muted{color:#b2d0bb}
+html[data-theme="dark"] .nutria-seguimiento-card,
+html[data-theme="dark"] .nutria-seguimiento-example{background:#2d503b;border-color:#5b8569}
+html[data-theme="dark"] .nutria-seguimiento-input{background:#1a3625;border-color:#638d70;color:#f2fcf5}
+html[data-theme="dark"] .nutria-seguimiento-save{background:#419465}
+html[data-theme="dark"] .nutria-seguimiento-error{background:#6b3833;border-color:#a97165;color:#ffddd1}
+html[data-theme="dark"] .nutria-seguimiento-success{background:#345f44;color:#e4f7e7}

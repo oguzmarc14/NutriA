@@ -26,6 +26,9 @@ function PacientesPage() {
   const location = useLocation()
   const { cerrarTrabajo, iniciarTrabajo, pacienteTrabajo } = usePacienteTrabajo()
   const [pacientes, setPacientes] = useState([])
+  const [preferenciasSeguimiento, setPreferenciasSeguimiento] = useState(null)
+  const [hoySeguimiento, setHoySeguimiento] = useState(null)
+  const [zonaHorariaSeguimiento, setZonaHorariaSeguimiento] = useState(null)
   const [busqueda, setBusqueda] = useState('')
   const [confirmacionTrabajo, setConfirmacionTrabajo] = useState(null)
   const [alertaTrabajo, setAlertaTrabajo] = useState(null)
@@ -76,6 +79,17 @@ function PacientesPage() {
 
   useEffect(() => {
     cargarPacientes()
+  }, [])
+
+  useEffect(() => {
+    let activo = true
+    client.get('/horario/seguimiento').then(({data}) => {
+      if (!activo) return
+      setPreferenciasSeguimiento(data.configuracion)
+      setHoySeguimiento(data.hoy)
+      setZonaHorariaSeguimiento(data.zonaHoraria)
+    }).catch(() => { if (activo) setPreferenciasSeguimiento(null) })
+    return () => { activo = false }
   }, [])
 
   // El Centro de atención puede abrir los avisos de un paciente sin seleccionarlo
@@ -131,6 +145,10 @@ function PacientesPage() {
     const paciente = pacienteConAvisos
     if (!paciente) return
     setPacienteConAvisos(null)
+    if (aviso.accion === 'cita') {
+      navigate('/citas/nueva', {state:{pacienteId:paciente._id}})
+      return
+    }
     if (aviso.accion === 'editar') {
       editarPaciente(paciente)
       return
@@ -745,6 +763,9 @@ function PacientesPage() {
                   }}
                   onTrabajar={() => comenzarTrabajo(paciente)}
                   onVerAvisos={() => setPacienteConAvisos(paciente)}
+                  configSeguimiento={preferenciasSeguimiento}
+                  hoySeguimiento={hoySeguimiento}
+                  zonaHorariaSeguimiento={zonaHorariaSeguimiento}
                   trabajando={pacienteTrabajo?.id === paciente._id}
                   onDejarTrabajar={() => setConfirmacionTrabajo({ tipo: 'dejar', paciente })}
                   obtenerSexo={
@@ -806,7 +827,8 @@ function PacientesPage() {
 
       <AvisosPaciente
         paciente={pacienteConAvisos}
-        avisos={obtenerAvisosPaciente(pacienteConAvisos)}
+        avisos={obtenerAvisosPaciente(pacienteConAvisos, preferenciasSeguimiento,
+          hoySeguimiento, zonaHorariaSeguimiento)}
         onCerrar={() => setPacienteConAvisos(null)}
         onAccion={atenderAviso}
       />

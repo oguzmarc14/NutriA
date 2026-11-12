@@ -71,6 +71,41 @@ const horarioCitasSchema = z.object({
   }
 })
 
+// Preferencias de recordatorio privadas, válidas únicamente para el nutriólogo autenticado.
+const seguimientoSchema = z.object({
+  activo: z.boolean(),
+  cicloDias: z.number().int().min(7).max(90),
+  anticipacionDias: z.number().int().min(0).max(30),
+}).strict().refine(d => d.anticipacionDias <= d.cicloDias, {
+  path:['anticipacionDias'],message:'La anticipación no puede superar el ciclo',
+})
+const seguimientoPorDefecto = { activo:true, cicloDias:30, anticipacionDias:5 }
+router.get('/seguimiento', async (req,res,next) => {
+  try {
+    const user = await User.findById(req.user._id).select('recordatoriosSeguimiento horarioLaboral').lean()
+    if (!user) return res.status(404).json({message:'Nutriólogo no encontrado'})
+    const zona = user.horarioLaboral?.zonaHoraria || 'America/Mexico_City'
+    res.set('Cache-Control','no-store')
+    return res.json({
+      configuracion:{...seguimientoPorDefecto,...(user.recordatoriosSeguimiento || {})},
+      zonaHoraria:zona, hoy:fechaLocalAhora(zona),
+    })
+  } catch (e) { next(e) }
+})
+router.put('/seguimiento', async (req,res,next) => {
+  try {
+    const parsed = seguimientoSchema.safeParse(req.body)
+    if (!parsed.success)
+      return res.status(400).json({message:'Revisa la configuración de recordatorios',issues:parsed.error.issues})
+    const user = await User.findByIdAndUpdate(req.user._id,
+      { $set:{ recordatoriosSeguimiento:parsed.data } },
+      { new:true,runValidators:true }).select('recordatoriosSeguimiento')
+    if (!user) return res.status(404).json({message:'Nutriólogo no encontrado'})
+    res.set('Cache-Control','no-store')
+    return res.json({configuracion:user.recordatoriosSeguimiento})
+  } catch(e) { next(e) }
+})
+
 // Disponibilidad privada: permite al nutriólogo crear citas aunque no haya
 // publicado su calendario para pacientes.
 router.get('/disponibilidad', async (req,res,next) => {

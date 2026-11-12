@@ -5,6 +5,8 @@ const Pacientes = require('../models/Pacientes')
 const Medicion = require('../models/Medicion')
 const ExpedienteClinico = require('../models/ExpedienteClinico')
 const PlanAlimenticio = require('../models/PlanAlimenticio')
+const Cita = require('../models/Cita')
+const mongoose = require('mongoose')
 const User = require('../models/User')
 const { enviarInvitacionPaciente } = require('../services/email.service')
 
@@ -179,7 +181,8 @@ async function obtenerPacientes(
      */
 
     const ids = pacientes.map((paciente) => paciente._id)
-    const [usuariosPaciente, expedientesExistentes, pacientesConPlan] = await Promise.all([
+    const ahora = new Date()
+    const [usuariosPaciente, expedientesExistentes, pacientesConPlan, fechasConsulta] = await Promise.all([
       User.find({ patient: { $in: ids }, role: 'patient' })
         .select('patient accountStatus').lean(),
       ExpedienteClinico.find({
@@ -190,7 +193,29 @@ async function obtenerPacientes(
         paciente: { $in: ids },
         nutritionist: req.user.id,
       }),
+      // Consulta real = cita marcada como completada. Las citas pendientes
+      // o canceladas no cuentan como consultas efectuadas.
+      ids.length ? Cita.aggregate([
+        { $match: {
+          nutritionist: new mongoose.Types.ObjectId(req.user.id),
+          patient: { $in: ids },
+          $or: [
+            { estado: 'completada', inicio: { $lte: ahora } },
+            { estado: { $in: ['programada', 'confirmada'] }, inicio: { $gt: ahora } },
+          ],
+        } },
+        { $group: {
+          _id: '$patient',
+          ultimaConsulta: { $max: {
+            $cond: [ { $eq: ['$estado', 'completada'] }, '$inicio', null ],
+          } },
+          proximaConsulta: { $min: {
+            $cond: [ { $in: ['$estado', ['programada', 'confirmada']] }, '$inicio', null ],
+          } },
+        } },
+      ]) : Promise.resolve([]),
     ])
+    const citasPorPaciente = new Map(fechasConsulta.map(item => [String(item._id), item]))
     const idsConExpediente = new Set(expedientesExistentes.map((item) => String(item.paciente)))
     const idsConPlan = new Set(pacientesConPlan.map(String))
 
@@ -231,6 +256,12 @@ async function obtenerPacientes(
               ultimaMedicion:
                 ultimaMedicion ||
                 null,
+
+              // Fechas de citas del nutriólogo, no campos huérfanos del paciente.
+              ultimaConsulta: citasPorPaciente.get(String(paciente._id))?.ultimaConsulta
+                ? { inicio: citasPorPaciente.get(String(paciente._id)).ultimaConsulta } : null,
+              proximaConsulta: citasPorPaciente.get(String(paciente._id))?.proximaConsulta
+                ? { inicio: citasPorPaciente.get(String(paciente._id)).proximaConsulta } : null,
 
               // Únicamente indicadores de existencia; nunca exponer datos clínicos en avisos.
               tieneExpediente: idsConExpediente.has(String(paciente._id)),
