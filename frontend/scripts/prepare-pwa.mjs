@@ -9,5 +9,9 @@ const generado = original
     "const CACHE_NAME = 'nutria-shell-" + version + "'")
   .replace(/const ASSETS_NAME = '[^']+'/,
     "const ASSETS_NAME = 'nutria-assets-" + version + "'")
-if (original === generado) throw new Error('No se pudo asignar version a la PWA')
+if (!/const CACHE_NAME = '[^']+'/.test(original) ||
+    !/const ASSETS_NAME = '[^']+'/.test(original)) {
+  throw new Error('No se pudo asignar version a la PWA')
+}
 writeFileSync(ruta, generado)
+console.log('[NutriA PWA] Service worker actualizado para:', version)

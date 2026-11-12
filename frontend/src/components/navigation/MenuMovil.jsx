@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { Building2, CalendarClock, Menu, UserPen, X } from 'lucide-react'
+import { Building2, CalendarClock, Menu, RefreshCw, UserPen, X } from 'lucide-react'
 import './menuMovil.css'
 import { rutasRapidas } from '../../utils/navigationMovil'
 
@@ -43,6 +43,19 @@ export default function MenuMovil({ enlaces, rol, pacienteTrabajo, abierto, setA
       if (elementoAnterior.current?.isConnected) elementoAnterior.current.focus()
     }
   }, [abierto, setAbierto])
+
+  async function actualizarAplicacion() {
+    // Permite refrescar voluntariamente la PWA sin borrar sesión ni datos.
+    try {
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration()
+        await registration?.update()
+      }
+    } catch (error) {
+      console.warn('No se pudo comprobar el service worker; recargando aplicación.', error)
+    }
+    window.location.reload()
+  }
 
   const extras = rol === 'nutritionist' ? [
     { to:'/citas', state:{abrirConfiguracion:true}, label:'Configurar agenda y horarios', icon:CalendarClock },
@@ -111,8 +124,12 @@ export default function MenuMovil({ enlaces, rol, pacienteTrabajo, abierto, setA
                 ))}
               </div>
             </>}
-            <p className="mt-5 px-2 text-center text-[11px] opacity-65">
-              Versión de NutriA: {__NUTRIA_BUILD_ID__} · Si faltan opciones, revisa el rol de tu cuenta.
+            <button type="button" onClick={actualizarAplicacion}
+              className="nutria-menu-opcion mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border p-3 text-xs font-bold">
+              <RefreshCw size={17} aria-hidden="true"/> Buscar actualización y recargar NutriA
+            </button>
+            <p className="mt-3 px-2 text-center text-[11px] opacity-65">
+              Versión de NutriA: {__NUTRIA_BUILD_ID__} · Los apartados dependen del rol de tu cuenta.
             </p>
           </div>
         </section>

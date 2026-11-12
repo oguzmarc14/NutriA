@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { RefreshCw, X } from 'lucide-react'
 
 export default function ActualizacionPWA() {
   const [disponible, setDisponible] = useState(false)
+  const teniaControlador = useRef(Boolean(navigator.serviceWorker?.controller))
   useEffect(() => {
     const actualizar = () => setDisponible(true)
     window.addEventListener('nutria:pwa-update', actualizar)
     const mensaje = (evento) => {
       if (evento.data?.type === 'NUTRIA_PWA_ACTUALIZADA' &&
-          navigator.serviceWorker.controller) actualizar()
+          teniaControlador.current && navigator.serviceWorker.controller) actualizar()
     }
     navigator.serviceWorker?.addEventListener('message', mensaje)
     return () => {
