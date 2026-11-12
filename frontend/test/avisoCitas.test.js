@@ -7,7 +7,7 @@ const aviso = readFileSync(new URL('../src/components/citas/AvisoConfigurarCitas
 const vista = readFileSync(new URL('../src/pages/CitasPage.jsx', import.meta.url), 'utf8')
 
 test('mensaje de horarios sin configurar muestra alerta y botones de acción',()=>{
-  assert.match(page,/available\.reason\.response\?\.status === 409/)
+  assert.match(page,/err\.response\?\.status === 409/)
   assert.match(page,/setMostrarAviso\(requiereConfigurar\)/)
   assert.match(aviso,/Configura los bloques de citas para ver los espacios disponibles/)
   assert.match(aviso,/>\s*Cancelar\s*</)
@@ -15,8 +15,8 @@ test('mensaje de horarios sin configurar muestra alerta y botones de acción',()
   assert.match(aviso,/role="alertdialog"/)
 })
 test('Ir a configurar llega a la configuración en Ver citas y Cancelar no navega',()=>{
-  assert.match(page,/navigate\('\/citas',\{state:\{abrirConfiguracion:true\}\}\)/)
-  assert.match(page,/onCancelar=\{\(\)=>setMostrarAviso\(false\)\}/)
+  assert.match(page,/navigate\('\/citas',\s*\{\s*state:\s*\{\s*abrirConfiguracion:\s*true\s*\}\s*\}\s*\)/)
+  assert.match(page,/onCancelar=\{\(\)\s*=>\s*setMostrarAviso\(false\)\}/)
   assert.match(vista,/location\.state\?\.abrirConfiguracion/)
 })
 test('se puede reabrir el aviso y no se confunde caída de red con horarios sin configurar',()=>{
