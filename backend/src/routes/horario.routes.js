@@ -58,18 +58,19 @@ const franja = z.object({
 }).strict().refine(f => minutos(f.fin)-minutos(f.inicio)>=60, {
   message: 'Cada bloque debe permitir una consulta de 60 minutos',
 })
-const intervaloBloqueado = z.object({
-  inicio:hora, fin:hora,
-}).refine(b => minutos(b.fin) > minutos(b.inicio), {
+const bloqueoRecurrente = z.object({
+  dia:z.number().int().min(0).max(6),
+  inicio:hora,fin:hora,
+}).strict().refine(b => minutos(b.fin)>minutos(b.inicio), {
   path:['fin'],message:'La hora final debe ser posterior a la inicial',
 })
-const bloqueoRecurrente = intervaloBloqueado.extend({
-  dia:z.number().int().min(0).max(6),
-}).strict()
-const bloqueoFecha = intervaloBloqueado.extend({
+const bloqueoFecha = z.object({
   fecha:fechaNoLaborable,
+  inicio:hora,fin:hora,
   motivo:z.string().trim().max(80).default(''),
-}).strict()
+}).strict().refine(b => minutos(b.fin)>minutos(b.inicio), {
+  path:['fin'],message:'La hora final debe ser posterior a la inicial',
+})
 const horarioCitasSchema = z.object({
   franjas: z.array(franja).min(1).max(21),
   publicado: z.boolean().default(false),
