@@ -1,3 +1,4 @@
+import { StatusBar } from 'expo-status-bar'
 import { Stack } from 'expo-router'
 import { ActivityIndicator, Text } from 'react-native'
 import { AuthProvider, useAuth } from '../src/auth'
@@ -32,5 +33,10 @@ function Navigation() {
 }
 
 export default function RootLayout() {
-  return <AuthProvider><Navigation /></AuthProvider>
+  return (
+    <AuthProvider>
+      <StatusBar style="dark" />
+      <Navigation />
+    </AuthProvider>
+  )
 }
