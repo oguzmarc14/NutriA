@@ -140,3 +140,38 @@ html[data-theme="dark"] .nutria-agenda-cal-vacio{background:#2a4836;border-color
   .nutria-agenda-cal-total{font-size:10px}
   .nutria-agenda-navegar{min-width:42px}
 }
+
+/* Configuración de horas: never let native date/time labels overflow PWA widths. */
+.nutria-agenda-config,.nutria-agenda-config form,.nutria-agenda-config label{min-width:0;max-width:100%}
+.nutria-agenda-config .nutria-agenda-time-row{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 42px;
+  align-items:end;gap:7px;min-width:0;max-width:100%;
+}
+.nutria-agenda-config .nutria-agenda-time-label{
+  display:grid;min-width:0;max-width:100%;gap:4px;
+  font-size:11px;font-weight:800;overflow:hidden;
+}
+.nutria-agenda-config .nutria-agenda-time-input{
+  display:block;width:100%;min-width:0;max-width:100%;
+  box-sizing:border-box;font-size:13px;overflow:hidden;
+}
+.nutria-agenda-config .nutria-agenda-time-remove{width:42px;min-width:42px}
+.nutria-agenda-config .nutria-agenda-fecha-grid{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  align-items:end;gap:10px;min-width:0;
+}
+.nutria-agenda-config .nutria-agenda-bloqueo-item{background:#e7f1e9;border-color:#bbd5c5}
+html[data-theme="dark"] .nutria-agenda-config .nutria-agenda-bloqueo-item{background:#2c4b39;border-color:#658774}
+@media(max-width:374px){
+  .nutria-agenda-config .nutria-agenda-time-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:7px}
+  .nutria-agenda-config .nutria-agenda-time-remove{grid-column:1/-1;width:100%;min-height:36px}
+  .nutria-agenda-config .nutria-agenda-fecha-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media(min-width:640px){
+  .nutria-agenda-config .nutria-agenda-fecha-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .nutria-agenda-config .nutria-agenda-fecha-grid label:last-child{grid-column:1/-1}
+}
+@media(min-width:900px){
+  .nutria-agenda-config .nutria-agenda-fecha-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .nutria-agenda-config .nutria-agenda-fecha-grid label:last-child{grid-column:auto}
+}

@@ -1,5 +1,6 @@
 import {
   Apple,
+  CalendarDays,
   ClipboardPlus,
   Goal,
   Ruler,
@@ -9,6 +10,8 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import usePerfilPaciente from "../../hooks/usePerfilPaciente";
+import useMisCitas from "../../hooks/useMisCitas";
+import {formatearCitaPaciente} from "../../utils/fechasMisCitas";
 import EstadoCargaPaciente from "../paciente/EstadoCargaPaciente";
 import CardComparacionMedicion from "./CardComparacionMedicion";
 import CardModuloDashboard from "./CardModuloDashboard";
@@ -41,6 +44,7 @@ function obtenerObjetivos(expediente, plan) {
 function DashboardPaciente({ nombre }) {
   const navigate = useNavigate();
   const { perfil, loading, error } = usePerfilPaciente();
+  const { datos: citasPaciente } = useMisCitas();
   const mediciones = perfil?.mediciones || [];
   const ultima = mediciones[0];
   const anterior = mediciones[1];
@@ -48,6 +52,12 @@ function DashboardPaciente({ nombre }) {
     perfil?.planes?.find((plan) => plan.activo) || perfil?.planes?.[0];
   const nutriologo = perfil?.paciente?.nutritionist;
   const accesos = [
+    {
+      nombre: "Mis citas",
+      descripcion: "Revisa tu próxima consulta, confirmaciones y seguimiento.",
+      icono: CalendarDays,
+      to: "/mis-citas",
+    },
     {
       nombre: "Mi expediente",
       descripcion: "Consulta tus antecedentes e informacion clinica.",
@@ -116,6 +126,27 @@ function DashboardPaciente({ nombre }) {
             tono="arena"
           />
         </div>
+
+        <button type="button" onClick={() => navigate('/mis-citas')}
+          className="mt-5 flex w-full min-w-0 flex-wrap items-center justify-between gap-3 rounded-[23px] border border-[#a9d0b6] bg-[#dff0e4] p-4 text-left text-[#194b36] shadow-sm transition hover:bg-[#cde8d6] dark:border-[#5c9871] dark:bg-[#2b5740] dark:text-[#e3f6e9] sm:p-5">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-extrabold uppercase tracking-wide opacity-70">
+              {citasPaciente?.proxima?.estado==='confirmada' ? 'Mi próxima cita' :
+                citasPaciente?.proxima ? 'Cita pendiente de confirmar' : 'Mi siguiente consulta'}
+            </p>
+            <p className="mt-1 break-words text-base font-black capitalize sm:text-lg">
+              {citasPaciente?.proxima
+                ? formatearCitaPaciente(citasPaciente.proxima.inicio,citasPaciente.zonaHoraria)
+                : citasPaciente?.avisos?.find(a=>a.tipo==='seguimiento')?.detalle ||
+                  'Aún no tienes una cita próxima registrada'}
+            </p>
+            <p className="mt-1 text-xs opacity-75">
+              {citasPaciente?.proxima?.estado==='confirmada'
+                ? 'Confirmada por tu nutriólogo' : 'Ver el estado de mis citas'}
+            </p>
+          </div>
+          <CalendarDays size={28} className="shrink-0"/>
+        </button>
 
         <div className="mt-5 grid gap-5 lg:grid-cols-2">
           <CardComparacionMedicion ultima={ultima} anterior={anterior} />

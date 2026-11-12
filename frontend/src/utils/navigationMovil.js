@@ -5,7 +5,7 @@ export function rutasRapidas(rol, pacienteTrabajo) {
   if (rol === 'nutritionist') return pacienteTrabajo
     ? ['/pacientes', '/pacientes/' + pacienteTrabajo.id + '/expediente', '/citas', '/citas/nueva']
     : ['/', '/pacientes', '/citas', '/citas/nueva']
-  if (rol === 'patient') return ['/', '/mi-expediente', '/mi-plan', '/mi-progreso']
+  if (rol === 'patient') return ['/', '/mis-citas', '/mi-plan', '/mi-progreso']
   return ['/', '/usuarios', '/community/moderacion']
 }
 

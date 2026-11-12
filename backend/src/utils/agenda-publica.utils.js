@@ -45,6 +45,17 @@ function horaLocalAUTC(fechaIso, hora, zonaHoraria) {
   return new Date(utc)
 }
 
+function bloqueadoPorHorario(configuracion, fecha, duracionMinutos = DURACION_MINUTOS) {
+  if (!configuracion) return false
+  const zona = configuracion.zonaHoraria
+  if (!zona) return false
+  const local = partesLocales(fecha, zona)
+  const inicio = minutos(local.hora)
+  const fin = inicio + duracionMinutos
+  return [...(configuracion.bloqueos || []).filter(b => b.dia === local.dia),
+    ...(configuracion.bloqueosPorFecha || []).filter(b => b.fecha === local.fecha)]
+    .some(b => inicio < minutos(b.fin) && fin > minutos(b.inicio))
+}
 function horarioAdmite(configuracion, fecha) {
   if(!configuracion?.configurado) return true
   const local = partesLocales(fecha, configuracion.zonaHoraria)
@@ -52,7 +63,7 @@ function horarioAdmite(configuracion, fecha) {
     f.dia === local.dia && minutos(local.hora) >= minutos(f.inicio) &&
     minutos(local.hora) + DURACION_MINUTOS <= minutos(f.fin)
   )
-  return Boolean(block)
+  return Boolean(block) && !bloqueadoPorHorario(configuracion,fecha)
 }
 function esDiaNoLaborable(horarioLaboral, fechaIso) {
   return Boolean(horarioLaboral?.diasNoLaborables?.some(d => d?.fecha === fechaIso))
@@ -72,6 +83,7 @@ function construirDisponibilidad(fechaIso, horarioCitas, horarioLaboral, citasOc
       if(t < minutos(horarioLaboral.inicio) || t+DURACION_MINUTOS > minutos(horarioLaboral.fin))continue
       const instante = horaLocalAUTC(fechaIso,hora,zonaHoraria)
       if(!instante || instante.getTime() <= limite)continue
+      if(bloqueadoPorHorario({...horarioCitas,zonaHoraria},instante))continue
       const fin = instante.getTime() + DURACION_MINUTOS*60000
       if(citasOcupadas.some(c=>new Date(c.inicio).getTime()<fin && new Date(c.fin).getTime()>instante.getTime()))continue
       horas.push({hora,inicio:instante.toISOString()})
@@ -86,4 +98,5 @@ function franjaDentroHorario(franjas,horarioLaboral){
     minutos(f.fin) <= minutos(horarioLaboral.fin))
 }
 module.exports = { DURACION_MINUTOS, minutos, partesLocales, fechaLocalAhora, sumarDias, diaSemana,
-  horaLocalAUTC, horarioAdmite, construirDisponibilidad, franjaDentroHorario, esDiaNoLaborable }
+  horaLocalAUTC, horarioAdmite, construirDisponibilidad, franjaDentroHorario, esDiaNoLaborable,
+  bloqueadoPorHorario }

@@ -28,3 +28,16 @@ html[data-theme="dark"] .nutria-horario-primary{background:#3c9167;color:#fff}
 html[data-theme="dark"] .nutria-horario-primary:hover{background:#48a475}
 html[data-theme="dark"] .nutria-horario-error{background:#563532;color:#ffe0d3;border-color:#98685a}
 html[data-theme="dark"] .nutria-horario-success{background:#346348;color:#d8f3e1}
+
+/* Formulario laboral responsive: etiquetas y date/time nativos no desbordan. */
+.nutria-horario-panel,.nutria-horario-panel form,.nutria-horario-panel fieldset,
+.nutria-horario-panel label,.nutria-horario-excepciones{min-width:0;max-width:100%}
+.nutria-horario-panel h2,.nutria-horario-excepciones h3{overflow-wrap:anywhere}
+.nutria-horario-input{display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+.nutria-horario-excepciones .nutria-horario-input{font-size:14px}
+.nutria-horario-excepciones .nutria-horario-excepcion{min-width:0;max-width:100%}
+.nutria-horario-panel label{overflow-wrap:anywhere}
+@media(max-width:375px){
+  .nutria-horario-excepciones{padding:10px}
+  .nutria-horario-excepciones input[type="date"]{font-size:13px}
+}

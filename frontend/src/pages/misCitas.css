@@ -1,0 +1,17 @@
+.nutria-mis-citas{color:#174332}
+.nutria-mis-citas-tarjeta{background:#f4faf5;border-color:#bed8c8}
+.nutria-mis-citas-destacada{background:linear-gradient(130deg,#d9efdf,#f0f8ee);border-color:#83b996}
+.nutria-mis-citas-tag{background:#246b50;color:white}
+.nutria-mis-citas-status{background:#e7edeb;color:#537260}
+.nutria-mis-citas-confirmada{background:#d1eadb;color:#246b50}
+.nutria-mis-citas-accion{background:#e5f2e9;border-color:#bad8c5;color:#286b50}
+.nutria-mis-citas-aviso{background:#fdf6e8;border-color:#e4cead;color:#76542b}
+.nutria-mis-citas-error{background:#fff0ec;border-color:#dda99d;color:#963e31}
+html[data-theme="dark"] .nutria-mis-citas{color:#e9f8ee}
+html[data-theme="dark"] .nutria-mis-citas-tarjeta{background:#294735;border-color:#62856b}
+html[data-theme="dark"] .nutria-mis-citas-destacada{background:linear-gradient(135deg,#23523a,#2b4536);border-color:#71a781}
+html[data-theme="dark"] .nutria-mis-citas-status{background:#3b5143;color:#d5e5d8}
+html[data-theme="dark"] .nutria-mis-citas-confirmada{background:#3a7350;color:#edf8ef}
+html[data-theme="dark"] .nutria-mis-citas-accion{background:#345a43;border-color:#6b9577;color:#d9efe0}
+html[data-theme="dark"] .nutria-mis-citas-aviso{background:#514332;border-color:#987c53;color:#f4e5ca}
+html[data-theme="dark"] .nutria-mis-citas-error{background:#5d3834;border-color:#986760;color:#ffe5d9}
