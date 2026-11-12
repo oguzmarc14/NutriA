@@ -12,6 +12,8 @@ Aplicación Android/iOS con Expo SDK 54, React Native y Expo Router. Usa la API 
 
 Las variables `EXPO_PUBLIC_*` son públicas. Usa identificadores de cliente OAuth, sin secretos. [Configuración de Google Sign-In para Expo](https://react-native-google-signin.github.io/docs/setting-up/expo)
 
+En Windows, usa una ruta corta para el proyecto, por ejemplo C:/dev/NutriA, y define ANDROID_HOME con la ruta del SDK. Ninja puede fallar al compilar las dependencias C++ desde rutas largas de OneDrive.
+
 ## Contrato y alcance
 
 - Paciente activo con contraseña: `POST /auth/paciente/login` recibe `email` y `password`.
