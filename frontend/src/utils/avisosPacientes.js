@@ -1,8 +1,12 @@
 // Avisos informativos para el nutriólogo. No son diagnósticos ni notificaciones push.
 // Los datos clínicos siguen protegidos en las rutas autenticadas correspondientes.
-export function obtenerAvisosPaciente(paciente) {
+import { avisoProximoSeguimiento } from './seguimientoConsultas'
+
+export function obtenerAvisosPaciente(paciente, configSeguimiento = null, hoy = null, zonaHoraria = null) {
   if (!paciente) return []
   const avisos = []
+  const seguimiento = avisoProximoSeguimiento(paciente,configSeguimiento,hoy,zonaHoraria)
+  if (seguimiento) avisos.push(seguimiento)
 
   if (paciente.accountStatus === 'pending') {
     avisos.push({

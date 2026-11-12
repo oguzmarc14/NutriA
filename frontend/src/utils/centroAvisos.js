@@ -2,14 +2,15 @@ import { obtenerAvisosPaciente } from './avisosPacientes'
 
 // Prepara avisos sin inferir diagnósticos, faltas del paciente ni supuestos de adhesión.
 // El recuento corresponde a asuntos por revisar, no a notificaciones sin leer.
-export function reunirAvisos(pacientes = [], citas = [], ahora = new Date()) {
+export function reunirAvisos(pacientes = [], citas = [], ahora = new Date(),
+  configSeguimiento = null, hoy = null, zonaHoraria = null) {
   const inicio = ahora.getTime()
   const fin = inicio + 7 * 24 * 60 * 60 * 1000
   const porPaciente = Array.isArray(pacientes) ? pacientes : []
   const pacientesPorId = new Map(porPaciente.map((p) => [String(p._id), p]))
 
   const asuntos = porPaciente.flatMap((paciente) =>
-    obtenerAvisosPaciente(paciente).map((aviso) => ({
+    obtenerAvisosPaciente(paciente,configSeguimiento,hoy,zonaHoraria).map((aviso) => ({
       id: `paciente:${paciente._id}:${aviso.id}`,
       tipo: 'seguimiento',
       filtro: aviso.categoria === 'Datos generales' || aviso.categoria === 'Cuenta' ? 'datos' : 'expediente',
