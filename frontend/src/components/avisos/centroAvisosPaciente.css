@@ -1,0 +1,12 @@
+.nutria-centro-paciente-bell{background:#e3f0e7;border-color:#bad7c5;color:#246b55}
+.nutria-centro-paciente-count{background:#267552;color:white}
+.nutria-centro-paciente-overlay{background:rgba(10,34,22,.62);backdrop-filter:blur(3px)}
+.nutria-centro-paciente-panel{background:#f5faf5;border-color:#c2dac8;color:#163f30}
+.nutria-centro-paciente-item{background:#e7f1e9;border-color:#c6decf}
+.nutria-centro-paciente-close{border-color:#bdd4c5;background:#e5efe8;color:#285d43}
+.nutria-centro-paciente-link{background:#287553;color:white}
+html[data-theme="dark"] .nutria-centro-paciente-bell{background:#345941;border-color:#729b7d;color:#e5f5e9}
+html[data-theme="dark"] .nutria-centro-paciente-panel{background:#213b2b;border-color:#6e9a79;color:#e7f6eb}
+html[data-theme="dark"] .nutria-centro-paciente-item{background:#2e513b;border-color:#628770}
+html[data-theme="dark"] .nutria-centro-paciente-close{background:#355743;color:#e4f6e8;border-color:#648d6f}
+html[data-theme="dark"] .nutria-centro-paciente-link{background:#3c9969;color:white}

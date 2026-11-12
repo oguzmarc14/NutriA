@@ -15,6 +15,7 @@ import ConsultarDietasPage from "./pages/ConsultarDietasPage";
 import UsuariosPage from "./pages/UsuariosPage";
 import ActivarCuentaPage from "./pages/ActivarCuentaPage";
 import MiExpedientePage from "./pages/MiExpedientePage";
+import MisCitasPage from "./pages/MisCitasPage";
 import MisMedicionesPage from "./pages/MisMedicionesPage";
 import MiPlanPage from "./pages/MiPlanPage";
 import CompararMedicionesPage from "./pages/CompararMedicionesPage";
@@ -92,6 +93,7 @@ function App() {
 
           <Route element={<ProtectedRoute roles={["patient"]} />}>
             <Route path="mi-expediente" element={<MiExpedientePage />} />
+            <Route path="mis-citas" element={<MisCitasPage />} />
 
             <Route path="mis-mediciones" element={<MisMedicionesPage />} />
 

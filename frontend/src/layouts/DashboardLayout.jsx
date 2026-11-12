@@ -43,6 +43,7 @@ import { useAuth } from '../context/auth'
 import ThemeSelector from '../components/theme/ThemeSelector'
 import BotonInstalarApp from '../components/pwa/BotonInstalarApp'
 import CentroAvisosNutriologo from '../components/avisos/CentroAvisosNutriologo'
+import CentroAvisosPaciente from '../components/avisos/CentroAvisosPaciente'
 import MenuMovil from '../components/navigation/MenuMovil'
 import ActualizacionPWA from '../components/pwa/ActualizacionPWA'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
@@ -194,6 +195,12 @@ function DashboardLayout() {
     ...(user.role === 'patient'
       ? [
           {
+            icon: CalendarDays,
+            label: 'Mis citas',
+            shortLabel: 'Mis citas',
+            to: '/mis-citas',
+          },
+          {
             icon: UserRound,
             label: 'Mi expediente',
             shortLabel: 'Expediente',
@@ -256,6 +263,7 @@ function DashboardLayout() {
     '/calculo-nutricional',
     '/usuarios',
     '/mi-expediente',
+    '/mis-citas',
     '/mis-mediciones',
     '/mi-plan',
     '/progreso',
@@ -391,6 +399,7 @@ function DashboardLayout() {
           </div>
           <div className="ml-auto flex items-center gap-2">
             {user.role === 'nutritionist' && <CentroAvisosNutriologo modo="movil" />}
+             {user.role === 'patient' && <CentroAvisosPaciente modo="movil" />}
             <BotonInstalarApp />
             <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} irAMiClinica={() => navigate('/mi-clinica')} irAEditarPerfil={() => navigate('/editar-perfil')}/>
           </div>
@@ -424,6 +433,7 @@ function DashboardLayout() {
           ) : <span className="text-xs font-semibold text-[#648073]">NutriA</span>}
           <div className="flex shrink-0 items-center gap-2">
             {user.role === 'nutritionist' && <CentroAvisosNutriologo modo="escritorio" />}
+             {user.role === 'patient' && <CentroAvisosPaciente modo="escritorio" />}
             <BotonInstalarApp />
             <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} irAMiClinica={() => navigate('/mi-clinica')} irAEditarPerfil={() => navigate('/editar-perfil')}/>
           </div>
