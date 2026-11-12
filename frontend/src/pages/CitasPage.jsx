@@ -68,6 +68,12 @@ export default function CitasPage() {
   const routerNavigate = useNavigate()
   const location = useLocation()
   const [configAbierta,setConfigAbierta] = useState(Boolean(location.state?.abrirConfiguracion))
+  useEffect(() => {
+    // Permite abrir Configurar agenda desde «Más», incluso si ya estamos en /citas.
+    if (!location.state?.abrirConfiguracion) return
+    setConfigAbierta(true)
+    routerNavigate(location.pathname, { replace: true, state: null })
+  }, [location.pathname, location.state, routerNavigate])
   const [horarioCitas,setHorarioCitas] = useState(null)
   const [view, setView] = useState('semana')
   const [focus, setFocus] = useState(new Date())

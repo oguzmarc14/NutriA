@@ -42,6 +42,7 @@ import { useAuth } from '../context/auth'
 import ThemeSelector from '../components/theme/ThemeSelector'
 import BotonInstalarApp from '../components/pwa/BotonInstalarApp'
 import CentroAvisosNutriologo from '../components/avisos/CentroAvisosNutriologo'
+import MenuMovil from '../components/navigation/MenuMovil'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
 function PerfilMenu({ user, roleLabel, cerrarSesion, irAMiClinica, irAEditarPerfil }) {
@@ -215,24 +216,6 @@ function DashboardLayout() {
           },
         ]
       : []),
-  ]
-
-  const navegacionMovil = user.role === 'nutritionist' && pacienteTrabajo
-    ? [
-        { icon: ClipboardPlus, label: 'Expediente clínico', shortLabel: 'Expediente', to: `/pacientes/${pacienteTrabajo.id}/expediente` },
-        { icon: Ruler, label: 'Mediciones', shortLabel: 'Medidas', to: '/mediciones' },
-        { icon: Calculator, label: 'Cálculo nutricional', shortLabel: 'Cálculo', to: '/calculo-nutricional' },
-        { icon: Apple, label: 'Crear dieta', shortLabel: 'Crear', to: '/planes' },
-        { icon: FileText, label: 'Consultar dietas', shortLabel: 'Dietas', to: '/dietas' },
-        { icon: TrendingUp, label: 'Progreso', shortLabel: 'Progreso', to: '/progreso' },
-        { icon: Users, label: 'Pacientes', shortLabel: 'Pacientes', to: '/pacientes' },
-        { icon: LayoutDashboard, label: 'Resumen', shortLabel: 'Resumen', to: '/' },
-      ]
-    : navigationVisible
-
-  const navegacionConMarca = [
-    { icon: Leaf, label: 'NutriA', shortLabel: 'NutriA', to: '/', marca: true },
-    ...navegacionMovil.filter(item => item.to !== '/'),
   ]
 
   /*
@@ -463,62 +446,7 @@ function DashboardLayout() {
       </main>
 
       {configurarHorario && <div className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto bg-[#102d26]/70 p-3 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Configuración inicial del horario"><div className="my-auto w-full max-w-2xl"><HorarioLaboral primerIngreso onSaved={()=>setConfigurarHorario(false)}/></div></div>}
-      {/* ============================================
-          NAVEGACIÓN MÓVIL
-      ============================================ */}
-
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t-2 border-[#a9cbb6] bg-[#f5faf6]/98 px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_30px_rgba(31,72,57,0.08)] md:backdrop-blur-xl md:hidden">
-        <div className="mx-auto flex max-w-lg snap-x snap-mandatory gap-1.5 overflow-x-auto overscroll-x-contain touch-pan-x pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {navegacionConMarca.map(
-            ({
-              icon: Icon,
-              shortLabel,
-              label,
-              to,
-              marca,
-            }) => (
-              <NavLink
-                key={label}
-                to={to}
-                end={to === '/' || to === '/pacientes' || to === '/citas'}
-                className={({
-                  isActive,
-                }) =>
-                  `flex min-w-[76px] flex-1 shrink-0 snap-start flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 transition-all ${
-                    isActive
-                      ? 'bg-[#d5e9dc] text-[#174b38] shadow-[inset_0_0_0_1px_#b4d4bf]'
-                      : 'text-[#356c55] hover:bg-[#e7f1e9] active:bg-[#dbece1]'
-                  }`
-                }
-              >
-                {({
-                  isActive,
-                }) => (
-                  <>
-                    <div
-                      className={`grid h-8 w-8 place-items-center rounded-xl transition ${
-                        isActive || marca
-                          ? 'bg-[#246b55] text-white shadow-[0_5px_14px_rgba(36,107,85,0.22)]'
-                          : 'bg-[#e2efe6] text-[#246b55]'
-                      }`}
-                    >
-                      <Icon
-                        size={18}
-                      />
-                    </div>
-
-                    <span className="max-w-full truncate text-[10px] font-extrabold sm:text-[11px]">
-                      {
-                        shortLabel
-                      }
-                    </span>
-                  </>
-                )}
-              </NavLink>
-            ),
-          )}
-        </div>
-      </nav>
+      <MenuMovil enlaces={navigationVisible} rol={user.role} pacienteTrabajo={pacienteTrabajo} />
     </div>
   )
 }
