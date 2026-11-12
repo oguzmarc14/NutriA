@@ -6,6 +6,7 @@ import {
   CircleCheck, CircleAlert,
 } from 'lucide-react'
 import { obtenerAvisosPaciente } from '../../utils/avisosPacientes'
+import { avisoDestacado } from '../../utils/cardPaciente'
 import './estilosPaciente.css'
 
 function enlaceWhatsApp(telefono) {
@@ -21,13 +22,6 @@ function fechaCorta(valor) {
   return Number.isNaN(fecha.getTime())
     ? null
     : new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }).format(fecha)
-}
-
-export function avisoDestacado(avisos = []) {
-  // Priorizar tareas de seguimiento reales sobre datos personales opcionales.
-  const preferencia = ['mediciones', 'expediente', 'plan']
-  return preferencia.map(id => avisos.find(a => a.id === id)).find(Boolean) ||
-    avisos.find(a => Boolean(a.accion)) || avisos[0] || null
 }
 
 export default function CardPaciente({
