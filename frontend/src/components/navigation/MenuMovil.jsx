@@ -59,7 +59,7 @@ export default function MenuMovil({ enlaces, rol, pacienteTrabajo }) {
   return <>
     <nav aria-label="Navegación principal móvil"
       className="nutria-menu-barra fixed inset-x-0 bottom-0 z-50 border-t px-1.5 pt-2 pb-[max(8px,env(safe-area-inset-bottom))] md:hidden">
-      <div className="mx-auto grid max-w-lg grid-cols-5 gap-1">
+      <div className={'mx-auto grid max-w-lg gap-1 '+(accesos.length===4?'grid-cols-5':accesos.length===3?'grid-cols-4':'grid-cols-3')}>
         {accesos.map(({icon:Icon,to,shortLabel,label})=>(
           <NavLink key={to} to={to} end
             aria-label={label}
