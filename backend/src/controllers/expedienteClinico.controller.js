@@ -39,6 +39,13 @@ const numeroOpcional = z.preprocess(
  */
 
 const expedienteSchema = z.object({
+  // Estados afirmativos de campos opcionales con editor desplegable.
+  // Una lista limitada impide inyectar nombres de propiedades arbitrarias.
+  camposConDetalle: z.array(z.enum(["antecedentesPersonales","antecedentesFamiliares","alergias","enfermedades","medicamentos","cirugias","lesionesActuales","padecimientos","nutricion.comidaFavorita","nutricion.comidaDisgusta","nutricion.cafePorDia","nutricion.bebidasEnergeticasSemana","nutricion.bebidasAzucaradasSemana","nutricion.intoleranciasAlimentarias","deporte.ejercicioRealizar","observaciones"]))
+    .max(16)
+    .refine(lista => new Set(lista).size === lista.length, 'No repitas campos')
+    .optional(),
+
   /*
    * ANTECEDENTES
    */
