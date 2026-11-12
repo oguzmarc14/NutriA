@@ -6,11 +6,23 @@ const router = express.Router()
 const { minutos, franjaDentroHorario, fechaLocalAhora, sumarDias, construirDisponibilidad } = require('../utils/agenda-publica.utils')
 const Cita = require('../models/Cita')
 router.use(requireAuth, allowRoles('nutritionist'))
+const fechaNoLaborable = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
+  const parsed = new Date(value + 'T12:00:00Z')
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0,10) === value
+}, 'Fecha inválida')
+const diaNoLaborableSchema = z.object({
+  fecha: fechaNoLaborable,
+  motivo: z.string().trim().max(80).default(''),
+}).strict()
 const schema = z.object({
   dias: z.array(z.number().int().min(0).max(6)).min(1).max(7).refine(d => new Set(d).size === d.length),
   inicio: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
   fin: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
   zonaHoraria: z.string().min(3).max(80),
+  // Opcional para que versiones anteriores de la PWA no borren vacaciones guardadas.
+  diasNoLaborables: z.array(diaNoLaborableSchema).max(100)
+    .refine(dias => new Set(dias.map(d => d.fecha)).size === dias.length, 'No repitas fechas no laborables')
+    .optional(),
 }).strict().refine(d => d.fin > d.inicio, { message: 'La hora final debe ser posterior al inicio', path: ['fin'] })
 router.get('/', async (req,res,next) => {
   try {
@@ -24,7 +36,17 @@ router.put('/', async (req,res,next) => {
     if (!parsed.success) return res.status(400).json({ message: 'Revisa los días y horas de trabajo', issues: parsed.error.issues })
     try { new Intl.DateTimeFormat('es-MX',{timeZone:parsed.data.zonaHoraria}) }
     catch { return res.status(400).json({message:'Zona horaria inválida'}) }
-    const u = await User.findByIdAndUpdate(req.user._id, { $set: { horarioLaboral: {...parsed.data, configurado:true} } }, { new:true, runValidators:true }).select('horarioLaboral')
+    const cambios = {
+      'horarioLaboral.dias': parsed.data.dias,
+      'horarioLaboral.inicio': parsed.data.inicio,
+      'horarioLaboral.fin': parsed.data.fin,
+      'horarioLaboral.zonaHoraria': parsed.data.zonaHoraria,
+      'horarioLaboral.configurado': true,
+    }
+    // Actualizar campos concretos evita eliminar excepciones con clientes viejos.
+    if (parsed.data.diasNoLaborables !== undefined)
+      cambios['horarioLaboral.diasNoLaborables'] = parsed.data.diasNoLaborables
+    const u = await User.findByIdAndUpdate(req.user._id, { $set: cambios }, { new:true, runValidators:true }).select('horarioLaboral')
     res.json({horario:u.horarioLaboral})
   } catch(e) { next(e) }
 })

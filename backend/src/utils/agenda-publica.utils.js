@@ -54,11 +54,14 @@ function horarioAdmite(configuracion, fecha) {
   )
   return Boolean(block)
 }
+function esDiaNoLaborable(horarioLaboral, fechaIso) {
+  return Boolean(horarioLaboral?.diasNoLaborables?.some(d => d?.fecha === fechaIso))
+}
 function construirDisponibilidad(fechaIso, horarioCitas, horarioLaboral, citasOcupadas = [], ahora = new Date()) {
   const zonaHoraria = horarioLaboral.zonaHoraria
   const dia = diaSemana(fechaIso)
   if (!horarioCitas?.configurado || !horarioCitas.franjas?.length || !horarioLaboral?.configurado) return []
-  if(!horarioLaboral.dias.includes(dia)) return []
+  if(!horarioLaboral.dias.includes(dia) || esDiaNoLaborable(horarioLaboral, fechaIso)) return []
   const minAnticipacion = (horarioCitas.anticipacionHoras ?? 2) * 3600000
   const limite = ahora.getTime() + minAnticipacion
   const horas = []
@@ -83,4 +86,4 @@ function franjaDentroHorario(franjas,horarioLaboral){
     minutos(f.fin) <= minutos(horarioLaboral.fin))
 }
 module.exports = { DURACION_MINUTOS, minutos, partesLocales, fechaLocalAhora, sumarDias, diaSemana,
-  horaLocalAUTC, horarioAdmite, construirDisponibilidad, franjaDentroHorario }
+  horaLocalAUTC, horarioAdmite, construirDisponibilidad, franjaDentroHorario, esDiaNoLaborable }
