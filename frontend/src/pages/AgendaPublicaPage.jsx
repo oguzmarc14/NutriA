@@ -36,7 +36,7 @@ export default function AgendaPublicaPage() {
   }
 
   return <main className="nutria-agenda-publica min-h-dvh p-3 sm:p-8">
-    <div className="mx-auto max-w-[850px] space-y-5">
+    <div className="mx-auto w-full min-w-0 max-w-[850px] space-y-5">
       <header className="overflow-hidden rounded-[28px] bg-linear-to-br from-[#143c30] via-[#245c43] to-[#367555] p-6 text-[#f5fff7] sm:p-9">
         <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[#c6ecd1]"><Leaf size={19}/>NutriA</div>
         <h1 className="mt-5 text-2xl font-black sm:text-4xl">Horarios disponibles para consulta</h1>
@@ -46,7 +46,7 @@ export default function AgendaPublicaPage() {
         </div>}
         <p className="mt-4 text-sm text-[#d9f2e1]">Elige un horario libre y envíalo al consultorio para solicitar tu cita. Tu selección no representa una reserva confirmada.</p>
       </header>
-      <section className="nutria-agenda-panel rounded-[26px] border p-4 sm:p-7">
+      <section className="nutria-agenda-panel w-full min-w-0 max-w-full rounded-[26px] border p-3 sm:p-7">
         {loading ? <p role="status" className="py-10 text-center text-sm">Consultando horarios...</p> :
          error && !datos ? <p role="alert" className="nutria-agenda-error rounded-xl border p-4 text-sm font-semibold">{error}</p> :
          <div className="space-y-6">
