@@ -5,7 +5,7 @@ Aplicación Android/iOS con Expo SDK 54, React Native y Expo Router. Usa la API 
 ## Configuración local
 
 1. Usa Node 22 y prepara Android Studio para Android o Xcode en macOS para iOS.
-2. Desde `mobile/`, ejecuta `npm install` y copia `.env.example` a `.env`.
+2. Desde `mobile/`, ejecuta `npm ci` y copia `.env.example` a `.env`.
 3. Define `EXPO_PUBLIC_API_URL` con la URL HTTPS pública del servicio de Render y el sufijo `/api`.
 4. Para el acceso del personal, configura `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` con el mismo ID público que Render tiene en `GOOGLE_CLIENT_ID`. Registra la app Android `com.nutria.mobile` con la huella SHA-1 del certificado de la compilación. En iOS registra `com.nutria.mobile`, configura `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` y usa el esquema invertido de ese cliente en `GOOGLE_IOS_URL_SCHEME`.
 5. Ejecuta `npm run android` o `npm run ios` para compilar y abrir el cliente de desarrollo. Después puedes iniciar Metro con `npm start`. Google Sign-In requiere el cliente nativo de desarrollo. Si cambia la configuración nativa de OAuth, regenera la app y vuelve a compilarla.
