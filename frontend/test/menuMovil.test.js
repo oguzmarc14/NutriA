@@ -34,8 +34,8 @@ test('menú completo usa la misma fuente que escritorio y no filtra rutas por pa
   assert.match(source,/Versión de NutriA/)
 })
 test('configuración de agenda y clínicas también son accesibles desde Más', () => {
-  assert.match(source,/Configurar agenda y horarios/)
-  assert.match(source,/Editar perfil y horario laboral/)
+  assert.doesNotMatch(source,/Configurar agenda y horarios/)
+  assert.match(source,/Editar perfil y horario/)
   assert.match(source,/Mi clínica/)
 })
 
