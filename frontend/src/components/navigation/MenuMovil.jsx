@@ -3,15 +3,7 @@ import { createPortal } from 'react-dom'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { Building2, CalendarClock, Menu, UserPen, X } from 'lucide-react'
 import './menuMovil.css'
-
-// Los accesos rápidos nunca sustituyen el menú completo.
-export function rutasRapidas(rol, pacienteTrabajo) {
-  if (rol === 'nutritionist') return pacienteTrabajo
-    ? ['/pacientes', '/pacientes/' + pacienteTrabajo.id + '/expediente', '/citas', '/citas/nueva']
-    : ['/', '/pacientes', '/citas', '/citas/nueva']
-  if (rol === 'patient') return ['/', '/mi-expediente', '/mi-plan', '/mi-progreso']
-  return ['/', '/usuarios', '/community/moderacion']
-}
+import { rutasRapidas } from '../../utils/navigationMovil'
 
 export default function MenuMovil({ enlaces, rol, pacienteTrabajo }) {
   const [abierto, setAbierto] = useState(false)
