@@ -1,15 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { Building2, CalendarClock, Menu, UserPen, X } from 'lucide-react'
+import { Building2, CalendarClock, Menu, RefreshCw, UserPen, X } from 'lucide-react'
 import './menuMovil.css'
 import { rutasRapidas } from '../../utils/navigationMovil'
 
-export default function MenuMovil({ enlaces, rol, pacienteTrabajo }) {
-  const [abierto, setAbierto] = useState(false)
+export default function MenuMovil({ enlaces, rol, pacienteTrabajo, abierto, setAbierto }) {
   const ubicacion = useLocation()
   const botonMas = useRef(null)
   const botonCerrar = useRef(null)
+  const elementoAnterior = useRef(null)
   const accesos = rutasRapidas(rol, pacienteTrabajo)
     .map(ruta => enlaces.find(enlace => enlace.to === ruta)).filter(Boolean)
   const visibles = new Set(accesos.map(item => item.to))
@@ -21,6 +21,7 @@ export default function MenuMovil({ enlaces, rol, pacienteTrabajo }) {
   useEffect(() => {
     if (!abierto) return undefined
     const original = document.body.style.overflow
+    elementoAnterior.current = document.activeElement
     document.body.style.overflow = 'hidden'
     botonCerrar.current?.focus()
     function teclado(e) {
@@ -39,8 +40,22 @@ export default function MenuMovil({ enlaces, rol, pacienteTrabajo }) {
     return () => {
       document.removeEventListener('keydown', teclado)
       document.body.style.overflow = original
+      if (elementoAnterior.current?.isConnected) elementoAnterior.current.focus()
     }
-  }, [abierto])
+  }, [abierto, setAbierto])
+
+  async function actualizarAplicacion() {
+    // Permite refrescar voluntariamente la PWA sin borrar sesión ni datos.
+    try {
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration()
+        await registration?.update()
+      }
+    } catch (error) {
+      console.warn('No se pudo comprobar el service worker; recargando aplicación.', error)
+    }
+    window.location.reload()
+  }
 
   const extras = rol === 'nutritionist' ? [
     { to:'/citas', state:{abrirConfiguracion:true}, label:'Configurar agenda y horarios', icon:CalendarClock },
@@ -57,7 +72,7 @@ export default function MenuMovil({ enlaces, rol, pacienteTrabajo }) {
             aria-label={label}
             className={({isActive})=>'nutria-menu-acceso flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 py-1.5 '+(isActive?'nutria-menu-acceso--activo':'')}>
             <Icon size={20} aria-hidden="true"/>
-            <span className="w-full truncate text-center text-[10px] font-extrabold leading-4">{shortLabel}</span>
+            <span className="w-full text-center text-[10px] font-extrabold leading-4">{shortLabel}</span>
           </NavLink>
         ))}
         <button ref={botonMas} type="button" onClick={()=>setAbierto(true)}
@@ -77,7 +92,10 @@ export default function MenuMovil({ enlaces, rol, pacienteTrabajo }) {
           <div className="flex items-center justify-between gap-3 border-b border-current/10 px-5 py-4">
             <div>
               <h2 id="nutria-menu-movil-titulo" className="text-xl font-black">Todos los apartados</h2>
-              <p className="mt-1 text-xs opacity-75">Accede a todas las funciones de NutriA.</p>
+              <p className="mt-1 text-xs opacity-75">
+                {rol === 'nutritionist' ? 'Nutriólogo' : rol === 'admin' ? 'Administrador' : 'Paciente'}
+                {' · '}{enlaces.length} apartados disponibles
+              </p>
             </div>
             <button ref={botonCerrar} type="button" onClick={()=>{setAbierto(false);botonMas.current?.focus()}}
               className="nutria-menu-cerrar grid h-10 w-10 shrink-0 place-items-center rounded-xl border" aria-label="Cerrar menú">
@@ -106,6 +124,13 @@ export default function MenuMovil({ enlaces, rol, pacienteTrabajo }) {
                 ))}
               </div>
             </>}
+            <button type="button" onClick={actualizarAplicacion}
+              className="nutria-menu-opcion mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border p-3 text-xs font-bold">
+              <RefreshCw size={17} aria-hidden="true"/> Buscar actualización y recargar NutriA
+            </button>
+            <p className="mt-3 px-2 text-center text-[11px] opacity-65">
+              Versión de NutriA: {__NUTRIA_BUILD_ID__} · Los apartados dependen del rol de tu cuenta.
+            </p>
           </div>
         </section>
       </div>,document.body

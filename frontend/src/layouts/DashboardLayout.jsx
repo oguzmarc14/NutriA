@@ -29,6 +29,7 @@ import {
   Calculator,
   PanelLeftOpen,
   PanelLeftClose,
+  Menu,
 } from 'lucide-react'
 
 import {
@@ -43,6 +44,7 @@ import ThemeSelector from '../components/theme/ThemeSelector'
 import BotonInstalarApp from '../components/pwa/BotonInstalarApp'
 import CentroAvisosNutriologo from '../components/avisos/CentroAvisosNutriologo'
 import MenuMovil from '../components/navigation/MenuMovil'
+import ActualizacionPWA from '../components/pwa/ActualizacionPWA'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
 function PerfilMenu({ user, roleLabel, cerrarSesion, irAMiClinica, irAEditarPerfil }) {
@@ -81,6 +83,7 @@ function DashboardLayout() {
   const enEditorPlanes = user.role === 'nutritionist' && location.pathname === '/planes'
   const [sidebarPlanesVisible, setSidebarPlanesVisible] = useState(false)
   const [configurarHorario, setConfigurarHorario] = useState(false)
+  const [menuMovilAbierto, setMenuMovilAbierto] = useState(false)
   useEffect(() => {
     if (user.role !== 'nutritionist') return
     let active = true
@@ -371,7 +374,12 @@ function DashboardLayout() {
             HEADER
         ============================================ */}
 
-        <header className="sticky top-0 z-40 flex min-h-[56px] items-center border-b border-[#c8dbd0] bg-[#fbfdfb]/95 px-4 md:backdrop-blur-md md:hidden">
+        <header className="sticky top-0 z-40 flex min-h-[56px] items-center border-b border-[#c8dbd0] bg-[#fbfdfb]/95 px-3 md:backdrop-blur-md md:hidden">
+          <button type="button" onClick={() => setMenuMovilAbierto(true)}
+            aria-label="Abrir todos los apartados" aria-haspopup="dialog" aria-expanded={menuMovilAbierto}
+            className="mr-1 grid h-9 w-9 shrink-0 place-items-center rounded-xl text-[#246b55] hover:bg-[#e6f0e9]">
+            <Menu size={20} aria-hidden="true"/>
+          </button>
           {mostrarAtras && (
             <button type="button" onClick={regresar} aria-label="Volver" className="mr-2 grid h-9 w-9 place-items-center rounded-xl text-[#246b55] hover:bg-[#e6f0e9]">
               <ArrowLeft size={19}/>
@@ -446,7 +454,9 @@ function DashboardLayout() {
       </main>
 
       {configurarHorario && <div className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto bg-[#102d26]/70 p-3 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Configuración inicial del horario"><div className="my-auto w-full max-w-2xl"><HorarioLaboral primerIngreso onSaved={()=>setConfigurarHorario(false)}/></div></div>}
-      <MenuMovil enlaces={navigationVisible} rol={user.role} pacienteTrabajo={pacienteTrabajo} />
+      <MenuMovil enlaces={navigationVisible} rol={user.role} pacienteTrabajo={pacienteTrabajo}
+        abierto={menuMovilAbierto} setAbierto={setMenuMovilAbierto} />
+      <ActualizacionPWA />
     </div>
   )
 }

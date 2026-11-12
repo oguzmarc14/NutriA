@@ -30,9 +30,18 @@ test('menú completo usa la misma fuente que escritorio y no filtra rutas por pa
   assert.doesNotMatch(layout,/const navegacionMovil = user\.role/)
   assert.match(source,/\{enlaces\.map\(/)
   assert.match(source,/Todos los apartados/)
+  assert.match(layout,/Abrir todos los apartados/)
+  assert.match(source,/Versión de NutriA/)
 })
 test('configuración de agenda y clínicas también son accesibles desde Más', () => {
   assert.match(source,/Configurar agenda y horarios/)
   assert.match(source,/Editar perfil y horario laboral/)
   assert.match(source,/Mi clínica/)
+})
+
+test('el menú del nutriólogo conserva los módulos de citas y dietas',()=>{
+  for (const title of ["label: 'Ver citas'","label: 'Crear cita'","label: 'Crear dieta'","label: 'Consultar dietas'","label: 'Cálculo nutricional'"]) {
+    assert.ok(layout.includes(title),'Falta apartado '+title)
+  }
+  assert.match(source,/Buscar actualización y recargar NutriA/)
 })
