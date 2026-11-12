@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Bell, CalendarCheck2, ChevronRight, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import useMisCitas from '../../hooks/useMisCitas'
 import { useAuth } from '../../context/auth'
 import './centroAvisosPaciente.css'
@@ -17,6 +18,14 @@ export default function CentroAvisosPaciente({modo='movil'}){
     try{setLeidos(JSON.parse(window.localStorage.getItem(key)||'[]'))}
     catch{setLeidos([])}
   },[key])
+  useEffect(()=>{
+    if(!abierto)return undefined
+    const antes=document.body.style.overflow
+    document.body.style.overflow='hidden'
+    const cerrar=e=>{if(e.key==='Escape')setAbierto(false)}
+    document.addEventListener('keydown',cerrar)
+    return ()=>{document.body.style.overflow=antes;document.removeEventListener('keydown',cerrar)}
+  },[abierto])
   const pendientes=avisos.filter(a=>!leidos.includes(a.id))
   const mostrar=(event)=>{
     event.stopPropagation()
@@ -37,7 +46,7 @@ export default function CentroAvisosPaciente({modo='movil'}){
         {pendientes.length>9?'9+':pendientes.length}
       </span>}
     </button>
-    {abierto && <div role="dialog" aria-modal="true" aria-label="Avisos de mis citas"
+    {abierto && createPortal(<div role="dialog" aria-modal="true" aria-label="Avisos de mis citas"
       className={'nutria-centro-paciente-overlay fixed inset-0 z-[220] flex items-end justify-center p-2 sm:items-center '+(modo==='escritorio'?'md:items-start md:justify-end md:p-5':'')}>
       <section className="nutria-centro-paciente-panel w-full max-w-lg rounded-[24px] border p-4 shadow-2xl">
         <div className="flex items-center justify-between gap-2">
@@ -63,6 +72,6 @@ export default function CentroAvisosPaciente({modo='movil'}){
           </Link>
         </div>
       </section>
-    </div>}
+    </div>,document.body)}
   </div>
 }
