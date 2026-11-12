@@ -11,7 +11,7 @@ export default function Dashboard() {
   if (!session) return null
   const { user } = session
   return (
-    <Page title="NutriA">
+    <Page>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Hola, {user.name}</Text>
         <Text style={styles.body}>{roleLabels[user.role]}</Text>
@@ -19,8 +19,8 @@ export default function Dashboard() {
       </View>
       {canViewClinic(user.role) && (
         <>
-          <Button label="Ver pacientes" onPress={() => router.push('/pacientes')} />
-          <Button label="Ver agenda" onPress={() => router.push('/citas')} />
+          <Button label="Ver pacientes" onPress={() => router.navigate('/pacientes')} />
+          <Button label="Ver agenda" onPress={() => router.navigate('/citas')} />
         </>
       )}
       <Button label="Cerrar sesión" selected={false} onPress={() => {

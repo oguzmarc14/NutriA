@@ -8,7 +8,7 @@ type Patient = { _id: string; name: string; email?: string }
 export default function Patients() {
   const { rows, loading, error, reload } = useList<Patient>('/pacientes', 'pacientes')
   return (
-    <Page title="Pacientes">
+    <Page>
       <ListState loading={loading} error={error} reload={reload}
         empty={rows.length ? undefined : 'No hay pacientes activos.'} />
       {rows.map(patient => (

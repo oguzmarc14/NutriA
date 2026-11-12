@@ -39,6 +39,7 @@ export default function Login() {
 
   return (
     <Page title="NutriA">
+      {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
       <Text style={styles.cardTitle}>Acceso de pacientes</Text>
       <TextInput accessibilityLabel="Correo electrónico" placeholder="Correo electrónico"
         autoCapitalize="none" keyboardType="email-address" autoComplete="email"
@@ -49,7 +50,6 @@ export default function Login() {
         disabled={busy || !email.trim() || password.length < 8} />
       <Text style={styles.cardTitle}>Administradores y nutriólogos</Text>
       <Button label="Continuar con Google" disabled={busy} onPress={() => void submit(true)} />
-      {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
     </Page>
   )
 }

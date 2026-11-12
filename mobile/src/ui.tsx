@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons'
 import type { ReactNode } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -29,30 +30,51 @@ export const styles = StyleSheet.create({
   disabled: { opacity: 0.5 },
   buttonText: { color: colors.white, fontSize: 16, fontWeight: '600', textAlign: 'center' },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  expandedButton: { flexGrow: 1 },
+  pressed: { opacity: 0.7 },
+  backButton: {
+    marginHorizontal: 8, width: 48, height: 48, borderRadius: 24,
+    backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center',
+  },
 })
 
-export function Page({ title, children }: { title: string; children: ReactNode }) {
+export function Page({ title, children }: { title?: string; children: ReactNode }) {
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.safe} edges={title ? ['top', 'bottom', 'left', 'right'] : ['left', 'right']}>
       <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
-        <Text accessibilityRole="header" style={styles.title}>{title}</Text>
+        {title && <Text accessibilityRole="header" style={styles.title}>{title}</Text>}
         {children}
       </ScrollView>
     </SafeAreaView>
   )
 }
 
-export function Button({ label, onPress, disabled, selected }: {
+export function Button({ label, onPress, disabled, selected, expand }: {
   label: string
   onPress: () => void
   disabled?: boolean
   selected?: boolean
+  expand?: boolean
 }) {
   return (
     <Pressable accessibilityRole="button" accessibilityState={{ disabled, selected }}
       disabled={disabled} onPress={onPress}
-      style={[styles.button, selected === false && styles.secondary, disabled && styles.disabled]}>
+      style={({ pressed }) => [styles.button, selected === false && styles.secondary,
+        expand && styles.expandedButton, pressed && styles.pressed, disabled && styles.disabled]}>
       <Text style={[styles.buttonText, selected === false && { color: colors.green }]}>{label}</Text>
+    </Pressable>
+  )
+}
+
+export function BackButton({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Volver a Inicio"
+      onPress={onPress}
+      style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+    >
+      <Ionicons name="arrow-back" size={23} color={colors.green} />
     </Pressable>
   )
 }
