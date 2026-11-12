@@ -125,7 +125,7 @@ export default function ConfiguracionCitas({ onSave }) {
     </div>
 
     {cargando ? <p className="mt-5 text-sm">Cargando horarios...</p> :
-     !laboral?.configurado ? <p className="nutria-agenda-error mt-5 rounded-xl border p-4 text-sm">Primero debes guardar tus días y horas de trabajo en <a className="font-extrabold underline" href="/editar-perfil">Editar perfil</a>.</p> :
+     !laboral?.configurado ? <p className="nutria-agenda-error mt-5 rounded-xl border p-4 text-sm">Primero guarda tus días y horas de trabajo en la sección superior de esta página.</p> :
      <form onSubmit={guardar} className="mt-5 space-y-5">
        <p className="nutria-agenda-muted text-xs">Jornada laboral: {laboral.inicio}–{laboral.fin} · {laboral.zonaHoraria}. Las consultas duran 60 minutos. Puedes crear varios bloques por día para dejar descansos.</p>
        <div className="space-y-3">

@@ -2,8 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Plus, RefreshCw, X, Trash2, Ban, CheckCircle2 } from 'lucide-react'
 import client from '../api/client'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Settings2 } from 'lucide-react'
-import ConfiguracionCitas from '../components/citas/ConfiguracionCitas'
 import ResumenCitas from '../components/citas/ResumenCitas'
 
 const EMPTY = { patient: '', inicio: '', tipo: 'seguimiento', estado: 'programada', notas: '' }
@@ -67,13 +65,13 @@ function MiniCalendar({ focus, today, onSelect, diasLaborales }) {
 export default function CitasPage() {
   const routerNavigate = useNavigate()
   const location = useLocation()
-  const [configAbierta,setConfigAbierta] = useState(Boolean(location.state?.abrirConfiguracion))
   useEffect(() => {
-    // Permite abrir Configurar agenda desde «Más», incluso si ya estamos en /citas.
-    if (!location.state?.abrirConfiguracion) return
-    setConfigAbierta(true)
-    routerNavigate(location.pathname, { replace: true, state: null })
-  }, [location.pathname, location.state, routerNavigate])
+    // Enlaces antiguos de la PWA que abrían configuración desde Ver citas.
+    // Mantener compatibilidad enviándolos al nuevo Perfil y horario.
+    if (location.state?.abrirConfiguracion) {
+      routerNavigate('/editar-perfil#horarios-citas', { replace: true })
+    }
+  }, [location.state, routerNavigate])
   const [horarioCitas,setHorarioCitas] = useState(null)
   const [view, setView] = useState('semana')
   const [focus, setFocus] = useState(new Date())
@@ -205,7 +203,8 @@ export default function CitasPage() {
   const diasLaborales = horarioCitas?.configurado
     ? [...new Set(horarioCitas.franjas.map(f=>f.dia))]
     : horario?.configurado ? horario.dias : null
-  const diaHabilitado = date => !diasLaborales || diasLaborales.includes(new Date(date).getDay())
+  const diaHabilitado = date => (!diasLaborales || diasLaborales.includes(new Date(date).getDay())) &&
+    !horario?.diasNoLaborables?.some(d => d?.fecha === dayKey(date))
   const horasLaborales = horario?.configurado ? { inicio: Number(horario.inicio.slice(0,2)), fin: Number(horario.fin.slice(0,2)) } : {inicio:7,fin:20}
   const minHora = v => Number(v.slice(0,2))*60+Number(v.slice(3,5))
   const horasDia = date => {
@@ -489,30 +488,6 @@ export default function CitasPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1480px] space-y-5 px-4 py-6 pb-16 text-[#173f34] sm:px-5 md:px-8 md:py-8">
-      <header className="relative isolate overflow-hidden rounded-[2rem] bg-linear-to-br from-[#173f34] via-[#205343] to-[#246b55] p-5 text-[#f1f8ee] shadow-[0_16px_36px_rgba(23,63,52,.19)] sm:p-8">
-        <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-36 -z-10 size-96 rounded-full border-[32px] border-white/5 ring-[30px] ring-white/5" />
-        <div className="flex flex-wrap items-end justify-between gap-5">
-          <div>
-            <p className="mb-3 flex items-center gap-2 text-xs font-bold tracking-widest text-[#d0e9d3] uppercase">
-              <CalendarDays size={16} aria-hidden="true" /> NutriA · Consultorio
-            </p>
-            <h1 className="text-3xl leading-tight font-black tracking-tight sm:text-4xl">Ver citas</h1>
-            <p className="mt-2 text-sm text-[#d9eddd]">Organiza tus consultas y haz espacio para tu próxima cita.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => setConfigAbierta(v=>!v)}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/30 px-4 py-3 text-xs font-extrabold text-white hover:bg-white/15">
-              <Settings2 size={17}/>{configAbierta?'Ocultar configuración':'Configurar agenda'}
-            </button>
-            <button type="button" onClick={() => routerNavigate('/citas/nueva')}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#dcefcf] px-5 py-3 text-sm font-extrabold text-[#173f34] shadow-sm hover:bg-[#eef8e8]">
-              <Plus size={18} aria-hidden="true" /> Crear cita
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {configAbierta && <ConfiguracionCitas onSave={setHorarioCitas}/>}
       <ResumenCitas revision={reload} onAbrir={abrirDesdeResumen}/>
 
       {error && !modal && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}

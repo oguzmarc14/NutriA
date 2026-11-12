@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { Building2, CalendarClock, Menu, RefreshCw, UserPen, X } from 'lucide-react'
+import { Building2, Menu, RefreshCw, UserPen, X } from 'lucide-react'
 import './menuMovil.css'
 import { rutasRapidas } from '../../utils/navigationMovil'
 
@@ -58,9 +58,8 @@ export default function MenuMovil({ enlaces, rol, pacienteTrabajo, abierto, setA
   }
 
   const extras = rol === 'nutritionist' ? [
-    { to:'/citas', state:{abrirConfiguracion:true}, label:'Configurar agenda y horarios', icon:CalendarClock },
     { to:'/mi-clinica', label:'Mi clínica', icon:Building2 },
-    { to:'/editar-perfil', label:'Editar perfil y horario laboral', icon:UserPen },
+    { to:'/editar-perfil', label:'Editar perfil y horario', icon:UserPen },
   ] : []
 
   return <>
