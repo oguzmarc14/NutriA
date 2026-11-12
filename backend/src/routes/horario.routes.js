@@ -60,17 +60,17 @@ router.get('/disponibilidad', async (req,res,next) => {
     const hoy=fechaLocalAhora(zona)
     const desde=String(req.query.desde || hoy)
     const dias=Number(req.query.dias || 14)
-    if(!Number.isInteger(dias)||dias<1||dias>21||!/^\d{4}-\d{2}-\d{2}$/.test(desde)||
+    if(!Number.isInteger(dias)||dias<1||dias>42||!/^\d{4}-\d{2}-\d{2}$/.test(desde)||
        !Number.isFinite(new Date(desde+'T12:00:00Z').getTime())||
        new Date(desde+'T12:00:00Z').toISOString().slice(0,10)!==desde||
-       desde<hoy||desde>sumarDias(hoy,30))
+       desde<sumarDias(hoy,-41)||desde>sumarDias(hoy,180))
       return res.status(400).json({message:'Rango de fechas inválido'})
     const from=new Date(desde+'T00:00:00Z')
     const to=new Date(sumarDias(desde,dias)+'T00:00:00Z')
     const booked=await Cita.find({nutritionist:req.user._id,estado:{$ne:'cancelada'},
       inicio:{$lt:new Date(to.getTime()+2*86400000)},fin:{$gt:new Date(from.getTime()-2*86400000)}})
       .select('inicio fin -_id').lean()
-    return res.json({zonaHoraria:zona,desde,dias:Array.from({length:dias},(_,i)=>{
+    return res.json({zonaHoraria:zona,hoy,desde,dias:Array.from({length:dias},(_,i)=>{
       const fecha=sumarDias(desde,i)
       return {fecha,espacios:construirDisponibilidad(fecha,user.horarioCitas,user.horarioLaboral,booked)}
     })})
