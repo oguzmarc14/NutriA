@@ -652,32 +652,32 @@ export default function CitasPage() {
           {(patientError || error) && <p role="alert" className="mb-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{error || patientError}</p>}
           {citaPasada ? (
             <section aria-label="Detalles de la cita" className="space-y-4">
-              <p className="rounded-xl border border-[#c7dfcf] bg-[#e8f3eb] px-4 py-3 text-sm font-semibold text-[#275e47]">
+              <p className="rounded-xl border border-[#c7dfcf] bg-[#e8f3eb] px-4 py-3 text-sm font-semibold text-[#275e47] dark:border-[#578769] dark:bg-[#2c4d39] dark:text-[#e6f6ec]">
                 Esta cita ya pasó y forma parte del historial. No puedes cambiar sus datos ni eliminarla.
               </p>
               <dl className="grid min-w-0 gap-3 sm:grid-cols-2">
-                <div className="min-w-0 rounded-xl bg-[#e8f3eb] p-3">
-                  <dt className="text-xs font-bold text-[#54745e]">Paciente</dt>
+                <div className="min-w-0 rounded-xl bg-[#e8f3eb] p-3 dark:bg-[#2c4d39] dark:text-[#e6f6ec]">
+                  <dt className="text-xs font-bold text-[#54745e] dark:text-[#b9d4c2]">Paciente</dt>
                   <dd className="mt-1 break-words text-sm font-extrabold">
                     {citaDetalle?.patient?.name || pacientes.find(p => p._id === form.patient)?.name || 'Paciente'}
                   </dd>
                 </div>
-                <div className="min-w-0 rounded-xl bg-[#e8f3eb] p-3">
-                  <dt className="text-xs font-bold text-[#54745e]">Fecha y hora</dt>
+                <div className="min-w-0 rounded-xl bg-[#e8f3eb] p-3 dark:bg-[#2c4d39] dark:text-[#e6f6ec]">
+                  <dt className="text-xs font-bold text-[#54745e] dark:text-[#b9d4c2]">Fecha y hora</dt>
                   <dd className="mt-1 break-words text-sm font-extrabold">
                     {new Intl.DateTimeFormat('es-MX',{dateStyle:'medium',timeStyle:'short'}).format(new Date(originalStart))}
                   </dd>
                 </div>
-                <div className="min-w-0 rounded-xl bg-[#e8f3eb] p-3">
-                  <dt className="text-xs font-bold text-[#54745e]">Tipo de consulta</dt>
+                <div className="min-w-0 rounded-xl bg-[#e8f3eb] p-3 dark:bg-[#2c4d39] dark:text-[#e6f6ec]">
+                  <dt className="text-xs font-bold text-[#54745e] dark:text-[#b9d4c2]">Tipo de consulta</dt>
                   <dd className="mt-1 text-sm font-extrabold">{TYPES[form.tipo] || 'Consulta'}</dd>
                 </div>
-                <div className="min-w-0 rounded-xl bg-[#e8f3eb] p-3">
-                  <dt className="text-xs font-bold text-[#54745e]">Estado registrado</dt>
+                <div className="min-w-0 rounded-xl bg-[#e8f3eb] p-3 dark:bg-[#2c4d39] dark:text-[#e6f6ec]">
+                  <dt className="text-xs font-bold text-[#54745e] dark:text-[#b9d4c2]">Estado registrado</dt>
                   <dd className="mt-1 text-sm font-extrabold">{STATES[form.estado]?.label || form.estado}</dd>
                 </div>
-                {form.notas && <div className="min-w-0 rounded-xl bg-[#e8f3eb] p-3 sm:col-span-2">
-                  <dt className="text-xs font-bold text-[#54745e]">Notas de la cita</dt>
+                {form.notas && <div className="min-w-0 rounded-xl bg-[#e8f3eb] p-3 dark:bg-[#2c4d39] dark:text-[#e6f6ec] sm:col-span-2">
+                  <dt className="text-xs font-bold text-[#54745e] dark:text-[#b9d4c2]">Notas de la cita</dt>
                   <dd className="mt-1 whitespace-pre-wrap break-words text-sm">{form.notas}</dd>
                 </div>}
               </dl>
