@@ -121,6 +121,9 @@ router.put('/:id', async (req,res,next) => {
     if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ message: 'ID inválido' })
     const cita = await Cita.findOne({ _id: req.params.id, nutritionist: req.user._id })
     if (!cita) return res.status(404).json({ message: 'Cita no encontrada' })
+    // El historial no puede reescribirse, ni siquiera cambiando sólo notas o tipo.
+    if (new Date(cita.inicio).getTime() <= Date.now())
+      return res.status(409).json({ message: 'Una cita pasada es de solo lectura. Si se realizó, puedes marcarla completada.' })
     const data = await validar(req,res,cita); if (!data) return
     if (data.estado !== 'cancelada' && await conflicto(req.user._id, data.inicio, data.fin, cita._id))
       return res.status(409).json({ message: 'Ya existe una cita en ese horario' })
@@ -152,6 +155,11 @@ router.patch('/:id/estado', async (req,res,next) => {
     const estado = parsed.data.estado
     if (estado === cita.estado) return res.json({ ...cita.toObject(), calendarSynced: true })
     const now = new Date()
+    // Una consulta ya iniciada sólo puede cerrarse como completada:
+    // no debe cancelarse, reactivarse ni alterarse retroactivamente.
+    if (new Date(cita.inicio).getTime() <= now.getTime() &&
+        !(estado === 'completada' && ['programada','confirmada'].includes(cita.estado)))
+      return res.status(409).json({ message: 'Una cita pasada es de solo lectura; sólo puede marcarse completada si se realizó.' })
     if (!estadoPermitidoEnFecha(estado, cita.inicio, now))
       return res.status(400).json({
         message: estado === 'completada'
@@ -182,6 +190,9 @@ router.delete('/:id', async (req,res,next) => {
     if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ message: 'ID inválido' })
     const cita = await Cita.findOne({ _id: req.params.id, nutritionist: req.user._id }).select('+calendarEventId')
     if (!cita) return res.status(404).json({ message: 'Cita no encontrada' })
+    // Conservar íntegro el historial de consultas, incluido Google Calendar.
+    if (new Date(cita.inicio).getTime() <= Date.now())
+      return res.status(409).json({ message: 'No se puede eliminar una cita pasada del historial.' })
 
     let calendarSynced
     try {

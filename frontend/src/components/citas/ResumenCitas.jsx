@@ -160,7 +160,7 @@ export default function ResumenCitas({revision=0,onAbrir}) {
           </div>
           <button type="button" onClick={()=>onAbrir(c)}
             className="nutria-resumen-cta inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-4 text-xs font-extrabold transition active:scale-[.98]">
-            Ver o editar<ArrowUpRight size={16} aria-hidden="true"/>
+            Ver<ArrowUpRight size={16} aria-hidden="true"/>
           </button>
         </article>)}
       </div>}
