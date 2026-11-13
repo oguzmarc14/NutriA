@@ -1,0 +1,61 @@
+/* Centro de atención del paciente: controles compactos y acciones claras. */
+.nutria-avisos-header,.nutria-avisos-footer{border-color:#d0e2d5;background:#f3f9f4}
+.nutria-avisos-overline{color:#387457}
+.nutria-avisos-subtitle{color:#557763}
+.nutria-avisos-help{color:#577363}
+.nutria-avisos-body{scrollbar-gutter:stable}
+.nutria-avisos-stat{background:#e7f2e9;border-color:#cadecf;color:#245f46;min-width:0}
+.nutria-avisos-stat>div{font-size:11px;font-weight:700;gap:8px;min-width:0}
+.nutria-avisos-stat>div>span{overflow-wrap:anywhere}
+.nutria-avisos-segment{background:#e5efe7}
+.nutria-avisos-filter{color:#466c54}
+.nutria-avisos-filter[aria-pressed="true"]{background:#267354;color:white;box-shadow:0 3px 10px #12533822}
+.nutria-avisos-filter:hover:not([aria-pressed="true"]){background:#d2e7d8}
+.nutria-avisos-select{color:#255d45;border-color:#bad8c5;background:#f4faf5}
+.nutria-avisos-card{box-shadow:0 5px 14px rgba(30,79,47,.045);border-left-width:4px}
+.nutria-avisos-card[data-group="cuenta"]{border-left-color:#6b9b7e}
+.nutria-avisos-card[data-group="clinica"]{border-left-color:#2e805f}
+.nutria-avisos-card[data-group="seguimiento"]{border-left-color:#ba8d4a}
+.nutria-avisos-card[data-group="datos"]{border-left-color:#729cb0}
+.nutria-avisos-card-icon{background:#d7eadf;color:#286e53}
+.nutria-avisos-card[data-group="seguimiento"] .nutria-avisos-card-icon{background:#f4ebda;color:#886332}
+.nutria-avisos-card[data-group="datos"] .nutria-avisos-card-icon{background:#dfedf1;color:#456b7d}
+.nutria-avisos-group{color:#537866}
+.nutria-avisos-detail--clamp{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.nutria-avisos-card--revisado{opacity:.82}
+.nutria-avisos-visto{color:#347151}
+.nutria-avisos-ghost{border:1px solid #c4d9cb;color:#34644d;background:#e9f3eb}
+.nutria-avisos-ghost:hover{background:#d7eadc}
+.nutria-avisos-empty{background:#ecf5ed;border-color:#c8dfcf}
+.nutria-avisos-card button:focus-visible,.nutria-avisos-footer button:focus-visible,
+.nutria-avisos-filter:focus-visible,.nutria-avisos-select:focus-visible{
+  outline:2px solid #267754;outline-offset:2px;
+}
+@media(max-width:420px){
+  .nutria-avisos-stat{padding:11px}
+  .nutria-avisos-stat>div{font-size:10px}
+  .nutria-avisos-footer>div:last-child{width:100%;justify-content:flex-end}
+  .nutria-avisos-body{scrollbar-gutter:auto}
+}
+html[data-theme="dark"] .nutria-avisos-header,
+html[data-theme="dark"] .nutria-avisos-footer{background:#253e2f;border-color:#577c61}
+html[data-theme="dark"] .nutria-avisos-overline{color:#b1e3c2}
+html[data-theme="dark"] .nutria-avisos-subtitle,
+html[data-theme="dark"] .nutria-avisos-help{color:#b3cdb9}
+html[data-theme="dark"] .nutria-avisos-stat{background:#294a36;border-color:#557e63;color:#e1f5e6}
+html[data-theme="dark"] .nutria-avisos-segment{background:#30523d}
+html[data-theme="dark"] .nutria-avisos-filter{color:#b9d7c3}
+html[data-theme="dark"] .nutria-avisos-filter[aria-pressed="true"]{background:#5bab7a;color:#102f1f}
+html[data-theme="dark"] .nutria-avisos-filter:hover:not([aria-pressed="true"]){background:#416b4d}
+html[data-theme="dark"] .nutria-avisos-select{background:#274532;color:#e6f5e8;border-color:#628971}
+html[data-theme="dark"] .nutria-avisos-card-icon{background:#3b654a;color:#c5f0d0}
+html[data-theme="dark"] .nutria-avisos-card[data-group="seguimiento"] .nutria-avisos-card-icon{background:#594c36;color:#ffdfa1}
+html[data-theme="dark"] .nutria-avisos-card[data-group="datos"] .nutria-avisos-card-icon{background:#365863;color:#c8e6ee}
+html[data-theme="dark"] .nutria-avisos-group{color:#b0d4bc}
+html[data-theme="dark"] .nutria-avisos-visto{color:#b0e6c3}
+html[data-theme="dark"] .nutria-avisos-ghost{background:#345943;color:#e0f6e6;border-color:#668c73}
+html[data-theme="dark"] .nutria-avisos-ghost:hover{background:#426d51}
+html[data-theme="dark"] .nutria-avisos-empty{background:#2c4b38;border-color:#5e8569}
+@media(prefers-reduced-motion:reduce){
+  .nutria-avisos-card,.nutria-avisos-filter,.nutria-avisos-ghost{transition:none}
+}
