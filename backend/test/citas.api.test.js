@@ -168,16 +168,40 @@ test('PATCH impide completar una cita futura', async () => {
   assert.equal(f.calls.saved, false)
 })
 
-test('PUT permite corregir notas de una cita pasada sin reprogramarla', async () => {
+test('PUT no altera datos ni notas de una cita pasada', async () => {
   const fecha = ORIGEN()
   const f = fixture({ inicio: fecha })
   const body = { patient: PID, inicio: fecha, zonaHoraria: 'America/Mexico_City',
-    tipo: 'seguimiento', estado: 'confirmada', notas: 'Revisar historial' }
+    tipo: 'seguimiento', estado: 'confirmada', notas: 'Cambio retroactivo' }
   const res = await f.invoke('PUT', '/:id', { body })
-  assert.equal(res.statusCode, 200)
-  assert.equal(f.record.notas, 'Revisar historial')
-  assert.equal(f.record.inicio.toISOString(), fecha)
-  assert.equal(f.calls.reminderReset, false)
+  assert.equal(res.statusCode, 409)
+  assert.match(res.body.message, /solo lectura/)
+  assert.equal(f.record.notas, '')
+  assert.equal(f.calls.saved, false)
+  assert.equal(f.calls.synced, false)
+})
+test('PATCH no permite cancelar ni reactivar una cita pasada', async () => {
+  const f = fixture({ inicio: ORIGEN() })
+  for (const estado of ['cancelada', 'programada']) {
+    const res = await f.invoke('PATCH', '/:id/estado', { body:{estado} })
+    assert.equal(res.statusCode,409)
+    assert.equal(f.record.estado,'confirmada')
+  }
+  assert.equal(f.calls.saved,false)
+})
+test('PATCH permite marcar una cita pasada como completada para el historial clínico', async () => {
+  const f = fixture({ inicio: ORIGEN(), estado:'programada' })
+  const res = await f.invoke('PATCH', '/:id/estado', { body:{estado:'completada'} })
+  assert.equal(res.statusCode,200)
+  assert.equal(f.record.estado,'completada')
+  assert.equal(f.calls.saved,true)
+})
+test('DELETE protege citas pasadas y no llama a Google Calendar', async () => {
+  const f = fixture({ inicio: ORIGEN() })
+  const res = await f.invoke('DELETE', '/:id')
+  assert.equal(res.statusCode,409)
+  assert.equal(f.calls.deleted,false)
+  assert.equal(f.calls.synced,false)
 })
 
 test('POST bloquea horarios ocupados y no crea duplicados', async () => {
