@@ -39,8 +39,9 @@ import {
 
 import client from '../api/client'
 import CardPacientePlanes from '../components/planes/CardPacientePlanes'
-import RecetasDietasPanel from '../components/planes/RecetasDietasPanel'
 import ModalPlanGuardado from '../components/planes/ModalPlanGuardado'
+import ModalRequisitosPlan from '../components/planes/ModalRequisitosPlan'
+import { evaluarRequisitosPlan } from '../utils/requisitosPlan.js'
 import { exportarPlanPDF } from '../utils/exportarPlanPDF'
 import TarjetaSelectorComida from '../components/planes/TarjetaSelectorComida'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
@@ -184,6 +185,9 @@ function PlanesAlimenticiosPage() {
   const navigate = useNavigate()
   const [referenciaNutricional, setReferenciaNutricional] = useState(null)
   const [errorReferencia, setErrorReferencia] = useState('')
+  const [requisitosPlan, setRequisitosPlan] = useState({estado:'cargando'})
+  const [alertaRequisitos, setAlertaRequisitos] = useState(null)
+  const [revisionRequisitos, setRevisionRequisitos] = useState(0)
   const [modoAsistido, setModoAsistido] = useState(false)
   const [mostrarGuia, setMostrarGuia] = useState(false)
   const [mostrarEleccion, setMostrarEleccion] = useState(false)
@@ -459,28 +463,44 @@ function PlanesAlimenticiosPage() {
 
 
   useEffect(() => {
-    if (!pacienteId) { setReferenciaNutricional(null); setErrorReferencia(''); return }
+    if (!pacienteId) {
+      setReferenciaNutricional(null)
+      setRequisitosPlan({estado:'sin-paciente'})
+      setAlertaRequisitos(null)
+      setErrorReferencia('')
+      return
+    }
     let activo = true
     setReferenciaNutricional(null)
+    setRequisitosPlan({estado:'cargando'})
+    setAlertaRequisitos(null)
     setErrorReferencia('')
-    // Consultar el expediente directamente: los objetivos son independientes
-    // de que el paciente tenga un cálculo nutricional guardado.
+    // Expedientes ya entrega la última medición: se verifica el origen real.
     Promise.allSettled([
       client.get('/expedientes/' + pacienteId),
       client.get('/calculo-nutricional/' + pacienteId),
     ]).then(([expedienteRespuesta, calculoRespuesta]) => {
       if (!activo) return
-      const expediente = expedienteRespuesta.status === 'fulfilled'
-        ? expedienteRespuesta.value.data.expediente : null
-      const calculo = calculoRespuesta.status === 'fulfilled'
-        ? calculoRespuesta.value.data.calculos?.[0] || null : null
-      setReferenciaNutricional({ expediente, calculo })
       if (expedienteRespuesta.status === 'rejected') {
         setErrorReferencia('No fue posible cargar el expediente clínico. Comprueba la conexión.')
+        setRequisitosPlan({estado:'error'})
+        if (!planSolicitado) setAlertaRequisitos('error')
+        return
+      }
+      const respuesta = expedienteRespuesta.value.data
+      const expediente = respuesta.expediente || null
+      const calculo = calculoRespuesta.status === 'fulfilled'
+        ? calculoRespuesta.value.data.calculos?.[0] || null : null
+      const resultado = evaluarRequisitosPlan(respuesta)
+      setReferenciaNutricional({expediente,calculo})
+      setRequisitosPlan(resultado)
+      if (resultado.estado === 'incompleto' && !planSolicitado) {
+        setMostrarEleccion(false)
+        setAlertaRequisitos(resultado.tipo)
       }
     })
     return () => { activo = false }
-  }, [pacienteId])
+  }, [pacienteId, planSolicitado, revisionRequisitos])
 
   useEffect(() => {
     if (!pacienteId) { setAsistenteEquivalentes(null); return }
@@ -494,12 +514,13 @@ function PlanesAlimenticiosPage() {
   }, [pacienteId])
 
   useEffect(() => {
-    if (!pacienteId || !referenciaNutricional || planEditandoId) return
+    if (!pacienteId || !referenciaNutricional || requisitosPlan.estado !== 'listo' ||
+        planEditandoId || planSolicitado) return
     if (eleccionMostrada.current === pacienteId) return
     eleccionMostrada.current = pacienteId
     setModalidadSeleccionada(null)
     setMostrarEleccion(true)
-  }, [pacienteId, referenciaNutricional, planEditandoId])
+  }, [pacienteId, referenciaNutricional, requisitosPlan.estado, planEditandoId, planSolicitado])
 
   /*
    * ----------------------------------------------------
@@ -1387,6 +1408,10 @@ function PlanesAlimenticiosPage() {
   }, {})
   async function confirmarModalidad() {
     if (!modalidadSeleccionada) return
+    if (requisitosPlan.estado !== 'listo') {
+      setAlertaRequisitos(requisitosPlan.estado === 'error' ? 'error' : requisitosPlan.tipo || 'error')
+      return
+    }
     if (modalidadSeleccionada === 'asistido' && !(await prepararPlanAsistido())) return
     if (modalidadSeleccionada === 'duplicar' && planes.length && !(await duplicarPlan(planes[0]))) return
     if (modalidadSeleccionada === 'libre') {
@@ -1489,6 +1514,11 @@ function PlanesAlimenticiosPage() {
       setError(
         'Selecciona un paciente.',
       )
+      return
+    }
+
+    if (!planEditandoId && requisitosPlan.estado !== 'listo') {
+      setAlertaRequisitos(requisitosPlan.estado === 'error' ? 'error' : requisitosPlan.tipo || 'error')
       return
     }
 
@@ -1868,6 +1898,10 @@ function PlanesAlimenticiosPage() {
   ) {
     iniciarTrabajo(paciente)
     setPacienteId(paciente._id)
+    setPlanEditandoId('')
+    setMostrarEleccion(false)
+    setAlertaRequisitos(null)
+    eleccionMostrada.current = ''
     setError('')
     setMensaje('')
     setAvisoPlanGuardado(null)
@@ -1877,6 +1911,10 @@ function PlanesAlimenticiosPage() {
     cerrarTrabajo()
     setPacienteId('')
     setPlanes([])
+    setMostrarEleccion(false)
+    setAlertaRequisitos(null)
+    eleccionMostrada.current = ''
+    if (searchParams.has('paciente') || searchParams.has('editar')) navigate('/planes', {replace:true})
 
     setNombre('')
     setObjetivo('')
@@ -1916,7 +1954,13 @@ function PlanesAlimenticiosPage() {
 
   return (
     <section className="min-h-screen bg-transparent px-4 py-6 sm:px-5 md:px-6 md:py-7">
-      <RecetasDietasPanel />
+      <ModalRequisitosPlan
+        tipo={alertaRequisitos}
+        onExpediente={() => navigate('/pacientes/' + encodeURIComponent(pacienteId) + '/expediente')}
+        onMediciones={() => navigate('/mediciones?paciente=' + encodeURIComponent(pacienteId))}
+        onReintentar={() => {setAlertaRequisitos(null);setRevisionRequisitos(valor => valor + 1)}}
+        onCancelar={regresarPacientes}
+      />
       {avisoPlanGuardado && (
         <ModalPlanGuardado
           tipo={avisoPlanGuardado.tipo}
@@ -2086,7 +2130,27 @@ function PlanesAlimenticiosPage() {
             PLANES DEL PACIENTE
         ============================================ */}
 
-        {pacienteId && (
+        {pacienteId && !planEditandoId && requisitosPlan.estado !== 'listo' && (
+          <div role="status" className="mb-7 rounded-3xl border border-[#cbded2] bg-[#f3f9f5] p-6 text-[#173f34] shadow-sm">
+            <h2 className="text-lg font-extrabold">
+              {requisitosPlan.estado === 'cargando' ? 'Verificando información del paciente…' :
+                'Revisa los requisitos antes de crear la dieta'}
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-[#52716a]">
+              {requisitosPlan.estado === 'cargando'
+                ? 'Consultando expediente clínico y última medición.'
+                : 'Para crear una dieta nueva se necesita expediente clínico y una medición registrada. No se ha abierto el editor.'}
+            </p>
+            {requisitosPlan.estado !== 'cargando' && (
+              <button type="button" onClick={() => setAlertaRequisitos(requisitosPlan.estado === 'error' ? 'error' : requisitosPlan.tipo)}
+                className="mt-4 min-h-11 rounded-xl bg-[#246b55] px-5 py-2.5 text-sm font-bold text-white">
+                Ver opciones
+              </button>
+            )}
+          </div>
+        )}
+
+        {pacienteId && (planEditandoId || requisitosPlan.estado === 'listo') && (
           <>
             <div className="mb-8">
               <p className="mb-2 text-sm font-bold uppercase tracking-[0.16em] text-[#4d816f]">
@@ -3038,23 +3102,23 @@ function PlanesAlimenticiosPage() {
             <button type="button" disabled={!objetivosReferencia} onClick={() => setModalidadSeleccionada('asistido')}
               aria-pressed={modalidadSeleccionada === 'asistido'}
               aria-label="Plan asistido"
-              className={`flex w-full items-start gap-3 rounded-2xl border-2 p-4 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#246b55] disabled:cursor-not-allowed disabled:opacity-50 ${modalidadSeleccionada === 'asistido' ? 'border-[#246b55] bg-[#e1f1e7] shadow-[0_0_0_2px_rgba(36,107,85,0.12)]' : 'border-[#d2e3d8] bg-white hover:border-[#9bc8ab] hover:bg-[#f4faf6]'}`}>
-              <Sparkles size={20} className="mt-0.5 shrink-0 text-[#246b55]"/><span className="min-w-0 flex-1"><strong className="block text-sm text-[#173f34]">Plan asistido</strong><span className="mt-1 block text-xs text-[#52716a]">Usa objetivos, cantidad de comidas y horarios del expediente. {objetivosReferencia ? 'Cálculo disponible.' : 'Requiere cálculo guardado.'}</span></span>
-              {modalidadSeleccionada === 'asistido' ? <CheckCircle2 size={21} className="shrink-0 text-[#246b55]"/> : <Circle size={21} className="shrink-0 text-[#b7cfc0]"/>}
+              className={`flex w-full items-center gap-3 rounded-2xl border-2 p-4 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#246b55] disabled:cursor-not-allowed disabled:opacity-50 ${modalidadSeleccionada === 'asistido' ? 'border-[#246b55] bg-[#e1f1e7] shadow-[0_0_0_2px_rgba(36,107,85,0.12)]' : 'border-[#d2e3d8] bg-white hover:border-[#9bc8ab] hover:bg-[#f4faf6]'}`}>
+              <Sparkles size={20} className="shrink-0 self-center text-[#246b55]"/><span className="min-w-0 flex-1"><strong className="block text-sm text-[#173f34]">Plan asistido</strong><span className="mt-1 block text-xs text-[#52716a]">Usa objetivos, cantidad de comidas y horarios del expediente. {objetivosReferencia ? 'Cálculo disponible.' : 'Requiere cálculo guardado.'}</span></span>
+              {modalidadSeleccionada === 'asistido' ? <CheckCircle2 size={21} className="shrink-0 self-center text-[#246b55]"/> : <Circle size={21} className="shrink-0 self-center text-[#b7cfc0]"/>}
             </button>
             <button type="button" disabled={!planes.length} onClick={() => setModalidadSeleccionada('duplicar')}
               aria-pressed={modalidadSeleccionada === 'duplicar'}
               aria-label="Duplicar último plan"
-              className={`flex w-full items-start gap-3 rounded-2xl border-2 p-4 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#246b55] disabled:cursor-not-allowed disabled:opacity-50 ${modalidadSeleccionada === 'duplicar' ? 'border-[#246b55] bg-[#e1f1e7] shadow-[0_0_0_2px_rgba(36,107,85,0.12)]' : 'border-[#d2e3d8] bg-white hover:border-[#9bc8ab] hover:bg-[#f4faf6]'}`}>
-              <Save size={20} className="mt-0.5 shrink-0 text-[#246b55]"/><span><strong className="block text-sm text-[#173f34]">Duplicar último plan</strong><span className="mt-1 block text-xs text-[#52716a]">Recupera alimentos y cantidades para ajustarlos.</span></span>
-              {modalidadSeleccionada === 'duplicar' ? <CheckCircle2 size={21} className="shrink-0 text-[#246b55]"/> : <Circle size={21} className="shrink-0 text-[#b7cfc0]"/>}
+              className={`flex w-full items-center gap-3 rounded-2xl border-2 p-4 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#246b55] disabled:cursor-not-allowed disabled:opacity-50 ${modalidadSeleccionada === 'duplicar' ? 'border-[#246b55] bg-[#e1f1e7] shadow-[0_0_0_2px_rgba(36,107,85,0.12)]' : 'border-[#d2e3d8] bg-white hover:border-[#9bc8ab] hover:bg-[#f4faf6]'}`}>
+              <Save size={20} className="shrink-0 self-center text-[#246b55]"/><span className="min-w-0 flex-1"><strong className="block text-sm text-[#173f34]">Duplicar último plan</strong><span className="mt-1 block text-xs text-[#52716a]">Recupera alimentos y cantidades para ajustarlos.</span></span>
+              {modalidadSeleccionada === 'duplicar' ? <CheckCircle2 size={21} className="shrink-0 self-center text-[#246b55]"/> : <Circle size={21} className="shrink-0 self-center text-[#b7cfc0]"/>}
             </button>
             <button type="button" onClick={() => setModalidadSeleccionada('libre')}
               aria-pressed={modalidadSeleccionada === 'libre'}
               aria-label="Desde cero"
-              className={`flex w-full items-start gap-3 rounded-2xl border-2 p-4 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#246b55] disabled:cursor-not-allowed disabled:opacity-50 ${modalidadSeleccionada === 'libre' ? 'border-[#246b55] bg-[#e1f1e7] shadow-[0_0_0_2px_rgba(36,107,85,0.12)]' : 'border-[#d2e3d8] bg-white hover:border-[#9bc8ab] hover:bg-[#f4faf6]'}`}>
-              <Apple size={20} className="mt-0.5 shrink-0 text-[#246b55]"/><span><strong className="block text-sm text-[#173f34]">Desde cero</strong><span className="mt-1 block text-xs text-[#52716a]">Editor libre, sin modificar tu información clínica.</span></span>
-              {modalidadSeleccionada === 'libre' ? <CheckCircle2 size={21} className="shrink-0 text-[#246b55]"/> : <Circle size={21} className="shrink-0 text-[#b7cfc0]"/>}
+              className={`flex w-full items-center gap-3 rounded-2xl border-2 p-4 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#246b55] disabled:cursor-not-allowed disabled:opacity-50 ${modalidadSeleccionada === 'libre' ? 'border-[#246b55] bg-[#e1f1e7] shadow-[0_0_0_2px_rgba(36,107,85,0.12)]' : 'border-[#d2e3d8] bg-white hover:border-[#9bc8ab] hover:bg-[#f4faf6]'}`}>
+              <Apple size={20} className="shrink-0 self-center text-[#246b55]"/><span className="min-w-0 flex-1"><strong className="block text-sm text-[#173f34]">Desde cero</strong><span className="mt-1 block text-xs text-[#52716a]">Editor libre, sin modificar tu información clínica.</span></span>
+              {modalidadSeleccionada === 'libre' ? <CheckCircle2 size={21} className="shrink-0 self-center text-[#246b55]"/> : <Circle size={21} className="shrink-0 self-center text-[#b7cfc0]"/>}
             </button>
           </div>
           {modalidadSeleccionada && <div className="mt-4 rounded-xl border border-[#c8ddd2] bg-[#f1f7f3] p-3">
@@ -3065,9 +3129,9 @@ function PlanesAlimenticiosPage() {
               libre: 'Comenzar un plan nuevo desde cero.',
             }[modalidadSeleccionada]} {comidas.some(c => c.alimentos.length > 0) ? 'El borrador actual podría reemplazarse.' : ''}</p>
           </div>}
-          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <button type="button" onClick={() => { setModalidadSeleccionada(null); setMostrarEleccion(false) }} className="rounded-xl border border-[#c8ddd2] bg-white px-5 py-2.5 text-sm font-bold text-[#52716a]">Cancelar</button>
-            <button type="button" disabled={!modalidadSeleccionada} onClick={confirmarModalidad} className="rounded-xl bg-[#246b55] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-40">Confirmar selección</button>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+            <button type="button" onClick={() => { setModalidadSeleccionada(null); setMostrarEleccion(false) }} className="inline-flex min-h-11 min-w-[125px] items-center justify-center rounded-xl border border-[#c8ddd2] bg-white px-5 py-2.5 text-sm font-bold text-[#52716a]">Cancelar</button>
+            <button type="button" disabled={!modalidadSeleccionada} onClick={confirmarModalidad} className="inline-flex min-h-11 min-w-[175px] items-center justify-center rounded-xl bg-[#246b55] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-40">Confirmar selección</button>
           </div>
         </div>
       </div>}

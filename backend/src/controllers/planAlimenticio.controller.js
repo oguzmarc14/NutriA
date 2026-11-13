@@ -7,6 +7,9 @@ const { z } =
 const PlanAlimenticio =
   require('../models/PlanAlimenticio')
 
+const ExpedienteClinico = require('../models/ExpedienteClinico')
+const Medicion = require('../models/Medicion')
+
 const Pacientes =
   require('../models/Pacientes')
 
@@ -578,6 +581,32 @@ async function crearPlanAlimenticio(
           message:
             'Paciente no encontrado',
         })
+    }
+
+    // Validar también en el servidor: el modal no es una medida de seguridad.
+    // La creación requiere expediente clínico y medición válida del mismo
+    // paciente y nutriólogo; no bloquea la consulta/edición de planes antiguos.
+    const [tieneExpediente, tieneMedicion] = await Promise.all([
+      ExpedienteClinico.exists({
+        paciente: paciente._id, nutritionist: req.user.id,
+      }),
+      Medicion.exists({
+        paciente: paciente._id, nutritionist: req.user.id,
+        peso: { $gt: 0 },
+        estatura: { $gte: 0.5, $lte: 3 },
+        edad: { $gte: 1, $lte: 120 },
+        nivelActividadFisica: { $gte: 1, $lte: 5 },
+      }),
+    ])
+    if (!tieneExpediente || !tieneMedicion) {
+      const faltantes = [
+        ...(!tieneExpediente ? ['expediente'] : []),
+        ...(!tieneMedicion ? ['mediciones'] : []),
+      ]
+      return res.status(409).json({
+        message: 'Completa el expediente clínico y las mediciones antes de crear una dieta.',
+        faltantes,
+      })
     }
 
     /*
