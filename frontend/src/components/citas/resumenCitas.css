@@ -53,3 +53,53 @@ html[data-theme="dark"] .nutria-resumen-cta:hover{background:#4ca87b}
 @media(prefers-reduced-motion:reduce){
  .nutria-resumen-kpi,.nutria-resumen-cta{transition:none;transform:none!important}
 }
+
+/* Pulido del calendario de Ver citas, sin alterar lógica ni recrear su banner. */
+[aria-label="Calendario de citas"]{min-width:0;overflow:hidden}
+[aria-label="Calendario de citas"]>div:first-child{
+  border-bottom:1px solid #dbe8de;padding-top:24px;padding-bottom:20px;
+}
+[aria-label="Calendario de citas"] [aria-label="Navegación del calendario"]{
+  gap:8px;max-width:100%;
+}
+[aria-label="Calendario de citas"] [aria-label="Navegación del calendario"] button{
+  transition:background .15s ease,transform .15s ease;
+}
+[aria-label="Calendario de citas"] [aria-label="Navegación del calendario"] button:hover:not(:disabled){
+  transform:translateY(-1px);
+}
+[aria-label="Calendario de citas"] [aria-label="Vista del calendario"]{
+  gap:4px;padding:6px;border-radius:16px;max-width:100%;
+}
+[aria-label="Calendario de citas"] [aria-label="Vista del calendario"] button{
+  min-height:44px;border-radius:12px;
+}
+[aria-label="Calendario de citas"] h2{overflow-wrap:anywhere}
+[aria-label="Resumen de agenda"] section:first-child{
+  border-color:#cadfd0;padding:20px;
+}
+[aria-label="Resumen de agenda"] section:first-child .grid.grid-cols-7{column-gap:4px;row-gap:6px}
+[aria-label="Resumen de agenda"] section:first-child button{
+  transition:background .15s ease,transform .15s ease;min-height:40px
+}
+[aria-label="Resumen de agenda"] section:first-child button:hover{transform:translateY(-1px)}
+@media(max-width:400px){
+ [aria-label="Calendario de citas"]>div:first-child{padding-left:13px;padding-right:13px}
+ [aria-label="Calendario de citas"] [aria-label="Navegación del calendario"]{gap:5px}
+ [aria-label="Calendario de citas"] [aria-label="Navegación del calendario"] button{
+   min-width:40px;min-height:40px;padding-left:10px;padding-right:10px
+ }
+ [aria-label="Calendario de citas"] [aria-label="Vista del calendario"] button{
+   padding-left:5px;padding-right:5px;font-size:11px;
+ }
+}
+html[data-theme="dark"] [aria-label="Calendario de citas"]>div:first-child{
+  border-color:#4f775e;
+}
+html[data-theme="dark"] [aria-label="Resumen de agenda"] section:first-child{
+  border-color:#527a61;
+}
+@media(prefers-reduced-motion:reduce){
+ [aria-label="Calendario de citas"] [aria-label="Navegación del calendario"] button,
+ [aria-label="Resumen de agenda"] section:first-child button{transition:none;transform:none!important}
+}
