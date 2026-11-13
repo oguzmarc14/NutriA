@@ -1,0 +1,55 @@
+/* KPIs separados y jerarquizados para agenda de NutriA. */
+.nutria-resumen-overline{color:#42805f}
+.nutria-resumen-muted{color:#577665}
+.nutria-resumen-total{background:#e0eee4;color:#236348}
+.nutria-resumen-kpi{background:#edf5ee;border-color:#c8decf;color:#2c674d;min-width:0}
+.nutria-resumen-kpi:hover{background:#e0f0e5;border-color:#86b899;transform:translateY(-1px)}
+.nutria-resumen-kpi-icon{background:#d6e8dc;color:#286a4f}
+.nutria-resumen-kpi-sub{color:#638370}
+.nutria-resumen-kpi-num{color:#173f34}
+.nutria-resumen-kpi[aria-selected="true"]{background:#277453;color:#fff;border-color:#277453;box-shadow:0 8px 18px rgba(31,95,63,.16)}
+.nutria-resumen-kpi[aria-selected="true"] .nutria-resumen-kpi-icon{background:rgba(255,255,255,.18);color:#fff}
+.nutria-resumen-kpi[aria-selected="true"] .nutria-resumen-kpi-sub,
+.nutria-resumen-kpi[aria-selected="true"] .nutria-resumen-kpi-num{color:#fff}
+.nutria-resumen-kpi:focus-visible,.nutria-resumen-cta:focus-visible,.nutria-resumen-reset:focus-visible{
+ outline:2px solid #287754;outline-offset:2px
+}
+.nutria-resumen-select{color:#37684e}
+.nutria-resumen-reset{background:#e8f1e9;color:#316c4e}
+.nutria-resumen-reset:hover{background:#d5e8d9}
+.nutria-resumen-empty{background:#eaf4ec;border-color:#c7dece}
+.nutria-resumen-empty-icon{background:#d6e8da;color:#49735b}
+.nutria-resumen-cta{background:#287653;color:white}
+.nutria-resumen-cta:hover{background:#205f43}
+.nutria-resumen-lista{scrollbar-gutter:stable}
+.nutria-resumen-cita{background:#eaf4ec;border-color:#c5ddcd}
+.nutria-resumen-cita-icon{background:#d4e7db;color:#2b7353}
+.nutria-resumen-cita:hover{border-color:#87b599}
+@media(max-width:430px){
+ .nutria-resumen-citas{padding:13px}
+ .nutria-resumen-kpi{padding:13px 5px}
+ .nutria-resumen-kpi-icon{width:38px;height:38px}
+ .nutria-resumen-kpi-label{font-size:10px}
+}
+html[data-theme="dark"] .nutria-resumen-overline{color:#b0dbbf}
+html[data-theme="dark"] .nutria-resumen-muted{color:#b0cfb9}
+html[data-theme="dark"] .nutria-resumen-total{background:#376145;color:#daf1e0}
+html[data-theme="dark"] .nutria-resumen-kpi{background:#2b4b37;border-color:#588263;color:#d9f0df}
+html[data-theme="dark"] .nutria-resumen-kpi:hover{background:#345e43;border-color:#82b38c}
+html[data-theme="dark"] .nutria-resumen-kpi-icon{background:#3c694a;color:#bce8ca}
+html[data-theme="dark"] .nutria-resumen-kpi-num{color:#e4f5e9}
+html[data-theme="dark"] .nutria-resumen-kpi-sub{color:#b3cebd}
+html[data-theme="dark"] .nutria-resumen-kpi[aria-selected="true"]{background:#448e64;border-color:#8dc4a0;color:#fff}
+html[data-theme="dark"] .nutria-resumen-kpi[aria-selected="true"] .nutria-resumen-kpi-icon{background:rgba(255,255,255,.13);color:#fff}
+html[data-theme="dark"] .nutria-resumen-reset{background:#335842;color:#d8f1e0}
+html[data-theme="dark"] .nutria-resumen-reset:hover{background:#406c50}
+html[data-theme="dark"] .nutria-resumen-select{color:#d3edde}
+html[data-theme="dark"] .nutria-resumen-empty{background:#2b4936;border-color:#597d65}
+html[data-theme="dark"] .nutria-resumen-empty-icon{background:#3b6449;color:#c1e6ca}
+html[data-theme="dark"] .nutria-resumen-cita{background:#2a4837;border-color:#567a63}
+html[data-theme="dark"] .nutria-resumen-cita-icon{background:#3a6148;color:#c5e9cf}
+html[data-theme="dark"] .nutria-resumen-cta{background:#3a9166;color:#fff}
+html[data-theme="dark"] .nutria-resumen-cta:hover{background:#4ca87b}
+@media(prefers-reduced-motion:reduce){
+ .nutria-resumen-kpi,.nutria-resumen-cta{transition:none;transform:none!important}
+}
