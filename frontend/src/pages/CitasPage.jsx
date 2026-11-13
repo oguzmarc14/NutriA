@@ -104,7 +104,10 @@ export default function CitasPage() {
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState('')
   const [originalStart, setOriginalStart] = useState('')
+  const [citaDetalle, setCitaDetalle] = useState(null)
   const [form, setForm] = useState(EMPTY)
+  const citaPasada = Boolean(editing && Number.isFinite(Date.parse(originalStart)) &&
+    Date.parse(originalStart) <= now.getTime())
   const [error, setError] = useState(() => new URLSearchParams(window.location.search).get('calendar') === 'error'
     ? 'No se pudo autorizar Google Calendar. Revisa la configuración OAuth.'
     : '')
@@ -250,6 +253,7 @@ export default function CitasPage() {
 
   function openEdit(c) {
     setForm({patient:c.patient?._id||c.patient||'',inicio:localInput(c.inicio),tipo:c.tipo,estado:c.estado,notas:c.notas||''})
+    setCitaDetalle(c)
     setEditing(c._id);setOriginalStart(c.inicio);setError('');setModal(true)
   }
   function updateField(field, value) {
@@ -261,10 +265,12 @@ export default function CitasPage() {
   }
 
   async function persist(payload, id) {
+    if (id && Date.parse(originalStart) <= Date.now())
+      throw new Error('Una cita pasada es de solo lectura.')
     const start = new Date(payload.inicio)
     const mismaFecha = Boolean(id && originalStart && start.getTime() === new Date(originalStart).getTime())
     if (!Number.isFinite(start.getTime()) || (start <= new Date() && !mismaFecha)) {
-      throw new Error('Sólo puedes reprogramar a fechas futuras. Puedes editar notas o estado de citas pasadas sin cambiar su fecha.')
+      throw new Error('Sólo puedes crear o reprogramar citas en fechas futuras.')
     }
     if (!mismaFecha && !disponible(start)) throw new Error('El horario está fuera de tus días u horas de atención.')
     if (payload.estado === 'completada' && start > new Date()) throw new Error('La cita aún no puede marcarse completada.')
@@ -277,6 +283,7 @@ export default function CitasPage() {
   }
   async function save(e) {
     e.preventDefault()
+    if (citaPasada) {setError('Una cita pasada es de solo lectura.');return}
     if (!form.inicio) {setError('Selecciona una fecha y hora para la cita.');return}
     if (editing && form.estado === 'cancelada' && citas.find(c => c._id === editing)?.estado !== 'cancelada' &&
       !window.confirm('¿Cancelar esta consulta? Permanecerá en el historial de NutriA.')) return
@@ -290,6 +297,9 @@ export default function CitasPage() {
   }
   async function cambiarEstadoCita(estado) {
     if (!editing || saving) return
+    // Sólo se permite cerrar como completada una consulta histórica.
+    if (citaPasada && !(estado === 'completada' &&
+      ['programada','confirmada'].includes(form.estado))) return
     if (estado === 'cancelada' && !window.confirm('¿Cancelar esta cita? Permanecerá en el historial y se retirará de Google Calendar si está sincronizada.')) return
     setSaving(true);setError('')
     try {
@@ -306,7 +316,7 @@ export default function CitasPage() {
   }
 
   async function eliminarCita() {
-    if (!editing || saving) return
+    if (!editing || saving || citaPasada) return
     const actual = citas.find(c => c._id === editing)
     if (!window.confirm(`¿Eliminar definitivamente la cita de ${actual?.patient?.name || 'este paciente'}? Esta acción no se puede deshacer. Para mantener el historial, utiliza «Cancelar cita».`)) return
     setSaving(true);setError('')
@@ -393,7 +403,7 @@ export default function CitasPage() {
     const time = formatTime(c.inicio)
     return (
       <button key={c._id} type="button"
-        aria-label={`Editar cita de ${patient}, ${dateTitle(new Date(c.inicio))}, ${time}, ${status.label}`}
+        aria-label={`Ver cita de ${patient}, ${dateTitle(new Date(c.inicio))}, ${time}, ${status.label}`}
         draggable={draggable && !saving && ['programada', 'confirmada'].includes(c.estado) && new Date(c.inicio) > now}
         onDragStart={e => {
           e.dataTransfer.effectAllowed = 'move'
@@ -628,14 +638,61 @@ export default function CitasPage() {
         <div className="p-5 sm:p-7">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div>
-              <h2 id="appointment-title" className="text-xl font-extrabold">{editing ? 'Editar cita' : 'Nueva cita'}</h2>
-              <p className="text-sm text-[#526d5d]">Completa los detalles de la consulta.</p>
+              <h2 id="appointment-title" className="text-xl font-extrabold">
+                {citaPasada ? 'Ver cita' : editing ? 'Editar cita' : 'Nueva cita'}
+              </h2>
+              <p className="text-sm text-[#526d5d]">
+                {citaPasada ? 'Esta consulta ya pasó. Sus datos son de solo lectura.' : 'Completa los detalles de la consulta.'}
+              </p>
             </div>
             <button type="button" aria-label="Cerrar" onClick={() => setModal(false)} disabled={saving} className={CONTROL}>
               <X size={19} aria-hidden="true" />
             </button>
           </div>
           {(patientError || error) && <p role="alert" className="mb-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{error || patientError}</p>}
+          {citaPasada ? (
+            <section aria-label="Detalles de la cita" className="space-y-4">
+              <p className="rounded-xl border border-[#c7dfcf] bg-[#e8f3eb] px-4 py-3 text-sm font-semibold text-[#275e47]">
+                Esta cita ya pasó y forma parte del historial. No puedes cambiar sus datos ni eliminarla.
+              </p>
+              <dl className="grid min-w-0 gap-3 sm:grid-cols-2">
+                <div className="min-w-0 rounded-xl bg-[#e8f3eb] p-3">
+                  <dt className="text-xs font-bold text-[#54745e]">Paciente</dt>
+                  <dd className="mt-1 break-words text-sm font-extrabold">
+                    {citaDetalle?.patient?.name || pacientes.find(p => p._id === form.patient)?.name || 'Paciente'}
+                  </dd>
+                </div>
+                <div className="min-w-0 rounded-xl bg-[#e8f3eb] p-3">
+                  <dt className="text-xs font-bold text-[#54745e]">Fecha y hora</dt>
+                  <dd className="mt-1 break-words text-sm font-extrabold">
+                    {new Intl.DateTimeFormat('es-MX',{dateStyle:'medium',timeStyle:'short'}).format(new Date(originalStart))}
+                  </dd>
+                </div>
+                <div className="min-w-0 rounded-xl bg-[#e8f3eb] p-3">
+                  <dt className="text-xs font-bold text-[#54745e]">Tipo de consulta</dt>
+                  <dd className="mt-1 text-sm font-extrabold">{TYPES[form.tipo] || 'Consulta'}</dd>
+                </div>
+                <div className="min-w-0 rounded-xl bg-[#e8f3eb] p-3">
+                  <dt className="text-xs font-bold text-[#54745e]">Estado registrado</dt>
+                  <dd className="mt-1 text-sm font-extrabold">{STATES[form.estado]?.label || form.estado}</dd>
+                </div>
+                {form.notas && <div className="min-w-0 rounded-xl bg-[#e8f3eb] p-3 sm:col-span-2">
+                  <dt className="text-xs font-bold text-[#54745e]">Notas de la cita</dt>
+                  <dd className="mt-1 whitespace-pre-wrap break-words text-sm">{form.notas}</dd>
+                </div>}
+              </dl>
+              <div className="flex flex-wrap justify-end gap-2 border-t border-[#d2e2d6] pt-4">
+                {['programada','confirmada'].includes(form.estado) && (
+                  <button type="button" onClick={() => cambiarEstadoCita('completada')} disabled={saving}
+                    className={`${CONTROL} gap-2`}>
+                    <CheckCircle2 size={16} aria-hidden="true"/>Marcar completada
+                  </button>
+                )}
+                <button type="button" onClick={() => setModal(false)} disabled={saving}
+                  className={CONTROL}>Cerrar</button>
+              </div>
+            </section>
+          ) : (
           <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
             <label className="grid gap-1.5 text-sm font-semibold sm:col-span-2">
               Paciente
@@ -690,6 +747,7 @@ export default function CitasPage() {
               </button>
             </div>
           </form>
+          )}
         </div>
       </dialog>
     </div>
