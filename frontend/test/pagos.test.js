@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
+import {fechaPagoValida} from '../src/utils/pagos.js'
 const src=path=>readFileSync(new URL('../src/'+path,import.meta.url),'utf8')
 const page=src('pages/PagosPage.jsx')
 const app=src('App.jsx')
@@ -44,4 +45,14 @@ test('HU-24 ignora respuestas anteriores al cambiar rápidamente de paciente',()
   assert.match(page,/if\(solicitud===solicitudActual\.current\)setCargando\(false\)/)
   assert.match(page,/return\(\)=>\{solicitudActual\.current\+=1\}/)
   assert.match(page,/setPacienteId\(e\.target\.value\);setPagos\(\[\]\);setCargando\(true\)/)
+})
+
+test('HU-23 valida fechas reales y no permite fechas futuras',()=>{
+  assert.equal(fechaPagoValida('2026-11-17','2026-11-17'),true)
+  assert.equal(fechaPagoValida('2024-02-29','2026-11-17'),true)
+  assert.equal(fechaPagoValida('2026-02-30','2026-11-17'),false)
+  assert.equal(fechaPagoValida('2026-11-18','2026-11-17'),false)
+  assert.equal(fechaPagoValida('2026/11/17','2026-11-17'),false)
+  assert.equal(fechaPagoValida('','2026-11-17'),false)
+  assert.ok(page.includes('fechaPagoValida(fecha)'))
 })

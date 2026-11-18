@@ -3,6 +3,7 @@ import {BadgeCheck, Banknote, CalendarDays, CheckCircle2, ClipboardList, LoaderC
 import client from '../api/client'
 import {useAuth} from '../context/auth'
 import './pagos.css'
+import {fechaPagoValida,hoyLocal} from '../utils/pagos.js'
 
 const metodos=[
   {value:'transferencia',label:'Transferencia bancaria'},
@@ -14,10 +15,6 @@ const estados={
   reportado:{label:'Por verificar',className:'nutria-pago-reportado'},
   confirmado:{label:'Confirmado por el nutriólogo',className:'nutria-pago-confirmado'},
   rechazado:{label:'No confirmado',className:'nutria-pago-rechazado'},
-}
-const hoyLocal=()=>{
-  const fecha=new Date()
-  return new Date(fecha.getTime()-fecha.getTimezoneOffset()*60000).toISOString().slice(0,10)
 }
 const moneda = cents => new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format((Number(cents)||0)/100)
 const fechaTexto = fecha => {
@@ -116,7 +113,7 @@ export default function PagosPage(){
       setError('Ingresa un importe positivo de hasta 100,000 MXN, con dos decimales como máximo.')
       return
     }
-    if(!fecha||fecha>hoyLocal()){setError('La fecha debe ser válida y no estar en el futuro.');return}
+    if(!fechaPagoValida(fecha)){setError('La fecha debe ser válida y no estar en el futuro.');return}
     setGuardando(true)
     try{
       const {data}=await client.post('/pagos/mios',{
