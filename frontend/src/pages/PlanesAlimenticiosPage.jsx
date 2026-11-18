@@ -238,6 +238,7 @@ function PlanesAlimenticiosPage() {
   const [nombre, setNombre] =
     useState('')
 
+  const [metaEnergiaIngresada, setMetaEnergiaIngresada] = useState('')
   const [objetivo, setObjetivo] =
     useState('')
 
@@ -1359,13 +1360,20 @@ function PlanesAlimenticiosPage() {
 
   const calculoReferencia = referenciaNutricional?.calculo
   const objetivosReferencia = calculoReferencia?.resultado
+  const metaEnergiaPersonalizada = metaEnergiaIngresada.trim()
+  const valorMetaEnergia = Number(metaEnergiaPersonalizada.replace(',', '.'))
+  const metaEnergiaValida = !metaEnergiaPersonalizada ||
+    (/^\d+(?:[.,]\d+)?$/.test(metaEnergiaPersonalizada) && Number.isFinite(valorMetaEnergia) && valorMetaEnergia > 0)
+  const metaEnergiaPlan = metaEnergiaPersonalizada && metaEnergiaValida
+    ? valorMetaEnergia
+    : Number(objetivosReferencia?.objetivoKcal) || 0
   const metas = [
-    ['Energía', 'kcal', 'kcal', objetivosReferencia?.objetivoKcal],
+    ['Energía', 'kcal', 'kcal', metaEnergiaPlan],
     ['Proteína', 'proteina', 'g', objetivosReferencia?.proteinasGramos],
     ['Carbohidratos', 'carbohidratos', 'g', objetivosReferencia?.carbohidratosGramos],
     ['Grasas', 'grasas', 'g', objetivosReferencia?.grasasGramos],
   ]
-  const mostrarDistribucion = Boolean(objetivosReferencia && comidas.length)
+  const mostrarDistribucion = metaEnergiaPlan > 0 && comidas.length > 0
   const totalDistribucion = comidas.reduce((total, _, indice) => total + (Number(distribucion[indice]) || 0), 0)
   const comidasBalance = comidas.map(comida => ({
     ...comida,
@@ -1428,6 +1436,7 @@ function PlanesAlimenticiosPage() {
     setComidaActivaId(nuevas[0].id)
     setPlanEditandoId('')
     setNombre('Plan nutricional - ' + obtenerFechaActual())
+    setMetaEnergiaIngresada('')
     setObjetivo(objetivos.map(v => ({
       perdida_peso: 'Pérdida de peso', incremento_masa: 'Incremento de masa muscular',
       salud: 'Mejorar la salud', rendimiento_deportivo: 'Rendimiento deportivo',
@@ -1459,6 +1468,7 @@ function PlanesAlimenticiosPage() {
     setPlanEditandoId('')
     setNombre((plan.nombre || 'Plan') + ' (copia)')
     setObjetivo(plan.objetivo || '')
+    setMetaEnergiaIngresada(plan.metaEnergiaKcal == null ? '' : String(plan.metaEnergiaKcal))
     setFechaPlan(obtenerFechaActual())
     setModoAsistido(false)
     setMostrarEleccion(false)
@@ -1524,8 +1534,13 @@ function PlanesAlimenticiosPage() {
       return
     }
 
+    if (!metaEnergiaValida) {
+      setError('Introduce una meta de energía mayor que cero en kcal por día.')
+      return
+    }
+
     const totalPorcentajes = comidas.reduce((suma, _, indice) => suma + (Number(distribucion[indice]) || 0), 0)
-    if (objetivosReferencia && Math.abs(totalPorcentajes - 100) > 0.01) {
+    if (mostrarDistribucion && Math.abs(totalPorcentajes - 100) > 0.01) {
       setError(`La distribución de comidas debe sumar 100 %. Actualmente suma ${totalPorcentajes} %.`)
       return
     }
@@ -1545,7 +1560,7 @@ function PlanesAlimenticiosPage() {
               ? { _id: comida.id }
               : {}),
 
-            porcentajeDistribucion: objetivosReferencia ? (Number(distribucion[comidas.findIndex(item => item.id === comida.id)]) || 0) : null,
+            porcentajeDistribucion: mostrarDistribucion ? (Number(distribucion[comidas.findIndex(item => item.id === comida.id)]) || 0) : null,
 
             nombre:
               comida.nombre.trim(),
@@ -1624,6 +1639,7 @@ function PlanesAlimenticiosPage() {
       const payload = {
         nombre: nombre.trim(),
         objetivo: objetivo.trim(),
+        metaEnergiaKcal: metaEnergiaPersonalizada ? valorMetaEnergia : null,
         fechaInicio: `${fechaPlan}T12:00:00.000Z`,
         comidas: comidasPayload,
       }
@@ -1640,6 +1656,7 @@ function PlanesAlimenticiosPage() {
 
       setNombre('')
       setObjetivo('')
+      setMetaEnergiaIngresada('')
       setFechaPlan(obtenerFechaActual())
       setPlanEditandoId('')
 
@@ -1711,6 +1728,7 @@ function PlanesAlimenticiosPage() {
     setPlanEditandoId(plan._id)
     setNombre(plan.nombre || '')
     setObjetivo(plan.objetivo || '')
+    setMetaEnergiaIngresada(plan.metaEnergiaKcal == null ? '' : String(plan.metaEnergiaKcal))
     setFechaPlan((plan.fechaInicio || plan.createdAt || '').slice(0, 10))
     setComidas(comidasEditables.length > 0 ? comidasEditables.map(normalizarPreparaciones) : crearComidasIniciales())
     const guardados = (plan.comidas || []).map(comida => comida.porcentajeDistribucion)
@@ -1729,6 +1747,7 @@ function PlanesAlimenticiosPage() {
     setPlanEditandoId('')
     setNombre('')
     setObjetivo('')
+    setMetaEnergiaIngresada('')
     setFechaPlan(obtenerFechaActual())
     setComidas(nuevas)
     setComidaActivaId(nuevas[0].id)
@@ -1804,6 +1823,7 @@ function PlanesAlimenticiosPage() {
 
     setNombre('')
     setObjetivo('')
+    setMetaEnergiaIngresada('')
     setFechaPlan(obtenerFechaActual())
     setPlanEditandoId('')
 
@@ -2675,10 +2695,10 @@ function PlanesAlimenticiosPage() {
                             {mostrarDistribucion && <div className="mt-3 rounded-xl border border-[#cfe0d6] bg-[#f0f7f2] px-3 py-2.5">
                               <div className="flex flex-wrap items-center justify-between gap-2">
                                 <span className="text-xs font-extrabold text-[#173f34]">Meta de {comida.nombre || `comida ${index + 1}`}</span>
-                                <span className="text-xs font-bold tabular-nums text-[#246b55]">{distribucion[index] ?? 0}% · {numero((Number(objetivosReferencia.objetivoKcal) || 0) * (Number(distribucion[index]) || 0) / 100, 0)} kcal objetivo</span>
+                                <span className="text-xs font-bold tabular-nums text-[#246b55]">{distribucion[index] ?? 0}% · {numero(metaEnergiaPlan * (Number(distribucion[index]) || 0) / 100, 0)} kcal objetivo</span>
                               </div>
-                              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#d9e8dd]"><div className="h-full rounded-full bg-[#70ae89] transition-all" style={{width: `${Math.min(100, (Number(objetivosReferencia.objetivoKcal) * (Number(distribucion[index]) || 0) / 100) > 0 ? subtotal.kcal / (Number(objetivosReferencia.objetivoKcal) * (Number(distribucion[index]) || 0) / 100) * 100 : 0)}%`}}/></div>
-                              <p className="mt-1 text-[11px] text-[#52716a]">{numero(subtotal.kcal, 0)} kcal agregadas · {numero(Math.max(0, (Number(objetivosReferencia.objetivoKcal) || 0) * (Number(distribucion[index]) || 0) / 100 - subtotal.kcal), 0)} kcal pendientes</p>
+                              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#d9e8dd]"><div className="h-full rounded-full bg-[#70ae89] transition-all" style={{width: `${Math.min(100, (metaEnergiaPlan * (Number(distribucion[index]) || 0) / 100) > 0 ? subtotal.kcal / (metaEnergiaPlan * (Number(distribucion[index]) || 0) / 100) * 100 : 0)}%`}}/></div>
+                              <p className="mt-1 text-[11px] text-[#52716a]">{numero(subtotal.kcal, 0)} kcal agregadas · {numero(Math.max(0, metaEnergiaPlan * (Number(distribucion[index]) || 0) / 100 - subtotal.kcal), 0)} kcal pendientes</p>
                             </div>}
                             {comida
                               .alimentos
@@ -2772,8 +2792,28 @@ function PlanesAlimenticiosPage() {
                       <PanelRightClose size={18}/>
                     </button>
                   </div>
-                  {objetivosReferencia ? <div className="space-y-4">
-                    {metas.map(([etiqueta, clave, unidad, meta]) => {
+                  <div className="space-y-2 rounded-xl border border-[#dceae1] bg-[#f7fbf8] p-3">
+                    <label htmlFor="meta-energia-plan" className="block text-xs font-extrabold text-[#173f34]">
+                      Meta de energía (kcal/día)
+                    </label>
+                    <input id="meta-energia-plan" type="text" inputMode="decimal" value={metaEnergiaIngresada}
+                      onChange={event => setMetaEnergiaIngresada(event.target.value)}
+                      placeholder={objetivosReferencia?.objetivoKcal != null ? String(objetivosReferencia.objetivoKcal) : 'Ej. 2000'}
+                      aria-invalid={!metaEnergiaValida}
+                      aria-describedby="meta-energia-plan-detalle"
+                      className="min-h-11 w-full min-w-0 rounded-xl border border-[#c9ddd3] bg-white px-3 text-sm font-semibold text-[#173f34]"/>
+                    <p id="meta-energia-plan-detalle" className={`text-xs ${metaEnergiaValida ? 'text-[#52716a]' : 'text-rose-700'}`}>
+                      {!metaEnergiaValida ? 'Introduce un número mayor que cero.' : objetivosReferencia?.objetivoKcal != null
+                        ? 'Meta del cálculo: ' + numero(objetivosReferencia.objetivoKcal, 1) + ' kcal/día.'
+                        : 'Indica la energía total que quieres usar para este plan.'}
+                    </p>
+                    {metaEnergiaIngresada && <button type="button" onClick={() => setMetaEnergiaIngresada('')}
+                      className="min-h-11 text-sm font-semibold text-[#246b55] underline">
+                      {objetivosReferencia ? 'Restaurar meta del cálculo' : 'Quitar meta personalizada'}
+                    </button>}
+                  </div>
+                  {(objetivosReferencia || metaEnergiaPlan > 0) ? <div className="space-y-4">
+                    {metas.filter(([, clave]) => clave === 'kcal' || objetivosReferencia).map(([etiqueta, clave, unidad, meta]) => {
                       const actual = Number(totalesPlan[clave]) || 0
                       const objetivo = Number(meta) || 0
                       const pct = objetivo > 0 ? actual / objetivo * 100 : 0
@@ -2793,14 +2833,14 @@ function PlanesAlimenticiosPage() {
                   <div className="border-t border-[#e3eee6] pt-3">
                     <h4 className="mb-2 flex items-center gap-2 text-xs font-extrabold text-[#173f34]"><Target size={15} className="text-[#246b55]"/> Comida seleccionada</h4>
                     <p className="text-xs font-bold text-[#52716a]">{comidaActiva?.nombre || 'Sin comida seleccionada'}</p>
-                    <p className="mt-1 text-xs text-[#648073]">{numero(calcularTotales(comidaActiva?.alimentos || []).kcal, 0)} kcal añadidas{modoAsistido && objetivosReferencia ? ` · Meta: ${numero(Number(objetivosReferencia.objetivoKcal) * (distribucion[comidas.findIndex(c => c.id === comidaActiva?.id)] || 0) / 100, 0)} kcal` : ''}</p>
+                    <p className="mt-1 text-xs text-[#648073]">{numero(calcularTotales(comidaActiva?.alimentos || []).kcal, 0)} kcal añadidas{modoAsistido && metaEnergiaPlan > 0 ? ` · Meta: ${numero(metaEnergiaPlan * (distribucion[comidas.findIndex(c => c.id === comidaActiva?.id)] || 0) / 100, 0)} kcal` : ''}</p>
                   </div>
                   {mostrarDistribucion && <div className="border-t border-[#e3eee6] pt-3">
                     <h4 className="mb-2 flex items-center gap-2 text-xs font-extrabold text-[#173f34]"><ListChecks size={15} className="text-[#246b55]"/> Distribución por comida</h4>
                     <p className="mb-3 text-[11px] text-[#648073]">Modifica el porcentaje y la meta se actualiza inmediatamente en cada comida.</p>
                     <div className="space-y-3">{comidasBalance.map((comida, indice) => {
                       const porcentaje = Number(distribucion[indice]) || 0
-                      const metaKcal = (Number(objetivosReferencia.objetivoKcal) || 0) * porcentaje / 100
+                      const metaKcal = metaEnergiaPlan * porcentaje / 100
                       return <div key={comida.id} className="rounded-xl bg-[#f5f9f6] p-2.5">
                         <div className="mb-2 flex items-center justify-between gap-2">
                           <span className="min-w-0 flex-1 truncate text-xs font-bold text-[#173f34]">{comida.nombre || `Comida ${indice + 1}`}</span>

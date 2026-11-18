@@ -259,6 +259,8 @@ const planAlimenticioSchema =
         default: '',
       },
 
+      metaEnergiaKcal: { type: Number, default: null, validate: valor => valor === null || (Number.isFinite(valor) && valor > 0) },
+
       comidas: {
         type: [
           comidaSchema,

@@ -252,6 +252,8 @@ const planSchema =
         .trim()
         .optional(),
 
+    metaEnergiaKcal: z.number().positive().nullable().optional(),
+
     comidas:
       z.array(
         comidaSchema,
@@ -636,6 +638,7 @@ async function crearPlanAlimenticio(
             parsed.data.objetivo ||
             '',
 
+          metaEnergiaKcal: parsed.data.metaEnergiaKcal ?? null,
           comidas,
 
           fechaInicio:
@@ -762,6 +765,7 @@ async function actualizarPlanAlimenticio(req, res, next) {
       {
         nombre: parsed.data.nombre,
         objetivo: parsed.data.objetivo || '',
+        ...(parsed.data.metaEnergiaKcal !== undefined && { metaEnergiaKcal: parsed.data.metaEnergiaKcal }),
         comidas,
         fechaInicio: parsed.data.fechaInicio,
       },
