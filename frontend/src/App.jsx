@@ -18,6 +18,7 @@ import RecuperarContrasenaPage from "./pages/RecuperarContrasenaPage";
 import RestablecerContrasenaPage from "./pages/RestablecerContrasenaPage";
 import MiExpedientePage from "./pages/MiExpedientePage";
 import MisCitasPage from "./pages/MisCitasPage";
+import PagosPage from "./pages/PagosPage";
 import MisMedicionesPage from "./pages/MisMedicionesPage";
 import MiPlanPage from "./pages/MiPlanPage";
 import CompararMedicionesPage from "./pages/CompararMedicionesPage";
@@ -89,6 +90,7 @@ function App() {
             <Route path="dietas" element={<ConsultarDietasPage />} />
             <Route path="citas" element={<CitasPage />} />
             <Route path="citas/nueva" element={<CitasCrearPage />} />
+            <Route path="pagos" element={<PagosPage />} />
             <Route path="editar-perfil" element={<EditarPerfilPage />} />
 
             <Route path="community" element={<CommunityPage />} />
@@ -98,6 +100,7 @@ function App() {
           <Route element={<ProtectedRoute roles={["patient"]} />}>
             <Route path="mi-expediente" element={<MiExpedientePage />} />
             <Route path="mis-citas" element={<MisCitasPage />} />
+            <Route path="mis-pagos" element={<PagosPage />} />
 
             <Route path="mis-mediciones" element={<MisMedicionesPage />} />
 

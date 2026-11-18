@@ -7,6 +7,7 @@ import {
   TrendingUp,
   UserRound,
   Utensils,
+  Wallet,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import usePerfilPaciente from "../../hooks/usePerfilPaciente";
@@ -75,6 +76,12 @@ function DashboardPaciente({ nombre }) {
       descripcion: "Consulta tus comidas e indicaciones actuales.",
       icono: Apple,
       to: "/mi-plan",
+    },
+    {
+      nombre: "Mis pagos",
+      descripcion: "Reporta pagos externos y consulta su verificación.",
+      icono: Wallet,
+      to: "/mis-pagos",
     },
     {
       nombre: "Mi progreso",

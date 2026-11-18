@@ -30,6 +30,7 @@ import {
   PanelLeftOpen,
   PanelLeftClose,
   Menu,
+  Wallet,
 } from 'lucide-react'
 
 import {
@@ -161,6 +162,12 @@ function DashboardLayout() {
             to: '/dietas',
           },
           {
+            icon: Wallet,
+            label: 'Pagos de pacientes',
+            shortLabel: 'Pagos',
+            to: '/pagos',
+          },
+          {
             icon: BookOpen,
             label: 'NutriA Community',
             shortLabel: 'Recetas',
@@ -217,6 +224,12 @@ function DashboardLayout() {
             label: 'Mi plan alimenticio',
             shortLabel: 'Mi plan',
             to: '/mi-plan',
+          },
+          {
+            icon: Wallet,
+            label: 'Mis pagos',
+            shortLabel: 'Mis pagos',
+            to: '/mis-pagos',
           },
           {
             icon: TrendingUp,
