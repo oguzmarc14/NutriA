@@ -1,5 +1,7 @@
 const { z } = require('zod')
 const User = require('../models/User')
+const Patient = require('../models/Pacientes')
+const mongoose = require('mongoose')
 
 const crearUsuarioSchema = z.object({
   name: z
@@ -226,7 +228,41 @@ async function actualizarEstadoUsuario(
   }
 }
 
+// HU-04: cambiar roles de cuentas Google existentes, sin alterar pacientes.
+async function actualizarRolUsuario(req,res,next) {
+  try {
+    const parsed=z.object({role:z.enum(['admin','nutritionist'])}).strict().safeParse(req.body)
+    if(!parsed.success)return res.status(400).json({message:'Solo se permite administrador o nutriólogo.'})
+    if(!mongoose.isValidObjectId(req.params.id))return res.status(400).json({message:'Identificador de usuario inválido.'})
+    const usuario=await User.findOne({
+      _id:req.params.id,authProvider:'google',role:{$in:['admin','nutritionist']},
+    }).select('+googleSub')
+    if(!usuario)return res.status(404).json({message:'Cuenta no encontrada.'})
+    const nuevo=parsed.data.role
+    if(usuario.role===nuevo)return res.json({message:'El rol ya estaba asignado.',usuario:usuarioPublico(usuario)})
+    if(String(usuario._id)===String(req.user._id)||String(usuario.id)===String(req.user.id)){
+      return res.status(409).json({message:'No puedes cambiar tu propio rol.'})
+    }
+    if(usuario.role==='admin'&&usuario.active){
+      const activos=await User.countDocuments({role:'admin',authProvider:'google',active:true})
+      if(activos<=1)return res.status(409).json({message:'Debe permanecer al menos un administrador activo.'})
+    }
+    if(usuario.role==='nutritionist'&&nuevo==='admin'&&
+      await Patient.exists({nutritionist:usuario._id,active:true})){
+      return res.status(409).json({
+        message:'El nutriólogo aún tiene pacientes activos. Reasígnalos antes de cambiar su rol.',
+      })
+    }
+    usuario.role=nuevo
+    await usuario.save()
+    return res.json({
+      message:nuevo==='admin'?'Rol actualizado a administrador.':'Rol actualizado a nutriólogo.',
+      usuario:usuarioPublico(usuario),
+    })
+  }catch(error){return next(error)}
+}
 module.exports = {
+  actualizarRolUsuario,
   obtenerUsuarios,
   crearUsuario,
   actualizarEstadoUsuario,

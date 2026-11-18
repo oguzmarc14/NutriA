@@ -6,6 +6,7 @@ import {
   ShieldCheck,
   UserCog,
   UserPlus,
+  ShieldAlert,
 } from 'lucide-react'
 
 import client from '../api/client'
@@ -21,6 +22,7 @@ function UsuariosPage() {
   const [loading, setLoading] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [actualizandoId, setActualizandoId] = useState(null)
+  const [cambioRol, setCambioRol] = useState(null)
 
   const [error, setError] = useState('')
   const [mensaje, setMensaje] = useState('')
@@ -139,6 +141,27 @@ function UsuariosPage() {
         err.response?.data?.message ||
           'No fue posible actualizar el acceso',
       )
+    } finally {
+      setActualizandoId(null)
+    }
+  }
+
+  async function confirmarCambioRol() {
+    if (!cambioRol || actualizandoId) return
+    setActualizandoId(cambioRol.usuario.id)
+    setError('')
+    setMensaje('')
+    try {
+      const {data} = await client.patch(
+        '/usuarios/' + encodeURIComponent(cambioRol.usuario.id) + '/rol',
+        {role:cambioRol.role},
+      )
+      setMensaje(data.message || 'Rol actualizado correctamente.')
+      setCambioRol(null)
+      await cargarUsuarios()
+    } catch (err) {
+      setError(err.response?.data?.message || 'No fue posible cambiar el rol.')
+      setCambioRol(null)
     } finally {
       setActualizandoId(null)
     }
@@ -347,6 +370,10 @@ function UsuariosPage() {
             actualizandoId={actualizandoId}
             obtenerEstado={obtenerEstado}
             onCambiarEstado={cambiarEstado}
+            onSolicitarCambioRol={(usuario)=>setCambioRol({
+              usuario,
+              role:usuario.role==='admin'?'nutritionist':'admin',
+            })}
           />
 
           <ListaUsuarios
@@ -358,9 +385,36 @@ function UsuariosPage() {
             actualizandoId={actualizandoId}
             obtenerEstado={obtenerEstado}
             onCambiarEstado={cambiarEstado}
+            onSolicitarCambioRol={(usuario)=>setCambioRol({
+              usuario,
+              role:usuario.role==='admin'?'nutritionist':'admin',
+            })}
           />
         </>
+
       )}
+      {cambioRol && <div className="fixed inset-0 z-[220] grid place-items-center bg-[#0d291d]/65 p-4"
+        onMouseDown={event=>{if(event.target===event.currentTarget&&!actualizandoId)setCambioRol(null)}}>
+        <section role="alertdialog" aria-modal="true" aria-labelledby="cambiar-rol-titulo"
+          className="w-full max-w-md rounded-[26px] border border-[#bedac8] bg-[#eef7f0] p-6 text-center text-[#173f34] shadow-2xl">
+          <ShieldAlert className="mx-auto text-[#246b55]" size={31}/>
+          <h2 id="cambiar-rol-titulo" className="mt-3 text-xl font-black">¿Cambiar rol de usuario?</h2>
+          <p className="mt-3 break-words text-sm leading-6">
+            {cambioRol.usuario.name} pasará a ser <strong>{cambioRol.role==='admin'?'administrador':'nutriólogo'}</strong>.
+          </p>
+          <p className="mt-2 text-xs leading-5 opacity-80">
+            El cambio modificará los permisos de acceso al sistema. No altera datos clínicos.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <button type="button" onClick={()=>setCambioRol(null)} disabled={Boolean(actualizandoId)}
+              className="min-h-11 rounded-xl border border-[#a6cdb6] bg-[#e0eee4] px-5 text-sm font-bold text-[#246b55] disabled:opacity-50">Cancelar</button>
+            <button type="button" onClick={confirmarCambioRol} disabled={Boolean(actualizandoId)}
+              className="min-h-11 rounded-xl bg-[#246b55] px-5 text-sm font-extrabold text-white disabled:opacity-50">
+              {actualizandoId?'Actualizando…':'Sí, cambiar rol'}
+            </button>
+          </div>
+        </section>
+      </div>}
     </section>
   )
 }

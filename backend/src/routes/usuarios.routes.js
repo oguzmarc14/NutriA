@@ -4,6 +4,7 @@ const {
   obtenerUsuarios,
   crearUsuario,
   actualizarEstadoUsuario,
+  actualizarRolUsuario,
 } = require('../controllers/usuarios.controller')
 
 const {
@@ -72,5 +73,7 @@ router.patch(
   '/:id/estado',
   actualizarEstadoUsuario,
 )
+
+router.patch('/:id/rol', actualizarRolUsuario)
 
 module.exports = router

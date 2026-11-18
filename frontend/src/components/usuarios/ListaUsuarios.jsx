@@ -9,6 +9,7 @@ function ListaUsuarios({
   actualizandoId,
   obtenerEstado,
   onCambiarEstado,
+  onSolicitarCambioRol,
 }) {
   return (
     <section className="mb-8">
@@ -16,7 +17,7 @@ function ListaUsuarios({
       {usuarios.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-[#cbdcd4] bg-white p-8 text-center"><div className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-xl bg-[#e8f3ee] text-[#246b55]"><Icono size={21} /></div><p className="font-bold text-[#173f34]">No hay usuarios registrados</p></div>
       ) : (
-        <div className="grid gap-4">{usuarios.map((usuario) => <CardUsuario key={usuario.id} usuario={usuario} icono={Icono} estado={obtenerEstado(usuario)} esUsuarioActual={usuario.id === usuarioActualId} actualizando={actualizandoId === usuario.id} onCambiarEstado={() => onCambiarEstado(usuario)} />)}</div>
+        <div className="grid gap-4">{usuarios.map((usuario) => <CardUsuario key={usuario.id} usuario={usuario} icono={Icono} estado={obtenerEstado(usuario)} esUsuarioActual={usuario.id === usuarioActualId} actualizando={actualizandoId === usuario.id} onCambiarEstado={() => onCambiarEstado(usuario)} onSolicitarCambioRol={() => onSolicitarCambioRol(usuario)} />)}</div>
       )}
     </section>
   )

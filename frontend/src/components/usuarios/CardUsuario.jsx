@@ -7,6 +7,7 @@ function CardUsuario({
   esUsuarioActual,
   actualizando,
   onCambiarEstado,
+  onSolicitarCambioRol,
 }) {
   return (
     <article className="rounded-2xl border border-[#e1e9e5] bg-white p-5 shadow-[0_8px_30px_rgba(32,78,64,0.05)]">
@@ -29,6 +30,12 @@ function CardUsuario({
           </div>
         </div>
 
+        <div className="flex min-w-0 flex-wrap items-center justify-center gap-2">
+          <button type="button" onClick={onSolicitarCambioRol}
+            disabled={actualizando || esUsuarioActual}
+            className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#b4d5c0] bg-[#e8f3ee] px-4 text-sm font-bold text-[#246b55] transition hover:bg-[#d6e8dc] disabled:opacity-50">
+            Cambiar rol
+          </button>
         <button
           type="button"
           onClick={onCambiarEstado}
@@ -38,6 +45,7 @@ function CardUsuario({
           {actualizando ? <LoaderCircle className="animate-spin" size={17} /> : usuario.active ? <XCircle size={17} /> : <CheckCircle2 size={17} />}
           {esUsuarioActual ? 'Tu cuenta' : usuario.active ? 'Desactivar acceso' : 'Activar acceso'}
         </button>
+        </div>
       </div>
     </article>
   )
