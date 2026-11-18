@@ -9,6 +9,7 @@ const Cita = require('../models/Cita')
 const mongoose = require('mongoose')
 const User = require('../models/User')
 const { enviarInvitacionPaciente } = require('../services/email.service')
+const { eliminarPacienteConDatos, ErrorEliminacionPaciente } = require('../services/eliminarPaciente.service')
 
 const crearPacienteSchema = z.object({
   name: z
@@ -429,27 +430,18 @@ async function actualizarPaciente(
 
 async function eliminarPaciente(req, res, next) {
   try {
-    const paciente = await Pacientes.findOne({
-      _id: req.params.id,
-      nutritionist: req.user.id,
-      active: true,
-    })
-
-    if (!paciente) {
-      return res.status(404).json({ message: 'Paciente no encontrado' })
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: 'Identificador de paciente inválido.' })
     }
-
-    await Promise.all([
-      Medicion.deleteMany({ paciente: paciente._id }),
-      ExpedienteClinico.deleteMany({ paciente: paciente._id }),
-      PlanAlimenticio.deleteMany({ paciente: paciente._id }),
-      User.deleteMany({ patient: paciente._id, role: 'patient' }),
-    ])
-
-    await paciente.deleteOne()
-
-    return res.json({ message: 'Paciente eliminado correctamente' })
+    const resultado = await eliminarPacienteConDatos({
+      pacienteId: req.params.id,
+      nutritionistId: req.user._id,
+    })
+    return res.json(resultado)
   } catch (error) {
+    if (error instanceof ErrorEliminacionPaciente) {
+      return res.status(error.statusCode).json({ message: error.message })
+    }
     return next(error)
   }
 }

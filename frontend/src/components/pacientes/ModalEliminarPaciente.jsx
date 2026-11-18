@@ -17,7 +17,7 @@ function ModalEliminarPaciente({ paciente, eliminando, onCancelar, onConfirmar }
           <div className="min-w-0 flex-1">
             <h2 id="titulo-eliminar-paciente" className="text-xl font-extrabold text-[#173f34]">Eliminar paciente</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Se eliminarán la cuenta y todos los datos clínicos de <strong>{paciente.name}</strong>. Esta acción no se puede deshacer.
+              Se eliminarán definitivamente la cuenta de <strong>{paciente.name}</strong>, su expediente, mediciones, cálculos nutricionales, dietas, seguimientos, citas y reportes de pago. También se retirarán sus citas vinculadas a Google Calendar. <strong>Esta acción no se puede deshacer.</strong>
             </p>
           </div>
           <button type="button" onClick={onCancelar} disabled={eliminando} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-400 hover:bg-slate-100" aria-label="Cerrar"><X size={18} /></button>
