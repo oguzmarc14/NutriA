@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import useModalAccesible from '../../hooks/useModalAccesible'
 import { CheckCircle2, LoaderCircle, MessageCircle, ThumbsUp, X } from 'lucide-react'
 import client from '../../api/client'
 
@@ -21,6 +22,11 @@ function ModalSeguimientoComida({ comida, fecha, onCerrar, onGuardado, plan, reg
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
   const [confirmado, setConfirmado] = useState(false)
+  const { modalRef, volverRef } = useModalAccesible({
+    abierto: Boolean(comida),
+    onVolver: onCerrar,
+    bloqueado: guardando,
+  })
 
   if (!comida) return null
 
@@ -46,20 +52,20 @@ function ModalSeguimientoComida({ comida, fecha, onCerrar, onGuardado, plan, reg
   }
 
   return (
-    <div className="fixed inset-0 z-[70] grid place-items-center bg-[#102d26]/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Confirmar seguimiento de comida">
+    <div ref={modalRef} className="fixed inset-0 z-[70] grid place-items-center bg-[#102d26]/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Confirmar seguimiento de comida">
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-[#fbfdfb] p-5 shadow-2xl sm:p-6">
         {confirmado ? (
           <div className="py-4 text-center">
             <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-[#dff3e8] text-[#246b55]"><CheckCircle2 size={34} /></div>
             <h2 className="mt-5 text-2xl font-black text-[#173f34]">Comida registrada correctamente</h2>
             <p className="mx-auto mt-2 max-w-sm text-sm text-slate-500">Tu nutriologa podra consultar esta informacion desde tu progreso.</p>
-            <button type="button" onClick={onCerrar} className="mt-6 w-full rounded-xl bg-[#246b55] px-5 py-3 font-extrabold text-white">Aceptar</button>
+            <button ref={volverRef} type="button" onClick={onCerrar} className="mt-6 w-full rounded-xl bg-[#246b55] px-5 py-3 font-extrabold text-white">Aceptar</button>
           </div>
         ) : (
           <>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0"><p className="text-xs font-bold uppercase tracking-[0.14em] text-[#4d816f]">Seguimiento diario</p><h2 className="mt-1 break-words text-xl font-black text-[#173f34]">{comida.platillo || comida.nombre}</h2><p className="mt-1 text-sm text-slate-500">Confirma como te fue con esta comida.</p></div>
-              <button type="button" onClick={onCerrar} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#edf4f0] text-[#48685c]" aria-label="Cerrar"><X size={18} /></button>
+              <button ref={volverRef} type="button" onClick={onCerrar} disabled={guardando} className="grid h-9 w-9 disabled:opacity-50 shrink-0 place-items-center rounded-xl bg-[#edf4f0] text-[#48685c]" aria-label="Cerrar"><X size={18} /></button>
             </div>
 
             <div className="mt-6">
@@ -74,7 +80,7 @@ function ModalSeguimientoComida({ comida, fecha, onCerrar, onGuardado, plan, reg
 
             <label className="mt-5 block"><span className="mb-2 flex items-center gap-2 text-sm font-extrabold text-[#173f34]"><MessageCircle size={16} />Comentario opcional</span><textarea value={comentario} onChange={(event) => setComentario(event.target.value)} maxLength={500} rows={3} placeholder="Ej. Me quede con hambre o no consegui un ingrediente..." className="w-full resize-none rounded-xl border border-[#d7e3dd] bg-white px-4 py-3 text-sm outline-none focus:border-[#4d816f]" /></label>
             {error && <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-600">{error}</p>}
-            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><button type="button" onClick={onCerrar} className="rounded-xl border border-[#d5e2dc] px-5 py-3 font-bold text-[#48685c]">Cancelar</button><button type="button" onClick={guardar} disabled={guardando} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#246b55] px-5 py-3 font-extrabold text-white disabled:opacity-60">{guardando && <LoaderCircle className="animate-spin" size={17} />}Confirmar comida</button></div>
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><button type="button" onClick={onCerrar} disabled={guardando} className="rounded-xl border border-[#d5e2dc] disabled:opacity-50 px-5 py-3 font-bold text-[#48685c]">Cancelar</button><button type="button" onClick={guardar} disabled={guardando} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#246b55] px-5 py-3 font-extrabold text-white disabled:opacity-60">{guardando && <LoaderCircle className="animate-spin" size={17} />}Confirmar comida</button></div>
           </>
         )}
       </div>

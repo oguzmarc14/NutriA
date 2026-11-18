@@ -44,3 +44,20 @@ test('guardar o eliminar conserva botón de regreso y control con Escape', () =>
   }
   assert.ok(leer('components/pacientes/ModalEliminarPaciente.jsx').includes('bloqueado: eliminando'))
 })
+
+test('seguimiento de comida bloquea salida mientras guarda y vuelve con teclado', () => {
+  const seguimiento = leer('components/progreso/ModalSeguimientoComida.jsx')
+  assert.ok(seguimiento.includes('useModalAccesible('))
+  assert.ok(seguimiento.includes('bloqueado: guardando'))
+  assert.ok(seguimiento.includes('ref={modalRef}'))
+  assert.ok(seguimiento.includes('ref={volverRef}'))
+  assert.ok(seguimiento.includes('onClick={onCerrar} disabled={guardando}'))
+})
+test('aviso de paciente activo también permite volver con teclado o botón', () => {
+  const alerta = leer('components/pacientes/AlertaTrabajoPaciente.jsx')
+  assert.ok(alerta.includes('Volver a pacientes'))
+  assert.ok(alerta.includes('onClick={onCerrar}'))
+  assert.ok(alerta.includes('ref={volverRef}'))
+  assert.ok(alerta.includes('useModalAccesible('))
+  assert.ok(alerta.includes('ref={modalRef}'))
+})

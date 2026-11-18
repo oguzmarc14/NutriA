@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Check } from 'lucide-react'
 import './estilosPaciente.css'
+import useModalAccesible from '../../hooks/useModalAccesible'
 
 /**
  * Aviso de éxito al elegir un paciente para trabajar.
@@ -9,36 +9,17 @@ import './estilosPaciente.css'
  * No utiliza alert() nativo ni agrega dependencias externas.
  */
 function AlertaTrabajoPaciente({ paciente, onAceptar, onCerrar }) {
-  useEffect(() => {
-    if (!paciente) return undefined
-
-    const overflowAnterior = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-
-    const manejarTecla = (event) => {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        onCerrar()
-      }
-      if (event.key === 'Tab') {
-        // El único elemento interactivo es el botón OK.
-        event.preventDefault()
-        document.getElementById('nutria-trabajo-ok')?.focus()
-      }
-    }
-
-    window.addEventListener('keydown', manejarTecla)
-    return () => {
-      document.body.style.overflow = overflowAnterior
-      window.removeEventListener('keydown', manejarTecla)
-    }
-  }, [paciente, onCerrar])
+  const { modalRef, volverRef } = useModalAccesible({
+    abierto: Boolean(paciente),
+    onVolver: onCerrar,
+  })
 
   if (!paciente) return null
 
   return createPortal(
     <div className="nutria-trabajo-overlay fixed inset-0 z-[120] grid place-items-center p-4" role="presentation">
       <div
+        ref={modalRef}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="nutria-trabajo-titulo"
@@ -57,15 +38,16 @@ function AlertaTrabajoPaciente({ paciente, onAceptar, onCerrar }) {
             {paciente.name}
           </strong>
         </p>
-        <button
-          id="nutria-trabajo-ok"
-          type="button"
-          autoFocus
-          onClick={onAceptar}
-          className="nutria-trabajo-button mt-7 inline-flex min-h-11 min-w-[148px] items-center justify-center rounded-xl px-7 py-3 text-base font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-        >
-          OK
-        </button>
+        <div className="mt-7 flex flex-col-reverse items-stretch justify-center gap-3 sm:flex-row">
+          <button ref={volverRef} type="button" onClick={onCerrar}
+            className="inline-flex min-h-11 min-w-[148px] items-center justify-center rounded-xl border border-[#8bb9a1] px-6 py-3 text-base font-bold transition focus-visible:outline-2">
+            Volver a pacientes
+          </button>
+          <button id="nutria-trabajo-ok" type="button" onClick={onAceptar}
+            className="nutria-trabajo-button inline-flex min-h-11 min-w-[148px] items-center justify-center rounded-xl px-7 py-3 text-base font-bold transition focus-visible:outline-2">
+            OK
+          </button>
+        </div>
       </div>
     </div>,
     document.body,
