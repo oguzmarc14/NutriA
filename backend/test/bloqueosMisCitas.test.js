@@ -106,6 +106,7 @@ test('GET de mis citas usa exclusivamente paciente autenticado y no expone notas
   const next=fecha('next','2026-12-01T16:00:00Z','confirmada')
   const queries=[]
   const deps={
+    mongoose: { isValidObjectId: value => /^[a-f\d]{24}$/i.test(value) },
     '../models/Pacientes':{findOne:(query)=>{
       queries.push(query)
       return {select:()=>({lean:async()=>({_id:PID,nutritionist:ID,active:true})})}
@@ -143,4 +144,60 @@ test('GET de mis citas usa exclusivamente paciente autenticado y no expone notas
   assert.equal(body.proxima.estado,'confirmada')
   assert.equal(JSON.stringify(body).includes('notas'),false)
   assert.equal(headers['Cache-Control'],'no-store')
+})
+
+test('el paciente sólo confirma citas propias, futuras y programadas', async () => {
+  const citaId = '507f1f77bcf86cd799439011'
+  const consultas = []
+  let actualizada = null
+  let actual = null
+  const deps = {
+    mongoose: { isValidObjectId: value => /^[a-f\d]{24}$/i.test(value) },
+    '../models/Pacientes': {
+      findOne: () => ({ select: () => ({ lean: async () => ({ _id: PID, nutritionist: ID }) }) }),
+    },
+    '../models/ExpedienteClinico': {},
+    '../models/Medicion': {},
+    '../models/PlanAlimenticio': {},
+    '../models/SeguimientoComida': {},
+    '../models/User': {},
+    '../utils/resumen-citas-paciente': { resumenCitasPaciente },
+    '../models/Cita': {
+      findOneAndUpdate(filtro, cambio) {
+        consultas.push({ filtro, cambio })
+        return { select: () => ({ lean: async () => actualizada }) }
+      },
+      findOne: () => ({ select: () => ({ lean: async () => actual }) }),
+    },
+  }
+  const mod = { exports: {} }
+  vm.runInNewContext(controller, { module: mod, Date, require: name => deps[name] })
+
+  async function confirmar(id = citaId) {
+    const resultado = { estado: 200 }
+    await mod.exports.confirmarMiCita({ params: { id }, user: { patient: PID } }, {
+      set() {},
+      status(estado) { resultado.estado = estado; return this },
+      json(body) { resultado.body = body; return this },
+    }, error => { throw error })
+    return resultado
+  }
+
+  assert.equal((await confirmar('inválido')).estado, 404)
+  assert.equal(consultas.length, 0)
+  assert.equal((await confirmar()).estado, 404)
+  const { filtro, cambio } = consultas[0]
+  assert.equal(filtro._id, citaId)
+  assert.equal(filtro.patient, PID)
+  assert.equal(filtro.nutritionist, ID)
+  assert.equal(filtro.estado, 'programada')
+  assert.ok(filtro.inicio.$gt instanceof Date)
+  assert.equal(cambio.$set.estado, 'confirmada')
+
+  actual = { _id: citaId, estado: 'cancelada', inicio: new Date(Date.now() + 60000) }
+  assert.equal((await confirmar()).estado, 409)
+  actual = { ...actual, estado: 'confirmada' }
+  assert.equal((await confirmar()).body.estado, 'confirmada')
+  actualizada = { _id: citaId, estado: 'confirmada' }
+  assert.equal((await confirmar()).estado, 200)
 })
