@@ -16,6 +16,10 @@ async function requireAuth(req, res, next) {
     if (!user || !user.active) {
       return res.status(401).json({ message: "La sesión ya no es válida" });
     }
+    if (user.role === 'patient' && user.passwordChangedAt &&
+        (!payload.iat || payload.iat < Math.floor(new Date(user.passwordChangedAt).getTime() / 1000))) {
+      return res.status(401).json({ message: 'La contraseña cambió. Vuelve a iniciar sesión.' });
+    }
 
     req.user = user;
     return next();

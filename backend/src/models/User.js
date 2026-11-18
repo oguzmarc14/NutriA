@@ -180,6 +180,13 @@ const userSchema = new mongoose.Schema(
       select: false,
       default: null,
     },
+
+    // HU-03: token de restablecimiento hasheado y de un solo uso.
+    passwordResetToken: { type: String, select: false, default: null },
+    passwordResetExpiresAt: { type: Date, select: false, default: null },
+    passwordResetRequestedAt: { type: Date, select: false, default: null },
+    // Permite invalidar JWT de pacientes emitidos antes del cambio de clave.
+    passwordChangedAt: { type: Date, default: null },
   },
   {
     timestamps: true,

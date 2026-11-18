@@ -14,6 +14,8 @@ import PlanesAlimenticiosPage from "./pages/PlanesAlimenticiosPage";
 import ConsultarDietasPage from "./pages/ConsultarDietasPage";
 import UsuariosPage from "./pages/UsuariosPage";
 import ActivarCuentaPage from "./pages/ActivarCuentaPage";
+import RecuperarContrasenaPage from "./pages/RecuperarContrasenaPage";
+import RestablecerContrasenaPage from "./pages/RestablecerContrasenaPage";
 import MiExpedientePage from "./pages/MiExpedientePage";
 import MisCitasPage from "./pages/MisCitasPage";
 import MisMedicionesPage from "./pages/MisMedicionesPage";
@@ -39,6 +41,8 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
 
       <Route path="/activar-cuenta" element={<ActivarCuentaPage />} />
+      <Route path="/recuperar-contrasena" element={<RecuperarContrasenaPage />} />
+      <Route path="/restablecer-contrasena" element={<RestablecerContrasenaPage />} />
 
       <Route path="/privacidad" element={<PrivacidadPage />} />
 

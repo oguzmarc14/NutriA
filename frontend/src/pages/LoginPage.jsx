@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   Navigate,
+  Link,
   useLocation,
   useNavigate,
 } from "react-router-dom";
@@ -608,6 +609,13 @@ function LoginPage() {
                         }
                       </p>
                     )}
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Link to="/recuperar-contrasena"
+                      className="text-xs font-bold text-[#246b55] underline-offset-4 hover:underline">
+                      ¿Olvidaste tu contraseña?
+                    </Link>
                   </div>
 
                   {apiError && (

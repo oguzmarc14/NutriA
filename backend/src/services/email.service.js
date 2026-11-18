@@ -39,4 +39,21 @@ async function enviarInvitacionPaciente({ email, name, nutritionistName, activat
   }
 }
 
-module.exports = { enviarInvitacionPaciente }
+// HU-03: nunca incluir el password ni información clínica en el correo.
+async function enviarRecuperacionPaciente({email,name,token}) {
+  const url = new URL('/restablecer-contrasena',process.env.CLIENT_URL || 'http://localhost:5173')
+  url.searchParams.set('token',token)
+  const subject='Restablece tu contraseña de NutriA'
+  const text=['Hola '+name+',','','Recibimos una solicitud para restablecer tu contraseña de paciente.', 'Abre este enlace para crear otra contraseña:',url.toString(),'','El enlace vence en 30 minutos y solo se puede usar una vez.','Si no solicitaste este cambio, ignora el mensaje.'].join('\n')
+  const html='<div style="background:#edf2e7;padding:32px 16px;font-family:Arial,sans-serif;color:#173f34">'+
+    '<div style="max-width:560px;margin:auto;background:#fffefa;border-radius:24px;padding:32px">'+
+    '<p style="font-weight:bold;color:#246b55">NutriA</p><h1>Recupera tu acceso</h1>'+
+    '<p>Hola '+escapeHtml(name)+'. Usa este enlace para crear una contraseña nueva:</p>'+
+    '<p><a style="display:inline-block;background:#246b55;color:white;padding:14px 22px;border-radius:12px;text-decoration:none" href="'+url.toString()+'">Restablecer contraseña</a></p>'+
+    '<p>Caduca en 30 minutos y funciona una sola vez. Si no lo solicitaste, ignora este correo.</p>'+
+    '</div></div>'
+  try { await enviarCorreoGmail({to:email,subject,text,html}) }
+  catch (error) { throw new EmailServiceError('No fue posible enviar el correo de recuperación.',error) }
+}
+
+module.exports = { enviarInvitacionPaciente, enviarRecuperacionPaciente }
