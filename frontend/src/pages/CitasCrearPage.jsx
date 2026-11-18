@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, CalendarPlus2, CheckCircle2, ClipboardList, RefreshCw } from 'lucide-react'
+import { ArrowLeft, CalendarPlus2, ClipboardList, RefreshCw } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import client from '../api/client'
 import SelectorCrearCita from '../components/citas/SelectorCrearCita'
 import AvisoConfigurarCitas from '../components/citas/AvisoConfigurarCitas'
+import ModalCitaCreada from '../components/citas/ModalCitaCreada'
 import { fechaActualDispositivo, rangoVistaAgenda } from '../utils/vistasAgenda'
 import '../components/citas/agenda.css'
 
@@ -31,7 +32,7 @@ export default function CitasCrearPage() {
   const [cargandoPacientes, setCargandoPacientes] = useState(true)
   const [error, setError] = useState('')
   const [errorPacientes, setErrorPacientes] = useState('')
-  const [ok, setOk] = useState('')
+  const [citaCreada, setCitaCreada] = useState(null)
   const [reload, setReload] = useState(0)
   const [sinConfiguracion, setSinConfiguracion] = useState(false)
   const [mostrarAviso, setMostrarAviso] = useState(false)
@@ -112,7 +113,7 @@ export default function CitasCrearPage() {
   async function registrar(event) {
     event.preventDefault()
     setError('')
-    setOk('')
+    setCitaCreada(null)
     if (!paciente || !seleccion) {
       setError('Selecciona un paciente y un horario disponible.')
       return
@@ -127,8 +128,7 @@ export default function CitasCrearPage() {
         estado: 'programada',
         notas,
       })
-      setOk('Cita registrada correctamente.' +
-        (respuesta.data.calendarSynced === false ? ' Google Calendar no confirmó la sincronización.' : ''))
+      setCitaCreada({ falloCalendario: respuesta.data.calendarSynced === false })
       setSeleccion(null)
       setNotas('')
       setReload(n => n + 1)
@@ -148,9 +148,8 @@ export default function CitasCrearPage() {
 
       {error && <div role="alert" className="nutria-agenda-error rounded-xl border p-4 text-sm font-semibold">{error}</div>}
       {errorPacientes && <div role="alert" className="nutria-agenda-error rounded-xl border p-4 text-sm font-semibold">{errorPacientes}</div>}
-      {ok && <div role="status" className="nutria-agenda-success flex items-center gap-2 rounded-xl p-4 text-sm font-bold">
-        <CheckCircle2 size={18}/>{ok}
-      </div>}
+      {citaCreada && <ModalCitaCreada falloCalendario={citaCreada.falloCalendario}
+        onAceptar={() => navigate('/citas')}/>}
 
       {!loading && !data ? (
         <div className="nutria-agenda-panel rounded-[24px] border p-6">
@@ -239,12 +238,6 @@ export default function CitasCrearPage() {
                 className="nutria-agenda-primary inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-5 text-sm font-black disabled:opacity-50">
                 <CalendarPlus2 size={18}/>{guardando ? 'Registrando cita…' : 'Confirmar y registrar cita'}
               </button>
-              {ok && (
-                <button type="button" onClick={() => navigate('/citas')}
-                  className="nutria-agenda-text min-h-10 text-sm font-bold underline">
-                  Ver citas registradas
-                </button>
-              )}
             </div>
           </section>
         </form>

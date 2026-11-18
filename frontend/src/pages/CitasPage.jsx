@@ -3,6 +3,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Plus, RefreshCw, X, Tr
 import client from '../api/client'
 import { useLocation, useNavigate } from 'react-router-dom'
 import ResumenCitas from '../components/citas/ResumenCitas'
+import ModalCitaCreada from '../components/citas/ModalCitaCreada'
 
 const EMPTY = { patient: '', inicio: '', tipo: 'seguimiento', estado: 'programada', notas: '' }
 const NO_APPOINTMENTS = []
@@ -102,6 +103,7 @@ export default function CitasPage() {
   const dialogRef = useRef(null)
   const [saving, setSaving] = useState(false)
   const [modal, setModal] = useState(false)
+  const [citaCreada, setCitaCreada] = useState(null)
   const [editing, setEditing] = useState('')
   const [originalStart, setOriginalStart] = useState('')
   const [citaDetalle, setCitaDetalle] = useState(null)
@@ -290,7 +292,14 @@ export default function CitasPage() {
     setSaving(true);setError('')
     try {
       const response=await persist(form,editing)
-      setModal(false);setNotice((editing?'Cita actualizada':'Cita registrada')+(connected&&!response.data.calendarSynced?' · No se sincronizó con Google Calendar':''))
+      setModal(false)
+      const falloCalendario = connected && !response.data.calendarSynced
+      if (editing) {
+        setNotice('Cita actualizada' + (falloCalendario ? ' · No se sincronizó con Google Calendar' : ''))
+      } else {
+        setNotice('')
+        setCitaCreada({ falloCalendario })
+      }
       load()
     } catch(e) {setError(e.response?.data?.message||e.message||'No se pudo guardar la cita')}
     finally {setSaving(false)}
@@ -499,6 +508,8 @@ export default function CitasPage() {
   return (
     <div className="mx-auto w-full max-w-[1480px] space-y-5 px-4 py-6 pb-16 text-[#173f34] sm:px-5 md:px-8 md:py-8">
       <ResumenCitas revision={reload} onAbrir={abrirDesdeResumen}/>
+      {citaCreada && <ModalCitaCreada falloCalendario={citaCreada.falloCalendario}
+        onAceptar={() => setCitaCreada(null)}/>}
 
       {error && !modal && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
       {loadError && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{loadError}</p>}
