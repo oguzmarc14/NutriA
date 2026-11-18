@@ -6,6 +6,7 @@ import { evaluarRequisitosPlan, medicionListaParaPlan } from '../src/utils/requi
 const src = path => readFileSync(new URL('../src/'+path,import.meta.url),'utf8')
 const page = src('pages/PlanesAlimenticiosPage.jsx')
 const modal = src('components/planes/ModalRequisitosPlan.jsx')
+const calculo = src('pages/CalculoNutricionalPage.jsx')
 const medicion = {peso:70,estatura:1.73,edad:30,nivelActividadFisica:3}
 const expediente = {_id:'507f1f77bcf86cd799439011', nutricion:{numeroComidasDia:4}}
 
@@ -67,4 +68,26 @@ test('círculos y botones del selector de modalidad se centran',()=>{
   assert.match(seccion,/className="mt-5 flex flex-wrap items-center justify-center gap-3"/)
   assert.match(seccion,/min-h-11 min-w-\[125px\]/)
   assert.match(seccion,/min-h-11 min-w-\[175px\]/)
+})
+
+test('cálculo muestra un solo modal al cargar un paciente con requisitos incompletos', () => {
+  assert.equal((calculo.match(/<ModalRequisitosPlan\\b/g) || []).length, 1)
+  assert.match(calculo, /evaluarRequisitosPlan\\(\\{/)
+  assert.match(calculo, /expediente: data\\.expediente/)
+  assert.match(calculo, /ultimaMedicion: data\\.mediciones\\?\\.\\[0\\]/)
+  assert.match(calculo, /requisitos\\.estado === 'incompleto'/)
+  assert.match(calculo, /pacienteId: pacienteTrabajo\\.id, tipo: requisitos\\.tipo/)
+  assert.match(calculo, /alertaRequisitos\\?\\.pacienteId === pacienteTrabajo\\?\\.id/)
+  assert.match(calculo, /onCancelar=\\{\\(\\) => setAlertaRequisitos\\(null\\)\\}/)
+})
+test('alerta de cálculo reutiliza el estilo de NutriA con Cancelar y rutas reales', () => {
+  assert.match(calculo, /contexto="calculo"/)
+  assert.match(calculo, /navigate\\('\\/pacientes\\/' \\+ encodeURIComponent\\(pacienteTrabajo\\.id\\) \\+ '\\/expediente'\\)/)
+  assert.match(calculo, /navigate\\('\\/mediciones\\?paciente=' \\+ encodeURIComponent\\(pacienteTrabajo\\.id\\)\\)/)
+  assert.match(modal, /mensajesCalculo/)
+  assert.match(modal, /titulo: 'Información del paciente incompleta'/)
+  assert.match(modal, /Antes del cálculo nutricional/)
+  assert.match(modal, /Los cálculos guardados anteriormente/)
+  assert.match(modal, /tipo === 'expediente' \\|\\| tipo === 'ambos'/)
+  assert.match(modal, /tipo === 'mediciones' \\|\\| tipo === 'ambos'/)
 })
