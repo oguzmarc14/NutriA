@@ -179,7 +179,7 @@ export default function CentroAvisosNutriologo({ modo = 'escritorio' }) {
 
       {abierto && createPortal(
         <div className="nutria-centro-overlay fixed inset-0 z-[180] grid place-items-center p-3 sm:p-6"
-          onMouseDown={(event) => { if (event.target === event.currentTarget) setAbierto(false) }}>
+          onClick={(event) => { if (event.target === event.currentTarget) setAbierto(false) }}>
           <section id="nutria-centro-aviso-dialog" role="dialog" aria-modal="true"
             aria-labelledby="nutria-centro-titulo" aria-describedby="nutria-centro-descripcion"
             className="nutria-centro-dialog flex max-h-[min(90dvh,800px)] w-full max-w-2xl flex-col overflow-hidden rounded-[24px] border shadow-2xl">

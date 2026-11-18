@@ -41,6 +41,7 @@ export default function CentroAvisosPaciente({modo='movil'}){
       </span>}
     </button>
     {abierto && createPortal(<div ref={modalRef} role="dialog" aria-modal="true" aria-label="Avisos de mis citas"
+      onClick={event => { if (event.target === event.currentTarget) setAbierto(false) }}
       className={'nutria-centro-paciente-overlay fixed inset-0 z-[220] flex items-end justify-center p-2 sm:items-center '+(modo==='escritorio'?'md:items-start md:justify-end md:p-5':'')}>
       <section className="nutria-centro-paciente-panel w-full max-w-lg rounded-[24px] border p-4 shadow-2xl">
         <div className="flex items-center justify-between gap-2">

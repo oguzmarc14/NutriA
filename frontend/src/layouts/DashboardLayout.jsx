@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import client from '../api/client'
 import HorarioLaboral from '../components/HorarioLaboral'
 import {
@@ -50,8 +50,22 @@ import ActualizacionPWA from '../components/pwa/ActualizacionPWA'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
 function PerfilMenu({ user, roleLabel, cerrarSesion, irAMiClinica, irAEditarPerfil }) {
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    function cerrarAlTocarFuera(event) {
+      const menu = menuRef.current
+      if (menu?.open && !event.composedPath().includes(menu)) {
+        menu.open = false
+      }
+    }
+
+    document.addEventListener('click', cerrarAlTocarFuera, true)
+    return () => document.removeEventListener('click', cerrarAlTocarFuera, true)
+  }, [])
+
   return (
-    <details className="group relative">
+    <details ref={menuRef} className="group relative">
       <summary aria-label="Abrir menú de perfil" className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-[#bcd8c7] bg-[#e3f0e7] text-[#246b55] shadow-sm transition hover:bg-[#d5e8db] [&::-webkit-details-marker]:hidden">
         <UserRound size={20}/>
       </summary>
