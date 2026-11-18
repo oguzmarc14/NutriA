@@ -36,3 +36,12 @@ test('HU-23/24 formulario móvil y tema oscuro',()=>{
   assert.match(css,/html\[data-theme="dark"\]/)
   assert.match(page,/role="alertdialog"/)
 })
+
+test('HU-24 ignora respuestas anteriores al cambiar rápidamente de paciente',()=>{
+  assert.match(page,/useRef\(0\)/)
+  assert.match(page,/const solicitud=\+\+solicitudActual\.current/)
+  assert.match(page,/if\(solicitud!==solicitudActual\.current\)return/)
+  assert.match(page,/if\(solicitud===solicitudActual\.current\)setCargando\(false\)/)
+  assert.match(page,/return\(\)=>\{solicitudActual\.current\+=1\}/)
+  assert.match(page,/setPacienteId\(e\.target\.value\);setPagos\(\[\]\);setCargando\(true\)/)
+})

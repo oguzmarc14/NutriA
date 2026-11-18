@@ -1,4 +1,4 @@
-import {useCallback,useEffect,useMemo,useState} from 'react'
+import {useCallback,useEffect,useMemo,useRef,useState} from 'react'
 import {BadgeCheck, Banknote, CalendarDays, CheckCircle2, ClipboardList, LoaderCircle, RefreshCw, ShieldCheck, Wallet, XCircle} from 'lucide-react'
 import client from '../api/client'
 import {useAuth} from '../context/auth'
@@ -74,6 +74,7 @@ export default function PagosPage(){
   const [concepto,setConcepto]=useState('Consulta nutricional')
   const [revisar,setRevisar]=useState(null)
   const [revisando,setRevisando]=useState(false)
+  const solicitudActual=useRef(0)
   useEffect(()=>{
     if(!nutricionista)return
     let activo=true
@@ -86,18 +87,26 @@ export default function PagosPage(){
     return()=>{activo=false}
   },[nutricionista])
   const cargar=useCallback(async()=>{
+    const solicitud=++solicitudActual.current
     if(nutricionista&&!pacienteId){setCargando(false);setPagos([]);return}
     setCargando(true)
     try{
       const {data}=paciente
         ?await client.get('/pagos/mios')
         :await client.get('/pagos/consultorio',{params:{pacienteId}})
+      if(solicitud!==solicitudActual.current)return
       setPagos(data.pagos||[])
       setError('')
-    }catch(err){setError(err.response?.data?.message||'No fue posible cargar los pagos.')}
-    finally{setCargando(false)}
+    }catch(err){
+      if(solicitud===solicitudActual.current)setError(err.response?.data?.message||'No fue posible cargar los pagos.')
+    }finally{
+      if(solicitud===solicitudActual.current)setCargando(false)
+    }
   },[paciente,nutricionista,pacienteId])
-  useEffect(()=>{cargar()},[cargar])
+  useEffect(()=>{
+    cargar()
+    return()=>{solicitudActual.current+=1}
+  },[cargar])
   async function registrar(event){
     event.preventDefault()
     if(guardando)return
@@ -185,7 +194,7 @@ export default function PagosPage(){
     </section>}
     {nutricionista&&<section className="nutria-pagos-card rounded-2xl border p-4">
       <label className="block text-sm font-black" htmlFor="paciente-pagos">Seleccionar paciente</label>
-      <select id="paciente-pagos" value={pacienteId} onChange={e=>{setPacienteId(e.target.value);setMensaje('')}}
+      <select id="paciente-pagos" value={pacienteId} onChange={e=>{setPacienteId(e.target.value);setPagos([]);setCargando(true);setError('');setMensaje('')}}
         className="nutria-pagos-input mt-2 min-h-11 w-full max-w-xl rounded-xl border px-3 text-sm">
         {pacientes.length===0&&<option value="">No hay pacientes registrados</option>}
         {pacientes.map(p=><option key={p._id} value={p._id}>{p.name}</option>)}
