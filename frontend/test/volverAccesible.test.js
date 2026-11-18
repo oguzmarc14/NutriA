@@ -61,3 +61,12 @@ test('aviso de paciente activo también permite volver con teclado o botón', ()
   assert.ok(alerta.includes('useModalAccesible('))
   assert.ok(alerta.includes('ref={modalRef}'))
 })
+
+test('avisos del paciente ofrece Volver con Escape, Tab y foco restaurado', () => {
+  const avisos = leer('components/avisos/CentroAvisosPaciente.jsx')
+  assert.ok(avisos.includes('useModalAccesible('))
+  assert.ok(avisos.includes('ref={modalRef}'))
+  assert.ok(avisos.includes('ref={volverRef}'))
+  assert.ok(avisos.includes('Volver'))
+  assert.ok(avisos.includes('onClick={()=>setAbierto(false)}'))
+})

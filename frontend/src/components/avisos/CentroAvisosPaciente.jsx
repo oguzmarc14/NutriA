@@ -3,6 +3,7 @@ import { Bell, CalendarCheck2, ChevronRight, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import useMisCitas from '../../hooks/useMisCitas'
+import useModalAccesible from '../../hooks/useModalAccesible'
 import { useAuth } from '../../context/auth'
 import './centroAvisosPaciente.css'
 
@@ -11,6 +12,7 @@ export default function CentroAvisosPaciente({modo='movil'}){
   const {user}=useAuth()
   const {datos,actualizar,error}=useMisCitas()
   const [abierto,setAbierto]=useState(false)
+  const {modalRef,volverRef}=useModalAccesible({abierto,onVolver:()=>setAbierto(false)})
   const key='nutria-avisos-paciente-v1-'+(user?._id || user?.id || 'sesion')
   const [leidos,setLeidos]=useState([])
   const avisos=useMemo(()=>datos?.avisos || [],[datos])
@@ -18,14 +20,6 @@ export default function CentroAvisosPaciente({modo='movil'}){
     try{setLeidos(JSON.parse(window.localStorage.getItem(key)||'[]'))}
     catch{setLeidos([])}
   },[key])
-  useEffect(()=>{
-    if(!abierto)return undefined
-    const antes=document.body.style.overflow
-    document.body.style.overflow='hidden'
-    const cerrar=e=>{if(e.key==='Escape')setAbierto(false)}
-    document.addEventListener('keydown',cerrar)
-    return ()=>{document.body.style.overflow=antes;document.removeEventListener('keydown',cerrar)}
-  },[abierto])
   const pendientes=avisos.filter(a=>!leidos.includes(a.id))
   const mostrar=(event)=>{
     event.stopPropagation()
@@ -46,12 +40,12 @@ export default function CentroAvisosPaciente({modo='movil'}){
         {pendientes.length>9?'9+':pendientes.length}
       </span>}
     </button>
-    {abierto && createPortal(<div role="dialog" aria-modal="true" aria-label="Avisos de mis citas"
+    {abierto && createPortal(<div ref={modalRef} role="dialog" aria-modal="true" aria-label="Avisos de mis citas"
       className={'nutria-centro-paciente-overlay fixed inset-0 z-[220] flex items-end justify-center p-2 sm:items-center '+(modo==='escritorio'?'md:items-start md:justify-end md:p-5':'')}>
       <section className="nutria-centro-paciente-panel w-full max-w-lg rounded-[24px] border p-4 shadow-2xl">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-base font-black">Mis notificaciones</h2>
-          <button type="button" aria-label="Cerrar avisos" onClick={()=>setAbierto(false)}
+          <button ref={volverRef} type="button" aria-label="Cerrar avisos" onClick={()=>setAbierto(false)}
             className="nutria-centro-paciente-close grid size-10 place-items-center rounded-xl border"><X size={18}/></button>
         </div>
         <p className="mt-1 text-xs opacity-75">Confirmaciones y recordatorios de seguimiento de tus consultas.</p>
@@ -64,6 +58,10 @@ export default function CentroAvisosPaciente({modo='movil'}){
           {error && <p role="alert" className="text-xs opacity-80">{error}</p>}
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+          <button type="button" onClick={()=>setAbierto(false)}
+            className="nutria-centro-paciente-close min-h-11 rounded-xl border px-4 text-xs font-bold">
+            Volver
+          </button>
           <button type="button" onClick={marcarLeidos}
             className="nutria-centro-paciente-close min-h-11 rounded-xl border px-3 text-xs font-bold">Marcar como vistos</button>
           <Link to="/mis-citas" onClick={()=>{marcarLeidos();setAbierto(false)}}
