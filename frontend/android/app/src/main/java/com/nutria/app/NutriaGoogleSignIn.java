@@ -17,7 +17,6 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
-import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException;
 
 @CapacitorPlugin(name = "NutriaGoogleSignIn")
 public class NutriaGoogleSignIn extends Plugin {
@@ -45,14 +44,16 @@ public class NutriaGoogleSignIn extends Plugin {
                         call.reject("Google devolvió una credencial inesperada.");
                         return;
                     }
+                    String token;
                     try {
-                        String token = GoogleIdTokenCredential.createFrom(credential.getData()).getIdToken();
-                        JSObject result = new JSObject();
-                        result.put("idToken", token);
-                        call.resolve(result);
-                    } catch (GoogleIdTokenParsingException error) {
+                        token = GoogleIdTokenCredential.createFrom(credential.getData()).getIdToken();
+                    } catch (Exception error) {
                         call.reject("No se pudo leer la credencial de Google.");
+                        return;
                     }
+                    JSObject result = new JSObject();
+                    result.put("idToken", token);
+                    call.resolve(result);
                 }
 
                 @Override
