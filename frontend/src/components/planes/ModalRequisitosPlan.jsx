@@ -21,7 +21,26 @@ const mensajes = {
   },
 }
 
-export default function ModalRequisitosPlan({ tipo, onExpediente, onMediciones, onReintentar, onCancelar }) {
+const mensajesCalculo = {
+  expediente: {
+    titulo: 'Falta el expediente clínico',
+    detalle: 'Este paciente aún no tiene expediente clínico registrado. Completa su información antes de continuar con el cálculo nutricional.',
+  },
+  mediciones: {
+    titulo: 'Faltan mediciones para continuar',
+    detalle: 'Registra peso, estatura, edad y actividad física del paciente antes de continuar con el cálculo nutricional.',
+  },
+  ambos: {
+    titulo: 'Información del paciente incompleta',
+    detalle: 'Este paciente aún no tiene expediente clínico ni mediciones completas. Registra ambos datos antes de continuar con el cálculo nutricional.',
+  },
+  error: {
+    titulo: 'No pudimos verificar la información',
+    detalle: 'No fue posible consultar el expediente y las mediciones. Revisa tu conexión y vuelve a intentarlo.',
+  },
+}
+
+export default function ModalRequisitosPlan({ tipo, contexto = 'plan', onExpediente, onMediciones, onReintentar, onCancelar }) {
   const cancelarRef = useRef(null)
   const origenRef = useRef(null)
 
@@ -54,7 +73,8 @@ export default function ModalRequisitosPlan({ tipo, onExpediente, onMediciones, 
 
   if (!tipo) return null
 
-  const mensaje = mensajes[tipo] || mensajes.error
+  const catalogo = contexto === 'calculo' ? mensajesCalculo : mensajes
+  const mensaje = catalogo[tipo] || catalogo.error
   const Icono = tipo === 'expediente' ? ClipboardList : tipo === 'mediciones' ? Ruler : AlertCircle
   return createPortal(
     <div className="fixed inset-0 z-[200] grid place-items-center bg-[#102d26]/65 p-3 backdrop-blur-sm sm:p-5"
@@ -65,7 +85,7 @@ export default function ModalRequisitosPlan({ tipo, onExpediente, onMediciones, 
         <span className="mx-auto grid size-[76px] place-items-center rounded-3xl bg-[#dfeee5] text-[#287353]" aria-hidden="true">
           <Icono size={37}/>
         </span>
-        <p className="mt-5 text-[11px] font-extrabold uppercase tracking-[.13em] text-[#547d61]">Antes de crear la dieta</p>
+        <p className="mt-5 text-[11px] font-extrabold uppercase tracking-[.13em] text-[#547d61]">{contexto === 'calculo' ? 'Antes del cálculo nutricional' : 'Antes de crear la dieta'}</p>
         <h2 id="requisitos-plan-titulo" className="mt-2 break-words text-xl font-black leading-tight sm:text-2xl">{mensaje.titulo}</h2>
         <p id="requisitos-plan-detalle" className="mt-3 break-words text-sm leading-6 text-[#547160]">{mensaje.detalle}</p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2 border-t border-[#d5e4da] pt-5 sm:gap-3">
@@ -93,7 +113,9 @@ export default function ModalRequisitosPlan({ tipo, onExpediente, onMediciones, 
             </button>
           )}
         </div>
-        <p className="mt-4 text-[11px] leading-5 text-[#6f8776]">Los planes ya guardados no se eliminan ni se modifican.</p>
+        <p className="mt-4 text-[11px] leading-5 text-[#6f8776]">{contexto === 'calculo'
+          ? 'Los cálculos guardados anteriormente no se eliminan ni se modifican.'
+          : 'Los planes ya guardados no se eliminan ni se modifican.'}</p>
       </section>
     </div>,
     document.body,
