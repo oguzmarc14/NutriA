@@ -1,5 +1,10 @@
 {
   "appId": "com.nutria.app",
   "appName": "Nutria",
-  "webDir": "dist"
+  "webDir": "dist",
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
 }

@@ -1,3 +1,4 @@
+import { Capacitor, registerPlugin } from "@capacitor/core";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Apple,
@@ -37,6 +38,9 @@ const schema = z.object({
     ),
 });
 
+const androidGoogle = Capacitor.getPlatform() === "android";
+const GoogleSignIn = registerPlugin("NutriaGoogleSignIn");
+
 function LoginPage() {
   const {
     loginGoogle,
@@ -57,9 +61,28 @@ function LoginPage() {
     useState(true);
 
   const googleButtonRef = useRef(null);
+  const [nativeGooglePending, setNativeGooglePending] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  async function signInWithAndroidGoogle() {
+    setNativeGooglePending(true);
+    setGoogleError("");
+    try {
+      const { idToken } = await GoogleSignIn.signIn({
+        serverClientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      });
+      await loginGoogle(idToken);
+      navigate(location.state?.from?.pathname || "/", { replace: true });
+    } catch (error) {
+      if (error.code !== "CANCELED") {
+        setGoogleError(error.response?.data?.message || error.message || "No fue posible iniciar sesión con Google");
+      }
+    } finally {
+      setNativeGooglePending(false);
+    }
+  }
 
   const {
     formState: {
@@ -73,7 +96,7 @@ function LoginPage() {
   });
 
   useEffect(() => {
-    if (user) {
+    if (user || androidGoogle) {
       return undefined;
     }
 
@@ -431,6 +454,17 @@ function LoginPage() {
 
                 {/* GOOGLE */}
 
+                {androidGoogle ? (
+                  <button
+                    type="button"
+                    disabled={nativeGooglePending}
+                    className="min-h-10 w-full rounded-xl border border-[#c7d4ce] bg-white px-3 text-sm font-semibold disabled:opacity-60"
+                    onClick={signInWithAndroidGoogle}
+                  >
+                    {nativeGooglePending ? "Conectando con Google…" : "Iniciar sesión con Google"}
+                  </button>
+                ) : (
+
                 <div className="w-full min-w-0 overflow-hidden rounded-xl border border-[#c7d4ce] bg-white px-2 py-1.5 shadow-[0_6px_18px_rgba(35,72,57,0.07)]">
                   <div className="relative flex min-h-[40px] w-full min-w-0 justify-center overflow-hidden">
                     {googleLoading && (
@@ -455,6 +489,7 @@ function LoginPage() {
                   </div>
                 </div>
 
+                )}
                 <div className="mt-2 flex items-center justify-center gap-1.5 text-center text-[10px] font-semibold text-[#5b6f65] sm:text-[11px]">
                   <LockKeyhole
                     size={12}

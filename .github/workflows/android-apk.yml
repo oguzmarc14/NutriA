@@ -34,6 +34,7 @@ jobs:
       - run: npm run build && npx --no-install cap sync android
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL || 'https://nutria-utdh.onrender.com/api' }}
+          VITE_GOOGLE_CLIENT_ID: 664061363853-nt772bl1bh9o9q032cf679pjuhadta46.apps.googleusercontent.com
       - run: bash ./gradlew --no-daemon assembleDebug
         working-directory: frontend/android
       - run: '"$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs android/app/build/outputs/apk/debug/app-debug.apk'
