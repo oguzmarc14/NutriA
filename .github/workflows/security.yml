@@ -20,3 +20,28 @@ jobs:
       - name: Audit frontend
         working-directory: frontend
         run: npm audit --audit-level=high
+
+  refresh-lockfiles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare patched lockfile candidates (temporary diagnostic)
+        shell: bash
+        run: |
+          set -eu
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('backend/package.json'));p.scripts.dev='node --watch src/server.js';delete p.devDependencies.nodemon;fs.writeFileSync('backend/package.json',JSON.stringify(p,null,2)+'\\n')"
+          (cd backend && npm install --package-lock-only --ignore-scripts --no-audit --no-fund)
+          (cd backend && npm audit fix --package-lock-only --ignore-scripts --no-fund) || true
+          (cd frontend && npm install --package-lock-only --ignore-scripts --no-audit --no-fund)
+          (cd frontend && npm audit fix --package-lock-only --ignore-scripts --no-fund) || true
+          echo NUTRIA_BACKEND_LOCK_BEGIN
+          base64 -w 120 backend/package-lock.json
+          echo NUTRIA_BACKEND_LOCK_END
+          echo NUTRIA_FRONTEND_LOCK_BEGIN
+          base64 -w 120 frontend/package-lock.json
+          echo NUTRIA_FRONTEND_LOCK_END
+          (cd backend && npm audit --audit-level=high) || true
+          (cd frontend && npm audit --audit-level=high) || true
