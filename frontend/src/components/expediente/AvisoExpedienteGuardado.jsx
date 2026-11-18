@@ -1,8 +1,11 @@
 import { ArrowRight, CheckCircle2, X } from 'lucide-react'
+import useModalAccesible from '../../hooks/useModalAccesible'
 
 function AvisoExpedienteGuardado({ mensaje, onCerrar, onContinuar }) {
+  const { modalRef, volverRef } = useModalAccesible({ onVolver: onCerrar })
   return (
     <div
+      ref={modalRef}
       className="fixed inset-0 z-50 grid place-items-center bg-[#102d26]/45 p-4 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
@@ -25,6 +28,7 @@ function AvisoExpedienteGuardado({ mensaje, onCerrar, onContinuar }) {
           </div>
 
           <button
+            ref={volverRef}
             type="button"
             onClick={onCerrar}
             className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100"

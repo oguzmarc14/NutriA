@@ -29,3 +29,18 @@ test('detalle de medición tiene salida visible y también Escape', () => {
   assert.ok(detalle.includes('ref={modalRef}'))
   assert.ok(detalle.includes('ref={volverRef}'))
 })
+
+test('guardar o eliminar conserva botón de regreso y control con Escape', () => {
+  for (const ruta of [
+    'components/pacientes/ModalEliminarPaciente.jsx',
+    'components/planes/ModalPlanGuardado.jsx',
+    'components/mediciones/ModalMedicionGuardada.jsx',
+    'components/expediente/AvisoExpedienteGuardado.jsx',
+  ]) {
+    const codigo = leer(ruta)
+    assert.ok(codigo.includes('useModalAccesible('), ruta)
+    assert.ok(codigo.includes('ref={modalRef}'), ruta)
+    assert.ok(codigo.includes('ref={volverRef}'), ruta)
+  }
+  assert.ok(leer('components/pacientes/ModalEliminarPaciente.jsx').includes('bloqueado: eliminando'))
+})
