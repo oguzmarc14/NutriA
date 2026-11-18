@@ -420,6 +420,7 @@ function PacientesPage() {
     <section className="min-h-screen bg-transparent px-4 py-6 sm:px-5 md:px-8 md:py-8">
       <ModalPacienteCreado
         paciente={pacienteCreado}
+        onVolver={() => setPacienteCreado(null)}
         onAceptar={() => {
           const nuevoPaciente = pacienteCreado
           setPacienteCreado(null)
