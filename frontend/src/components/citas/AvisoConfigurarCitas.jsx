@@ -56,7 +56,7 @@ export default function AvisoConfigurarCitas({ abierto, onIr, onCancelar }) {
           Configura los bloques de citas para ver los espacios disponibles.
           Puedes elegir los días y las horas de consulta desde la configuración de tu agenda.
         </p>
-        <div className="mt-6 grid grid-cols-2 gap-3 border-t border-current/10 pt-5">
+        <div className="mt-6 nutria-acciones border-t border-current/10 pt-5">
           <button ref={cancelarRef} type="button" onClick={onCancelar}
             className="nutria-citas-aviso-cancel min-h-11 rounded-xl border px-3 py-3 text-sm font-extrabold">
             Cancelar

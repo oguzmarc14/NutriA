@@ -66,7 +66,7 @@ function PerfilMenu({ user, roleLabel, cerrarSesion, irAMiClinica, irAEditarPerf
 
   return (
     <details ref={menuRef} className="group relative">
-      <summary aria-label="Abrir menú de perfil" className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-[#bcd8c7] bg-[#e3f0e7] text-[#246b55] shadow-sm transition hover:bg-[#d5e8db] [&::-webkit-details-marker]:hidden">
+      <summary aria-label="Abrir menú de perfil" className="flex size-11 shrink-0 cursor-pointer list-none items-center justify-center rounded-xl border border-[#bcd8c7] bg-[#e3f0e7] text-[#246b55] shadow-sm transition hover:bg-[#d5e8db] [&::-webkit-details-marker]:hidden">
         <UserRound size={20}/>
       </summary>
       <div className="absolute right-0 top-12 z-50 w-64 rounded-2xl border border-[#d5e3d9] bg-white p-2 shadow-[0_16px_40px_rgba(24,73,53,.18)]">

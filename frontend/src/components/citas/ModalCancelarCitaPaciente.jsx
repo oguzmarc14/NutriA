@@ -56,11 +56,11 @@ export default function ModalCancelarCitaPaciente({ cita, zonaHoraria, guardando
           pero seguirá registrada como cancelada en tu historial.
         </p>
         {error && <p role="alert" className="nutria-mis-citas-error mt-3 rounded-xl border p-3 text-sm">{error}</p>}
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+        <div className="mt-6 nutria-acciones">
           <button type="button" onClick={onCerrar} disabled={guardando}
-            className="nutria-mis-citas-accion inline-flex min-h-11 min-w-[125px] items-center justify-center rounded-xl border px-4 text-sm font-bold disabled:opacity-50">Conservar cita</button>
+            className="nutria-mis-citas-accion inline-flex min-h-11 items-center justify-center rounded-xl border px-4 text-sm font-bold disabled:opacity-50">Conservar cita</button>
           <button type="button" onClick={onCancelar} disabled={guardando}
-            className="nutria-mis-citas-confirmar inline-flex min-h-11 min-w-[150px] items-center justify-center rounded-xl px-4 text-sm font-extrabold disabled:opacity-50">
+            className="nutria-mis-citas-confirmar inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-extrabold disabled:opacity-50">
             {guardando ? 'Cancelando…' : 'Sí, cancelar cita'}
           </button>
         </div>

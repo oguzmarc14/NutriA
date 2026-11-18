@@ -643,7 +643,7 @@ function PacientesPage() {
 
             {/* BOTONES */}
 
-            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <div className="mt-6 nutria-acciones">
               <button
                 type="button"
                 onClick={

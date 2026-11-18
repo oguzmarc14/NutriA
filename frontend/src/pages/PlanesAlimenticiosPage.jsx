@@ -3084,7 +3084,7 @@ function PlanesAlimenticiosPage() {
         <div role="alertdialog" aria-modal="true" aria-labelledby="titulo-confirmacion-plan" aria-describedby="mensaje-confirmacion-plan" className="w-full max-w-md rounded-3xl border border-[#d5e5da] bg-white p-5 shadow-2xl sm:p-7">
           <div className="mb-4 flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#e1f0e7] text-[#246b55]">{confirmacion.peligro ? <Trash2 size={20}/> : <Save size={20}/>}</span><h2 id="titulo-confirmacion-plan" className="text-lg font-extrabold text-[#173f34]">{confirmacion.titulo}</h2></div>
           <p id="mensaje-confirmacion-plan" className="text-sm leading-6 text-[#52716a]">{confirmacion.mensaje}</p>
-          <div className="mt-6 flex justify-end gap-2">
+          <div className="mt-6 nutria-acciones">
             <button type="button" onClick={() => resolverConfirmacion(false)} className="rounded-xl border border-[#cbded2] bg-white px-4 py-2.5 text-sm font-bold text-[#246b55] hover:bg-[#f1f7f3]">Cancelar</button>
             <button type="button" autoFocus onClick={() => resolverConfirmacion(true)} className={`rounded-xl px-4 py-2.5 text-sm font-bold text-white ${confirmacion.peligro ? 'bg-[#a33c3c] hover:bg-[#852d2d]' : 'bg-[#246b55] hover:bg-[#173f34]'}`}>Aceptar</button>
           </div>
@@ -3825,7 +3825,7 @@ function FormularioPersonalizado({
         />
       </div>
 
-      <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <div className="mt-5 nutria-acciones">
         <button
           type="button"
           onClick={

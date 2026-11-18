@@ -34,7 +34,7 @@ export default function CentroAvisosPaciente({modo='movil'}){
   return <div className="nutria-centro-paciente relative">
     <button type="button" onClick={mostrar} aria-label={'Notificaciones del paciente'+(pendientes.length?' · '+pendientes.length+' pendientes':'')}
       aria-haspopup="dialog" aria-expanded={abierto}
-      className="nutria-centro-paciente-bell relative grid size-11 place-items-center rounded-2xl border sm:size-12">
+      className="nutria-centro-paciente-bell relative grid size-11 shrink-0 place-items-center rounded-xl border">
       <Bell size={22} aria-hidden="true"/>
       {pendientes.length>0 && <span aria-hidden="true" className="nutria-centro-paciente-count absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full px-1 text-[11px] font-black">
         {pendientes.length>9?'9+':pendientes.length}
@@ -58,7 +58,7 @@ export default function CentroAvisosPaciente({modo='movil'}){
             </div>)}
           {error && <p role="alert" className="text-xs opacity-80">{error}</p>}
         </div>
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+        <div className="mt-4 nutria-acciones">
           <button type="button" onClick={()=>setAbierto(false)}
             className="nutria-centro-paciente-close min-h-11 rounded-xl border px-4 text-xs font-bold">
             Volver

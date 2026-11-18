@@ -6,6 +6,31 @@ import ModalCancelarCitaPaciente from '../components/citas/ModalCancelarCitaPaci
 import { citaCancelable, estadoCitaPaciente, formatearCitaPaciente, tipoCitaPaciente } from '../utils/fechasMisCitas'
 import './misCitas.css'
 
+function AccionesCita({ cita, onConfirmar, onCancelar, confirmando }) {
+  const puedeConfirmar = cita.estado === 'programada' && new Date(cita.inicio) > new Date()
+  const puedeCancelar = citaCancelable(cita)
+  if (!puedeConfirmar && !puedeCancelar) return null
+
+  return (
+    <div className="nutria-acciones mt-4">
+      {puedeConfirmar && (
+        <button type="button" disabled={Boolean(confirmando)} onClick={() => onConfirmar(cita)}
+          className="nutria-mis-citas-accion rounded-xl border text-xs font-extrabold disabled:opacity-60">
+          <CalendarCheck2 size={16} aria-hidden="true"/>
+          {confirmando === cita._id ? 'Confirmando…' : 'Confirmar cita'}
+        </button>
+      )}
+      {puedeCancelar && (
+        <button type="button" onClick={() => onCancelar(cita)}
+          className="nutria-mis-citas-cancelar rounded-xl border text-xs font-extrabold">
+          <XCircle size={16} aria-hidden="true"/>
+          Cancelar cita
+        </button>
+      )}
+    </div>
+  )
+}
+
 function TarjetaCita({cita,zonaHoraria,onSolicitarCancelacion,onConfirmar,confirmando}){
   const estado=estadoCitaPaciente(cita.estado)
   return <article className="nutria-mis-citas-tarjeta min-w-0 rounded-2xl border p-4">
@@ -19,16 +44,7 @@ function TarjetaCita({cita,zonaHoraria,onSolicitarCancelacion,onConfirmar,confir
       <CalendarDays className="mt-0.5 shrink-0" size={17}/>
       {formatearCitaPaciente(cita.inicio,zonaHoraria)}
     </p>
-    {cita.estado === 'programada' && new Date(cita.inicio) > new Date() && (
-          <button type="button" disabled={Boolean(confirmando)} onClick={() => onConfirmar(cita)}
-            className="nutria-mis-citas-accion mr-2 mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 text-xs font-extrabold disabled:opacity-60">
-            <CalendarCheck2 size={16}/>{confirmando === cita._id ? 'Confirmando…' : 'Confirmar cita'}
-          </button>
-        )}
-    {citaCancelable(cita) && <button type="button" onClick={()=>onSolicitarCancelacion(cita)}
-      className="nutria-mis-citas-cancelar mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-xs font-extrabold">
-      <XCircle size={16}/> Cancelar cita
-    </button>}
+    <AccionesCita cita={cita} onConfirmar={onConfirmar} onCancelar={onSolicitarCancelacion} confirmando={confirmando}/>
   </article>
 }
 
@@ -82,14 +98,14 @@ export default function MisCitasPage(){
     .sort((a,b)=>new Date(b.inicio)-new Date(a.inicio))
 
   return <main className="nutria-mis-citas mx-auto w-full min-w-0 max-w-4xl space-y-5 overflow-x-clip p-4 pb-28 sm:p-8">
-    <header className="flex flex-wrap items-center justify-between gap-3">
+    <header className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
       <div className="min-w-0">
         <p className="text-xs font-extrabold uppercase tracking-wide opacity-70">Mis consultas</p>
         <h1 className="mt-1 text-2xl font-black sm:text-3xl">Mis citas</h1>
         <p className="mt-2 text-sm opacity-75">Consulta tus citas con {datos?.profesional || 'tu nutriólogo'}.</p>
       </div>
       <button type="button" onClick={actualizar} aria-label="Actualizar mis citas"
-        className="nutria-mis-citas-accion inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 text-xs font-bold">
+        className="nutria-mis-citas-accion inline-flex min-h-11 w-full max-w-48 items-center justify-center gap-2 justify-self-center rounded-xl border px-4 text-xs font-bold sm:w-auto sm:justify-self-end">
         <RefreshCw size={16}/>Actualizar
       </button>
     </header>
@@ -121,16 +137,7 @@ export default function MisCitasPage(){
           {proxima.estado==='confirmada'?'Esta consulta está confirmada.':
             'Confirma que podrás asistir a esta consulta.'}
         </p>
-        {proxima.estado === 'programada' && new Date(proxima.inicio) > new Date() && (
-          <button type="button" disabled={Boolean(confirmando)} onClick={() => confirmarCita(proxima)}
-            className="nutria-mis-citas-accion mr-2 mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 text-xs font-extrabold disabled:opacity-60">
-            <CalendarCheck2 size={16}/>{confirmando === proxima._id ? 'Confirmando…' : 'Confirmar cita'}
-          </button>
-        )}
-        {citaCancelable(proxima) && <button type="button" onClick={()=>solicitarCancelacion(proxima)}
-          className="nutria-mis-citas-cancelar mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-xs font-extrabold">
-          <XCircle size={16}/>Cancelar mi próxima cita
-        </button>}
+        <AccionesCita cita={proxima} onConfirmar={confirmarCita} onCancelar={solicitarCancelacion} confirmando={confirmando}/>
       </section> : <section className="nutria-mis-citas-tarjeta rounded-[24px] border p-5">
         <div className="flex items-center gap-2"><CalendarClock size={21}/><h2 className="text-lg font-extrabold">Sin próxima cita</h2></div>
         <p className="mt-2 text-sm opacity-75">Todavía no tienes una consulta futura registrada. Puedes comunicarte con tu nutriólogo para programar una.</p>

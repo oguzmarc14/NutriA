@@ -316,7 +316,7 @@ function UsuariosPage() {
             </div>
           </div>
 
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <div className="mt-5 nutria-acciones">
             <button
               type="button"
               onClick={() => {

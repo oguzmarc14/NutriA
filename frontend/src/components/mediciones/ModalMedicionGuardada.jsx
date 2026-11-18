@@ -18,7 +18,7 @@ function ModalMedicionGuardada({ mensaje, editada = false, onCerrar, onContinuar
         {editada ? (
           <button type="button" onClick={onCerrar} className="mt-6 w-full cursor-pointer rounded-xl bg-[#246b55] px-4 py-3 text-sm font-extrabold text-white transition hover:bg-[#1d5947]">Aceptar</button>
         ) : (
-          <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <div className="mt-6 nutria-acciones">
             <button type="button" onClick={onCerrar} className="cursor-pointer rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50">Permanecer aqui</button>
             <button type="button" onClick={onContinuar} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#246b55] px-4 py-3 text-sm font-extrabold text-white transition hover:bg-[#1d5947]">Aceptar e ir a comidas<ArrowRight size={17} /></button>
           </div>

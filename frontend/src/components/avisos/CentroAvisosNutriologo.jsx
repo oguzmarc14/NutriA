@@ -170,7 +170,7 @@ export default function CentroAvisosNutriologo({ modo = 'escritorio' }) {
   return (
     <>
       <button type="button" onClick={abrir} title="Centro de atención" aria-label={`Centro de atención: ${numero} avisos por revisar`}
-        className="nutria-centro-trigger relative grid h-10 w-10 shrink-0 place-items-center rounded-xl border transition" >
+        className="nutria-centro-trigger relative grid size-11 shrink-0 place-items-center rounded-xl border transition" >
         <Bell size={19} aria-hidden="true"/>
         {!actualizando && !errores.length && numero > 0 && (
           <span aria-hidden="true" className="nutria-centro-count absolute -right-2 -top-2 min-w-[21px] rounded-full px-1 py-0.5 text-center text-[10px] font-black leading-none">{badge}</span>

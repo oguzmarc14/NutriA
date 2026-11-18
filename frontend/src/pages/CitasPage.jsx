@@ -692,7 +692,7 @@ export default function CitasPage() {
                   <dd className="mt-1 whitespace-pre-wrap break-words text-sm">{form.notas}</dd>
                 </div>}
               </dl>
-              <div className="flex flex-wrap justify-end gap-2 border-t border-[#d2e2d6] pt-4">
+              <div className="nutria-acciones border-t border-[#d2e2d6] pt-4">
                 {['programada','confirmada'].includes(form.estado) && (
                   <button type="button" onClick={() => cambiarEstadoCita('completada')} disabled={saving}
                     className={`${CONTROL} gap-2`}>
@@ -751,7 +751,7 @@ export default function CitasPage() {
                 </button>
               </div>
             )}
-            <div className="flex flex-wrap justify-end gap-2 pt-2 sm:col-span-2">
+            <div className="nutria-acciones pt-2 sm:col-span-2">
               <button type="button" onClick={() => setModal(false)} disabled={saving} className={CONTROL}>Cerrar</button>
               <button type="submit" disabled={saving} className={`rounded-xl bg-[#246b55] px-5 py-3 text-sm font-bold text-white hover:bg-[#1d5947] disabled:opacity-50 ${FOCUS}`}>
                 {saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Registrar cita'}

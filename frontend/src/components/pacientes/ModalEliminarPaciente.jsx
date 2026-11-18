@@ -29,7 +29,7 @@ function ModalEliminarPaciente({ paciente, eliminando, error, onCancelar, onConf
           </p>
         )}
 
-        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <div className="mt-6 nutria-acciones">
           <button ref={volverRef} type="button" onClick={onCancelar} disabled={eliminando} className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50">Cancelar</button>
           <button type="button" onClick={onConfirmar} disabled={eliminando} className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-60">
             {eliminando ? <LoaderCircle size={17} className="animate-spin" /> : <Trash2 size={17} />}

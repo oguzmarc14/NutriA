@@ -277,7 +277,7 @@ export default function ConsultarDietasPage() {
         <div className="mb-4 inline-flex size-12 items-center justify-center rounded-2xl bg-red-50 text-red-600"><Trash2 size={23}/></div>
         <h2 id="eliminar-dieta-titulo" className="text-xl font-black text-[#173f34]">¿Eliminar esta dieta?</h2>
         <p className="mt-2 break-words text-sm leading-6 text-[#5b7366]">Se eliminará permanentemente «{eliminarPendiente.nombre}». Esta acción no se puede deshacer.</p>
-        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div className="mt-6 nutria-acciones">
           <button type="button" disabled={borrando} onClick={() => setEliminarPendiente(null)} className="rounded-xl border border-[#d4e4d8] px-4 py-3 text-sm font-bold text-[#246b55] disabled:opacity-60">Cancelar</button>
           <button type="button" disabled={borrando} onClick={confirmarEliminacion} className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-extrabold text-white disabled:opacity-60">{borrando ? 'Eliminando…' : 'Sí, eliminar dieta'}</button>
         </div>

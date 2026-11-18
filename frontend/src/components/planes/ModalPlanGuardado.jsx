@@ -16,7 +16,7 @@ function ModalPlanGuardado({ tipo, mensaje, onCerrar, onExportarPDF }) {
           </div>
           <button ref={volverRef} type="button" onClick={onCerrar} className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100" aria-label="Cerrar"><X size={18} /></button>
         </div>
-        <div className="mt-6 flex flex-col gap-2">
+        <div className="mt-6 nutria-acciones">
           {onExportarPDF && <button type="button" onClick={onExportarPDF} className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#246b55] px-4 py-3 text-sm font-extrabold text-white transition hover:bg-[#1d5947]"><Download size={18} /> Exportar dieta a PDF</button>}
           <button type="button" onClick={onCerrar} className="w-full cursor-pointer rounded-xl border border-[#cfe0d6] px-4 py-3 text-sm font-bold text-[#246b55] transition hover:bg-emerald-50">{onExportarPDF ? 'Ahora no' : 'Aceptar'}</button>
         </div>
