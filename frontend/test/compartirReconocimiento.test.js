@@ -22,7 +22,7 @@ test('HU-31 comparte solo logros realmente reconocidos y de lista blanca', () =>
   assert.match(publico, /Mi primer paso/)
   assert.doesNotMatch(publico, /Medición privada|70kg|expediente|Persona Privada|correo personal/)
   assert.deepEqual(Object.keys(TITULOS_PUBLICOS).sort(),
-    ['primer-paso', 'conociendome', 'mi-voz', 'a-mi-ritmo', 'sigo-aprendiendo'].sort())
+    ['primer-paso', 'conociendome', 'mi-voz', 'a-mi-ritmo', 'sigo-aprendiendo', 'tres-dias-seguidos', 'siete-dias-seguidos'].sort())
   assert.equal(textoPublicoReconocimiento({ id: 'otro', titulo: 'Título desconocido' }), null)
 })
 test('HU-31 permite abrir hoja de compartir nativa sin publicar automáticamente', async () => {
@@ -73,4 +73,10 @@ test('HU-31 integra botón solo en reconocimientos activos, responsive y accesib
   assert.match(jsx, /role="status"/)
   assert.match(jsx, /onFocus=\{event => event\.target\.select\(\)\}/)
   assert.match(jsx, /min-w-0/)
+})
+
+test('HU-30: nuevas rachas se comparten solo mediante título público',()=>{
+  const texto=textoPublicoReconocimiento({id:'tres-dias-seguidos',titulo:'Dato privado',descripcion:'Peso privado'})
+  assert.match(texto,/Tres momentos seguidos/)
+  assert.doesNotMatch(texto,/Dato privado|Peso privado/)
 })
