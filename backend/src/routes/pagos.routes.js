@@ -1,0 +1,10 @@
+const express=require('express')
+const {requireAuth,allowRoles}=require('../middleware/auth.middleware')
+const {listarMisPagos,registrarMiPago,listarPagosPaciente,revisarPago}=require('../controllers/pagos.controller')
+const router=express.Router()
+router.use(requireAuth)
+router.get('/mios',allowRoles('patient'),listarMisPagos)
+router.post('/mios',allowRoles('patient'),registrarMiPago)
+router.get('/consultorio',allowRoles('nutritionist'),listarPagosPaciente)
+router.patch('/consultorio/:id/estado',allowRoles('nutritionist'),revisarPago)
+module.exports=router

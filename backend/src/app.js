@@ -11,6 +11,7 @@ const alimentosRoutes = require('./routes/alimentos.routes')
 const perfilPacienteRoutes = require('./routes/perfilPaciente.routes')
 const seguimientoComidaRoutes = require('./routes/seguimientoComida.routes')
 const gamificacionRoutes = require('./routes/gamificacion.routes')
+const pagosRoutes = require('./routes/pagos.routes')
 
 const clinicaRoutes = require('./routes/clinica.routes')
 const calculoNutricionalRoutes = require('./routes/calculoNutricional.routes')
@@ -109,6 +110,7 @@ app.use(
 )
 
 app.use('/api/gamificacion', gamificacionRoutes)
+app.use('/api/pagos', pagosRoutes)
 
 /*
  * ----------------------------------------------------
