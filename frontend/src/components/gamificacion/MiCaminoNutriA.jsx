@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Award, Heart, Leaf, MessageCircle, PauseCircle, PlayCircle, Sparkles, Sun } from 'lucide-react'
 import client from '../../api/client'
+import CompartirReconocimiento from './CompartirReconocimiento.jsx'
 
 const ICONOS = {
   sprout: Leaf,
@@ -113,11 +114,12 @@ export default function MiCaminoNutriA() {
                   {resumen.reconocimientos.map((logro) => {
                     const Icono = ICONOS[logro.icono] || Award
                     return (
-                      <article key={logro.id} className="flex items-start gap-3 rounded-2xl border border-white/80 bg-white/75 p-4">
+                      <article key={logro.id} className="flex min-w-0 items-start gap-3 rounded-2xl border border-white/80 bg-white/75 p-4 shadow-sm transition hover:border-[#afcfba] dark:border-[#568268] dark:bg-[#2b4838]">
                         <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#dceee4] text-[#246b55]"><Icono size={23} /></span>
                         <div className="min-w-0">
                           <h4 className="font-extrabold text-[#173f34]">{logro.titulo}</h4>
                           <p className="mt-1 text-sm leading-5 text-[#60766b]">{logro.descripcion}</p>
+                          <CompartirReconocimiento logro={logro}/>
                         </div>
                       </article>
                     )
