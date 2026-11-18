@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { AlertCircle, ArrowRight, ClipboardList, Ruler, RefreshCw, X } from 'lucide-react'
+import { AlertCircle, ArrowRight, ClipboardList, Ruler, RefreshCw } from 'lucide-react'
 
 const mensajes = {
   expediente: {
@@ -43,6 +43,8 @@ const mensajesCalculo = {
 export default function ModalRequisitosPlan({ tipo, contexto = 'plan', onExpediente, onMediciones, onReintentar, onCancelar }) {
   const cancelarRef = useRef(null)
   const origenRef = useRef(null)
+  const onCancelarRef = useRef(onCancelar)
+  onCancelarRef.current = onCancelar
 
   useEffect(() => {
     if (!tipo) return undefined
@@ -51,14 +53,15 @@ export default function ModalRequisitosPlan({ tipo, contexto = 'plan', onExpedie
     document.body.style.overflow = 'hidden'
     cancelarRef.current?.focus()
     function teclas(event) {
-      if (event.key === 'Escape') { event.preventDefault(); onCancelar(); return }
+      if (event.key === 'Escape') { event.preventDefault(); onCancelarRef.current(); return }
       if (event.key !== 'Tab') return
       const controles = [...(document.getElementById('nutria-requisitos-plan-modal')?.querySelectorAll('button:not([disabled])') || [])]
       if (!controles.length) return
-      if (event.shiftKey && document.activeElement === controles[0]) {
+      const focoDentro = controles.includes(document.activeElement)
+      if (event.shiftKey && (document.activeElement === controles[0] || !focoDentro)) {
         event.preventDefault()
         controles[controles.length - 1].focus()
-      } else if (!event.shiftKey && document.activeElement === controles[controles.length - 1]) {
+      } else if (!event.shiftKey && (document.activeElement === controles[controles.length - 1] || !focoDentro)) {
         event.preventDefault()
         controles[0].focus()
       }
@@ -69,7 +72,7 @@ export default function ModalRequisitosPlan({ tipo, contexto = 'plan', onExpedie
       document.removeEventListener('keydown', teclas)
       origenRef.current?.focus?.()
     }
-  }, [tipo, onCancelar])
+  }, [tipo])
 
   if (!tipo) return null
 

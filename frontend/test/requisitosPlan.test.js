@@ -91,3 +91,12 @@ test('alerta de cálculo reutiliza el estilo de NutriA con Cancelar y rutas real
   assert.ok(modal.includes("tipo === 'expediente' || tipo === 'ambos'"))
   assert.ok(modal.includes("tipo === 'mediciones' || tipo === 'ambos'"))
 })
+
+test('modal mantiene el foco y Escape sin reiniciar al recibir callbacks nuevos',()=>{
+  assert.ok(modal.includes('const onCancelarRef = useRef(onCancelar)'))
+  assert.ok(modal.includes('onCancelarRef.current = onCancelar'))
+  assert.ok(modal.includes('onCancelarRef.current()'))
+  assert.ok(modal.includes('const focoDentro = controles.includes(document.activeElement)'))
+  assert.ok(modal.includes('}, [tipo])'))
+  assert.ok(modal.includes('origenRef.current?.focus?.()'))
+})
