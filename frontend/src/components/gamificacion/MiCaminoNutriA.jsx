@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Award, Heart, Leaf, MessageCircle, PauseCircle, PlayCircle, Sparkles, Sun } from 'lucide-react'
+import { Award, CalendarCheck2, Flame, Heart, Leaf, MessageCircle, PauseCircle, PlayCircle, Sparkles, Sun } from 'lucide-react'
 import client from '../../api/client'
 import CompartirReconocimiento from './CompartirReconocimiento.jsx'
 
@@ -9,6 +9,8 @@ const ICONOS = {
   message: MessageCircle,
   sun: Sun,
   flower: Sparkles,
+  flame: Flame,
+  calendar: CalendarCheck2,
 }
 
 export default function MiCaminoNutriA() {
@@ -108,6 +110,32 @@ export default function MiCaminoNutriA() {
                   <p className="text-xs text-[#60766b]">Días con algún registro, sin objetivos obligatorios.</p>
                 </article>
               </div>
+              {resumen.rachas && (
+                <div className="mt-4 rounded-2xl border border-[#c7dfce] bg-[#eaf4eb] p-4 dark:border-[#568268] dark:bg-[#2b4838]">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Flame size={19} className="text-[#267452] dark:text-[#c1e8cb]" aria-hidden="true" />
+                    <h3 className="text-sm font-black text-[#173f34] dark:text-[#e5f7eb]">Rachas de seguimiento</h3>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-[#587261] dark:text-[#bfdac7]">
+                    Días seguidos en que registraste alguna experiencia. Son opcionales: no miden cuánto comiste ni califican tu salud.
+                  </p>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <div className="rounded-xl bg-white/85 p-3 dark:bg-[#365845]">
+                      <p className="text-xs font-semibold text-[#5b7968] dark:text-[#c3dbca]">Racha actual</p>
+                      <p className="mt-1 text-2xl font-black tabular-nums text-[#184c38] dark:text-[#e5f7eb]">{resumen.rachas.actual} <span className="text-xs font-bold">días</span></p>
+                    </div>
+                    <div className="rounded-xl bg-white/85 p-3 dark:bg-[#365845]">
+                      <p className="text-xs font-semibold text-[#5b7968] dark:text-[#c3dbca]">Mejor racha</p>
+                      <p className="mt-1 text-2xl font-black tabular-nums text-[#184c38] dark:text-[#e5f7eb]">{resumen.rachas.maxima} <span className="text-xs font-bold">días</span></p>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-xs leading-5 text-[#587261] dark:text-[#bfdac7]">
+                    {resumen.rachas.actual > 0
+                      ? 'Hoy o ayer registraste una experiencia. ¡Gracias por darte ese espacio!'
+                      : 'Puedes retomar cuando quieras. Tu mejor racha se conserva.'}
+                  </p>
+                </div>
+              )}
               <div className="mt-6 flex items-center gap-2"><Award className="text-[#246b55]" size={21} /><h3 className="text-lg font-black text-[#173f34]">Momentos reconocidos</h3></div>
               {resumen.reconocimientos.length ? (
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">

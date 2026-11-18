@@ -6,6 +6,8 @@ export const TITULOS_PUBLICOS = Object.freeze({
   'mi-voz': 'Mi voz cuenta',
   'a-mi-ritmo': 'A mi ritmo',
   'sigo-aprendiendo': 'Sigo aprendiendo',
+  'tres-dias-seguidos': 'Tres momentos seguidos',
+  'siete-dias-seguidos': 'Una semana de constancia',
 })
 
 export function textoPublicoReconocimiento(logro) {
