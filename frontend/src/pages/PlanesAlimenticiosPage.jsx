@@ -38,6 +38,7 @@ import {
 
 import client from '../api/client'
 import ModalPlanGuardado from '../components/planes/ModalPlanGuardado'
+import ReferenciaCalculo from '../components/calculo/ReferenciaCalculo'
 import ModalRequisitosPlan from '../components/planes/ModalRequisitosPlan'
 import { evaluarRequisitosPlan } from '../utils/requisitosPlan.js'
 import { exportarPlanPDF } from '../utils/exportarPlanPDF'
@@ -478,10 +479,11 @@ function PlanesAlimenticiosPage() {
       }
       const respuesta = expedienteRespuesta.value.data
       const expediente = respuesta.expediente || null
-      const calculo = calculoRespuesta.status === 'fulfilled'
-        ? calculoRespuesta.value.data.calculos?.[0] || null : null
+      const datosCalculo = calculoRespuesta.status === 'fulfilled' ? calculoRespuesta.value.data : null
+      const calculo = datosCalculo?.calculos?.[0] || null
+      const medicionReciente = datosCalculo?.mediciones?.[0] || respuesta.ultimaMedicion
       const resultado = evaluarRequisitosPlan(respuesta)
-      setReferenciaNutricional({expediente,calculo})
+      setReferenciaNutricional({ expediente, calculo, medicionReciente })
       setRequisitosPlan(resultado)
       if (resultado.estado === 'incompleto' && !planSolicitado) {
         setMostrarEleccion(false)
@@ -1928,6 +1930,12 @@ function PlanesAlimenticiosPage() {
               </p>
             </div>
 
+            {calculoReferencia && (
+              <div className={`mb-5 ${panelBalanceVisible ? 'xl:mr-[330px] 2xl:mr-[370px]' : ''}`}>
+                <ReferenciaCalculo calculo={calculoReferencia} medicionReciente={referenciaNutricional.medicionReciente}
+                  onRecalcular={() => navigate('/calculo-nutricional')}/>
+              </div>
+            )}
             {referenciaNutricional && <div className={`mb-5 overflow-hidden rounded-3xl border border-[#cbded2] bg-white shadow-[0_12px_30px_rgba(24,73,53,0.06)] ${panelBalanceVisible ? 'xl:mr-[330px] 2xl:mr-[370px]' : ''}`}>
               <button type="button" aria-expanded={mostrarGuia} onClick={() => setMostrarGuia(v => !v)}
                 className="flex w-full items-center justify-between gap-3 bg-gradient-to-r from-[#f3f9f5] to-white px-5 py-4 text-left transition hover:bg-[#edf6f0]">

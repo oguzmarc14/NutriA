@@ -3,6 +3,8 @@ const schema = new mongoose.Schema({
   paciente: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true, index: true },
   nutritionist: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   medicion: { type: mongoose.Schema.Types.ObjectId, ref: 'Medicion', required: true },
+  fechaMedicion: Date,
+  fechaRegistroMedicion: Date,
   formula: { type: String, enum: ['mifflin'], required: true },
   sexoCalculo: { type: String, enum: ['male', 'female'], required: true },
   edad: { type: Number, required: true },

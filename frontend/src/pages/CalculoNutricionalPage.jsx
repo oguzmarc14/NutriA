@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Activity, Calculator, ChevronRight, ClipboardList, Save, UserRound, AlertCircle } from 'lucide-react'
 import client from '../api/client'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
+import ReferenciaCalculo, { fechaDeCalculo, fechaDeMedicion } from '../components/calculo/ReferenciaCalculo'
 import ModalRequisitosPlan from '../components/planes/ModalRequisitosPlan'
 import { evaluarRequisitosPlan } from '../utils/requisitosPlan.js'
 
@@ -26,6 +27,7 @@ export default function CalculoNutricionalPage() {
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
   const [exito, setExito] = useState('')
+  const selectorMedicionRef = useRef(null)
   const [medicionId, setMedicionId] = useState('')
   const [sexo, setSexo] = useState('')
   const [factor, setFactor] = useState('1.2')
@@ -64,6 +66,15 @@ export default function CalculoNutricionalPage() {
     const sugerido = factorPorNivel[seleccionada?.nivelActividadFisica]
     if (sugerido) setFactor(sugerido)
   }, [datos?.mediciones, medicionId])
+
+  const medicionReciente = datos?.mediciones?.[0]
+  const calculoReciente = datos?.calculos?.[0]
+
+  function recalcularConMedicionReciente() {
+    setMedicionId(medicionReciente._id)
+    selectorMedicionRef.current?.focus()
+    selectorMedicionRef.current?.scrollIntoView({ block: 'center' })
+  }
 
   const medicion = datos?.mediciones?.find(item => item._id === medicionId)
   const resultado = useMemo(() => {
@@ -125,6 +136,8 @@ export default function CalculoNutricionalPage() {
           <div><p className="text-xs text-[#648073]">Paciente activo</p><h2 className="font-bold text-[#173f34]">{pacienteTrabajo.name}</h2></div></div>
         <span className="rounded-full bg-[#f0f5ef] px-3 py-1 text-xs font-semibold text-[#4d816f]">Fórmula Mifflin-St Jeor · Adultos</span>
       </div>
+      <ReferenciaCalculo calculo={calculoReciente} medicionReciente={medicionReciente}
+        onRecalcular={recalcularConMedicionReciente}/>
       {datos && <div className={tarjeta + ' space-y-3'}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div><h2 className="font-extrabold text-[#173f34]">Contexto del expediente clínico</h2>
@@ -173,8 +186,8 @@ export default function CalculoNutricionalPage() {
           <div className={tarjeta + ' space-y-4'}>
             <div className="flex items-center gap-2"><ClipboardList size={19} className="text-[#246b55]"/><h2 className="font-extrabold text-[#173f34]">Datos de evaluación</h2></div>
             <label className="block text-xs font-bold text-[#52716a]">Medición de referencia
-              <select className={campo + ' mt-2'} value={medicionId} onChange={e => setMedicionId(e.target.value)}>
-                {datos.mediciones.map(m => <option key={m._id} value={m._id}>{new Date(m.fecha).toLocaleDateString('es-MX')} · {m.peso} kg · {m.edad} años</option>)}
+              <select ref={selectorMedicionRef} className={campo + ' mt-2'} value={medicionId} onChange={e => setMedicionId(e.target.value)}>
+                {datos.mediciones.map(m => <option key={m._id} value={m._id}>{fechaDeMedicion(m.fecha)} · {m.peso} kg · {m.edad} años</option>)}
               </select>
             </label>
             {medicion && <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -235,7 +248,7 @@ export default function CalculoNutricionalPage() {
         <h2 className="mb-3 font-extrabold text-[#173f34]">Historial de cálculos</h2>
         {!datos.calculos?.length ? <p className="text-sm text-[#648073]">Aún no hay cálculos guardados.</p> :
           <div className="space-y-2">{datos.calculos.map(c => <div key={c._id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e0eae3] bg-[#f7faf7] px-4 py-3">
-            <div><p className="text-sm font-bold text-[#173f34]">{formato(c.resultado?.objetivoKcal)} kcal/día · Borrador</p><p className="text-xs text-[#648073]">{new Date(c.createdAt).toLocaleString('es-MX')} · Mifflin-St Jeor</p></div>
+            <div><p className="text-sm font-bold text-[#173f34]">{formato(c.resultado?.objetivoKcal)} kcal/día · Borrador</p><p className="text-xs text-[#648073]">Guardado: {fechaDeCalculo(c.createdAt)} · Mifflin-St Jeor</p><p className="text-xs text-[#648073]">Medición: {fechaDeMedicion(c.fechaMedicion)} · {c.peso} kg</p></div>
             <span className="text-xs text-[#648073]">C {c.porcentajes?.carbohidratos}% · P {c.porcentajes?.proteinas}% · G {c.porcentajes?.grasas}%</span>
           </div>)}</div>}
         <button type="button" onClick={() => navigate('/planes')} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#246b55] hover:underline">Ir a planes alimenticios <ChevronRight size={16}/></button>

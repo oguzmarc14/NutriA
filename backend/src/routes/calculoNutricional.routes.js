@@ -37,11 +37,27 @@ router.get('/:pacienteId', async (req, res, next) => {
     const paciente = await verificarPaciente(req, res)
     if (!paciente) return
     const [mediciones, calculos, expediente] = await Promise.all([
-      Medicion.find({ paciente: paciente._id, nutritionist: req.user.id }).sort({ fecha: -1 }).limit(20).lean(),
+      Medicion.find({ paciente: paciente._id, nutritionist: req.user.id }).sort({ fecha: -1, createdAt: -1, _id: -1 }).limit(20).lean(),
       Calculo.find({ paciente: paciente._id, nutritionist: req.user.id }).sort({ createdAt: -1 }).limit(20).lean(),
       ExpedienteClinico.findOne({ paciente: paciente._id, nutritionist: req.user.id }).lean(),
     ])
-    return res.json({ paciente, mediciones, calculos, expediente })
+    const medicionesPorId = new Map(mediciones.map(item => [String(item._id), item]))
+    const idsAnteriores = [...new Set(calculos
+      .filter(calculo => !calculo.fechaMedicion && calculo.medicion && !medicionesPorId.has(String(calculo.medicion)))
+      .map(calculo => String(calculo.medicion)))]
+    if (idsAnteriores.length) {
+      const anteriores = await Medicion.find({
+        _id: { $in: idsAnteriores }, paciente: paciente._id, nutritionist: req.user.id,
+      }).select('fecha createdAt').lean()
+      for (const item of anteriores) medicionesPorId.set(String(item._id), item)
+    }
+    const historial = calculos.map(calculo => {
+      const medicion = medicionesPorId.get(String(calculo.medicion))
+      return calculo.fechaMedicion || !medicion ? calculo : {
+        ...calculo, fechaMedicion: medicion.fecha, fechaRegistroMedicion: medicion.createdAt,
+      }
+    })
+    return res.json({ paciente, mediciones, calculos: historial, expediente })
   } catch (error) { next(error) }
 })
 
@@ -66,6 +82,7 @@ router.post('/:pacienteId', async (req, res, next) => {
     const redondear = n => Math.round(n * 10) / 10
     const calculo = await Calculo.create({
       paciente: paciente._id, nutritionist: req.user.id, medicion: medicion._id,
+      fechaMedicion: medicion.fecha, fechaRegistroMedicion: medicion.createdAt,
       formula: 'mifflin', sexoCalculo: d.sexoCalculo, edad: medicion.edad,
       peso: medicion.peso, estaturaCm, factorActividad: d.factorActividad,
       ajusteKcal: d.ajusteKcal, porcentajes: d.porcentajes, observaciones: d.observaciones,
