@@ -6,7 +6,7 @@ import ModalCancelarCitaPaciente from '../components/citas/ModalCancelarCitaPaci
 import { citaCancelable, estadoCitaPaciente, formatearCitaPaciente, tipoCitaPaciente } from '../utils/fechasMisCitas'
 import './misCitas.css'
 
-function TarjetaCita({cita,zonaHoraria,onSolicitarCancelacion}){
+function TarjetaCita({cita,zonaHoraria,onSolicitarCancelacion,onConfirmar,confirmando}){
   const estado=estadoCitaPaciente(cita.estado)
   return <article className="nutria-mis-citas-tarjeta min-w-0 rounded-2xl border p-4">
     <div className="flex flex-wrap items-start justify-between gap-2">
@@ -19,6 +19,12 @@ function TarjetaCita({cita,zonaHoraria,onSolicitarCancelacion}){
       <CalendarDays className="mt-0.5 shrink-0" size={17}/>
       {formatearCitaPaciente(cita.inicio,zonaHoraria)}
     </p>
+    {cita.estado === 'programada' && new Date(cita.inicio) > new Date() && (
+          <button type="button" disabled={Boolean(confirmando)} onClick={() => onConfirmar(cita)}
+            className="nutria-mis-citas-accion mr-2 mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 text-xs font-extrabold disabled:opacity-60">
+            <CalendarCheck2 size={16}/>{confirmando === cita._id ? 'Confirmando…' : 'Confirmar cita'}
+          </button>
+        )}
     {citaCancelable(cita) && <button type="button" onClick={()=>onSolicitarCancelacion(cita)}
       className="nutria-mis-citas-cancelar mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-xs font-extrabold">
       <XCircle size={16}/> Cancelar cita
@@ -32,6 +38,26 @@ export default function MisCitasPage(){
   const [guardando,setGuardando]=useState(false)
   const [errorCancelacion,setErrorCancelacion]=useState('')
   const [confirmacion,setConfirmacion]=useState('')
+  const [confirmando, setConfirmando] = useState('')
+  const [errorConfirmacion, setErrorConfirmacion] = useState('')
+
+  async function confirmarCita(cita) {
+    if (confirmando) return
+    setConfirmando(cita._id)
+    setConfirmacion('')
+    setErrorConfirmacion('')
+    try {
+      await client.patch('/mi-perfil/citas/' + encodeURIComponent(cita._id) + '/confirmar')
+      setConfirmacion('Tu cita quedó confirmada.')
+      await actualizar()
+    } catch (error) {
+      setErrorConfirmacion(error.response?.data?.message || 'No fue posible confirmar la cita.')
+      if (error.response?.status === 409) await actualizar()
+    } finally {
+      setConfirmando('')
+    }
+  }
+
   function cerrarModal(){if(!guardando){setACancelar(null);setErrorCancelacion('')}}
   function solicitarCancelacion(cita){setErrorCancelacion('');setConfirmacion('');setACancelar(cita)}
   async function confirmarCancelacion(){
@@ -70,6 +96,7 @@ export default function MisCitasPage(){
 
     {cargando && !datos && <p role="status" className="nutria-mis-citas-tarjeta rounded-xl border p-5 text-sm">Cargando tus citas…</p>}
     {error && <p role="alert" className="nutria-mis-citas-error rounded-xl border p-4 text-sm">{error}</p>}
+    {errorConfirmacion && <p role="alert" className="nutria-mis-citas-error rounded-xl border p-4 text-sm">{errorConfirmacion}</p>}
     {confirmacion && <p role="status" className="nutria-mis-citas-exito rounded-xl border p-4 text-sm font-semibold">{confirmacion}</p>}
     <ModalCancelarCitaPaciente cita={aCancelar} zonaHoraria={zona}
       guardando={guardando} error={errorCancelacion}
@@ -91,9 +118,15 @@ export default function MisCitasPage(){
         </p>
         <p className="mt-2 text-sm">{tipoCitaPaciente(proxima.tipo)}</p>
         <p className="mt-2 text-xs leading-5 opacity-75">
-          {proxima.estado==='confirmada'?'Tu nutriólogo confirmó esta consulta.':
-            'Tu nutriólogo todavía no ha marcado esta consulta como confirmada.'}
+          {proxima.estado==='confirmada'?'Esta consulta está confirmada.':
+            'Confirma que podrás asistir a esta consulta.'}
         </p>
+        {proxima.estado === 'programada' && new Date(proxima.inicio) > new Date() && (
+          <button type="button" disabled={Boolean(confirmando)} onClick={() => confirmarCita(proxima)}
+            className="nutria-mis-citas-accion mr-2 mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 text-xs font-extrabold disabled:opacity-60">
+            <CalendarCheck2 size={16}/>{confirmando === proxima._id ? 'Confirmando…' : 'Confirmar cita'}
+          </button>
+        )}
         {citaCancelable(proxima) && <button type="button" onClick={()=>solicitarCancelacion(proxima)}
           className="nutria-mis-citas-cancelar mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-xs font-extrabold">
           <XCircle size={16}/>Cancelar mi próxima cita
@@ -111,12 +144,12 @@ export default function MisCitasPage(){
 
       <section className="space-y-3">
         <h2 className="flex items-center gap-2 text-lg font-extrabold"><Clock3 size={19}/>Próximas consultas</h2>
-        {futuras.length ? futuras.map(c=><TarjetaCita key={c._id} cita={c} zonaHoraria={zona} onSolicitarCancelacion={solicitarCancelacion}/>) :
+        {futuras.length ? futuras.map(c=><TarjetaCita key={c._id} cita={c} zonaHoraria={zona} onSolicitarCancelacion={solicitarCancelacion} onConfirmar={confirmarCita} confirmando={confirmando}/>) :
           <p className="text-sm opacity-70">No hay consultas próximas.</p>}
       </section>
       <section className="space-y-3">
         <h2 className="flex items-center gap-2 text-lg font-extrabold"><CheckCircle2 size={19}/>Historial de citas</h2>
-        {anteriores.length ? anteriores.map(c=><TarjetaCita key={c._id} cita={c} zonaHoraria={zona} onSolicitarCancelacion={solicitarCancelacion}/>) :
+        {anteriores.length ? anteriores.map(c=><TarjetaCita key={c._id} cita={c} zonaHoraria={zona} onSolicitarCancelacion={solicitarCancelacion} onConfirmar={confirmarCita} confirmando={confirmando}/>) :
           <p className="text-sm opacity-70">Todavía no hay citas en tu historial.</p>}
       </section>
       <p className="text-xs opacity-65">Zona horaria del consultorio: {zona}. Solo se muestran las citas asociadas a tu cuenta.</p>

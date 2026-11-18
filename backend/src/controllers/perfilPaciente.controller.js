@@ -1,3 +1,4 @@
+const { isValidObjectId } = require('mongoose')
 const Paciente = require('../models/Pacientes')
 const ExpedienteClinico = require('../models/ExpedienteClinico')
 const Medicion = require('../models/Medicion')
@@ -84,4 +85,37 @@ async function obtenerMisCitas(req,res,next) {
     })
   } catch(error) { next(error) }
 }
-module.exports = { obtenerMiPerfil, obtenerMisCitas }
+async function confirmarMiCita(req, res, next) {
+  try {
+    res.set('Cache-Control', 'no-store')
+    if (!isValidObjectId(req.params.id) || !req.user.patient) {
+      return res.status(404).json({ message: 'Cita no encontrada' })
+    }
+
+    const paciente = await Paciente.findOne({ _id: req.user.patient, active: true })
+      .select('_id nutritionist').lean()
+    if (!paciente?.nutritionist) {
+      return res.status(404).json({ message: 'Cita no encontrada' })
+    }
+
+    const filtro = { _id: req.params.id, patient: paciente._id, nutritionist: paciente.nutritionist }
+    const cita = await Cita.findOneAndUpdate(
+      { ...filtro, estado: 'programada', inicio: { $gt: new Date() } },
+      { $set: { estado: 'confirmada' } },
+      { new: true },
+    ).select('_id estado').lean()
+
+    if (cita) return res.json(cita)
+
+    const actual = await Cita.findOne(filtro).select('_id estado inicio').lean()
+    if (!actual) return res.status(404).json({ message: 'Cita no encontrada' })
+    if (actual.estado === 'confirmada' && actual.inicio > new Date()) {
+      return res.json({ _id: actual._id, estado: actual.estado })
+    }
+    return res.status(409).json({ message: 'Esta cita ya no está disponible para confirmar.' })
+  } catch (error) {
+    return next(error)
+  }
+}
+
+module.exports = { obtenerMiPerfil, obtenerMisCitas, confirmarMiCita }

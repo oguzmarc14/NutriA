@@ -149,7 +149,7 @@ function DashboardPaciente({ nombre }) {
             </p>
             <p className="mt-1 text-xs opacity-75">
               {citasPaciente?.proxima?.estado==='confirmada'
-                ? 'Confirmada por tu nutriólogo' : 'Ver el estado de mis citas'}
+                ? 'Consulta confirmada' : 'Ver mis citas'}
             </p>
           </div>
           <CalendarDays size={28} className="shrink-0"/>
