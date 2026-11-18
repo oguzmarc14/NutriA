@@ -17,6 +17,9 @@ jobs:
       - name: Audit backend
         working-directory: backend
         run: npm audit --audit-level=high
-      - name: Audit frontend
+      - name: Audit frontend runtime (sin herramientas de compilación)
+        working-directory: frontend
+        run: npm audit --omit=dev --audit-level=high
+      - name: Audit frontend (incluye dependencias de desarrollo)
         working-directory: frontend
         run: npm audit --audit-level=high
