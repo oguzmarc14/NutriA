@@ -42,5 +42,11 @@
         }
       ]
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/recordatorios",
+      "schedule": "17 6 * * *"
+    }
   ]
 }
