@@ -56,3 +56,15 @@ test('HU-23 valida fechas reales y no permite fechas futuras',()=>{
   assert.equal(fechaPagoValida('','2026-11-17'),false)
   assert.ok(page.includes('fechaPagoValida(fecha)'))
 })
+
+test('HU-23/24 modal de confirmación atrapa foco y permite Escape',()=>{
+  assert.ok(page.includes("document.addEventListener('keydown',teclas)"))
+  assert.ok(page.includes("document.removeEventListener('keydown',teclas)"))
+  assert.ok(page.includes("if(event.key==='Escape')"))
+  assert.ok(page.includes("if(!revisandoRef.current)"))
+  assert.ok(page.includes("const focoDentro=botones.includes(document.activeElement)"))
+  assert.ok(page.includes('ref={modalRevisionRef} role="alertdialog"'))
+  assert.ok(page.includes('ref={cancelarRevisionRef}'))
+  assert.ok(page.includes('aria-describedby="revision-pago-detalle"'))
+  assert.ok(page.includes("document.body.style.overflow=desbordamientoAnterior"))
+})

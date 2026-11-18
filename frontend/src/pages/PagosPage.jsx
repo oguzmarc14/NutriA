@@ -72,6 +72,44 @@ export default function PagosPage(){
   const [revisar,setRevisar]=useState(null)
   const [revisando,setRevisando]=useState(false)
   const solicitudActual=useRef(0)
+  const cancelarRevisionRef=useRef(null)
+  const modalRevisionRef=useRef(null)
+  const revisandoRef=useRef(false)
+  revisandoRef.current=revisando
+
+  useEffect(()=>{
+    if(!revisar)return undefined
+    const origen=document.activeElement
+    const desbordamientoAnterior=document.body.style.overflow
+    document.body.style.overflow='hidden'
+    cancelarRevisionRef.current?.focus()
+    function teclas(event){
+      if(event.key==='Escape'){
+        if(!revisandoRef.current){
+          event.preventDefault()
+          setRevisar(null)
+        }
+        return
+      }
+      if(event.key!=='Tab')return
+      const botones=[...(modalRevisionRef.current?.querySelectorAll('button:not([disabled])')||[])]
+      if(!botones.length)return
+      const focoDentro=botones.includes(document.activeElement)
+      if(event.shiftKey&&(document.activeElement===botones[0]||!focoDentro)){
+        event.preventDefault()
+        botones[botones.length-1].focus()
+      }else if(!event.shiftKey&&(document.activeElement===botones[botones.length-1]||!focoDentro)){
+        event.preventDefault()
+        botones[0].focus()
+      }
+    }
+    document.addEventListener('keydown',teclas)
+    return()=>{
+      document.body.style.overflow=desbordamientoAnterior
+      document.removeEventListener('keydown',teclas)
+      origen?.focus?.()
+    }
+  },[revisar?.pago?._id,revisar?.estado])
   useEffect(()=>{
     if(!nutricionista)return
     let activo=true
@@ -212,12 +250,12 @@ export default function PagosPage(){
         </div>}
     </section>
     {revisar&&<div className="nutria-pagos-overlay fixed inset-0 z-[240] grid place-items-center p-4" onMouseDown={e=>{if(e.target===e.currentTarget&&!revisando)setRevisar(null)}}>
-      <section role="alertdialog" aria-modal="true" aria-labelledby="revision-pago-titulo" className="nutria-pagos-card w-full max-w-md rounded-3xl border p-5 text-center shadow-2xl sm:p-7">
+      <section ref={modalRevisionRef} role="alertdialog" aria-modal="true" aria-labelledby="revision-pago-titulo" aria-describedby="revision-pago-detalle" className="nutria-pagos-card w-full max-w-md rounded-3xl border p-5 text-center shadow-2xl sm:p-7">
         <ShieldCheck size={30} className="mx-auto"/>
         <h2 id="revision-pago-titulo" className="mt-3 text-xl font-black">{revisar.estado==='confirmado'?'¿Confirmas que recibiste este pago?':'¿Marcar reporte como no confirmado?'}</h2>
-        <p className="mt-3 text-sm leading-6 opacity-75">{moneda(revisar.pago.montoCentavos)} · Este cambio quedará registrado y no se podrá revertir desde este formulario.</p>
+        <p id="revision-pago-detalle" className="mt-3 text-sm leading-6 opacity-75">{moneda(revisar.pago.montoCentavos)} · Este cambio quedará registrado y no se podrá revertir desde este formulario.</p>
         <div className="mt-5 flex flex-wrap justify-center gap-3">
-          <button type="button" onClick={()=>setRevisar(null)} disabled={revisando}
+          <button ref={cancelarRevisionRef} type="button" onClick={()=>setRevisar(null)} disabled={revisando}
             className="nutria-pagos-boton inline-flex min-h-11 items-center rounded-xl border px-4 text-sm font-bold disabled:opacity-50">Volver</button>
           <button type="button" onClick={confirmarRevision} disabled={revisando}
             className="nutria-pago-aprobar inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-bold disabled:opacity-50">
