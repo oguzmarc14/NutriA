@@ -1839,11 +1839,12 @@ function PlanesAlimenticiosPage() {
   return (
     <section className="min-h-screen bg-transparent px-4 py-6 sm:px-5 md:px-6 md:py-7">
       <ModalRequisitosPlan
-        tipo={alertaRequisitos}
+        tipo={pacienteId ? alertaRequisitos : 'paciente'}
+        onElegirPaciente={() => navigate('/pacientes?para=crear-dieta')}
         onExpediente={() => navigate('/pacientes/' + encodeURIComponent(pacienteId) + '/expediente')}
         onMediciones={() => navigate('/mediciones?paciente=' + encodeURIComponent(pacienteId))}
         onReintentar={() => {setAlertaRequisitos(null);setRevisionRequisitos(valor => valor + 1)}}
-        onCancelar={regresarPacientes}
+        onCancelar={pacienteId ? regresarPacientes : () => navigate('/')}
       />
       {avisoPlanGuardado && (
         <ModalPlanGuardado
@@ -1879,17 +1880,6 @@ function PlanesAlimenticiosPage() {
         {/* ============================================
             SELECCIÓN DE PACIENTE
         ============================================ */}
-
-        {!pacienteId && (
-          <section className="mx-auto max-w-lg rounded-3xl border border-[#cbded2] bg-[#f3f9f5] p-6 text-center text-[#173f34] shadow-sm sm:p-9">
-            <h1 className="text-xl font-black sm:text-2xl">Aún no tienes un paciente elegido</h1>
-            <p className="mt-2 text-sm leading-6 text-[#52716a]">Elige uno para continuar a Crear dieta.</p>
-            <button type="button" onClick={() => navigate('/pacientes?para=crear-dieta')}
-              className="mx-auto mt-5 flex min-h-11 w-full max-w-64 items-center justify-center rounded-xl bg-[#246b55] px-5 text-sm font-bold text-white hover:bg-[#1d5947]">
-              Elegir paciente
-            </button>
-          </section>
-        )}
 
         {/* ============================================
             PLANES DEL PACIENTE

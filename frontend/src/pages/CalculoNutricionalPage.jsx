@@ -102,8 +102,9 @@ export default function CalculoNutricionalPage() {
   return <section className="mx-auto w-full max-w-[1480px] space-y-5 px-4 py-7 sm:px-5 md:px-8 md:py-9">
     <ModalRequisitosPlan
       contexto="calculo"
-      tipo={alertaRequisitos && alertaRequisitos.pacienteId === pacienteTrabajo?.id ? alertaRequisitos.tipo : null}
-      onCancelar={() => setAlertaRequisitos(null)}
+      tipo={!pacienteTrabajo?.id ? 'paciente' : alertaRequisitos?.pacienteId === pacienteTrabajo.id ? alertaRequisitos.tipo : null}
+      onElegirPaciente={() => navigate('/pacientes?para=calculo-nutricional')}
+      onCancelar={() => pacienteTrabajo?.id ? setAlertaRequisitos(null) : navigate('/')}
       onExpediente={() => {
         setAlertaRequisitos(null)
         navigate('/pacientes/' + encodeURIComponent(pacienteTrabajo.id) + '/expediente')
@@ -118,12 +119,7 @@ export default function CalculoNutricionalPage() {
       <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-[#173f34]">Cálculo nutricional</h1>
       <p className="mt-1 text-sm text-[#648073]">Calcula requerimientos a partir de las mediciones y guarda borradores verificables por paciente.</p>
     </div>
-    {!pacienteTrabajo ? <div className={tarjeta + ' flex flex-col items-start gap-3'}>
-      <UserRound className="text-[#246b55]"/>
-      <h2 className="font-bold text-[#173f34]">Selecciona un paciente para comenzar</h2>
-      <p className="text-sm text-[#648073]">Utiliza la lista de pacientes para activar su expediente de trabajo.</p>
-      <button onClick={() => navigate('/pacientes')} className="rounded-xl bg-[#246b55] px-4 py-2 text-sm font-bold text-white">Seleccionar paciente</button>
-    </div> : <>
+    {pacienteTrabajo?.id && <>
       <div className={tarjeta + ' flex flex-wrap items-center justify-between gap-3'}>
         <div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-xl bg-[#e1f0e7] text-[#246b55]"><UserRound/></div>
           <div><p className="text-xs text-[#648073]">Paciente activo</p><h2 className="font-bold text-[#173f34]">{pacienteTrabajo.name}</h2></div></div>

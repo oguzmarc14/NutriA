@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { AlertCircle, ArrowRight, ClipboardList, Ruler, RefreshCw } from 'lucide-react'
+import { AlertCircle, ArrowRight, ClipboardList, Ruler, RefreshCw, UserRound } from 'lucide-react'
 
 const mensajes = {
   expediente: {
@@ -40,7 +40,7 @@ const mensajesCalculo = {
   },
 }
 
-export default function ModalRequisitosPlan({ tipo, contexto = 'plan', onExpediente, onMediciones, onReintentar, onCancelar }) {
+export default function ModalRequisitosPlan({ tipo, contexto = 'plan', onExpediente, onMediciones, onReintentar, onElegirPaciente, onCancelar }) {
   const cancelarRef = useRef(null)
   const origenRef = useRef(null)
   const onCancelarRef = useRef(onCancelar)
@@ -77,8 +77,14 @@ export default function ModalRequisitosPlan({ tipo, contexto = 'plan', onExpedie
   if (!tipo) return null
 
   const catalogo = contexto === 'calculo' ? mensajesCalculo : mensajes
-  const mensaje = catalogo[tipo] || catalogo.error
-  const Icono = tipo === 'expediente' ? ClipboardList : tipo === 'mediciones' ? Ruler : AlertCircle
+  const sinPaciente = tipo === 'paciente'
+  const mensaje = sinPaciente ? {
+    titulo: 'Aún no tienes un paciente elegido',
+    detalle: contexto === 'calculo'
+      ? 'Elige un paciente para continuar con el cálculo nutricional.'
+      : 'Elige un paciente para continuar a Crear dieta.',
+  } : catalogo[tipo] || catalogo.error
+  const Icono = sinPaciente ? UserRound : tipo === 'expediente' ? ClipboardList : tipo === 'mediciones' ? Ruler : AlertCircle
   return createPortal(
     <div className="fixed inset-0 z-[200] grid place-items-center overflow-y-auto bg-[#102d26]/65 p-3 backdrop-blur-sm sm:p-5"
       onMouseDown={e => { if (e.target === e.currentTarget) onCancelar() }}>
@@ -109,6 +115,12 @@ export default function ModalRequisitosPlan({ tipo, contexto = 'plan', onExpedie
               Ir a mediciones <ArrowRight size={16} className="shrink-0" aria-hidden="true"/>
             </button>
           )}
+          {sinPaciente && (
+            <button type="button" onClick={onElegirPaciente}
+              className="inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-xl bg-[#246b55] px-3 py-2.5 text-sm font-extrabold text-white transition hover:bg-[#1c5745] focus-visible:outline-2 focus-visible:outline-offset-2">
+              Elegir paciente <ArrowRight size={16} className="shrink-0" aria-hidden="true"/>
+            </button>
+          )}
           {tipo === 'error' && (
             <button type="button" onClick={onReintentar}
               className="inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-xl bg-[#246b55] px-3 py-2.5 text-sm font-extrabold text-white transition hover:bg-[#1c5745] focus-visible:outline-2 focus-visible:outline-offset-2">
@@ -116,9 +128,9 @@ export default function ModalRequisitosPlan({ tipo, contexto = 'plan', onExpedie
             </button>
           )}
         </div>
-        <p className="mt-4 text-[11px] leading-5 text-[#6f8776]">{contexto === 'calculo'
+        {!sinPaciente && <p className="mt-4 text-[11px] leading-5 text-[#6f8776]">{contexto === 'calculo'
           ? 'Los cálculos guardados anteriormente no se eliminan ni se modifican.'
-          : 'Los planes ya guardados no se eliminan ni se modifican.'}</p>
+          : 'Los planes ya guardados no se eliminan ni se modifican.'}</p>}
       </section>
     </div>,
     document.body,
