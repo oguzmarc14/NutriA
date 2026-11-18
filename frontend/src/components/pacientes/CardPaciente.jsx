@@ -29,7 +29,7 @@ function fechaCorta(valor, zonaHoraria) {
 }
 
 export default function CardPaciente({
-  paciente, onEditar, onEliminar, onTrabajar, onDejarTrabajar, onVerAvisos,
+  paciente, onEditar, onEliminar, onTrabajar, onDejarTrabajar, onVerAvisos, onElegirParaDieta,
   trabajando, obtenerSexo, calcularEdad, obtenerInicial, onReenviar, reenviando, eliminando,
   configSeguimiento, hoySeguimiento, zonaHorariaSeguimiento,
 }) {
@@ -223,12 +223,12 @@ export default function CardPaciente({
       )}
 
       <footer className="mt-auto flex items-stretch gap-2 pt-4">
-        <button type="button" onClick={trabajando ? onDejarTrabajar : onTrabajar}
-          aria-label={trabajando ? 'Dejar de trabajar con ' + paciente.name : 'Trabajar con ' + paciente.name}
+        <button type="button" onClick={onElegirParaDieta || (trabajando ? onDejarTrabajar : onTrabajar)}
+          aria-label={(onElegirParaDieta ? 'Elegir para crear dieta: ' : trabajando ? 'Dejar de trabajar con ' : 'Trabajar con ') + paciente.name}
           className={'nutria-patient-card__work inline-flex min-h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl px-2.5 text-[13px] font-extrabold transition ' +
             (trabajando ? 'nutria-patient-card__work--active' : '')}>
           <Hammer size={17} className="shrink-0" aria-hidden="true"/>
-          <span className="text-center">{trabajando ? 'Dejar de trabajar' : 'Trabajar con paciente'}</span>
+          <span className="text-center">{onElegirParaDieta ? 'Elegir paciente' : trabajando ? 'Dejar de trabajar' : 'Trabajar con paciente'}</span>
           {trabajando ? <CheckCircle2 size={16} className="shrink-0"/> : <ArrowUpRight size={16} className="shrink-0"/>}
         </button>
         {whatsapp ? (

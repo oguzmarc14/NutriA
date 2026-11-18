@@ -24,6 +24,7 @@ const formularioInicial = {
 function PacientesPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const eligiendoParaDieta = new URLSearchParams(location.search).get('para') === 'crear-dieta'
   const { cerrarTrabajo, iniciarTrabajo, pacienteTrabajo } = usePacienteTrabajo()
   const [pacientes, setPacientes] = useState([])
   const [preferenciasSeguimiento, setPreferenciasSeguimiento] = useState(null)
@@ -132,6 +133,11 @@ function PacientesPage() {
     if (!paciente?._id || pacienteTrabajo?.id === paciente._id) return
     // Primer paso: preguntar. Aún no modificamos el contexto.
     setConfirmacionTrabajo({ tipo: 'iniciar', paciente })
+  }
+
+  function elegirPacienteParaDieta(paciente) {
+    iniciarTrabajo(paciente)
+    navigate('/planes?paciente=' + encodeURIComponent(paciente._id), { replace: true })
   }
 
   function abrirExpedienteTrasAlerta() {
@@ -435,7 +441,7 @@ function PacientesPage() {
         <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
             <h1 className="text-[27px] font-black leading-tight tracking-tight text-[#173f34] sm:text-3xl">
-              Pacientes
+              {eligiendoParaDieta ? 'Elige un paciente para crear su dieta' : 'Pacientes'}
             </h1>
             <p className="mt-1 text-xs font-medium text-[#648476]">
               {loading ? 'Cargando...' : `${pacientes.length} ${pacientes.length === 1 ? 'paciente' : 'pacientes'} registrados`}
@@ -763,6 +769,7 @@ function PacientesPage() {
                     setPacienteAEliminar(paciente)
                   }}
                   onTrabajar={() => comenzarTrabajo(paciente)}
+                  onElegirParaDieta={eligiendoParaDieta ? () => elegirPacienteParaDieta(paciente) : undefined}
                   onVerAvisos={() => setPacienteConAvisos(paciente)}
                   configSeguimiento={preferenciasSeguimiento}
                   hoySeguimiento={hoySeguimiento}

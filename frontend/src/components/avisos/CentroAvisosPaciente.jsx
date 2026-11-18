@@ -42,34 +42,31 @@ export default function CentroAvisosPaciente({modo='movil'}){
     </button>
     {abierto && createPortal(<div ref={modalRef} role="dialog" aria-modal="true" aria-label="Avisos de mis citas"
       onClick={event => { if (event.target === event.currentTarget) setAbierto(false) }}
-      className={'nutria-centro-paciente-overlay fixed inset-0 z-[220] flex items-end justify-center p-2 sm:items-center '+(modo==='escritorio'?'md:items-start md:justify-end md:p-5':'')}>
-      <section className="nutria-centro-paciente-panel w-full max-w-lg rounded-[24px] border p-4 shadow-2xl">
-        <div className="flex items-center justify-between gap-2">
+      className={'nutria-centro-paciente-overlay fixed inset-0 z-[220] flex items-end justify-center px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:items-center sm:p-4 '+(modo==='escritorio'?'md:items-start md:justify-end md:p-5':'')}>
+      <section className="nutria-centro-paciente-panel flex max-h-[min(80dvh,42rem)] w-full max-w-md flex-col overflow-hidden rounded-[24px] border shadow-2xl">
+        <header className="flex shrink-0 items-center justify-between gap-2 border-b border-current/10 px-4 py-2.5">
           <h2 className="text-base font-black">Mis notificaciones</h2>
           <button ref={volverRef} type="button" aria-label="Cerrar avisos" onClick={()=>setAbierto(false)}
-            className="nutria-centro-paciente-close grid size-10 place-items-center rounded-xl border"><X size={18}/></button>
-        </div>
-        <p className="mt-1 text-xs opacity-75">Confirmaciones y recordatorios de seguimiento de tus consultas.</p>
-        <div className="mt-4 max-h-[55dvh] space-y-2 overflow-y-auto">
+            className="nutria-centro-paciente-close grid size-11 shrink-0 place-items-center rounded-xl border"><X size={18}/></button>
+        </header>
+        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain px-4 py-3">
           {avisos.length===0 ? <p className="rounded-xl border border-current/15 p-4 text-sm opacity-75">No tienes avisos nuevos de citas.</p> :
             avisos.map(aviso=><div key={aviso.id} className="nutria-centro-paciente-item rounded-xl border p-3">
-              <p className="flex items-center gap-2 text-sm font-extrabold"><CalendarCheck2 size={17}/>{aviso.titulo}</p>
+              <p className="flex items-center gap-2 text-sm font-extrabold"><CalendarCheck2 size={17} className="shrink-0" aria-hidden="true"/>{aviso.titulo}</p>
               <p className="mt-2 text-xs leading-relaxed">{aviso.detalle}</p>
             </div>)}
           {error && <p role="alert" className="text-xs opacity-80">{error}</p>}
         </div>
-        <div className="mt-4 nutria-acciones">
-          <button type="button" onClick={()=>setAbierto(false)}
-            className="nutria-centro-paciente-close min-h-11 rounded-xl border px-4 text-xs font-bold">
-            Volver
-          </button>
-          <button type="button" onClick={marcarLeidos}
-            className="nutria-centro-paciente-close min-h-11 rounded-xl border px-3 text-xs font-bold">Marcar como vistos</button>
+        <footer className="grid shrink-0 gap-1.5 border-t border-current/10 px-4 py-3">
           <Link to="/mis-citas" onClick={()=>{marcarLeidos();setAbierto(false)}}
-            className="nutria-centro-paciente-link inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-xs font-extrabold">
-            Ver mis citas <ChevronRight size={16}/>
+            className="nutria-centro-paciente-link flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-extrabold">
+            Ver mis citas <ChevronRight size={16} aria-hidden="true"/>
           </Link>
-        </div>
+          {pendientes.length > 0 && <button type="button" onClick={marcarLeidos}
+            className="min-h-11 rounded-xl px-2 text-sm font-semibold underline underline-offset-4">
+            Marcar como vistos
+          </button>}
+        </footer>
       </section>
     </div>,document.body)}
   </div>

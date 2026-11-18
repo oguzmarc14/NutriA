@@ -32,13 +32,11 @@ import {
   Sun,
   Moon,
   Trash2,
-  UserRound,
   Utensils,
   X,
 } from 'lucide-react'
 
 import client from '../api/client'
-import CardPacientePlanes from '../components/planes/CardPacientePlanes'
 import ModalPlanGuardado from '../components/planes/ModalPlanGuardado'
 import ModalRequisitosPlan from '../components/planes/ModalRequisitosPlan'
 import { evaluarRequisitosPlan } from '../utils/requisitosPlan.js'
@@ -232,9 +230,6 @@ function PlanesAlimenticiosPage() {
   const [planes, setPlanes] =
     useState([])
 
-  const [busqueda, setBusqueda] =
-    useState('')
-
   /*
    * NUEVO PLAN
    */
@@ -337,9 +332,6 @@ function PlanesAlimenticiosPage() {
    * UI
    */
 
-  const [loading, setLoading] =
-    useState(true)
-
   const [
     cargandoPlanes,
     setCargandoPlanes,
@@ -368,7 +360,6 @@ function PlanesAlimenticiosPage() {
   useEffect(() => {
     async function cargarPacientes() {
       try {
-        setLoading(true)
         setError('')
 
         const { data } =
@@ -385,8 +376,6 @@ function PlanesAlimenticiosPage() {
             ?.message ||
             'No fue posible cargar los pacientes',
         )
-      } finally {
-        setLoading(false)
       }
     }
 
@@ -535,27 +524,6 @@ function PlanesAlimenticiosPage() {
         pacienteId,
     )
 
-  const pacientesFiltrados =
-    useMemo(() => {
-      const texto =
-        busqueda
-          .trim()
-          .toLowerCase()
-
-      if (!texto) {
-        return pacientes
-      }
-
-      return pacientes.filter(
-        (paciente) =>
-          paciente.name
-            ?.toLowerCase()
-            .includes(texto),
-      )
-    }, [
-      busqueda,
-      pacientes,
-    ])
 
   /*
    * ----------------------------------------------------
@@ -1788,76 +1756,6 @@ function PlanesAlimenticiosPage() {
    * ----------------------------------------------------
    */
 
-  function calcularEdad(
-    fechaNacimiento,
-  ) {
-    if (!fechaNacimiento) {
-      return null
-    }
-
-    const nacimiento =
-      new Date(
-        fechaNacimiento,
-      )
-
-    const hoy =
-      new Date()
-
-    let edad =
-      hoy.getFullYear() -
-      nacimiento.getFullYear()
-
-    const diferenciaMes =
-      hoy.getMonth() -
-      nacimiento.getMonth()
-
-    if (
-      diferenciaMes < 0 ||
-      (
-        diferenciaMes ===
-          0 &&
-        hoy.getDate() <
-          nacimiento.getDate()
-      )
-    ) {
-      edad -= 1
-    }
-
-    return edad
-  }
-
-  function obtenerInicial(
-    nombrePaciente,
-  ) {
-    return (
-      nombrePaciente
-        ?.trim()
-        ?.charAt(0)
-        ?.toUpperCase() ||
-      'P'
-    )
-  }
-
-  function obtenerSexo(
-    sex,
-  ) {
-    if (sex === 'male') {
-      return 'Masculino'
-    }
-
-    if (
-      sex === 'female'
-    ) {
-      return 'Femenino'
-    }
-
-    if (sex === 'other') {
-      return 'Otro'
-    }
-
-    return 'Sin especificar'
-  }
-
   function formatearFecha(
     fecha,
   ) {
@@ -1891,20 +1789,6 @@ function PlanesAlimenticiosPage() {
           decimales,
       },
     )
-  }
-
-  function seleccionarPaciente(
-    paciente,
-  ) {
-    iniciarTrabajo(paciente)
-    setPacienteId(paciente._id)
-    setPlanEditandoId('')
-    setMostrarEleccion(false)
-    setAlertaRequisitos(null)
-    eleccionMostrada.current = ''
-    setError('')
-    setMensaje('')
-    setAvisoPlanGuardado(null)
   }
 
   function regresarPacientes() {
@@ -1997,133 +1881,14 @@ function PlanesAlimenticiosPage() {
         ============================================ */}
 
         {!pacienteId && (
-          <>
-            <div className="mb-7 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <p className="mb-2 text-sm font-bold uppercase tracking-[0.18em] text-[#4d816f]">
-                  Planes alimenticios
-                </p>
-
-                <h1 className="text-3xl font-black tracking-tight text-[#173f34] md:text-4xl">
-                  Selecciona un
-                  paciente
-                </h1>
-
-                <p className="mt-2 max-w-2xl text-slate-500">
-                  Elige un
-                  paciente para
-                  crear un nuevo
-                  plan alimenticio
-                  o consultar los
-                  planes que ya
-                  tiene
-                  registrados.
-                </p>
-              </div>
-
-              <div className="w-full lg:max-w-md">
-                <div className="relative">
-                  <Search
-                    size={18}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6e9484]"
-                  />
-
-                  <input
-                    type="search"
-                    value={
-                      busqueda
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      setBusqueda(
-                        event
-                          .target
-                          .value,
-                      )
-                    }
-                    placeholder="Buscar paciente por nombre..."
-                    className="w-full rounded-2xl border border-[#c9ddd3] bg-white/85 py-3 pl-11 pr-4 text-sm text-[#173f34] shadow-[0_8px_24px_rgba(36,107,85,0.06)] outline-none backdrop-blur transition focus:border-[#4d816f] focus:ring-4 focus:ring-[#cfe2d7]"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {error && (
-              <AlertaError
-                mensaje={
-                  error
-                }
-              />
-            )}
-
-            {loading ? (
-              <div className="rounded-3xl border border-[#cfe0d6] bg-white/75 p-10 text-center shadow-sm">
-                <LoaderCircle
-                  size={28}
-                  className="mx-auto mb-3 animate-spin text-[#246b55]"
-                />
-
-                <p className="text-sm text-slate-500">
-                  Cargando
-                  pacientes...
-                </p>
-              </div>
-            ) : pacientesFiltrados.length ===
-              0 ? (
-              <div className="rounded-3xl border border-dashed border-[#bdd3c7] bg-white/55 p-12 text-center">
-                <UserRound
-                  size={34}
-                  className="mx-auto mb-3 text-[#4d816f]"
-                />
-
-                <p className="font-extrabold text-[#173f34]">
-                  No se
-                  encontraron
-                  pacientes
-                </p>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  Prueba con otro
-                  nombre.
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {pacientesFiltrados.map(
-                  (
-                    paciente,
-                    index,
-                  ) => (
-                    <CardPacientePlanes
-                      key={
-                        paciente._id
-                      }
-                      paciente={
-                        paciente
-                      }
-                      color={
-                        coloresPaciente[
-                          index %
-                            coloresPaciente.length
-                        ]
-                      }
-                      calcularEdad={
-                        calcularEdad
-                      }
-                      obtenerInicial={
-                        obtenerInicial
-                      }
-                      obtenerSexo={
-                        obtenerSexo
-                      }
-                      onClick={() => seleccionarPaciente(paciente)}
-                    />
-                  ),
-                )}
-              </div>
-            )}
-          </>
+          <section className="mx-auto max-w-lg rounded-3xl border border-[#cbded2] bg-[#f3f9f5] p-6 text-center text-[#173f34] shadow-sm sm:p-9">
+            <h1 className="text-xl font-black sm:text-2xl">Aún no tienes un paciente elegido</h1>
+            <p className="mt-2 text-sm leading-6 text-[#52716a]">Elige uno para continuar a Crear dieta.</p>
+            <button type="button" onClick={() => navigate('/pacientes?para=crear-dieta')}
+              className="mx-auto mt-5 flex min-h-11 w-full max-w-64 items-center justify-center rounded-xl bg-[#246b55] px-5 text-sm font-bold text-white hover:bg-[#1d5947]">
+              Elegir paciente
+            </button>
+          </section>
         )}
 
         {/* ============================================
