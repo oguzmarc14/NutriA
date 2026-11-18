@@ -51,3 +51,42 @@ test('se rechazan métodos distintos de GET y petición sin autorización', asyn
     else process.env.CRON_SECRET=antes
   }
 })
+
+test('petición autorizada reenvía el secreto solo al backend y devuelve conteos', async () => {
+  const anteriorSecreto = process.env.CRON_SECRET
+  const anteriorApi = process.env.VITE_API_URL
+  const anteriorBackend = process.env.NUTRIA_BACKEND_URL
+  const anteriorFetch = globalThis.fetch
+  let llamadas = 0
+  process.env.CRON_SECRET = 'secreto-de-prueba-seguro'
+  process.env.VITE_API_URL = 'https://api.ejemplo.mx/api'
+  delete process.env.NUTRIA_BACKEND_URL
+  globalThis.fetch = async (url, opciones) => {
+    llamadas++
+    assert.equal(url, 'https://api.ejemplo.mx/api/recordatorios/procesar')
+    assert.equal(opciones.method, 'POST')
+    assert.equal(opciones.headers['x-cron-secret'], 'secreto-de-prueba-seguro')
+    assert.equal(opciones.redirect, 'error')
+    return { ok: true, json: async () => ({ enviados: 2, fallidos: 0, omitidos: 3, evaluados: 5 }) }
+  }
+  const respuesta = { statusCode: 200, headers: {},
+    setHeader(k,v){this.headers[k]=v;return this},
+    status(code){this.statusCode=code;return this},
+    json(data){this.body=data;return this},
+  }
+  try {
+    await handler({method:'GET',headers:{authorization:'Bearer secreto-de-prueba-seguro'}},respuesta)
+    assert.equal(respuesta.statusCode,200)
+    assert.deepEqual(respuesta.body,{enviados:2,fallidos:0,omitidos:3,evaluados:5})
+    assert.equal(llamadas,1)
+    assert.equal(JSON.stringify(respuesta.body).includes('secreto-de-prueba-seguro'),false)
+  } finally {
+    globalThis.fetch=anteriorFetch
+    if(anteriorSecreto===undefined)delete process.env.CRON_SECRET
+    else process.env.CRON_SECRET=anteriorSecreto
+    if(anteriorApi===undefined)delete process.env.VITE_API_URL
+    else process.env.VITE_API_URL=anteriorApi
+    if(anteriorBackend===undefined)delete process.env.NUTRIA_BACKEND_URL
+    else process.env.NUTRIA_BACKEND_URL=anteriorBackend
+  }
+})
