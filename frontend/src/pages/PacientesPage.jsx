@@ -843,7 +843,13 @@ function PacientesPage() {
       <ModalEliminarPaciente
         paciente={pacienteAEliminar}
         eliminando={eliminando}
-        onCancelar={() => !eliminando && setPacienteAEliminar(null)}
+        error={error}
+        onCancelar={() => {
+          if (!eliminando) {
+            setError('')
+            setPacienteAEliminar(null)
+          }
+        }}
         onConfirmar={eliminarPaciente}
       />
     </section>

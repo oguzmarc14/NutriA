@@ -70,3 +70,13 @@ test('avisos del paciente ofrece Volver con Escape, Tab y foco restaurado', () =
   assert.ok(avisos.includes('Volver'))
   assert.ok(avisos.includes('onClick={()=>setAbierto(false)}'))
 })
+ 
+test('la eliminación informa fallos de Calendar dentro del modal y ofrece Cancelar', () => {
+  const modal = leer('components/pacientes/ModalEliminarPaciente.jsx')
+  assert.ok(modal.includes('error && ('))
+  assert.ok(modal.includes('role="alert"'))
+  assert.ok(modal.includes('max-h-[calc(100dvh-2rem)]'))
+  assert.ok(modal.includes('aria-describedby="detalle-eliminar-paciente"'))
+  assert.ok(lista.includes('error={error}'))
+  assert.ok(lista.includes("setError('')"))
+})
