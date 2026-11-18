@@ -77,8 +77,13 @@ test('cálculo muestra un solo modal al cargar un paciente con requisitos incomp
   assert.ok(calculo.includes('ultimaMedicion: data.mediciones?.[0]'))
   assert.ok(calculo.includes("requisitos.estado === 'incompleto'"))
   assert.ok(calculo.includes('pacienteId: pacienteTrabajo.id, tipo: requisitos.tipo'))
-  assert.ok(calculo.includes('alertaRequisitos?.pacienteId === pacienteTrabajo?.id'))
-  assert.ok(calculo.includes('onCancelar={() => setAlertaRequisitos(null)}'))
+  const selector = calculo.match(/tipo=\{([^\n]+alertaRequisitos[^\n]+)\}/)?.[1]
+  assert.ok(selector, 'El modal debe derivar el aviso del paciente activo')
+  const tipo = new Function('pacienteTrabajo', 'alertaRequisitos', 'return ' + selector)
+  assert.equal(tipo(null, null), 'paciente')
+  assert.equal(tipo({ id: 'a' }, null), null)
+  assert.equal(tipo({ id: 'a' }, { pacienteId: 'b', tipo: 'ambos' }), null)
+  assert.equal(tipo({ id: 'a' }, { pacienteId: 'a', tipo: 'ambos' }), 'ambos')
 })
 test('alerta de cálculo reutiliza el estilo de NutriA con Cancelar y rutas reales', () => {
   assert.ok(calculo.includes('contexto="calculo"'))

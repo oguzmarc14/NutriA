@@ -21,7 +21,9 @@ test('HU-22 usa endpoint propio y actualiza la lista tras confirmar',()=>{
   assert.match(page,/client\.patch\('\/mi-perfil\/citas\/'/)
   assert.match(page,/await actualizar\(\)/)
   assert.match(page,/ModalCancelarCitaPaciente/)
-  assert.match(page,/Cancelar mi próxima cita/)
+  assert.match(page,/<AccionesCita cita=\{proxima\}/)
+  assert.match(page,/Cancelar cita/)
+  assert.match(page,/onCancelar\(cita\)/)
   assert.match(page,/Historial de citas/)
 })
 test('HU-22 modal accesible, bloqueo de doble envío y ajuste a móviles',()=>{
