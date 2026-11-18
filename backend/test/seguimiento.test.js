@@ -97,6 +97,10 @@ test('listado de pacientes incluye última completada y siguiente activa, no dat
     '../models/User':{find:()=>({select:()=>({lean:async()=>[]})})},
     mongoose:{Types:{ObjectId:class{constructor(id){this.id=id}toString(){return this.id}}}},
     '../services/email.service':{enviarInvitacionPaciente:async()=>{}},
+    '../services/eliminarPaciente.service':{
+      eliminarPacienteConDatos:async()=>({message:'Paciente eliminado'}),
+      ErrorEliminacionPaciente:class extends Error {},
+    },
   }
   const module={exports:{}}
   vm.runInNewContext(pacientesSource,{
