@@ -41,16 +41,16 @@ function MiPlanPage() {
 
   return (
     <section className="mx-auto min-w-0 max-w-[1480px] overflow-x-hidden p-4 sm:p-5 md:p-8">
-      <div className="mb-6 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="mb-2 text-sm font-bold uppercase tracking-[0.16em] text-[#4d816f]">Mi alimentación</p>
           <h1 className="text-3xl font-extrabold tracking-tight text-[#173f34]">Mi plan alimenticio</h1>
           <p className="mt-2 max-w-xl text-sm text-slate-500">Consulta la dieta correspondiente al día y registra el cumplimiento de cada comida.</p>
         </div>
-        <label className="block min-w-0 w-full overflow-hidden sm:max-w-xs">
+        <label className="block w-full max-w-56 min-w-0">
           <span className="mb-2 flex items-center gap-2 text-sm font-bold text-[#48685c]"><CalendarDays size={17}/>Fecha del menú</span>
           <input type="date" value={fechaSeleccionada} onChange={event => setFechaSeleccionada(event.target.value)}
-            className="block min-w-0 w-full rounded-xl border border-[#c9ddd3] bg-white px-3 py-3 font-bold text-[#173f34] outline-none focus:border-[#4d816f]"/>
+            className="block min-w-0 w-full rounded-xl border border-[#c9ddd3] bg-white px-3 py-2 text-sm font-bold text-[#173f34] outline-none focus:border-[#4d816f]"/>
         </label>
       </div>
       {tienePlanes && <details className="mb-5 overflow-hidden rounded-2xl border border-[#c9ddd3] bg-white/80">
@@ -59,7 +59,10 @@ function MiPlanPage() {
         </summary>
         <div className="max-h-64 space-y-1 overflow-y-auto border-t border-[#e0ebe3] p-2">
           {planesOrdenados.map(plan => <button key={plan._id} type="button"
-            onClick={() => setFechaSeleccionada(fechaInicio(plan))}
+            onClick={event => {
+              setFechaSeleccionada(fechaInicio(plan))
+              event.currentTarget.closest('details').open = false
+            }}
             className="flex w-full flex-wrap items-center justify-between gap-2 rounded-xl px-3 py-3 text-left text-sm hover:bg-[#edf5ef]">
             <span className="font-bold text-[#173f34]">{plan.nombre}</span>
             <span className="text-xs font-semibold text-[#648073]">{fechaLegible(fechaInicio(plan))}</span>
