@@ -15,3 +15,9 @@ export function estadoCitaPaciente(estado){
   return {confirmada:'Confirmada',programada:'Por confirmar',
     completada:'Realizada',cancelada:'Cancelada'}[estado] || 'En revisión'
 }
+
+// El servidor vuelve a comprobar la pertenencia y el horario real.
+export function citaCancelable(cita,ahora=new Date()){
+  return Boolean(cita && ['programada','confirmada'].includes(cita.estado) &&
+    Number.isFinite(new Date(cita.inicio).getTime()) && new Date(cita.inicio)>ahora)
+}

@@ -15,3 +15,19 @@ html[data-theme="dark"] .nutria-mis-citas-confirmada{background:#3a7350;color:#e
 html[data-theme="dark"] .nutria-mis-citas-accion{background:#345a43;border-color:#6b9577;color:#d9efe0}
 html[data-theme="dark"] .nutria-mis-citas-aviso{background:#514332;border-color:#987c53;color:#f4e5ca}
 html[data-theme="dark"] .nutria-mis-citas-error{background:#5d3834;border-color:#986760;color:#ffe5d9}
+
+.nutria-mis-citas-cancelar{background:#f9eee7;border-color:#e2c8b6;color:#8b4c38;transition:background .15s ease}
+.nutria-mis-citas-cancelar:hover{background:#f3e1d6}
+.nutria-mis-citas-overlay{background:rgba(12,38,24,.65);backdrop-filter:blur(4px)}
+.nutria-mis-citas-dialog{background:#f6faf6;border-color:#b8d4c2;color:#1a4632}
+.nutria-mis-citas-dialog-icon{background:#f4e5dc;color:#995b43}
+.nutria-mis-citas-confirmar{background:#9b5543;color:white;transition:background .15s ease}
+.nutria-mis-citas-confirmar:hover{background:#854432}
+.nutria-mis-citas-exito{background:#e4f4e8;border-color:#acd4b7;color:#225a3d}
+html[data-theme="dark"] .nutria-mis-citas-cancelar{background:#4b3c37;border-color:#9d7665;color:#ffd8c6}
+html[data-theme="dark"] .nutria-mis-citas-cancelar:hover{background:#60483e}
+html[data-theme="dark"] .nutria-mis-citas-dialog{background:#254333;border-color:#648c70;color:#e8f7ee}
+html[data-theme="dark"] .nutria-mis-citas-dialog-icon{background:#5a433a;color:#f6cbba}
+html[data-theme="dark"] .nutria-mis-citas-confirmar{background:#ac6953;color:#fff}
+html[data-theme="dark"] .nutria-mis-citas-exito{background:#315a41;border-color:#77a887;color:#e1f5e7}
+@media(prefers-reduced-motion:reduce){.nutria-mis-citas-cancelar,.nutria-mis-citas-confirmar{transition:none}}

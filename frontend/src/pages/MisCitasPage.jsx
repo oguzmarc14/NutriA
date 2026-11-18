@@ -1,9 +1,12 @@
-import { Bell, CalendarCheck2, CalendarClock, CalendarDays, CheckCircle2, Clock3, RefreshCw } from 'lucide-react'
+import { useState } from 'react'
+import { Bell, CalendarCheck2, CalendarClock, CalendarDays, CheckCircle2, Clock3, RefreshCw, XCircle } from 'lucide-react'
 import useMisCitas from '../hooks/useMisCitas'
-import { estadoCitaPaciente, formatearCitaPaciente, tipoCitaPaciente } from '../utils/fechasMisCitas'
+import client from '../api/client'
+import ModalCancelarCitaPaciente from '../components/citas/ModalCancelarCitaPaciente'
+import { citaCancelable, estadoCitaPaciente, formatearCitaPaciente, tipoCitaPaciente } from '../utils/fechasMisCitas'
 import './misCitas.css'
 
-function TarjetaCita({cita,zonaHoraria}){
+function TarjetaCita({cita,zonaHoraria,onSolicitarCancelacion}){
   const estado=estadoCitaPaciente(cita.estado)
   return <article className="nutria-mis-citas-tarjeta min-w-0 rounded-2xl border p-4">
     <div className="flex flex-wrap items-start justify-between gap-2">
@@ -16,11 +19,33 @@ function TarjetaCita({cita,zonaHoraria}){
       <CalendarDays className="mt-0.5 shrink-0" size={17}/>
       {formatearCitaPaciente(cita.inicio,zonaHoraria)}
     </p>
+    {citaCancelable(cita) && <button type="button" onClick={()=>onSolicitarCancelacion(cita)}
+      className="nutria-mis-citas-cancelar mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-xs font-extrabold">
+      <XCircle size={16}/> Cancelar cita
+    </button>}
   </article>
 }
 
 export default function MisCitasPage(){
   const {datos,cargando,error,actualizar}=useMisCitas()
+  const [aCancelar,setACancelar]=useState(null)
+  const [guardando,setGuardando]=useState(false)
+  const [errorCancelacion,setErrorCancelacion]=useState('')
+  const [confirmacion,setConfirmacion]=useState('')
+  function cerrarModal(){if(!guardando){setACancelar(null);setErrorCancelacion('')}}
+  function solicitarCancelacion(cita){setErrorCancelacion('');setConfirmacion('');setACancelar(cita)}
+  async function confirmarCancelacion(){
+    if(!aCancelar || guardando)return
+    setGuardando(true);setErrorCancelacion('')
+    try{
+      const {data}=await client.patch('/mi-perfil/citas/'+encodeURIComponent(aCancelar._id)+'/cancelar')
+      setACancelar(null)
+      setConfirmacion(data.message || 'Tu cita fue cancelada.')
+      await actualizar()
+    }catch(err){
+      setErrorCancelacion(err.response?.data?.message || 'No fue posible cancelar esta cita. Inténtalo nuevamente.')
+    }finally{setGuardando(false)}
+  }
   const citas=datos?.citas||[]
   const zona=datos?.zonaHoraria || 'America/Mexico_City'
   const proxima=datos?.proxima
@@ -45,6 +70,10 @@ export default function MisCitasPage(){
 
     {cargando && !datos && <p role="status" className="nutria-mis-citas-tarjeta rounded-xl border p-5 text-sm">Cargando tus citas…</p>}
     {error && <p role="alert" className="nutria-mis-citas-error rounded-xl border p-4 text-sm">{error}</p>}
+    {confirmacion && <p role="status" className="nutria-mis-citas-exito rounded-xl border p-4 text-sm font-semibold">{confirmacion}</p>}
+    <ModalCancelarCitaPaciente cita={aCancelar} zonaHoraria={zona}
+      guardando={guardando} error={errorCancelacion}
+      onCancelar={confirmarCancelacion} onCerrar={cerrarModal}/>
 
     {datos && <>
       {proxima ? <section className="nutria-mis-citas-destacada min-w-0 rounded-[24px] border p-4 sm:p-6">
@@ -65,6 +94,10 @@ export default function MisCitasPage(){
           {proxima.estado==='confirmada'?'Tu nutriólogo confirmó esta consulta.':
             'Tu nutriólogo todavía no ha marcado esta consulta como confirmada.'}
         </p>
+        {citaCancelable(proxima) && <button type="button" onClick={()=>solicitarCancelacion(proxima)}
+          className="nutria-mis-citas-cancelar mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-xs font-extrabold">
+          <XCircle size={16}/>Cancelar mi próxima cita
+        </button>}
       </section> : <section className="nutria-mis-citas-tarjeta rounded-[24px] border p-5">
         <div className="flex items-center gap-2"><CalendarClock size={21}/><h2 className="text-lg font-extrabold">Sin próxima cita</h2></div>
         <p className="mt-2 text-sm opacity-75">Todavía no tienes una consulta futura registrada. Puedes comunicarte con tu nutriólogo para programar una.</p>
@@ -78,12 +111,12 @@ export default function MisCitasPage(){
 
       <section className="space-y-3">
         <h2 className="flex items-center gap-2 text-lg font-extrabold"><Clock3 size={19}/>Próximas consultas</h2>
-        {futuras.length ? futuras.map(c=><TarjetaCita key={c._id} cita={c} zonaHoraria={zona}/>) :
+        {futuras.length ? futuras.map(c=><TarjetaCita key={c._id} cita={c} zonaHoraria={zona} onSolicitarCancelacion={solicitarCancelacion}/>) :
           <p className="text-sm opacity-70">No hay consultas próximas.</p>}
       </section>
       <section className="space-y-3">
         <h2 className="flex items-center gap-2 text-lg font-extrabold"><CheckCircle2 size={19}/>Historial de citas</h2>
-        {anteriores.length ? anteriores.map(c=><TarjetaCita key={c._id} cita={c} zonaHoraria={zona}/>) :
+        {anteriores.length ? anteriores.map(c=><TarjetaCita key={c._id} cita={c} zonaHoraria={zona} onSolicitarCancelacion={solicitarCancelacion}/>) :
           <p className="text-sm opacity-70">Todavía no hay citas en tu historial.</p>}
       </section>
       <p className="text-xs opacity-65">Zona horaria del consultorio: {zona}. Solo se muestran las citas asociadas a tu cuenta.</p>
