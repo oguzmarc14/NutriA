@@ -102,7 +102,7 @@ export default function CalculoNutricionalPage() {
   return <section className="mx-auto w-full max-w-[1480px] space-y-5 px-4 py-7 sm:px-5 md:px-8 md:py-9">
     <ModalRequisitosPlan
       contexto="calculo"
-      tipo={alertaRequisitos?.pacienteId === pacienteTrabajo?.id ? alertaRequisitos.tipo : null}
+      tipo={alertaRequisitos && alertaRequisitos.pacienteId === pacienteTrabajo?.id ? alertaRequisitos.tipo : null}
       onCancelar={() => setAlertaRequisitos(null)}
       onExpediente={() => {
         setAlertaRequisitos(null)
