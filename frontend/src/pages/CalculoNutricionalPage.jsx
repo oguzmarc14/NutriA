@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { Activity, Calculator, ChevronRight, ClipboardList, Save, UserRound, AlertCircle } from 'lucide-react'
 import client from '../api/client'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
+import ModalRequisitosPlan from '../components/planes/ModalRequisitosPlan'
+import { evaluarRequisitosPlan } from '../utils/requisitosPlan.js'
 
 const factores = [
   { value: '1.2', label: '1.20 · Sedentario' },
@@ -32,15 +34,23 @@ export default function CalculoNutricionalPage() {
   const [proteinas, setProteinas] = useState('20')
   const [grasas, setGrasas] = useState('30')
   const [observaciones, setObservaciones] = useState('')
+  const [alertaRequisitos, setAlertaRequisitos] = useState(null)
 
   useEffect(() => {
-    if (!pacienteTrabajo?.id) { setDatos(null); setMedicionId(''); return }
+    if (!pacienteTrabajo?.id) { setDatos(null); setMedicionId(''); setAlertaRequisitos(null); return }
     let activo = true
-    setCargando(true); setError(''); setExito(''); setDatos(null); setMedicionId(''); setSexo('')
+    setCargando(true); setError(''); setExito(''); setDatos(null); setMedicionId(''); setSexo(''); setAlertaRequisitos(null)
     client.get('/calculo-nutricional/' + pacienteTrabajo.id)
       .then(({ data }) => {
         if (!activo) return
         setDatos(data)
+        const requisitos = evaluarRequisitosPlan({
+          expediente: data.expediente,
+          ultimaMedicion: data.mediciones?.[0] || null,
+        })
+        setAlertaRequisitos(requisitos.estado === 'incompleto'
+          ? { pacienteId: pacienteTrabajo.id, tipo: requisitos.tipo }
+          : null)
         setMedicionId(data.mediciones?.[0]?._id || '')
         if (['male', 'female'].includes(data.paciente?.sex)) setSexo(data.paciente.sex)
       })
@@ -90,6 +100,19 @@ export default function CalculoNutricionalPage() {
   }
 
   return <section className="mx-auto w-full max-w-[1480px] space-y-5 px-4 py-7 sm:px-5 md:px-8 md:py-9">
+    <ModalRequisitosPlan
+      contexto="calculo"
+      tipo={alertaRequisitos?.pacienteId === pacienteTrabajo?.id ? alertaRequisitos.tipo : null}
+      onCancelar={() => setAlertaRequisitos(null)}
+      onExpediente={() => {
+        setAlertaRequisitos(null)
+        navigate('/pacientes/' + encodeURIComponent(pacienteTrabajo.id) + '/expediente')
+      }}
+      onMediciones={() => {
+        setAlertaRequisitos(null)
+        navigate('/mediciones?paciente=' + encodeURIComponent(pacienteTrabajo.id))
+      }}
+    />
     <div>
       <p className="text-xs font-extrabold uppercase tracking-[.18em] text-[#4d816f]">Motor nutricional · Etapa 1</p>
       <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-[#173f34]">Cálculo nutricional</h1>
