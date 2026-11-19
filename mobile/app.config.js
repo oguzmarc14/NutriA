@@ -1,12 +1,13 @@
 module.exports = {
   name: 'NutriA',
-  slug: 'nutria-mobile',
+  slug: 'nutria-oguzmarc',
+  owner: 'oguzmarc',
   scheme: 'nutriamobile',
   orientation: 'portrait',
   ios: { bundleIdentifier: 'com.nutria.mobile' },
   android: { package: 'com.nutria.mobile', googleServicesFile: process.env.GOOGLE_SERVICES_FILE || './google-services.json' },
   extra: {
-    ...(process.env.EXPO_PUBLIC_EAS_PROJECT_ID && { eas: { projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID } }),
+    eas: { projectId: 'b43c4e23-5353-4dc2-824a-fd4b19bc3453' },
   },
   platforms: ['android', 'ios'],
   plugins: [
