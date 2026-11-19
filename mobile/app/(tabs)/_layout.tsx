@@ -23,6 +23,10 @@ export default function TabsLayout() {
         tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" color={color} size={size} />,
       }} />
       <Tabs.Protected guard={session?.user.role === 'patient'}>
+        <Tabs.Screen name="progreso" options={{
+          title: 'Progreso',
+          tabBarIcon: ({ color, size }) => <Ionicons name="stats-chart-outline" color={color} size={size} />,
+        }} />
         <Tabs.Screen name="mi-plan" options={{
           title: 'Mi plan',
           tabBarIcon: ({ color, size }) => <Ionicons name="nutrition-outline" color={color} size={size} />,

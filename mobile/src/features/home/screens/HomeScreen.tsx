@@ -46,6 +46,8 @@ export default function Dashboard() {
         <Text style={styles.body}>{user.email}</Text>
       </View>
       {canViewClinic(user.role) && <ClinicHome />}
+      {user.role === 'patient' && <Shortcut icon="notifications-outline" title="Mis notificaciones"
+        detail="Avisos y recordatorios de tus consultas" onPress={() => router.push('/notificaciones')} />}
       {user.role === 'patient' && <Shortcut icon="nutrition-outline" title="Mi plan alimenticio"
         detail="Consulta tu dieta por fecha" onPress={() => router.navigate('/mi-plan')} />}
       {user.role === 'patient' && <Shortcut primary icon="calendar-outline" title="Mis citas"
