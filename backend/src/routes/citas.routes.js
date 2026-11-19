@@ -113,6 +113,7 @@ router.post('/', async (req,res,next) => {
     if (data.estado !== 'cancelada' && await conflicto(req.user._id, data.inicio, data.fin)) return res.status(409).json({ message: 'Ya existe una cita en ese horario' })
     const cita = await Cita.create({ ...data, nutritionist: req.user._id })
     const calendarSynced = await intentarSincronizar(cita)
+    void req.app?.locals?.notificarCita?.(cita)
     res.status(201).json({ ...cita.toObject(), calendarSynced })
   } catch(e) { next(e) }
 })
@@ -136,6 +137,7 @@ router.put('/:id', async (req,res,next) => {
     }
     await cita.save()
     const calendarSynced = await intentarSincronizar(cita)
+    void req.app?.locals?.notificarCita?.(cita)
     res.json({ ...cita.toObject(), calendarSynced })
   } catch(e) { next(e) }
 })
@@ -180,6 +182,7 @@ router.patch('/:id/estado', async (req,res,next) => {
     cita.recordatorio2hEnviado = null
     await cita.save()
     const calendarSynced = await intentarSincronizar(cita)
+    void req.app?.locals?.notificarCita?.(cita)
     res.json({ ...cita.toObject(), calendarSynced })
   } catch(e) { next(e) }
 })
@@ -212,6 +215,7 @@ router.delete('/:id', async (req,res,next) => {
       })
     }
     await cita.deleteOne()
+    void req.app?.locals?.notificarCita?.(cita)
     return res.json({
       message: 'Cita eliminada correctamente',
       calendarSynced: true,

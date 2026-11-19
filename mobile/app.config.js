@@ -4,7 +4,10 @@ module.exports = {
   scheme: 'nutriamobile',
   orientation: 'portrait',
   ios: { bundleIdentifier: 'com.nutria.mobile' },
-  android: { package: 'com.nutria.mobile' },
+  android: { package: 'com.nutria.mobile', ...(process.env.GOOGLE_SERVICES_FILE && { googleServicesFile: process.env.GOOGLE_SERVICES_FILE }) },
+  extra: {
+    ...(process.env.EXPO_PUBLIC_EAS_PROJECT_ID && { eas: { projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID } }),
+  },
   platforms: ['android', 'ios'],
   plugins: [
     'expo-router',

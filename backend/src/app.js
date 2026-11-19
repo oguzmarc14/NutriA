@@ -25,6 +25,7 @@ const calendarRoutes = require('./routes/calendar.routes')
 const recordatoriosRoutes = require('./routes/recordatorios.routes')
 
 const app = express()
+app.locals.notificarCita = require('./services/push.service').notificarCita
 
 app.disable('x-powered-by')
 
@@ -135,6 +136,7 @@ app.use('/api/horario', horarioRoutes)
 app.use('/api/agenda-publica', agendaPublicaRoutes)
 app.use('/api/calendar', calendarRoutes)
 app.use('/api/recordatorios', recordatoriosRoutes)
+app.use('/api/push', require('./routes/push.routes'))
 
 /*
  * ----------------------------------------------------

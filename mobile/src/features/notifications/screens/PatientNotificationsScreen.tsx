@@ -1,3 +1,4 @@
+import { registerPush, unregisterPush } from '../pushRegistration'
 import { programReminders, clearReminders } from '../reminders'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
@@ -62,6 +63,24 @@ export default function PatientNotificationsScreen() {
     </View>)}
     {!!unread.length && <Button label={saving ? 'Guardando…' : 'Marcar como vistos'}
       disabled={saving || loading} selected={false} onPress={() => void markSeen()}/>}
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>Avisos de cambios de cita</Text>
+      <Text style={styles.body}>Recibe actualizaciones enviadas por tu consultorio.</Text>
+      <Button label="Activar notificaciones remotas" disabled={saving} onPress={() => {
+        if (!session) return
+        setSaving(true)
+        void registerPush(session.token).then(() => setStorageError('Teléfono registrado para notificaciones.'))
+          .catch(error => setStorageError(error instanceof Error ? error.message : 'No fue posible registrar el teléfono.'))
+          .finally(() => setSaving(false))
+      }}/>
+      <Button label="Desactivar avisos remotos" selected={false} disabled={saving} onPress={() => {
+        if (!session) return
+        setSaving(true)
+        void unregisterPush(session.token).then(() => setStorageError('Avisos remotos desactivados.'))
+          .catch(() => setStorageError('No se pudo desconectar este teléfono. Intenta de nuevo.'))
+          .finally(() => setSaving(false))
+      }}/>
+    </View>
     <View style={styles.card}>
       <Text style={styles.cardTitle}>Recordatorios del teléfono</Text>
       <Text style={styles.body}>Programa avisos 24 y 2 horas antes de las citas sincronizadas. Vuelve a programarlos después de cambiar o cancelar una cita.</Text>

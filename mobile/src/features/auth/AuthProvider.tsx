@@ -1,3 +1,4 @@
+import { unregisterPush } from '@/features/notifications/pushRegistration'
 import { clearReminders } from '@/features/notifications/reminders'
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import * as SecureStore from 'expo-secure-store'
@@ -62,11 +63,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = useCallback(async () => {
+    if (session?.token) await unregisterPush(session.token)
     await clearReminders()
     await SecureStore.deleteItemAsync(key, storage)
     setSession(null)
     setRestoreError('')
-  }, [])
+  }, [session?.token])
 
   return (
     <AuthContext.Provider value={{
