@@ -20,6 +20,8 @@ function ClinicHome() {
       <Shortcut primary icon="calendar-outline" title="Agendar cita"
         detail="Busca un paciente y elige un horario" onPress={() => router.push('/agendar')} />
       <Shortcut icon="time-outline" title="Ver agenda" detail="Día, semana y mes" onPress={() => router.navigate('/citas')} />
+      <Shortcut icon="nutrition-outline" title="Crear o consultar dieta"
+        detail="Elige un paciente y organiza su plan" onPress={() => router.push('/planes')} />
       <Shortcut icon="people-outline" title="Ver pacientes" onPress={() => router.navigate('/pacientes')} />
       <Text accessibilityRole="header" style={styles.cardTitle}>Próximas citas de hoy</Text>
       {today.loading || today.error || !upcoming.length ? (

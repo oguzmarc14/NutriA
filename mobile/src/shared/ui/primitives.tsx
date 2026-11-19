@@ -30,7 +30,7 @@ export const styles = StyleSheet.create({
   disabled: { opacity: 0.5 },
   buttonText: { color: colors.white, fontSize: 16, fontWeight: '600', textAlign: 'center' },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  expandedButton: { flexGrow: 1 },
+  expandedButton: { flexGrow: 1, flexBasis: 0, minWidth: 128 },
   pressed: { opacity: 0.7 },
   backButton: {
     marginHorizontal: 8, width: 48, height: 48, borderRadius: 24,

@@ -47,6 +47,10 @@ function Navigation() {
       <Stack.Protected guard={canViewClinic(session?.user.role)}>
         <Stack.Screen name="paciente" options={{ ...clinicHeader, title: 'Ficha del paciente' }} />
         <Stack.Screen name="consulta" options={{ ...clinicHeader, title: 'Detalle de cita' }} />
+        <Stack.Screen name="elegir-paciente" options={{ ...clinicHeader, title: 'Elegir paciente' }} />
+        <Stack.Screen name="planes" options={{ ...clinicHeader, title: 'Planes alimenticios' }} />
+        <Stack.Screen name="dieta" options={{ ...clinicHeader, title: 'Editor de dieta' }} />
+        <Stack.Screen name="expediente" options={{ ...clinicHeader, title: 'Expediente clínico' }} />
         <Stack.Screen name="calculo" options={{ ...clinicHeader, title: 'Cálculo nutricional' }} />
         <Stack.Screen name="mediciones" options={{ ...clinicHeader, title: 'Mediciones' }} />
         <Stack.Screen name="agendar" options={{ ...clinicHeader, title: 'Agendar cita' }} />
