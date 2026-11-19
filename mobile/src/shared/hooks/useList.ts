@@ -1,4 +1,4 @@
-import { useResource } from './use-resource'
+import { useResource } from '@/shared/hooks/useResource'
 
 export function useList<T>(path: string, key?: string) {
   const { data, error, loading, reload } = useResource<T[] | Record<string, T[]>>(path)

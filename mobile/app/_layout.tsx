@@ -1,10 +1,10 @@
 import { StatusBar } from 'expo-status-bar'
 import { router, Stack } from 'expo-router'
 import { ActivityIndicator, Text } from 'react-native'
-import { AuthProvider, useAuth } from '../src/auth'
-import { BackButton, Button, colors, Page, styles } from '../src/ui'
+import { AuthProvider, useAuth } from '@/features/auth/AuthProvider'
+import { BackButton, Button, colors, Page, styles } from '@/shared/ui/primitives'
 import { useState } from 'react'
-import { canViewClinic } from '../src/access'
+import { canViewClinic } from '@/features/auth/access'
 
 const clinicHeader = {
   headerShown: true,

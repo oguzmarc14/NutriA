@@ -1,4 +1,4 @@
-import type { Role } from './access'
+import type { Role } from '@/features/auth/access'
 
 export type User = {
   id: string

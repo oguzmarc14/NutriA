@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import * as SecureStore from 'expo-secure-store'
-import { ApiError, request, type Session, type User } from './api'
-import { isRole } from './access'
+import { ApiError, request, type Session, type User } from '@/core/api/client'
+import { isRole } from '@/features/auth/access'
 
 const key = 'nutria.session'
 const storage = { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY }

@@ -1,5 +1,5 @@
 import { ActivityIndicator, Text } from 'react-native'
-import { Button, styles } from './ui'
+import { Button, styles } from '@/shared/ui/primitives'
 
 export function ListState({ loading, error, empty, reload }: {
   loading: boolean

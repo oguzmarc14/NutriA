@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { period } from '../src/agenda.ts'
-import { matchesPatient, shiftDate } from '../src/clinic.ts'
-import { canViewClinic, isRole } from '../src/access.ts'
+import { period } from '../src/features/appointments/calendar.ts'
+import { matchesPatient, shiftDate } from '../src/features/appointments/models.ts'
+import { canViewClinic, isRole } from '../src/features/auth/access.ts'
 
 test('solo el nutriólogo tiene acceso a las rutas clínicas', () => {
   for (const role of ['admin', 'nutritionist', 'patient']) assert.ok(isRole(role))

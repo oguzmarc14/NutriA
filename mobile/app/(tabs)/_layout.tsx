@@ -1,8 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Tabs } from 'expo-router'
-import { BackButton, colors } from '../../src/ui'
-import { useAuth } from '../../src/auth'
-import { canViewClinic } from '../../src/access'
+import { BackButton, colors } from '@/shared/ui/primitives'
+import { useAuth } from '@/features/auth/AuthProvider'
+import { canViewClinic } from '@/features/auth/access'
 
 export default function TabsLayout() {
   const { session } = useAuth()
@@ -23,6 +23,10 @@ export default function TabsLayout() {
         tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" color={color} size={size} />,
       }} />
       <Tabs.Protected guard={session?.user.role === 'patient'}>
+        <Tabs.Screen name="mi-plan" options={{
+          title: 'Mi plan',
+          tabBarIcon: ({ color, size }) => <Ionicons name="nutrition-outline" color={color} size={size} />,
+        }} />
         <Tabs.Screen name="mis-citas" options={{
           title: 'Mis citas',
           tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" color={color} size={size} />,

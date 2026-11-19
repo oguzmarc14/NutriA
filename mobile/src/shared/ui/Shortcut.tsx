@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { colors, styles } from './ui'
+import { colors, styles } from '@/shared/ui/primitives'
 
 export function Shortcut({ title, detail, icon, primary, onPress }: {
   title: string

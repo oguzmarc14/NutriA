@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useFocusEffect } from 'expo-router'
-import { ApiError, request } from './api'
-import { useAuth } from './auth'
+import { ApiError, request } from '@/core/api/client'
+import { useAuth } from '@/features/auth/AuthProvider'
 
 export function useResource<T>(path: string | null) {
   const { session, signOut } = useAuth()
