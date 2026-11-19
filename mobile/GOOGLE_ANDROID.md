@@ -17,7 +17,7 @@ Firebase `nutria-a9121` se utiliza para notificaciones FCM. Su archivo google-se
 
 ## Estado de verificación
 
-Se verificaron la firma de la APK 0.1.0 y el cliente anterior. La automatización de la consola falló antes de crear el cliente de React Native. El registro nuevo y un inicio de sesión real siguen pendientes. No declarar corregido Google hasta verificar ambos.
+Se verificaron la firma de la APK 0.1.0 y el cliente anterior. El usuario creó el cliente adicional «NutriA React Native Android» el 19 de noviembre de 2026; las capturas muestran com.nutria.mobile y la SHA-1 anterior en el formulario, y después el cliente en la lista. Sigue pendiente verificar un inicio de sesión real. No declarar corregido Google hasta comprobarlo.
 
 Después de registrar el cliente, esperar la propagación indicada por Google y probar la APK firmada, no Expo Go. Verificar la respuesta de /api/auth/google y el rol que devuelve /api/auth/me. No publicar tokens ni claves privadas en logs.
 
