@@ -1,3 +1,4 @@
+import { programReminders, clearReminders } from '../reminders'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
 import * as SecureStore from 'expo-secure-store'
@@ -7,7 +8,7 @@ import { useResource } from '@/shared/hooks/useResource'
 import { Button, Page, styles } from '@/shared/ui/primitives'
 
 type Notice = { id: string; titulo: string; detalle: string }
-type Notices = { avisos: Notice[] }
+type Notices = { avisos: Notice[]; citas: { _id: string; inicio: string; estado: string }[] }
 
 export default function PatientNotificationsScreen() {
   const { session } = useAuth()
@@ -61,6 +62,23 @@ export default function PatientNotificationsScreen() {
     </View>)}
     {!!unread.length && <Button label={saving ? 'Guardando…' : 'Marcar como vistos'}
       disabled={saving || loading} selected={false} onPress={() => void markSeen()}/>}
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>Recordatorios del teléfono</Text>
+      <Text style={styles.body}>Programa avisos 24 y 2 horas antes de las citas sincronizadas. Vuelve a programarlos después de cambiar o cancelar una cita.</Text>
+      <Button label="Programar recordatorios" disabled={!data || loading || saving} onPress={() => {
+        setSaving(true)
+        void programReminders(data!.citas).then(count => setStorageError(count
+          ? 'Recordatorios programados en este teléfono.' : 'No hay recordatorios futuros para programar.'))
+          .catch(error => setStorageError(error instanceof Error ? error.message : 'No se pudieron programar los avisos.'))
+          .finally(() => setSaving(false))
+      }}/>
+      <Button label="Desactivar recordatorios" selected={false} disabled={saving} onPress={() => {
+        setSaving(true)
+        void clearReminders().then(() => setStorageError('Recordatorios desactivados.'))
+          .catch(() => setStorageError('No se pudieron desactivar los recordatorios.'))
+          .finally(() => setSaving(false))
+      }}/>
+    </View>
     <Button label="Ver mis citas" onPress={() => router.navigate('/mis-citas')}/>
   </Page>
 }

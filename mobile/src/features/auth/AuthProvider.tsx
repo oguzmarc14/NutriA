@@ -1,3 +1,4 @@
+import { clearReminders } from '@/features/notifications/reminders'
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import * as SecureStore from 'expo-secure-store'
 import { ApiError, request, type Session, type User } from '@/core/api/client'
@@ -61,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = useCallback(async () => {
+    await clearReminders()
     await SecureStore.deleteItemAsync(key, storage)
     setSession(null)
     setRestoreError('')

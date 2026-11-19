@@ -1,3 +1,4 @@
+import NotificationNavigation from '@/features/notifications/NotificationNavigation'
 import { StatusBar } from 'expo-status-bar'
 import { router, Stack } from 'expo-router'
 import { ActivityIndicator, Text } from 'react-native'
@@ -57,6 +58,7 @@ export default function RootLayout() {
     <AuthProvider>
       <StatusBar style="dark" />
       <Navigation />
+      <NotificationNavigation />
     </AuthProvider>
   )
 }
