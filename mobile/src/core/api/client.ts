@@ -38,8 +38,8 @@ export async function request<T>(path: string, options: {
   const data = await response.json().catch(() => null)
   if (!response.ok) {
     throw new ApiError(response.status, response.status < 500 && typeof data?.message === 'string'
-      ? data.message : 'El servicio no estÃ¡ disponible. Intenta de nuevo.')
+      ? data.message : 'El servicio no está disponible. Intenta de nuevo.')
   }
-  if (data === null) throw new Error('La API devolviÃ³ una respuesta inesperada.')
+  if (data === null) throw new Error('La API devolvió una respuesta inesperada.')
   return data as T
 }
