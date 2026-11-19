@@ -27,6 +27,10 @@ export default function PatientDetail() {
           </View>
           <Shortcut primary icon="calendar-outline" title="Agendar cita"
             detail="Elige un horario disponible" onPress={() => router.push({ pathname: '/agendar', params: { patient: id } })} />
+          <Shortcut icon="calculator-outline" title="Cálculo nutricional" detail="Crea borradores con historial de fechas"
+            onPress={() => router.push({ pathname: '/calculo', params: { patient: id } })} />
+          <Shortcut icon="fitness-outline" title="Mediciones" detail="Registra medidas y consulta el historial"
+            onPress={() => router.push({ pathname: '/mediciones', params: { patient: id } })} />
           <View style={styles.card}>
             <Text accessibilityRole="header" style={styles.cardTitle}>Próxima cita</Text>
             <Text style={styles.body}>{next ? dateTime.format(new Date(next.inicio)) :

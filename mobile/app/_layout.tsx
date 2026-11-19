@@ -47,6 +47,8 @@ function Navigation() {
       <Stack.Protected guard={canViewClinic(session?.user.role)}>
         <Stack.Screen name="paciente" options={{ ...clinicHeader, title: 'Ficha del paciente' }} />
         <Stack.Screen name="consulta" options={{ ...clinicHeader, title: 'Detalle de cita' }} />
+        <Stack.Screen name="calculo" options={{ ...clinicHeader, title: 'Cálculo nutricional' }} />
+        <Stack.Screen name="mediciones" options={{ ...clinicHeader, title: 'Mediciones' }} />
         <Stack.Screen name="agendar" options={{ ...clinicHeader, title: 'Agendar cita' }} />
       </Stack.Protected>
     </Stack>
