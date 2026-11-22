@@ -42,6 +42,6 @@ export function ClinicMenu({ close }: { close?: () => void }) {
       <Ionicons name={item.icon} color={colors.green} size={22} />
       <Text style={{ color: colors.ink, fontSize: 15, fontWeight: '600', flex: 1 }}>{item.label}</Text>
       <Ionicons name="chevron-forward" color={colors.muted} size={16} />
-    </Press>)}
+    </Pressable>)}
   </View>
 }
