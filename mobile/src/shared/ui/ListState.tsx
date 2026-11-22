@@ -12,7 +12,7 @@ export function ListState({ loading, error, empty, reload }: {
     <>
       {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text>
         : empty && <Text style={styles.body}>{empty}</Text>}
-      <Button label={error ? 'Reintentar' : 'Actualizar'} selected={false} onPress={reload} />
+      {!!error && <Button label="Reintentar" selected={false} onPress={reload} />}
     </>
   )
 }

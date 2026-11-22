@@ -76,7 +76,6 @@ export default function MyAppointments() {
   return <Page>
     <Text accessibilityRole="header" style={styles.title}>Mis citas</Text>
     {data && <Text style={styles.body}>Consultas con {data.profesional}</Text>}
-    <Button label="Actualizar" selected={false} disabled={loading || !!busy} onPress={reload} />
     {loading && <ActivityIndicator accessibilityLabel="Cargando citas" />}
     {!!(error || actionError) && <Text accessibilityRole="alert" style={styles.error}>{actionError || error}</Text>}
     {data && <>

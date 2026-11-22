@@ -16,10 +16,10 @@ export type DraftPlan = { name: string; goal: string; date: string; energy: stri
 let sequence = 0
 export const draftKey = () => `draft-${++sequence}`
 export function newMeal(nombre = 'Desayuno'): DraftMeal {
-  return { key: draftKey(), nombre, hora: '', platillo: '', descripcion: '', percentage: '', preparaciones: [], alimentos: [] }
+  return { key: draftKey(), nombre, hora: '', platillo: '', descripcion: '', percentage: '', preparaciones: [{ id: draftKey(), nombre: '', tipo: 'platillo' }], alimentos: [] }
 }
 export function newPlan(): DraftPlan {
-  return { name: '', goal: '', date: localDate(), energy: '', meals: [newMeal()] }
+  return { name: '', goal: '', date: localDate(), energy: '', meals: [['Desayuno', '08:00'], ['Comida', '14:30'], ['Cena', '20:30']].map(([nombre, hora], i) => ({ ...newMeal(nombre), hora, percentage: String([25, 40, 35][i]) })) }
 }
 export function editPlan(plan: Plan): DraftPlan {
   return { name: plan.nombre, goal: plan.objetivo || '', date: plan.fechaInicio.slice(0, 10),
@@ -60,7 +60,7 @@ export function planPayload(draft: DraftPlan) {
       alimentos: meal.alimentos.map(food => {
         const cantidad = numberInput(food.quantity)
         if (!Number.isFinite(cantidad) || cantidad < 0.1) throw new Error(`Revisa las porciones de ${food.nombre}: el mínimo es 0.1.`)
-        const common = { cantidad, notas: food.notas || '' }
+        const common = { cantidad, notas: food.notas || '', preparacionId: food.preparacionId || '' }
         if (food.tipo === 'catalogo') {
           const alimentoId = typeof food.alimento === 'string' ? food.alimento : food.alimento?._id
           if (!alimentoId || !/^[a-f\d]{24}$/i.test(alimentoId)) throw new Error(`El alimento ${food.nombre} ya no tiene referencia de catálogo. Sustitúyelo antes de guardar.`)
@@ -73,4 +73,23 @@ export function planPayload(draft: DraftPlan) {
     }
   })
   return { nombre: draft.name.trim(), objetivo: draft.goal.trim(), fechaInicio: `${draft.date}T00:00:00.000Z`, metaEnergiaKcal: energy, comidas }
+}
+
+export function duplicatePlan(plan: Plan): DraftPlan {
+  const draft = editPlan(plan)
+  return { ...draft, name: plan.nombre + ' (copia)', date: localDate(), meals: draft.meals.map(({ _id, ...meal }) => ({ ...meal, key: draftKey(), alimentos: meal.alimentos.map(food => ({ ...food, key: draftKey() })) })) }
+}
+export function assistedPlan(nutrition: { numeroComidasDia?: number | string; primeraComida?: string; ultimaComida?: string; objetivos?: string[] }, kcal: number): DraftPlan {
+  const count = Number(nutrition.numeroComidasDia)
+  const names = count === 4 ? ['Desayuno', 'Colación', 'Comida', 'Cena'] : count >= 5 ? ['Desayuno', 'Colación matutina', 'Comida', 'Colación vespertina', 'Cena'] : ['Desayuno', 'Comida', 'Cena']
+  const hours = names.length === 3 ? ['08:00', '14:30', '20:30'] : names.length === 4 ? ['08:00', '11:30', '14:30', '20:30'] : ['08:00', '11:30', '14:30', '17:30', '20:30']
+  const percentages = names.length === 3 ? [25, 40, 35] : names.length === 4 ? [25, 10, 40, 25] : [20, 10, 35, 10, 25]
+  const minutes = (v?: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(v || '') ? Number(v!.slice(0, 2)) * 60 + Number(v!.slice(3)) : null
+  const first = minutes(nutrition.primeraComida), last = minutes(nutrition.ultimaComida)
+  const hhmm = (n: number) => String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0')
+  const labels: Record<string, string> = { perdida_peso: 'Pérdida de peso', incremento_masa: 'Incremento de masa muscular', salud: 'Mejorar la salud', rendimiento_deportivo: 'Rendimiento deportivo', control_enfermedades: 'Control de enfermedades' }
+  return { name: 'Plan nutricional - ' + localDate(), date: localDate(), energy: String(kcal), goal: (nutrition.objetivos || []).map(x => labels[x] || x).join(', '),
+    meals: names.map((name, i) => ({ ...newMeal(name), percentage: String(percentages[i]), hora: first !== null && last !== null && last > first
+      ? hhmm(Math.round((first + (last - first) * i / (names.length - 1)) / 5) * 5)
+      : i === 0 && first !== null ? hhmm(first) : i === names.length - 1 && last !== null ? hhmm(last) : hours[i] })) }
 }

@@ -56,7 +56,6 @@ export default function ClinicDashboard() {
     <Shortcut icon="clipboard-outline" title="Expediente clínico" detail="Consulta y actualiza su información" onPress={() => router.push({ pathname: '/elegir-paciente', params: { intent: 'record' } })} />
     <Shortcut icon="nutrition-outline" title="Crear dieta" detail="Continúa con el paciente elegido" onPress={() => router.push({ pathname: '/elegir-paciente', params: { intent: 'create-plan' } })} />
     <Button label="Ver todos los apartados" selected={false} onPress={() => router.navigate('/mas')} />
-    <Button label="Actualizar resumen" selected={false} onPress={() => { clinic.reload(); stats.reload() }} />
   </Page>
 }
 const s = StyleSheet.create({

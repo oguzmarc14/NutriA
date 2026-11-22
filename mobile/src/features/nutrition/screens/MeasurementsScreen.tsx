@@ -1,3 +1,4 @@
+import { DateField } from '@/shared/ui/DateTimeField'
 import { MeasurementChart } from '@/features/progress/MeasurementChart'
 import { useState } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
@@ -59,7 +60,7 @@ export default function Measurements() {
       <Text style={styles.title}>{resource.data.paciente.name}</Text>
       <View style={styles.card}>
         <Text accessibilityRole="header" style={styles.cardTitle}>{editing ? 'Editar medición' : 'Nueva medición'}</Text>
-        <FormField label="Fecha (AAAA-MM-DD)" value={date} onChange={setDate} disabled={busy} />
+        <DateField label="Fecha de medición" value={date} onChange={setDate} disabled={busy} />
         {fields.map(([key, label]) => <FormField key={key} numeric label={label} value={form[key]}
           disabled={busy} onChange={value => setForm(previous => ({ ...previous, [key]: value }))} />)}
         {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}

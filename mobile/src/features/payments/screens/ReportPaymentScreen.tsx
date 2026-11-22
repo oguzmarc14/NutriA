@@ -1,3 +1,4 @@
+import { DateField } from '@/shared/ui/DateTimeField'
 import { useRef, useState } from 'react'
 import { router } from 'expo-router'
 import { Alert, Text } from 'react-native'
@@ -42,7 +43,7 @@ export default function ReportPaymentScreen() {
     <Text style={styles.title}>Reportar un pago</Text>
     <Text style={styles.body}>Registra únicamente un pago que ya realizaste. La nutrióloga revisará su recepción.</Text>
     <FormField label="Importe en MXN (sin separadores de miles)" numeric disabled={busy || sent} value={form.amount} onChange={value => change('amount', value)} />
-    <FormField label="Fecha del pago (AAAA-MM-DD)" disabled={busy || sent} value={form.date} onChange={value => change('date', value)} />
+    <DateField label="Fecha del pago" disabled={busy || sent} value={form.date} onChange={value => change('date', value)} />
     <Text style={styles.cardTitle}>Método de pago</Text>
     {Object.entries(methods).map(([value, label]) => <Button key={value} disabled={busy || sent} selected={form.method === value} label={label} onPress={() => change('method', value)} />)}
     <FormField label="Concepto (2 a 120 caracteres)" disabled={busy || sent} value={form.concept} onChange={value => change('concept', value)} />

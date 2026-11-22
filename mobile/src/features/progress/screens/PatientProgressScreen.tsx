@@ -36,7 +36,6 @@ export default function PatientProgressScreen() {
   return <Page>
     <Text accessibilityRole="header" style={styles.title}>Mi progreso</Text>
     <Text style={styles.body}>Consulta tus mediciones y registros diarios de comidas.</Text>
-    <Button label="Actualizar" selected={false} disabled={loading} onPress={reload}/>
     {loading && <ActivityIndicator accessibilityLabel="Cargando mediciones"/>}
     {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
     {latest && <View style={styles.card}>

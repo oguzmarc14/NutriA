@@ -19,7 +19,6 @@ export default function ClinicPlansScreen() {
     {resource.data && <>
       <Text style={styles.title}>{resource.data.paciente.name}</Text>
       <Button label="Crear dieta" onPress={() => router.push({ pathname: '/dieta', params: { patient } })} />
-      <Button selected={false} label="Actualizar planes" onPress={resource.reload} />
       <Text accessibilityRole="header" style={styles.cardTitle}>Planes alimenticios</Text>
       {!resource.data.planes.length && <Text style={styles.body}>Este paciente todavía no tiene dietas registradas.</Text>}
       {resource.data.planes.map(plan => <View key={plan._id} style={styles.card}>

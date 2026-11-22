@@ -1,3 +1,5 @@
+import { DateField } from '@/shared/ui/DateTimeField'
+import { parseDay } from '@/shared/ui/dateTimeModel'
 import { useRef, useState } from 'react'
 import { router, Stack, useLocalSearchParams } from 'expo-router'
 import { Alert, Text, TextInput, View } from 'react-native'
@@ -39,6 +41,7 @@ function AppointmentForm({ initialPatient, existing }: { initialPatient?: string
   const [patient, setPatient] = useState(initialPatient ?? '')
   const [search, setSearch] = useState('')
   const [date, setDate] = useState('')
+  const [calendarDate, setCalendarDate] = useState('')
   const [from, setFrom] = useState('')
   const [slot, setSlot] = useState('')
   const [type, setType] = useState<keyof typeof types>(existing && Object.prototype.hasOwnProperty.call(types, existing.tipo) ? existing.tipo as keyof typeof types : 'seguimiento')
@@ -50,7 +53,8 @@ function AppointmentForm({ initialPatient, existing }: { initialPatient?: string
   const availability = useResource<Availability>('/horario/disponibilidad?dias=7' + (from ? '&desde=' + from : ''))
   const data = availability.data
   const day = data?.dias.find(item => item.fecha === date) ?? data?.dias[0]
-  const selected = day?.espacios.find(item => item.inicio === slot)
+  const calendarValid = !calendarDate || !!parseDay(calendarDate) && !!data && calendarDate >= data.hoy && calendarDate <= shiftDate(data.hoy, 180)
+  const selected = calendarValid ? day?.espacios.find(item => item.inicio === slot) : undefined
   const selectedPatient = patients.rows.find(item => item._id === patient)
 
   async function save() {
@@ -119,16 +123,22 @@ function AppointmentForm({ initialPatient, existing }: { initialPatient?: string
         {availability.loading || availability.error ? <ListState {...availability} /> : data && (
           <>
             <Text style={styles.body}>{data.zonaHoraria} · 60 min</Text>
+            <DateField label="Fecha de la cita" disabled={saving} value={calendarDate || day?.fecha || data.desde} onChange={value => {
+              setCalendarDate(value); setSlot('')
+              if (!parseDay(value)) { setError('Elige una fecha válida.'); return }
+              if (value < data.hoy || value > shiftDate(data.hoy, 180)) { setError('Elige una fecha entre hoy y los próximos 180 días.'); return }
+              setError(''); setDate(value); setFrom(value)
+            }} />
             <View style={styles.row}>
               <Button label="7 días antes" expand selected={false} disabled={saving || data.desde <= data.hoy}
-                onPress={() => { setFrom([shiftDate(data.desde, -7), data.hoy].sort()[1]); setDate(''); setSlot('') }} />
+                onPress={() => { setFrom([shiftDate(data.desde, -7), data.hoy].sort()[1]); setDate(''); setCalendarDate(''); setSlot('') }} />
               <Button label="7 días después" expand selected={false} disabled={saving || shiftDate(data.desde, 7) > shiftDate(data.hoy, 180)}
-                onPress={() => { setFrom(shiftDate(data.desde, 7)); setDate(''); setSlot('') }} />
+                onPress={() => { setFrom(shiftDate(data.desde, 7)); setDate(''); setCalendarDate(''); setSlot('') }} />
             </View>
             <View style={styles.row}>
               {data.dias.map(item => (
                 <Button key={item.fecha} label={dayLabel(item.fecha, true)} expand selected={day?.fecha === item.fecha} disabled={saving}
-                  onPress={() => { setDate(item.fecha); setSlot('') }} />
+                  onPress={() => { setDate(item.fecha); setCalendarDate(item.fecha); setSlot('') }} />
               ))}
             </View>
             <Text style={styles.cardTitle}>{day && dayLabel(day.fecha)}</Text>

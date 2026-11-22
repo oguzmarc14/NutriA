@@ -1,3 +1,4 @@
+import { DateField } from '@/shared/ui/DateTimeField'
 import { useState } from 'react'
 import { router } from 'expo-router'
 import { Text, TextInput, View } from 'react-native'
@@ -13,7 +14,7 @@ export function MealHistory({ data, editable }: { data: TrackingData; editable?:
   const records = valid ? data.registros.filter(item => item.fecha === date) : []
   return <View style={{ gap: 12 }}>
     <Text accessibilityRole="header" style={styles.cardTitle}>Seguimiento de comidas</Text>
-    <TextInput accessibilityLabel="Fecha del seguimiento, AAAA-MM-DD" placeholder="AAAA-MM-DD" maxLength={10} style={styles.input} value={date} onChangeText={setDate} />
+    <DateField label="Fecha del seguimiento" value={date} onChange={setDate} />
     {!valid && <Text style={styles.error}>Escribe una fecha válida en formato AAAA-MM-DD.</Text>}
     <View style={styles.row}>
       <Button expand selected={false} disabled={!valid} label="Día anterior" onPress={() => setDate(shiftDate(date, -1))} />
@@ -35,7 +36,7 @@ export function MealHistory({ data, editable }: { data: TrackingData; editable?:
       {!!record.comentario && <Text style={styles.body}>{record.comentario}</Text>}
       {record.plan !== summary.plan?._id && <Text style={styles.body}>Registro conservado de una dieta anterior.</Text>}
       {editable && date <= localDate() && record.plan === summary.plan?._id && summary.plan.comidas.some(meal => meal._id === record.comida) &&
-        <Button selected={false} label="Actualizar registro" onPress={() => router.push({ pathname: '/registrar-comida', params: { plan: record.plan, meal: record.comida, date } })} />}
+        <Button selected={false} label="Editar registro" onPress={() => router.push({ pathname: '/registrar-comida', params: { plan: record.plan, meal: record.comida, date } })} />}
     </View>)}
   </View>
 }

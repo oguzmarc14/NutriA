@@ -1,3 +1,4 @@
+import { DateField } from '@/shared/ui/DateTimeField'
 import { router } from 'expo-router'
 import { useState } from 'react'
 import { ActivityIndicator, Text, TextInput, View } from 'react-native'
@@ -26,12 +27,9 @@ export default function PatientPlanScreen() {
 
   return <Page>
     <Text accessibilityRole="header" style={styles.title}>Mi plan alimenticio</Text>
-    <Text style={styles.body}>Fecha del menú</Text>
-    <TextInput accessibilityLabel="Fecha del menú, año mes día" value={date} onChangeText={setDate}
-      placeholder="AAAA-MM-DD" maxLength={10} style={styles.input} autoCapitalize="none"/>
+    <DateField label="Fecha del menú" value={date} onChange={setDate} />
     {!validDate && <Text accessibilityRole="alert" style={styles.error}>Escribe una fecha válida en formato AAAA-MM-DD.</Text>}
     <Button label="Hoy" selected={false} onPress={() => setDate(localDate())}/>
-    <Button label="Actualizar" selected={false} disabled={loading} onPress={reload}/>
     {loading && <ActivityIndicator accessibilityLabel="Cargando dieta"/>}
     {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
     {validDate && date > localDate() && <Text style={styles.body}>Puedes consultar menús futuros; el registro de comidas se habilita cuando llegue ese día.</Text>}

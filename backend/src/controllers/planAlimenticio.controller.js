@@ -165,6 +165,8 @@ const alimentoPersonalizadoSchema =
         .min(0.1)
         .default(1),
 
+    preparacionId: z.string().trim().optional(),
+
     notas:
       z.string()
         .trim()

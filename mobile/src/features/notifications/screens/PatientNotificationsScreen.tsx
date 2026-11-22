@@ -52,7 +52,6 @@ export default function PatientNotificationsScreen() {
   return <Page>
     <Text accessibilityRole="header" style={styles.title}>Mis notificaciones</Text>
     <Text style={styles.body}>Confirmaciones y recordatorios de tus consultas.</Text>
-    <Button label="Actualizar" selected={false} disabled={loading || saving} onPress={reload}/>
     {loading && <ActivityIndicator accessibilityLabel="Cargando notificaciones"/>}
     {!!(error || storageError) && <Text accessibilityRole="alert" style={styles.error}>{error || storageError}</Text>}
     {data && !notices.length && <Text style={styles.body}>No tienes avisos de citas.</Text>}

@@ -32,12 +32,12 @@ function fixture({expediente=true,medicion=true,pertenece=true}={}){
     require(name){if(!(name in deps))throw Error('Unexpected require: '+name);return deps[name]},
     module:mod,Date,Number,Promise,Set,
   },{filename:'planAlimenticio.controller.js'})
-  const invoke=async()=>{
+  const invoke=async(overrides={})=>{
     let error=null
     const res={statusCode:200,body:null,status(n){this.statusCode=n;return this},
       json(data){this.body=data;return this}}
     const req={params:{pacienteId:PID},user:{id:UID},body:{
-      nombre:'Dieta seguimiento',fechaInicio:'2026-11-14',comidas:[],
+      nombre:'Dieta seguimiento',fechaInicio:'2026-11-14',comidas:[],...overrides,
     }}
     await mod.exports.crearPlanAlimenticio(req,res,e=>error=e)
     if(error)throw error
@@ -81,4 +81,15 @@ test('crear dieta funciona si existen expediente y medidas, con permiso de nutri
   const res=await sinPermiso.invoke()
   assert.equal(res.statusCode,404)
   assert.equal(sinPermiso.calls.created,0)
+})
+
+test('alimentos personalizados conservan el vínculo al platillo o bebida al guardar', async () => {
+  const f = fixture()
+  const r = await f.invoke({ comidas: [{ nombre: 'Desayuno', hora: '08:00',
+    preparaciones: [{ id: 'prep-bebida', tipo: 'bebida', nombre: 'Batido' }],
+    alimentos: [{ tipo: 'personalizado', nombre: 'Batido casero', cantidad: 1.5, preparacionId: 'prep-bebida', nutrimentos: { kcal: 100, proteina: 5, carbohidratos: 10, grasas: 3 } }],
+  }] })
+  assert.equal(r.statusCode, 201)
+  assert.equal(r.body.plan.comidas[0].alimentos[0].preparacionId, 'prep-bebida')
+  assert.equal(r.body.plan.comidas[0].alimentos[0].cantidad, 1.5)
 })
