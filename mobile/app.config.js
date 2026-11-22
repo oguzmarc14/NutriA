@@ -15,6 +15,7 @@ module.exports = {
     'expo-router',
     'expo-secure-store',
     'expo-notifications',
+    ['expo-image-picker', { photosPermission: 'Permitir seleccionar el logo de tu clínica.', cameraPermission: false, microphonePermission: false }],
     ...(process.env.GOOGLE_IOS_URL_SCHEME
       ? [['@react-native-google-signin/google-signin', {
           iosUrlScheme: process.env.GOOGLE_IOS_URL_SCHEME,

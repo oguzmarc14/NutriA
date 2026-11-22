@@ -56,6 +56,9 @@ function Navigation() {
       <Stack.Protected guard={session?.user.role === 'admin' || canViewClinic(session?.user.role)}>
         <Stack.Screen name="comunidad" options={{ ...clinicHeader, title: 'NutriA Community' }} />
       </Stack.Protected>
+      <Stack.Protected guard={session?.user.role === 'nutritionist'}>
+        <Stack.Screen name="mi-clinica" options={{ ...clinicHeader, title: 'Mi clínica' }} />
+      </Stack.Protected>
       <Stack.Protected guard={canViewClinic(session?.user.role)}>
         <Stack.Screen name="pagos-paciente" options={{ ...clinicHeader, title: 'Pagos del paciente' }} />
         <Stack.Screen name="seguimiento-paciente" options={{ ...clinicHeader, title: 'Seguimiento de comidas' }} />
