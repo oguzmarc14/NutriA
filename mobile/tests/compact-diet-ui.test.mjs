@@ -1,30 +1,26 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
-
-const source = path => readFileSync(new URL('../src/features/nutrition/plans/' + path, import.meta.url), 'utf8')
-const search = source('InlineFoodSearch.tsx')
-const editor = source('MealEditor.tsx')
-
-test('mobile search uses accessible compact add action instead of full-width result buttons', () => {
-  assert.match(search, /accessibilityLabel=\{\x60Agregar \$\{food\.nombre\} a la preparación\x60\}/)
-  assert.match(search, /width: 44, height: 44/)
-  assert.doesNotMatch(search, /label="Agregar alimento"/)
+import { newMeal, fromCatalog, planPayload, newPlan } from '../src/features/nutrition/plans/models.ts'
+import { preparationFoods, normalizedFoods, stepPortion } from '../src/features/nutrition/plans/preparations.ts'
+const tortilla = { _id: 'aaaaaaaaaaaaaaaaaaaaaaaa', nombre: 'Tortilla', nutrimentos: { kcal: 70, proteina: 2, carbohidratos: 15, grasas: 0 } }
+test('switching preparation keeps catalog and custom food quantities independent', () => {
+  const meal = newMeal(); meal.preparaciones = [{ id: 'plate', nombre: 'Tacos', tipo: 'platillo' }, { id: 'drink', nombre: 'Leche', tipo: 'bebida' }]
+  meal.alimentos = [{ ...fromCatalog(tortilla), preparacionId: 'plate', quantity: '2' }, { ...fromCatalog(tortilla), tipo: 'personalizado', preparacionId: 'drink', quantity: '0.5' }]
+  assert.equal(preparationFoods(meal, 'plate')[0].quantity, '2')
+  assert.equal(preparationFoods(meal, 'drink')[0].quantity, '0.5')
 })
-test('meal preparations stay in horizontal scroll with accessible selected states', () => {
-  assert.match(editor, /<ScrollView horizontal/)
-  assert.match(editor, /accessibilityState=\{\{ selected \}\}/)
-  assert.match(editor, /Platillos y bebidas/)
+test('decimal portions stay editable and preserve notes when serialized', () => {
+  const draft = newPlan(); draft.name = 'Plan de prueba'
+  draft.meals[0].alimentos = [{ ...fromCatalog(tortilla), quantity: '0,5', notas: 'Calentar', preparacionId: draft.meals[0].preparaciones[0].id }]
+  const food = planPayload(draft).comidas[0].alimentos[0]
+  assert.equal(food.cantidad, 0.5); assert.equal(food.notas, 'Calentar')
 })
-test('portions are compact, validate minimum and keep optional notes collapsed', () => {
-  assert.match(editor, /function adjustPortion\(/)
-  assert.match(editor, /Math\.max\(0\.1,/)
-  assert.match(editor, /Notas y cantidad exacta/)
-  assert.match(editor, /\{expanded && <View/)
-  assert.match(editor, /accessibilityLabel=\{\x60Reducir porciones de/)
+test('portion changes obey backend minimum without losing comma decimal values', () => {
+  assert.equal(stepPortion('0,5', -1), '0.1')
+  assert.equal(stepPortion('1,5', 1), '2.5')
 })
-test('removal is explicit and destructive meal removal requires confirmation', () => {
-  assert.match(editor, /Alert\.alert\('Eliminar comida'/)
-  assert.match(editor, /accessibilityLabel=\{\x60Quitar \$\{food\.nombre\}\x60\}/)
-  assert.match(editor, /Alert\.alert\('Eliminar preparación'/)
+test('legacy food preparation normalization does not mutate saved references', () => {
+  const meal = newMeal(); meal.alimentos = [{ ...fromCatalog(tortilla), preparacionId: 'legacy-unknown' }]
+  assert.equal(normalizedFoods(meal)[0].preparacionId, meal.preparaciones[0].id)
+  assert.equal(meal.alimentos[0].preparacionId, 'legacy-unknown')
 })

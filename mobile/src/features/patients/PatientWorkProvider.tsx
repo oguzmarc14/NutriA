@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store'
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useAuth } from '@/features/auth/AuthProvider'
 
 type ActivePatient = { id: string; name: string }
@@ -14,12 +14,14 @@ const validId = (id: string) => /^[a-f\d]{24}$/i.test(id)
 export function PatientWorkProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth()
   const key = session?.user.role === 'nutritionist' ? 'nutria.patient-work.' + session.user.id : null
+  const restoreRevision = useRef(0)
   const [saved, setSaved] = useState<{ key: string; patient: ActivePatient } | null>(null)
   useEffect(() => {
     if (!key) return
     let cancelled = false
+    const revision = ++restoreRevision.current
     void SecureStore.getItemAsync(key).then(raw => {
-      if (!raw || cancelled) return
+      if (!raw || cancelled || revision !== restoreRevision.current) return
       try {
         const patient = JSON.parse(raw) as ActivePatient
         if (typeof patient.id !== 'string' || !validId(patient.id) ||
@@ -33,11 +35,13 @@ export function PatientWorkProvider({ children }: { children: ReactNode }) {
   const active = key && saved?.key === key ? saved.patient : null
   const start = useCallback((patient: { _id: string; name: string }) => {
     if (!key || !validId(patient._id) || !patient.name.trim()) return
+    restoreRevision.current++
     const selected = { id: patient._id, name: patient.name.trim() }
     setSaved({ key, patient: selected })
     void SecureStore.setItemAsync(key, JSON.stringify(selected)).catch(() => {})
   }, [key])
   const stop = useCallback(() => {
+    restoreRevision.current++
     setSaved(null)
     if (key) void SecureStore.deleteItemAsync(key).catch(() => {})
   }, [key])

@@ -58,10 +58,21 @@ jobs:
             --key-pass pass:android --out NutriA-Mobile-preview.apk "$APK"
           "$SDK_BUILD_TOOLS/apksigner" verify --verbose --print-certs NutriA-Mobile-preview.apk
           test -s NutriA-Mobile-preview.apk
+      - name: Advertir alcance de la firma temporal
+        run: |
+          echo "::warning title=APK de interfaz::Esta APK usa una firma temporal distinta de la registrada para Google. Para actualizar la app habitual y probar Google usa la compilación de Expo con la firma estable."
+          cat > APK-LEEME.txt <<'EOF'
+          APK DE PRUEBA DE INTERFAZ
+          Esta compilación usa una firma temporal generada por GitHub Actions.
+          No sustituye la APK habitual de Expo y no acredita que funcione el acceso con Google.
+          Para actualizar la app que ya funciona, utiliza la compilación de Expo con la firma estable.
+          EOF
       - name: Publicar APK instalable de prueba
         uses: actions/upload-artifact@v4
         with:
           name: NutriA-ReactNative-APK-preview
-          path: mobile/NutriA-Mobile-preview.apk
+          path: |
+            mobile/NutriA-Mobile-preview.apk
+            mobile/APK-LEEME.txt
           if-no-files-found: error
           retention-days: 14

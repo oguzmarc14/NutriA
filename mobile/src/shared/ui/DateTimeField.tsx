@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { Modal, Pressable, ScrollView, Text, TextInput, View, type StyleProp, type TextStyle } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Button, colors, styles } from './primitives'
 import { calendarDays, dayValue, parseDay } from './dateTimeModel'
-type Props = { label: string; value: string; onChange: (value: string) => void; disabled?: boolean }
-export function DateField({ label, value, onChange, disabled }: Props) {
+type Props = { label: string; value: string; onChange: (value: string) => void; disabled?: boolean; labelStyle?: StyleProp<TextStyle> }
+export function DateField({ label, value, onChange, disabled, labelStyle }: Props) {
   const [open, setOpen] = useState(false)
   const [month, setMonth] = useState(new Date())
-  return <View style={{ gap: 6 }}><Text style={styles.body}>{label}</Text>
+  return <View style={{ gap: 6 }}><Text style={[styles.body, labelStyle]}>{label}</Text>
     <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
       <TextInput accessibilityLabel={label} value={value} onChangeText={onChange} editable={!disabled}
         placeholder="AAAA-MM-DD" maxLength={10} style={[styles.input, { flex: 1 }]} keyboardType="numbers-and-punctuation" />
@@ -42,10 +42,10 @@ export function DateField({ label, value, onChange, disabled }: Props) {
     </Modal>
   </View>
 }
-export function TimeField({ label, value, onChange, disabled }: Props) {
+export function TimeField({ label, value, onChange, disabled, labelStyle }: Props) {
   const [open, setOpen] = useState(false)
   const [hour, setHour] = useState('08'), [minute, setMinute] = useState('00')
-  return <View style={{ gap: 6 }}><Text style={styles.body}>{label}</Text>
+  return <View style={{ gap: 6 }}><Text style={[styles.body, labelStyle]}>{label}</Text>
     <View style={{ flexDirection: 'row', gap: 8 }}><TextInput accessibilityLabel={label} value={value} onChangeText={onChange}
       placeholder="HH:MM" maxLength={5} keyboardType="numbers-and-punctuation" editable={!disabled} style={[styles.input, { flex: 1 }]} />
       <Pressable disabled={disabled} accessibilityRole="button" accessibilityLabel={'Elegir hora: ' + label} style={{ padding: 14 }} onPress={() => {

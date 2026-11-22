@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import type { ReactNode } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 export const colors = {
@@ -38,10 +38,10 @@ export const styles = StyleSheet.create({
   },
 })
 
-export function Page({ title, children, bottomInset }: { title?: string; children: ReactNode; bottomInset?: boolean }) {
+export function Page({ title, children, bottomInset, contentStyle }: { title?: string; children: ReactNode; bottomInset?: boolean; contentStyle?: StyleProp<ViewStyle> }) {
   return (
     <SafeAreaView style={styles.safe} edges={title ? ['top', 'bottom', 'left', 'right'] : bottomInset ? ['bottom', 'left', 'right'] : ['left', 'right']}>
-      <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
+      <ScrollView contentContainerStyle={[styles.screen, contentStyle]} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         {title && <Text accessibilityRole="header" style={styles.title}>{title}</Text>}
         {children}
       </ScrollView>

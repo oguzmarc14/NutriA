@@ -71,3 +71,17 @@ El paciente accede desde Inicio → Mis pagos, consulta los últimos 200 reporte
 La nutrióloga accede desde Inicio → Pagos de pacientes o desde la ficha del paciente. Confirma o rechaza reportes pendientes con una confirmación explícita. El backend conserva la revisión atómica y los filtros por consultorio. Los totales se separan por estado y corresponden solo a los reportes cargados; no representan una cuenta por cobrar, saldo ni conciliación bancaria. No existe una garantía de idempotencia entre dispositivos o tras una respuesta perdida del servidor; antes de reenviar un reporte, revisar el historial.
 
 Se usan las rutas existentes /pagos/mios, /pagos/consultorio?pacienteId=... y PATCH /pagos/consultorio/:id/estado. La app no permite elegir al propietario del reporte ni confirmarlo desde una cuenta de paciente. Las pruebas automáticas usan datos sintéticos; el registro y revisión con sesiones reales siguen pendientes de la instalación de esta versión.
+
+
+## Editor móvil 0.9.0
+
+El editor usa tarjetas horizontales de comidas, preparaciones independientes de platillos y bebidas y búsqueda compacta dentro de la comida. Los alimentos agregados se agrupan por preparación y cada uno tiene control de porciones, eliminación y notas desplegables. Las indicaciones, el seguimiento global y las opciones avanzadas se despliegan cuando se necesitan. La meta de la comida compara las calorías agregadas con su porcentaje de la meta personalizada o del cálculo guardado; no utiliza las calorías consumidas como objetivo.
+
+Las pruebas visuales de componentes se realizaron a 320 y 390 píxeles mediante React Native Web y datos de prueba, sin crear dietas en producción. Se comprobó búsqueda, adición de alimento, cambio de una a dos porciones y actualización de 70 a 140 kcal. Esta previsualización no sustituye una prueba de la APK instalada con sesión real.
+
+
+### Firma de las APK
+
+El workflow mobile-apk.yml utiliza un certificado temporal distinto en cada ejecución. Su artefacto permite pruebas de interfaz, pero no debe sustituir la APK habitual ni se debe asumir que permite iniciar sesión con Google: OAuth valida el paquete y la huella del certificado. La versión para actualizar la app habitual se debe generar con la firma estable guardada en Expo.
+
+La integración del editor 0.9.0 conserva los cambios de pacientes, paciente en atención, Mi clínica y agenda publicados hasta 99875528. La restauración del paciente seleccionado ignora lecturas antiguas si se seleccionó o se dejó de trabajar con otro paciente antes de terminar la lectura de SecureStore.

@@ -1,3 +1,5 @@
+import { MealNavigator } from '../plans/MealNavigator'
+import { dietColors as dc, dietStyles as ds, DietDisclosure } from '../plans/dietUI'
 import { AppDialog } from '@/shared/ui/AppDialog'
 import { DateField } from '@/shared/ui/DateTimeField'
 import { useRef, useState } from 'react'
@@ -24,6 +26,9 @@ function Editor({ patient, initial, requirements, refreshRequirements, previousP
   const [planId, setPlanId] = useState(initial?._id)
   const [draft, setDraft] = useState(() => initial ? editPlan(initial) : newPlan())
   const [activeMeal, setActiveMeal] = useState(draft.meals[0]?.key || '')
+  const [balanceOpen, setBalanceOpen] = useState(false)
+  const [goalOpen, setGoalOpen] = useState(!!initial?.objetivo)
+  const [addMealOpen, setAddMealOpen] = useState(false)
   const [guideOpen, setGuideOpen] = useState(false)
   const [modeOpen, setModeOpen] = useState(!initial)
   const [confirmSave, setConfirmSave] = useState(false)
@@ -36,7 +41,7 @@ function Editor({ patient, initial, requirements, refreshRequirements, previousP
   const totals = planTotals(draft.meals)
   const reference = requirements?.calculos[0]
   const current = draft.meals.find(meal => meal.key === activeMeal)
-  const target = draft.energy.trim() ? numberInput(draft.energy) : totals.kcal
+  const target = draft.energy.trim() ? numberInput(draft.energy) : reference?.resultado.objetivoKcal || 0
   const missingRecord = !requirements?.expediente
   const missingMeasurements = !requirements?.mediciones.some(item => item.peso > 0 && item.estatura >= 0.5 && item.estatura <= 3 && item.edad >= 1 && item.edad <= 120 && item.nivelActividadFisica >= 1 && item.nivelActividadFisica <= 5)
   const blocked = !planId && (!requirements || missingRecord || missingMeasurements)
@@ -91,69 +96,67 @@ function Editor({ patient, initial, requirements, refreshRequirements, previousP
       {missingMeasurements && <Button label="Ir a mediciones" onPress={() => router.push({ pathname: '/mediciones', params: { patient } })} />}
       <Button selected={false} label="Cancelar" onPress={() => router.back()} />
     </AppDialog>
-    {!!requirements && <View style={styles.card}>
-      <Button selected={false} label={guideOpen ? 'Ocultar guía clínica del paciente' : 'Guía clínica del paciente'} onPress={() => setGuideOpen(!guideOpen)} />
-      {guideOpen && <><Text style={styles.body}>Objetivos: {requirements.expediente?.nutricion?.objetivos?.join(', ') || 'Sin registrar'}</Text>
-        <Text style={styles.body}>Comidas al día: {requirements.expediente?.nutricion?.numeroComidasDia || 'Sin registrar'}</Text>
-        <Text style={styles.body}>Primera comida: {requirements.expediente?.nutricion?.primeraComida || 'Sin registrar'} · Última comida: {requirements.expediente?.nutricion?.ultimaComida || 'Sin registrar'}</Text>
-        <Text style={styles.body}>Alergias: {requirements.expediente?.alergias || 'Sin registrar'}</Text>
-        <Text style={styles.body}>Intolerancias: {requirements.expediente?.nutricion?.intoleranciasAlimentarias || 'Sin registrar'}</Text>
-        {!!reference && <><Text style={styles.body}>Cálculo guardado: {new Date(reference.createdAt).toLocaleDateString('es-MX')}</Text>
-          {measurementChanged(reference, requirements.mediciones) && <Text style={styles.error}>Hay mediciones nuevas o modificadas. Revisa el cálculo antes de continuar.</Text>}</>}
-        <Button selected={false} label="Ver cálculo nutricional" onPress={() => router.push({ pathname: '/calculo', params: { patient } })} />
-      </>}
-    </View>}
-    <View style={[styles.card, { gap: 12 }]}>
-      <Text accessibilityRole="header" style={styles.cardTitle}>{planId ? 'Editar plan alimenticio' : 'Nuevo plan alimenticio'}</Text>
-      <FormField label="Nombre de la dieta" value={draft.name} disabled={busy} onChange={name => change({ ...draft, name })} />
-      <FormField label="Objetivo e indicaciones generales · opcional" multiline value={draft.goal} disabled={busy} onChange={goal => change({ ...draft, goal })} />
+    <View style={[ds.card, ds.body]}>
+      <Text style={ds.title}>Datos del plan</Text>
+      <FormField label="Nombre del plan *" value={draft.name} disabled={busy} onChange={name => change({ ...draft, name })} />
       <DateField label="Fecha de inicio" value={draft.date} disabled={busy} onChange={date => change({ ...draft, date })} />
-      <FormField label="Meta total de energía (kcal) · opcional" numeric value={draft.energy} disabled={busy} onChange={energy => change({ ...draft, energy })} />
-      <View style={styles.row}>
-        <Button expand selected={false} disabled={busy || !Number.isFinite(target) || target <= 100} label="−100 kcal" onPress={() => change({ ...draft, energy: String(Math.round((target - 100) * 10) / 10) })} />
-        <Button expand selected={false} disabled={busy || !Number.isFinite(target)} label="+100 kcal" onPress={() => change({ ...draft, energy: String(Math.round((target + 100) * 10) / 10) })} />
-      </View>
-      {!!requirements?.calculos[0] && <Button selected={false} disabled={busy} label={`Usar último cálculo: ${requirements.calculos[0].resultado.objetivoKcal} kcal`}
-        onPress={() => change({ ...draft, energy: String(requirements.calculos[0].resultado.objetivoKcal) })} />}
-      {!planId && <Button selected={false} disabled={busy} label="Cambiar modalidad" onPress={() => setModeOpen(true)} />}
-      <Text style={styles.body}>Deja la meta vacía para quitarla. Los nutrientes se calculan con los alimentos y sus porciones.</Text>
+      <DietDisclosure label="Objetivo e indicaciones generales" open={goalOpen} disabled={busy} onPress={() => setGoalOpen(!goalOpen)}>
+        <FormField label="Indicaciones · opcional" multiline value={draft.goal} disabled={busy} onChange={goal => change({ ...draft, goal })} />
+      </DietDisclosure>
+      {!planId && <DietDisclosure label="Modalidad y guía clínica" open={guideOpen} disabled={busy} onPress={() => setGuideOpen(!guideOpen)}>
+        <Button selected={false} disabled={busy} label="Cambiar modalidad" onPress={() => setModeOpen(true)} />
+        {!!requirements && <><Text style={ds.caption}>Objetivos clínicos: {requirements.expediente?.nutricion?.objetivos?.join(', ') || 'Sin registrar'}</Text>
+          <Text style={ds.caption}>Comidas al día: {requirements.expediente?.nutricion?.numeroComidasDia || 'Sin registrar'} · {requirements.expediente?.nutricion?.primeraComida || '—'} a {requirements.expediente?.nutricion?.ultimaComida || '—'}</Text>
+          <Text style={ds.caption}>Alergias: {requirements.expediente?.alergias || 'Sin registrar'}</Text>
+          <Text style={ds.caption}>Intolerancias: {requirements.expediente?.nutricion?.intoleranciasAlimentarias || 'Sin registrar'}</Text>
+          {!!reference && <Text style={ds.caption}>Cálculo guardado: {new Date(reference.createdAt).toLocaleDateString('es-MX')}</Text>}
+          <Button selected={false} label="Ver cálculo nutricional" onPress={() => router.push({ pathname: '/calculo', params: { patient } })} />
+        </>}
+      </DietDisclosure>}
     </View>
-    <View style={styles.card}>
-      <Text accessibilityRole="header" style={styles.cardTitle}>Seguimiento del plan</Text>
-      <Text style={styles.body}>{totals.kcal.toFixed(1)} kcal{draft.energy.trim() ? ` / ${draft.energy} kcal de meta` : ''}</Text>
-      {[{ label: 'Energía', actual: totals.kcal, goal: draft.energy.trim() ? numberInput(draft.energy) : null, unit: 'kcal' },
-        { label: 'Proteínas', actual: totals.proteina, goal: reference?.resultado.proteinasGramos, unit: 'g' },
-        { label: 'Carbohidratos', actual: totals.carbohidratos, goal: reference?.resultado.carbohidratosGramos, unit: 'g' },
-        { label: 'Grasas', actual: totals.grasas, goal: reference?.resultado.grasasGramos, unit: 'g' }].map(metric => <View key={metric.label} style={{ gap: 6 }}>
-          <Text style={styles.body}>{metric.label}: {metric.actual.toFixed(1)}{metric.goal != null && Number.isFinite(metric.goal) ? ' / ' + metric.goal.toFixed(1) : ''} {metric.unit}</Text>
-          {metric.goal != null && Number.isFinite(metric.goal) && metric.goal > 0 && <><View style={{ height: 7, borderRadius: 4, overflow: 'hidden', backgroundColor: '#dfede5' }}>
-            <View style={{ height: 7, width: `${Math.min(100, metric.actual / metric.goal * 100)}%`, backgroundColor: metric.actual > metric.goal ? '#b47820' : '#176344' }} /></View>
-            <Text style={styles.body}>{metric.actual > metric.goal ? 'Excedente' : 'Pendiente'}: {Math.abs(metric.goal - metric.actual).toFixed(1)} {metric.unit}</Text></>}
-        </View>)}
-    </View>
-    <Text accessibilityRole="header" style={styles.cardTitle}>Comidas</Text>
-    {draft.meals.map(meal => <Button key={meal.key} disabled={busy} selected={meal.key === activeMeal}
-      label={`${meal.nombre || 'Sin nombre'} · ${meal.alimentos.length} alimentos`} onPress={() => setActiveMeal(meal.key)} />)}
-    <Button selected={false} disabled={busy} label="Agregar comida" onPress={() => {
-      const meal = newMeal('Nueva comida'); change({ ...draft, meals: [...draft.meals, meal] }); setActiveMeal(meal.key)
+    {!!reference && !!requirements && measurementChanged(reference, requirements.mediciones) && <View style={ds.inset}>
+      <Text style={ds.caption}>Hay mediciones nuevas o modificadas. Revisa el cálculo nutricional antes de continuar.</Text>
+      <Button selected={false} label="Revisar cálculo" onPress={() => router.push({ pathname: '/calculo', params: { patient } })} />
+    </View>}
+    <MealNavigator meals={draft.meals} active={activeMeal} disabled={busy} onSelect={setActiveMeal} onAdd={() => setAddMealOpen(true)} onMove={(key, direction) => {
+      const meals = [...draft.meals], index = meals.findIndex(meal => meal.key === key), next = index + direction
+      if (index < 0 || next < 0 || next >= meals.length) return
+      ;[meals[index], meals[next]] = [meals[next], meals[index]]; change({ ...draft, meals })
     }} />
-    {current && <MealEditor key={current.key} patient={patient} meal={current} busy={busy}
+    <AppDialog visible={addMealOpen} title="Agregar tiempo de comida" message="Elige un tipo. Puedes cambiar su nombre y hora después." onClose={() => setAddMealOpen(false)}>
+      {['Desayuno', 'Colación', 'Comida', 'Cena', 'Otra comida'].map(name => <Button key={name} label={name} selected={false} onPress={() => {
+        const meal = { ...newMeal(name), hora: ({ Desayuno: '08:00', Colación: '11:30', Comida: '14:30', Cena: '20:30' } as Record<string, string>)[name] || '' }
+        change({ ...draft, meals: [...draft.meals, meal] }); setActiveMeal(meal.key); setAddMealOpen(false)
+      }} />)}
+    </AppDialog>
+    {current && <MealEditor key={current.key} patient={patient} meal={current} index={draft.meals.findIndex(m => m.key === current.key)} target={target} busy={busy}
       onChange={meal => change({ ...draft, meals: draft.meals.map(item => item.key === meal.key ? meal : item) })}
       onRemove={() => { const meals = draft.meals.filter(item => item.key !== current.key); change({ ...draft, meals }); setActiveMeal(meals[0]?.key || '') }} />}
     <AppDialog visible={!!error} title="Revisa los datos del plan" message={error} onClose={() => setError('')} />
-    {current && <View style={styles.row}>
-      <Button expand disabled={busy || draft.meals[0]?.key === current.key} selected={false} label="Mover antes" onPress={() => {
-        const meals = [...draft.meals], index = meals.findIndex(m => m.key === current.key); [meals[index - 1], meals[index]] = [meals[index], meals[index - 1]]; change({ ...draft, meals })
-      }} />
-      <Button expand disabled={busy || draft.meals[draft.meals.length - 1]?.key === current.key} selected={false} label="Mover después" onPress={() => {
-        const meals = [...draft.meals], index = meals.findIndex(m => m.key === current.key); [meals[index + 1], meals[index]] = [meals[index], meals[index + 1]]; change({ ...draft, meals })
-      }} />
-    </View>}
+    <View style={[ds.card, ds.body]}>
+      <DietDisclosure label={`Seguimiento del plan · ${totals.kcal.toFixed(0)}${target > 0 ? ' / ' + target.toFixed(0) : ''} kcal`} open={balanceOpen} onPress={() => setBalanceOpen(!balanceOpen)}>
+        <Text style={ds.caption}>Se calcula al editar alimentos y porciones.</Text>
+        <FormField label="Meta de energía (kcal/día)" numeric value={draft.energy} disabled={busy} onChange={energy => change({ ...draft, energy })} />
+        <View style={styles.row}><Button expand selected={false} disabled={busy || !Number.isFinite(target) || target <= 100} label="−100 kcal" onPress={() => change({ ...draft, energy: String(Math.round((target - 100) * 10) / 10) })} />
+          <Button expand selected={false} disabled={busy || !Number.isFinite(target)} label="+100 kcal" onPress={() => change({ ...draft, energy: String(Math.round((target + 100) * 10) / 10) })} /></View>
+        <Text style={ds.caption}>Sin meta personalizada se usa como referencia el último cálculo guardado.</Text>
+        {!!draft.energy.trim() && <Button selected={false} disabled={busy} label={reference ? 'Restaurar meta del cálculo' : 'Quitar meta personalizada'} onPress={() => change({ ...draft, energy: '' })} />}
+        {[{ label: 'Energía', actual: totals.kcal, goal: target, unit: 'kcal' },
+          { label: 'Proteínas', actual: totals.proteina, goal: reference?.resultado.proteinasGramos, unit: 'g' },
+          { label: 'Carbohidratos', actual: totals.carbohidratos, goal: reference?.resultado.carbohidratosGramos, unit: 'g' },
+          { label: 'Grasas', actual: totals.grasas, goal: reference?.resultado.grasasGramos, unit: 'g' }].map(metric => <View key={metric.label} style={{ gap: 6, paddingVertical: 6 }}>
+            <Text style={ds.label}>{metric.label}: {metric.actual.toFixed(1)}{metric.goal != null && Number.isFinite(metric.goal) && metric.goal > 0 ? ' / ' + metric.goal.toFixed(1) : ''} {metric.unit}</Text>
+            {metric.goal != null && Number.isFinite(metric.goal) && metric.goal > 0 && <><View style={{ height: 7, borderRadius: 4, overflow: 'hidden', backgroundColor: '#dfede5' }}>
+              <View style={{ height: 7, width: `${Math.min(100, metric.actual / metric.goal * 100)}%`, backgroundColor: metric.actual > metric.goal ? '#b47820' : '#79b593' }} /></View>
+              <Text style={ds.caption}>{metric.actual > metric.goal ? 'Excedente' : 'Pendiente'}: {Math.abs(metric.goal - metric.actual).toFixed(1)} {metric.unit}</Text></>}
+          </View>)}
     <View style={styles.card}><Text style={styles.cardTitle}>Distribución por comida</Text>
       {draft.meals.map(meal => { const subtotal = planTotals([meal]); const percent = numberInput(meal.percentage); const goal = Number.isFinite(percent) && Number.isFinite(target) ? target * percent / 100 : null
         return <View key={meal.key} style={{ gap: 6 }}><Text style={styles.body}>{meal.nombre}: {subtotal.kcal.toFixed(1)} kcal{goal === null ? '' : ` / ${goal.toFixed(1)} kcal`}</Text>
           <View style={{ height: 7, backgroundColor: '#dfede5', borderRadius: 4, overflow: 'hidden' }}><View style={{ height: 7, width: `${Math.min(100, goal && goal > 0 ? subtotal.kcal / goal * 100 : 0)}%`, backgroundColor: '#176344' }} /></View></View>
       })}
+    </View>
+      </DietDisclosure>
     </View>
     <View style={styles.row}><Button expand selected={false} disabled={busy} label="Cancelar" onPress={() => router.back()} />
     <Button expand disabled={busy || blocked || !dirty} label={busy ? 'Guardando…' : planId ? 'Guardar cambios' : 'Guardar plan'} onPress={save} /></View>
@@ -168,10 +171,11 @@ export default function PlanEditorScreen() {
   const requirements = useResource<Requirements>(valid ? '/calculo-nutricional/' + patient : null)
   if (!valid) return <Page><Text style={styles.cardTitle}>Elige un paciente para crear una dieta.</Text><Button label="Elegir paciente" onPress={() => router.replace({ pathname: '/elegir-paciente', params: { intent: 'create-plan' } })} /></Page>
   const existing = id ? resource.data?.planes.find(plan => plan._id === id) : undefined
-  return <Page bottomInset>
+  return <Page bottomInset contentStyle={{ width: '100%', maxWidth: 720, alignSelf: 'center' }}>
     <ListState loading={resource.loading} error={resource.error} reload={resource.reload} />
     {!id && <ListState loading={requirements.loading} error={requirements.error} reload={requirements.reload} />}
-    {resource.data && <Text style={styles.title}>{resource.data.paciente.name}</Text>}
+    {resource.data && <View style={{ gap: 5 }}><Text style={{ color: dc.ink, fontSize: 25, fontWeight: '800' }}>{id ? 'Editar plan alimenticio' : 'Crear plan alimenticio'}</Text>
+      <Text style={ds.caption}>Paciente · {resource.data.paciente.name}</Text></View>}
     {resource.data && id && !existing && <Text style={styles.error}>Esta dieta no está disponible. Regresa a los planes del paciente.</Text>}
     {resource.data && (!id || existing) && <Editor key={`${patient}-${id || 'new'}`} patient={patient!} initial={existing} requirements={requirements.data} refreshRequirements={requirements.reload} previousPlans={resource.data.planes} />}
   </Page>
