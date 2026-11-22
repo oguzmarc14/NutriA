@@ -1,3 +1,4 @@
+import { MeasurementChart } from '@/features/progress/MeasurementChart'
 import { useState } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
 import { Alert, Text, View } from 'react-native'
@@ -65,6 +66,7 @@ export default function Measurements() {
         <Button disabled={busy} label={busy ? 'Guardando…' : 'Guardar medición'} onPress={() => void save()} />
         {editing && <Button disabled={busy} selected={false} label="Cancelar edición" onPress={reset} />}
       </View>
+      <MeasurementChart measurements={resource.data.mediciones} />
       <Text accessibilityRole="header" style={styles.cardTitle}>Historial de mediciones</Text>
       {!resource.data.mediciones.length && <Text style={styles.body}>Aún no hay mediciones registradas.</Text>}
       {resource.data.mediciones.map(item => <View key={item._id} style={styles.card}>

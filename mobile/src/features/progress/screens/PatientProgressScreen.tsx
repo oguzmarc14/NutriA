@@ -1,3 +1,4 @@
+import { MeasurementChart } from '../MeasurementChart'
 import { ActivityIndicator, Text, View } from 'react-native'
 import { Button, Page, styles } from '@/shared/ui/primitives'
 import { useResource } from '@/shared/hooks/useResource'
@@ -11,6 +12,7 @@ type Measurement = {
   peso: number
   estatura: number
   imc?: number
+  masaMuscular?: number
   grasaCorporal?: number
 }
 type Profile = TrackingData & { mediciones: Measurement[] }
@@ -26,7 +28,7 @@ export default function PatientProgressScreen() {
   const { data, loading, error, reload } = useResource<Profile>('/seguimiento-comidas/mi-progreso')
   const measurements = [...(data?.mediciones || [])].sort((a, b) =>
     (b.fecha || b.createdAt).localeCompare(a.fecha || a.createdAt) ||
-    b.createdAt.localeCompare(a.createdAt))
+    (b.createdAt || '').localeCompare(a.createdAt || ''))
   const latest = measurements[0]
   const previous = measurements[1]
   const difference = latest && previous ? latest.peso - previous.peso : null
@@ -45,6 +47,7 @@ export default function PatientProgressScreen() {
         Cambio desde la medición anterior: {difference > 0 ? '+' : ''}{difference.toFixed(1)} kg
       </Text>}
     </View>}
+    {data && <MeasurementChart measurements={measurements} />}
     {data && <MealHistory data={data} editable />}
     <Text accessibilityRole="header" style={styles.cardTitle}>Historial de mediciones</Text>
     {data && !measurements.length && <Text style={styles.body}>Todavía no tienes mediciones registradas.</Text>}

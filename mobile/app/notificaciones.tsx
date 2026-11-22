@@ -1,1 +1,1 @@
-export { default } from '@/features/notifications/screens/PatientNotificationsScreen'
+export { default } from '@/features/notifications/screens/RoleNotificationsScreen'

@@ -40,16 +40,22 @@ function Navigation() {
       </Stack.Protected>
       <Stack.Protected guard={!!session}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="notificaciones" options={{ ...clinicHeader, title: 'Notificaciones' }} />
         <Stack.Screen name="cuenta" options={{ ...clinicHeader, title: 'Mi cuenta' }} />
       </Stack.Protected>
       <Stack.Protected guard={session?.user.role === 'patient'}>
         <Stack.Screen name="mis-pagos" options={{ ...clinicHeader, title: 'Mis pagos' }} />
         <Stack.Screen name="reportar-pago" options={{ ...clinicHeader, title: 'Reportar pago' }} />
         <Stack.Screen name="registrar-comida" options={{ ...clinicHeader, title: 'Registrar comida' }} />
-        <Stack.Screen name="notificaciones" options={{ ...clinicHeader, title: 'Mis notificaciones' }} />
+      </Stack.Protected>
+      <Stack.Protected guard={session?.user.role === 'admin'}>
+        <Stack.Screen name="usuarios" options={{ ...clinicHeader, title: 'Usuarios y accesos' }} />
+        <Stack.Screen name="moderacion" options={{ ...clinicHeader, title: 'Moderación' }} />
+      </Stack.Protected>
+      <Stack.Protected guard={session?.user.role === 'admin' || canViewClinic(session?.user.role)}>
+        <Stack.Screen name="comunidad" options={{ ...clinicHeader, title: 'NutriA Community' }} />
       </Stack.Protected>
       <Stack.Protected guard={canViewClinic(session?.user.role)}>
-        <Stack.Screen name="comunidad" options={{ ...clinicHeader, title: 'NutriA Community' }} />
         <Stack.Screen name="pagos-paciente" options={{ ...clinicHeader, title: 'Pagos del paciente' }} />
         <Stack.Screen name="seguimiento-paciente" options={{ ...clinicHeader, title: 'Seguimiento de comidas' }} />
         <Stack.Screen name="paciente" options={{ ...clinicHeader, title: 'Ficha del paciente' }} />
