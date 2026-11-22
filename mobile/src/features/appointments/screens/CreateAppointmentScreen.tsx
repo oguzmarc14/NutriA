@@ -94,6 +94,16 @@ function AppointmentForm({ initialPatient, initialDate, existing }: {
     if (!initialPatient && active?.id) setPatient(value => value || active.id)
   }, [active?.id, initialPatient])
 
+  useEffect(() => {
+    if (!data || calendarDate || date) return
+    const first = data.dias.find(item => item.fecha >= data.hoy && item.espacios.length)?.fecha ||
+      data.dias.find(item => item.fecha >= data.hoy)?.fecha
+    if (first) {
+      setDate(first)
+      setCalendarDate(first)
+    }
+  }, [data, calendarDate, date])
+
   function chooseDate(value: string) {
     setCalendarDate(value)
     setDate(value)
