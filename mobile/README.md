@@ -85,3 +85,16 @@ Las pruebas visuales de componentes se realizaron a 320 y 390 píxeles mediante 
 El workflow mobile-apk.yml utiliza un certificado temporal distinto en cada ejecución. Su artefacto permite pruebas de interfaz, pero no debe sustituir la APK habitual ni se debe asumir que permite iniciar sesión con Google: OAuth valida el paquete y la huella del certificado. La versión para actualizar la app habitual se debe generar con la firma estable guardada en Expo.
 
 La integración del editor 0.9.0 conserva los cambios de pacientes, paciente en atención, Mi clínica y agenda publicados hasta 99875528. La restauración del paciente seleccionado ignora lecturas antiguas si se seleccionó o se dejó de trabajar con otro paciente antes de terminar la lectura de SecureStore.
+
+
+## Versión 0.11.0 — revisión integral
+
+Incluye cantidades prácticas y notas del plan para pacientes, historial seleccionable por ID, orden guardado de comidas, vista previa/PDF, borradores protegidos por usuario y paciente, expediente completo, horarios y bloqueos, acciones de citas, usuarios y moderación/creación de recetas. Mantiene el seguimiento minimizado de energía y la meta editable con referencia del cálculo.
+
+La sesión local se elimina aunque falle la desasociación remota. Los recordatorios locales se concilian al abrir/volver a NutriA, después de una acción de cita o mientras la app está activa. Si una cita cambia cuando la app está cerrada y el sistema no la ejecuta, puede quedar un recordatorio local antiguo hasta volver a abrirla; no se garantiza sincronización en segundo plano.
+
+La API conserva un buzón de avisos por usuario durante 30 días y procesa receipts de Expo. En Render gratuito el proceso puede dormir; no se garantiza un plazo de entrega. Las credenciales FCM se gestionan en Expo; no se incorporan claves privadas al código.
+
+Comprobaciones de esta entrega: TypeScript, 70 pruebas móviles, 115 pruebas de API, npm audit y exportación Hermes de Android/iOS. La exportación iOS no constituye una app firmada para iPhone: faltan firma Apple, configuración OAuth de iOS y prueba en dispositivo. Las pruebas automáticas y visuales previas usan fixtures; la entrega real de notificaciones y los flujos con sesiones de cada rol en la APK instalada requieren validación en dispositivos.
+
+Las adaptaciones de dependencias en vendor conservan la compatibilidad CommonJS de SDK 54; image-size delega el análisis al paquete original actualizado y solo adapta rutas de archivos de Metro a bytes.

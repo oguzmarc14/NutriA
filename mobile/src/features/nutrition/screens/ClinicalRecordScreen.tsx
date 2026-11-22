@@ -1,3 +1,4 @@
+import { RecordSectionFields } from '../RecordSectionFields'
 import { useState } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
 import { Alert, Text, View } from 'react-native'
@@ -35,9 +36,10 @@ function RecordForm({ patient, initial }: { patient: string; initial: Record<str
   }
   return <View style={[styles.card, { gap: 12 }]}>
     <Text accessibilityRole="header" style={styles.cardTitle}>Datos clínicos principales</Text>
-    <Text style={styles.body}>Registra lo revisado durante la consulta. Un campo vacío queda sin especificar. Las secciones detalladas de nutrición, hábitos y deporte se conservan; su edición sigue disponible en la PWA.</Text>
+    <Text style={styles.body}>Registra antecedentes, tratamientos, hábitos, nutrición y deporte. Las secciones que no modifiques conservarán sus datos.</Text>
     {fields.map(([key, label]) => <FormField key={key} multiline disabled={busy} label={label} value={form[key]}
       onChange={value => { setForm(previous => ({ ...previous, [key]: value })); setDirty(true) }} />)}
+    <RecordSectionFields form={form} disabled={busy} onChange={(key,value) => { setForm(previous => ({ ...previous,[key]:value })); setDirty(true) }} />
     {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
     <Button disabled={busy || !dirty} label={busy ? 'Guardando…' : 'Guardar expediente'} onPress={() => void save()} />
   </View>

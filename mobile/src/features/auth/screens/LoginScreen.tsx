@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Platform, Text, TextInput } from 'react-native'
+import { Linking, Platform, Text, TextInput } from 'react-native'
 import { GoogleSignin, isSuccessResponse } from '@react-native-google-signin/google-signin'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { googleLoginError } from '@/features/auth/googleLoginError'
@@ -53,8 +53,11 @@ export default function Login() {
         secureTextEntry editable={!busy} style={styles.input} value={password} onChangeText={setPassword} />
       <Button label={busy ? 'Conectando…' : 'Iniciar sesión'} onPress={() => void submit(false)}
         disabled={busy || !email.trim() || password.length < 8} />
+      <Button selected={false} label="Olvidé mi contraseña" disabled={busy} onPress={() => { void Linking.openURL('https://nutri-a-six.vercel.app/recuperar-contrasena').catch(() => setError('No se pudo abrir la recuperación. Visita NutriA desde el navegador.')) }} />
       <Text style={styles.cardTitle}>Administradores y nutriólogos</Text>
       <Button label="Continuar con Google" disabled={busy} onPress={() => void submit(true)} />
+      <Button selected={false} label="Aviso de privacidad" onPress={() => { void Linking.openURL('https://nutri-a-six.vercel.app/privacidad').catch(() => setError('No se pudo abrir el aviso de privacidad.')) }} />
+      <Button selected={false} label="Términos de uso" onPress={() => { void Linking.openURL('https://nutri-a-six.vercel.app/terminos').catch(() => setError('No se pudieron abrir los términos.')) }} />
     </Page>
   )
 }

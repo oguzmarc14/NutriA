@@ -1,4 +1,4 @@
-export type Notice = { id: string; titulo: string; detalle: string }
+export type Notice = { id: string; titulo: string; detalle: string; route?: string; seen?: boolean }
 export type NoticeData = { avisos?: Notice[] } | { _id: string; titulo?: string; estado?: string; inicio?: string; patient?: { name: string } | null }[]
 export function roleNotices(role: string | undefined, data: NoticeData | undefined, now = Date.now()): Notice[] {
   if (!data) return []
@@ -10,4 +10,12 @@ export function roleNotices(role: string | undefined, data: NoticeData | undefin
     detalle: (item.patient?.name || 'Paciente') + ' · ' + new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(item.inicio!)),
   }))
   return []
+}
+
+export function noticeDestination(role: string | undefined, route: unknown) {
+  if (role === 'patient' && route === '/mis-citas') return '/mis-citas' as const
+  if (role === 'nutritionist' && route === '/citas') return '/citas' as const
+  if (role === 'nutritionist' && route === '/comunidad') return '/comunidad' as const
+  if (role === 'admin' && route === '/moderacion') return '/moderacion' as const
+  return null
 }

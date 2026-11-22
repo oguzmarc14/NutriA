@@ -1,50 +1,67 @@
 const Device = require('../models/PushDevice')
+const Receipt = require('../models/PushReceipt')
 const User = require('../models/User')
-
-async function enviarDispositivo(device) {
+const Notice = require('../models/Notification')
+const enabled = () => process.env.PUSH_NOTIFICATIONS_ENABLED === 'true'
+const headers = () => ({ 'Content-Type': 'application/json', ...(process.env.EXPO_ACCESS_TOKEN && { Authorization: 'Bearer ' + process.env.EXPO_ACCESS_TOKEN }) })
+async function sendDevice(device, notice) {
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const response = await fetch('https://exp.host/--/api/v2/push/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(process.env.EXPO_ACCESS_TOKEN && { Authorization: 'Bearer ' + process.env.EXPO_ACCESS_TOKEN }),
-        },
-        body: JSON.stringify({
-          to: device.token,
-          title: 'NutriA',
-          body: 'Hay una actualización de tus citas. Abre Mis citas para ver los detalles.',
-          sound: 'default', channelId: 'appointments',
-          data: { kind: 'nutria-appointment', route: '/mis-citas' },
-        }),
-        signal: AbortSignal.timeout(8000),
+        method: 'POST', headers: headers(),
+        body: JSON.stringify({to:device.token,title:'NutriA',body:notice.body,sound:'default',channelId:'appointments',priority:'high',
+          data:{kind:notice.kind,route:notice.route,recipientUser:String(device.user)}}),signal:AbortSignal.timeout(8000),
       })
-      if (response.status === 429 || response.status >= 500) throw new Error('Servicio push temporalmente no disponible')
-      if (!response.ok) throw Object.assign(new Error('Configuración push rechazada'), { permanent: true })
-      const ticket = (await response.json()).data
-      if (ticket?.details?.error === 'DeviceNotRegistered') {
-        await Device.deleteOne({ _id: device._id, token: device.token, user: device.user })
-        return
-      }
-      if (ticket?.status !== 'ok') throw Object.assign(new Error('Expo rechazó el aviso'), { permanent: true })
+      if(response.status===429||response.status>=500)throw new Error('Servicio push temporalmente no disponible')
+      if(!response.ok)throw Object.assign(new Error('Configuración push rechazada'),{permanent:true})
+      const ticket=(await response.json()).data
+      if(ticket?.details?.error==='DeviceNotRegistered'){await Device.deleteOne({_id:device._id,token:device.token,user:device.user});return}
+      if(ticket?.status!=='ok')throw Object.assign(new Error('Expo rechazó el aviso'),{permanent:true})
+      if(ticket.id){try{await Receipt.updateOne({ticket:ticket.id},{$setOnInsert:{device:device._id,user:device.user,token:device.token,nextCheckAt:new Date(Date.now()+15*60000),expiresAt:new Date(Date.now()+24*3600000)}},{upsert:true})}catch{console.error('No se pudo registrar un receipt push')}}
       return
-    } catch (error) {
-      if (error.permanent || attempt === 2) throw error
-      await new Promise(resolve => setTimeout(resolve, 500 * 2 ** attempt))
-    }
+    }catch(error){if(error.permanent||attempt===2)throw error;await new Promise(resolve=>setTimeout(resolve,500*2**attempt))}
   }
 }
-
-async function notificarCita(cita) {
-  if (process.env.PUSH_NOTIFICATIONS_ENABLED !== 'true') return
-  try {
-    const patient = cita.patient?._id || cita.patient
-    const users = await User.find({ patient, role: 'patient', active: true }).select('_id').lean()
-    const devices = await Device.find({ user: { $in: users.map(user => user._id) } }).limit(50).lean()
-    for (const device of devices) {
-      try { await enviarDispositivo(device) }
-      catch { console.error('No se pudo enviar aviso push de cita', String(cita._id)) }
-    }
-  } catch { console.error('No se pudieron consultar dispositivos push', String(cita._id)) }
+async function notifyUsers(ids, notice) {
+  if(!ids.length)return
+  await Notice.insertMany(ids.map(user=>({user,kind:notice.kind,titulo:'Actualización de NutriA',detalle:notice.body,route:notice.route,expiresAt:new Date(Date.now()+30*86400000)})))
+  if(!enabled())return
+  const devices=await Device.find({user:{$in:ids}}).limit(100).lean()
+  await Promise.allSettled(devices.map(device=>sendDevice(device,notice)))
 }
-module.exports = { notificarCita }
+async function notificarCita(cita) {
+  try {
+    const patient=cita.patient?._id||cita.patient, professional=cita.nutritionist?._id||cita.nutritionist
+    const users=await User.find({active:true,$or:[{patient,role:'patient'},...professional?[{_id:professional,role:'nutritionist'}]:[]]}).select('_id role').lean()
+    await Promise.allSettled(users.map(user=>notifyUsers([user._id],user.role==='patient'
+      ? {kind:'nutria-appointment',route:'/mis-citas',body:'Hay una actualización de tus citas. Abre Mis citas para ver los detalles.'}
+      : {kind:'nutria-appointment',route:'/citas',body:'Hay una actualización en tu agenda. Abre NutriA para revisar la cita.'})))
+  }catch{console.error('No se pudo procesar un aviso de cita')}
+}
+async function notificarReceta(receta, pending) {
+  try {
+    const users=await User.find(pending?{active:true,role:'admin'}:{active:true,_id:receta.autor?._id||receta.autor,role:'nutritionist'}).select('_id').limit(100).lean()
+    await notifyUsers(users.map(u=>u._id),{kind:'nutria-community',route:pending?'/moderacion':'/comunidad',body:pending?'Hay una receta pendiente de revisión en NutriA.':'Tu receta tiene una actualización. Abre NutriA Community.'})
+  }catch{console.error('No se pudo procesar un aviso de Community')}
+}
+let processing=false
+async function processReceipts() {
+  if(!enabled()||processing)return
+  processing=true
+  try{
+    const receipts=await Receipt.find({nextCheckAt:{$lte:new Date()},expiresAt:{$gt:new Date()}}).sort({nextCheckAt:1}).limit(100).lean()
+    if(!receipts.length)return
+    const response=await fetch('https://exp.host/--/api/v2/push/getReceipts',{method:'POST',headers:headers(),body:JSON.stringify({ids:receipts.map(r=>r.ticket)}),signal:AbortSignal.timeout(8000)})
+    if(!response.ok)throw new Error('Receipts no disponibles')
+    const data=(await response.json()).data||{}
+    for(const item of receipts){
+      const result=data[item.ticket]
+      if(!result){await Receipt.updateOne({_id:item._id},{$set:{nextCheckAt:new Date(Date.now()+2*60000)}});continue}
+      if(result.details?.error==='DeviceNotRegistered')await Device.deleteOne({_id:item.device,user:item.user,token:item.token})
+      if(result.status==='error')console.error('Expo no entregó un aviso push:',result.details?.error||'unknown')
+      await Receipt.deleteOne({_id:item._id})
+    }
+  }catch{console.error('No se pudieron consultar receipts push')}
+  finally{processing=false}
+}
+module.exports={notificarCita,notificarReceta,processReceipts}

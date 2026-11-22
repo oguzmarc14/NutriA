@@ -1,3 +1,5 @@
+import { noticeDestination } from '../noticeModel'
+import { PushControls } from '../PushControls'
 import { Text, View } from 'react-native'
 import { router } from 'expo-router'
 import { useAuth } from '@/features/auth/AuthProvider'
@@ -14,8 +16,9 @@ function StaffNotices() {
     <ListState {...notices} empty={!notices.notices.length ? 'No tienes avisos pendientes en esta sección.' : undefined} />
     {!!notices.storageError && <Text accessibilityRole="alert" style={styles.error}>{notices.storageError}</Text>}
     {notices.notices.map(item => <View key={item.id} style={styles.card}><Text style={styles.cardTitle}>{item.titulo}</Text>
-      <Text style={styles.body}>{item.detalle}</Text><Text style={styles.body}>{notices.seen?.includes(item.id) ? 'Visto' : 'Nuevo'}</Text></View>)}
+      <Text style={styles.body}>{item.detalle}</Text>{noticeDestination(session?.user.role,item.route)&&<Button selected={false} label="Abrir apartado" onPress={()=>router.push(noticeDestination(session?.user.role,item.route)!)}/>}<Text style={styles.body}>{item.seen || notices.seen?.includes(item.id) ? 'Visto' : 'Nuevo'}</Text></View>)}
     {!!notices.unread && <Button label="Marcar como vistos" disabled={notices.saving} onPress={() => void notices.markSeen()} />}
+    <PushControls />
     <Button label={admin ? 'Abrir moderación' : 'Ver agenda'} onPress={() => admin ? router.push('/moderacion') : router.navigate('/citas')} />
   </Page>
 }

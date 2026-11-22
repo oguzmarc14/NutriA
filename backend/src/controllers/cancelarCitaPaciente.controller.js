@@ -52,6 +52,7 @@ async function cancelarMiCita(req,res,next) {
     cita.recordatorio24hEnviado=null
     cita.recordatorio2hEnviado=null
     await cita.save()
+    void req.app?.locals?.notificarCita?.(cita)
     return res.json({
       message:'Tu cita fue cancelada. Puedes consultar el registro en tu historial.',
       cita:{_id:cita._id,inicio:cita.inicio,estado:cita.estado},

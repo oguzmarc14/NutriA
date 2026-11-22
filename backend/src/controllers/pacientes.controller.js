@@ -183,7 +183,7 @@ async function obtenerPacientes(
 
     const ids = pacientes.map((paciente) => paciente._id)
     const ahora = new Date()
-    const [usuariosPaciente, expedientesExistentes, pacientesConPlan, fechasConsulta] = await Promise.all([
+    const [usuariosPaciente, expedientesExistentes, pacientesConPlan, fechasConsulta, resumenMediciones] = await Promise.all([
       User.find({ patient: { $in: ids }, role: 'patient' })
         .select('patient accountStatus').lean(),
       ExpedienteClinico.find({
@@ -215,7 +215,14 @@ async function obtenerPacientes(
           } },
         } },
       ]) : Promise.resolve([]),
+      ids.length ? Medicion.aggregate([
+        { $match: { paciente: { $in: ids }, nutritionist: new mongoose.Types.ObjectId(req.user.id) } },
+        { $sort: { fecha: 1, createdAt: 1, _id: 1 } },
+        { $group: { _id: '$paciente', primera: { $first: '$$ROOT' }, ultima: { $last: '$$ROOT' }, cantidad: { $sum: 1 } } },
+        { $project: { cantidad: 1, primera: { peso: '$primera.peso' }, ultima: { peso: '$ultima.peso', estatura: '$ultima.estatura', imc: '$ultima.imc', fecha: '$ultima.fecha' } } },
+      ]) : Promise.resolve([]),
     ])
+    const medicionesPorPaciente = new Map(resumenMediciones.map(item => [String(item._id), item]))
     const citasPorPaciente = new Map(fechasConsulta.map(item => [String(item._id), item]))
     const idsConExpediente = new Set(expedientesExistentes.map((item) => String(item.paciente)))
     const idsConPlan = new Set(pacientesConPlan.map(String))
@@ -231,22 +238,10 @@ async function obtenerPacientes(
       await Promise.all(
         pacientes.map(
           async (paciente) => {
-            const ultimaMedicion =
-              await Medicion.findOne({
-                paciente:
-                  paciente._id,
-
-                nutritionist:
-                  req.user.id,
-              })
-                .sort({
-                  fecha: -1,
-                  createdAt: -1,
-                })
-                .select(
-                  'peso estatura imc fecha',
-                )
-                .lean()
+            const resumen = medicionesPorPaciente.get(String(paciente._id))
+            const ultimaMedicion = resumen?.ultima || null
+            const cambioPeso = resumen?.cantidad > 1 && Number.isFinite(resumen.primera?.peso) && resumen.primera.peso > 0 && Number.isFinite(ultimaMedicion?.peso) && ultimaMedicion.peso > 0
+              ? ultimaMedicion.peso - resumen.primera.peso : null
 
             return {
               ...paciente,
@@ -257,6 +252,8 @@ async function obtenerPacientes(
               ultimaMedicion:
                 ultimaMedicion ||
                 null,
+
+              progresoPeso: { cambioKg: cambioPeso, mediciones: resumen?.cantidad || 0 },
 
               // Fechas de citas del nutriólogo, no campos huérfanos del paciente.
               ultimaConsulta: citasPorPaciente.get(String(paciente._id))?.ultimaConsulta

@@ -1,0 +1,1 @@
+Expo SDK 54 / Metro passes a filename to image-size synchronously. The patched upstream image-size 2.1.0 accepts Uint8Array only. This Node build-time adapter reads filename inputs and delegates all parsing to the unmodified upstream package installed as nutria-image-size-core. Buffer inputs and named exports remain available. No image parser is forked.

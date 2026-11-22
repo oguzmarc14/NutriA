@@ -105,7 +105,7 @@ async function confirmarMiCita(req, res, next) {
       { new: true },
     ).select('_id estado').lean()
 
-    if (cita) return res.json(cita)
+    if (cita) { void req.app?.locals?.notificarCita?.({...cita,patient:paciente._id,nutritionist:paciente.nutritionist}); return res.json(cita) }
 
     const actual = await Cita.findOne(filtro).select('_id estado inicio').lean()
     if (!actual) return res.status(404).json({ message: 'Cita no encontrada' })

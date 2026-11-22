@@ -1,0 +1,9 @@
+{
+  "name": "decode-uri-component",
+  "version": "0.5.1",
+  "license": "MIT",
+  "main": "index.cjs",
+  "types": "index.d.ts",
+  "repository": "SamVerschueren/decode-uri-component",
+  "description": "Upstream 0.5.1 with a CommonJS-only export adapter for Expo SDK 54 query-string"
+}

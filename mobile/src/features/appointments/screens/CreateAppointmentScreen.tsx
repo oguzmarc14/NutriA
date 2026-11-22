@@ -12,7 +12,7 @@ import {
   type Availability, type Patient,
 } from '@/features/appointments/models'
 import { ListState } from '@/shared/ui/ListState'
-import { Page, colors, styles } from '@/shared/ui/primitives'
+import { Button, Page, colors, styles } from '@/shared/ui/primitives'
 import { useList } from '@/shared/hooks/useList'
 import { useResource } from '@/shared/hooks/useResource'
 
@@ -222,7 +222,7 @@ function AppointmentForm({ initialPatient, initialDate, existing }: {
       {availability.loading || availability.error ? <View style={{ gap: 8 }}>
         <ListState {...availability} />
         {!!availability.error && /configur|horario|bloques/i.test(availability.error) &&
-          <Text style={s.hint}>Configura tus bloques de citas en el perfil de la versión web para habilitar la agenda.</Text>}
+          <View style={{gap:8}}><Text style={s.hint}>Configura tu horario laboral y los bloques de consulta para habilitar la agenda.</Text><Button label="Configurar horarios" selected={false} onPress={()=>router.push('/horarios')}/></View>}
       </View> : data && <View style={{ gap: 13 }}>
         <View style={s.weekNav}>
           <Pressable accessibilityRole="button" accessibilityLabel="Semana anterior" style={s.weekButton}

@@ -1,8 +1,11 @@
+import { loadDraft, saveDraft, removeDraft, restoreDraftIds } from '../plans/draftStore'
+import { reorderMeals } from '../plans/reorderMeals'
+import { PlanTracker } from '../plans/PlanTracker'
 import { MealNavigator } from '../plans/MealNavigator'
 import { dietColors as dc, dietStyles as ds, DietDisclosure } from '../plans/dietUI'
 import { AppDialog } from '@/shared/ui/AppDialog'
 import { DateField } from '@/shared/ui/DateTimeField'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
 import { Alert, Text, View } from 'react-native'
 import { ApiError, request } from '@/core/api/client'
@@ -19,14 +22,13 @@ import { measurementChanged, numberInput, type Calculation, type Measurement } f
 type Requirements = { expediente: { alergias?: string; nutricion?: Parameters<typeof assistedPlan>[0] & { intoleranciasAlimentarias?: string } } | null; mediciones: Measurement[]; calculos: Calculation[] }
 const validId = (value: unknown): value is string => typeof value === 'string' && /^[a-f\d]{24}$/i.test(value)
 
-function Editor({ patient, initial, requirements, refreshRequirements, previousPlans }: {
-  patient: string; initial?: Plan; requirements?: Requirements; refreshRequirements: () => void; previousPlans: Plan[]
+function Editor({ patient, patientName, initial, requirements, refreshRequirements, previousPlans }: {
+  patient: string; patientName: string; initial?: Plan; requirements?: Requirements; refreshRequirements: () => void; previousPlans: Plan[]
 }) {
   const { session } = useAuth()
   const [planId, setPlanId] = useState(initial?._id)
   const [draft, setDraft] = useState(() => initial ? editPlan(initial) : newPlan())
   const [activeMeal, setActiveMeal] = useState(draft.meals[0]?.key || '')
-  const [balanceOpen, setBalanceOpen] = useState(false)
   const [goalOpen, setGoalOpen] = useState(!!initial?.objetivo)
   const [addMealOpen, setAddMealOpen] = useState(false)
   const [guideOpen, setGuideOpen] = useState(false)
@@ -36,6 +38,12 @@ function Editor({ patient, initial, requirements, refreshRequirements, previousP
   const [dirty, setDirty] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const draftStorageKey = 'nutria.diet-draft.'+session!.user.id+'.'+patient+'.'+(initial?._id||'new')
+  const [recovery,setRecovery]=useState<Awaited<ReturnType<typeof loadDraft>>>(null)
+  const [draftReady,setDraftReady]=useState(false)
+  const [draftMessage,setDraftMessage]=useState('')
+  useEffect(()=>{let active=true;void loadDraft(draftStorageKey).then(saved=>{if(!active)return;if(saved)setRecovery(saved);else setDraftReady(true)}).catch(()=>{if(active){setDraftMessage('No se pudo recuperar el borrador local. Puedes continuar y guardar el plan en NutriA.');setDraftReady(true)}});return()=>{active=false}},[draftStorageKey])
+  useEffect(()=>{if(!draftReady||!dirty||busy)return;let active=true;const timer=setTimeout(()=>{void saveDraft(draftStorageKey,draft).then(()=>{if(active)setDraftMessage('Borrador protegido guardado en este teléfono.')}).catch(cause=>{if(active)setDraftMessage(cause instanceof Error?cause.message:'No se pudo guardar el borrador local.')})},1500);return()=>{active=false;clearTimeout(timer)}},[draftStorageKey,draftReady,draft,dirty,busy])
   const submitting = useRef(false)
   useUnsavedChanges(dirty, busy)
   const totals = planTotals(draft.meals)
@@ -53,6 +61,7 @@ function Editor({ patient, initial, requirements, refreshRequirements, previousP
       const { plan } = await request<{ plan: Plan }>('/planes/' + patient + (planId ? '/' + planId : ''), {
         token: session.token, method: planId ? 'PUT' : 'POST', body,
       })
+      await removeDraft(draftStorageKey).catch(()=>{})
       setPlanId(plan._id)
       const saved = editPlan(plan)
       setDraft(saved); setActiveMeal(saved.meals[0]?.key || ''); setDirty(false)
@@ -74,8 +83,15 @@ function Editor({ patient, initial, requirements, refreshRequirements, previousP
     if (dirty) Alert.alert('Reemplazar borrador', 'Se reemplazarán las comidas actuales. ¿Continuar?', [{ text: 'Cancelar', style: 'cancel' }, { text: 'Aceptar', onPress: apply }])
     else apply()
   }
-  return <>
-    <AppDialog visible={modeOpen && !blocked} title="¿Cómo quieres crear este plan?" message="Elige cómo comenzar. Puedes cambiar de modalidad antes de guardar." onClose={() => setModeOpen(false)}>
+  return <View style={{ flex: 1 }}><Page contentStyle={{ width: '100%', maxWidth: 720, alignSelf: 'center' }}>
+    <Text style={ds.title}>{planId ? 'Editar plan alimenticio' : 'Crear plan alimenticio'}</Text>
+    <Text style={ds.caption}>Paciente · {patientName}</Text>
+    {!!draftMessage&&<Text style={ds.caption}>{draftMessage}</Text>}
+    <AppDialog visible={!!recovery} title="Recuperar borrador" message={recovery?'Hay un borrador protegido de este paciente guardado el '+new Date(recovery.savedAt).toLocaleString('es-MX')+'. Comprueba los datos antes de guardarlo en NutriA.':''} onClose={()=>{void removeDraft(draftStorageKey).catch(()=>{});setRecovery(null);setDraftReady(true)}}>
+      <Button label="Recuperar borrador" onPress={()=>{if(recovery){const restored=restoreDraftIds(recovery.draft);change(restored);setActiveMeal(restored.meals[0]?.key||'');setModeOpen(false)}setRecovery(null);setDraftReady(true)}}/>
+      <Button label="Conservar formulario actual" selected={false} onPress={()=>{void removeDraft(draftStorageKey).catch(()=>{});setRecovery(null);setDraftReady(true)}}/>
+    </AppDialog>
+    <AppDialog visible={modeOpen && !blocked && draftReady && !recovery} title="¿Cómo quieres crear este plan?" message="Elige cómo comenzar. Puedes cambiar de modalidad antes de guardar." onClose={() => setModeOpen(false)}>
       <Button label="Plan asistido" disabled={!requirements?.calculos[0]} onPress={() => begin(assistedPlan(requirements?.expediente?.nutricion || {}, requirements!.calculos[0].resultado.objetivoKcal))} />
       <Text style={styles.body}>Usa objetivos, cantidad de comidas y horarios del expediente. Requiere un cálculo guardado.</Text>
       <Button label="Duplicar último plan" disabled={!previousPlans.length} onPress={() => begin(duplicatePlan([...previousPlans].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]))} />
@@ -118,7 +134,10 @@ function Editor({ patient, initial, requirements, refreshRequirements, previousP
       <Text style={ds.caption}>Hay mediciones nuevas o modificadas. Revisa el cálculo nutricional antes de continuar.</Text>
       <Button selected={false} label="Revisar cálculo" onPress={() => router.push({ pathname: '/calculo', params: { patient } })} />
     </View>}
-    <MealNavigator meals={draft.meals} active={activeMeal} disabled={busy} onSelect={setActiveMeal} onAdd={() => setAddMealOpen(true)} onMove={(key, direction) => {
+    <MealNavigator meals={draft.meals} active={activeMeal} disabled={busy} onReorder={(from, to) => {
+      if (from === to) return
+      change({ ...draft, meals: reorderMeals(draft.meals, from, to) })
+    }} onSelect={setActiveMeal} onAdd={() => setAddMealOpen(true)} onMove={(key, direction) => {
       const meals = [...draft.meals], index = meals.findIndex(meal => meal.key === key), next = index + direction
       if (index < 0 || next < 0 || next >= meals.length) return
       ;[meals[index], meals[next]] = [meals[next], meals[index]]; change({ ...draft, meals })
@@ -133,35 +152,10 @@ function Editor({ patient, initial, requirements, refreshRequirements, previousP
       onChange={meal => change({ ...draft, meals: draft.meals.map(item => item.key === meal.key ? meal : item) })}
       onRemove={() => { const meals = draft.meals.filter(item => item.key !== current.key); change({ ...draft, meals }); setActiveMeal(meals[0]?.key || '') }} />}
     <AppDialog visible={!!error} title="Revisa los datos del plan" message={error} onClose={() => setError('')} />
-    <View style={[ds.card, ds.body]}>
-      <DietDisclosure label={`Seguimiento del plan · ${totals.kcal.toFixed(0)}${target > 0 ? ' / ' + target.toFixed(0) : ''} kcal`} open={balanceOpen} onPress={() => setBalanceOpen(!balanceOpen)}>
-        <Text style={ds.caption}>Se calcula al editar alimentos y porciones.</Text>
-        <FormField label="Meta de energía (kcal/día)" numeric value={draft.energy} disabled={busy} onChange={energy => change({ ...draft, energy })} />
-        <View style={styles.row}><Button expand selected={false} disabled={busy || !Number.isFinite(target) || target <= 100} label="−100 kcal" onPress={() => change({ ...draft, energy: String(Math.round((target - 100) * 10) / 10) })} />
-          <Button expand selected={false} disabled={busy || !Number.isFinite(target)} label="+100 kcal" onPress={() => change({ ...draft, energy: String(Math.round((target + 100) * 10) / 10) })} /></View>
-        <Text style={ds.caption}>Sin meta personalizada se usa como referencia el último cálculo guardado.</Text>
-        {!!draft.energy.trim() && <Button selected={false} disabled={busy} label={reference ? 'Restaurar meta del cálculo' : 'Quitar meta personalizada'} onPress={() => change({ ...draft, energy: '' })} />}
-        {[{ label: 'Energía', actual: totals.kcal, goal: target, unit: 'kcal' },
-          { label: 'Proteínas', actual: totals.proteina, goal: reference?.resultado.proteinasGramos, unit: 'g' },
-          { label: 'Carbohidratos', actual: totals.carbohidratos, goal: reference?.resultado.carbohidratosGramos, unit: 'g' },
-          { label: 'Grasas', actual: totals.grasas, goal: reference?.resultado.grasasGramos, unit: 'g' }].map(metric => <View key={metric.label} style={{ gap: 6, paddingVertical: 6 }}>
-            <Text style={ds.label}>{metric.label}: {metric.actual.toFixed(1)}{metric.goal != null && Number.isFinite(metric.goal) && metric.goal > 0 ? ' / ' + metric.goal.toFixed(1) : ''} {metric.unit}</Text>
-            {metric.goal != null && Number.isFinite(metric.goal) && metric.goal > 0 && <><View style={{ height: 7, borderRadius: 4, overflow: 'hidden', backgroundColor: '#dfede5' }}>
-              <View style={{ height: 7, width: `${Math.min(100, metric.actual / metric.goal * 100)}%`, backgroundColor: metric.actual > metric.goal ? '#b47820' : '#79b593' }} /></View>
-              <Text style={ds.caption}>{metric.actual > metric.goal ? 'Excedente' : 'Pendiente'}: {Math.abs(metric.goal - metric.actual).toFixed(1)} {metric.unit}</Text></>}
-          </View>)}
-    <View style={styles.card}><Text style={styles.cardTitle}>Distribución por comida</Text>
-      {draft.meals.map(meal => { const subtotal = planTotals([meal]); const percent = numberInput(meal.percentage); const goal = Number.isFinite(percent) && Number.isFinite(target) ? target * percent / 100 : null
-        return <View key={meal.key} style={{ gap: 6 }}><Text style={styles.body}>{meal.nombre}: {subtotal.kcal.toFixed(1)} kcal{goal === null ? '' : ` / ${goal.toFixed(1)} kcal`}</Text>
-          <View style={{ height: 7, backgroundColor: '#dfede5', borderRadius: 4, overflow: 'hidden' }}><View style={{ height: 7, width: `${Math.min(100, goal && goal > 0 ? subtotal.kcal / goal * 100 : 0)}%`, backgroundColor: '#176344' }} /></View></View>
-      })}
-    </View>
-      </DietDisclosure>
-    </View>
     <View style={styles.row}><Button expand selected={false} disabled={busy} label="Cancelar" onPress={() => router.back()} />
     <Button expand disabled={busy || blocked || !dirty} label={busy ? 'Guardando…' : planId ? 'Guardar cambios' : 'Guardar plan'} onPress={save} /></View>
 
-  </>
+  </Page><PlanTracker draft={draft} reference={reference} active={activeMeal} disabled={busy || blocked} onChange={change} /></View>
 }
 
 export default function PlanEditorScreen() {
@@ -171,12 +165,12 @@ export default function PlanEditorScreen() {
   const requirements = useResource<Requirements>(valid ? '/calculo-nutricional/' + patient : null)
   if (!valid) return <Page><Text style={styles.cardTitle}>Elige un paciente para crear una dieta.</Text><Button label="Elegir paciente" onPress={() => router.replace({ pathname: '/elegir-paciente', params: { intent: 'create-plan' } })} /></Page>
   const existing = id ? resource.data?.planes.find(plan => plan._id === id) : undefined
-  return <Page bottomInset contentStyle={{ width: '100%', maxWidth: 720, alignSelf: 'center' }}>
+  if (resource.data && (!id || existing) && (id || (!requirements.loading && !requirements.error))) return <Editor key={`${patient}-${id || 'new'}`} patient={patient!} patientName={resource.data.paciente.name} initial={existing} requirements={requirements.data} refreshRequirements={requirements.reload} previousPlans={resource.data.planes} />
+  return <Page bottomInset>
     <ListState loading={resource.loading} error={resource.error} reload={resource.reload} />
     {!id && <ListState loading={requirements.loading} error={requirements.error} reload={requirements.reload} />}
     {resource.data && <View style={{ gap: 5 }}><Text style={{ color: dc.ink, fontSize: 25, fontWeight: '800' }}>{id ? 'Editar plan alimenticio' : 'Crear plan alimenticio'}</Text>
       <Text style={ds.caption}>Paciente · {resource.data.paciente.name}</Text></View>}
     {resource.data && id && !existing && <Text style={styles.error}>Esta dieta no está disponible. Regresa a los planes del paciente.</Text>}
-    {resource.data && (!id || existing) && <Editor key={`${patient}-${id || 'new'}`} patient={patient!} initial={existing} requirements={requirements.data} refreshRequirements={requirements.reload} previousPlans={resource.data.planes} />}
   </Page>
 }

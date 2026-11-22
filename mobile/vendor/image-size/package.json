@@ -1,0 +1,7 @@
+{
+  "name": "image-size",
+  "version": "2.1.0",
+  "main": "index.cjs",
+  "private": true,
+  "description": "Expo SDK 54 synchronous filename compatibility adapter for patched image-size 2.1.0"
+}

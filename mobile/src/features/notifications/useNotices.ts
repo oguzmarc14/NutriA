@@ -1,10 +1,11 @@
+import { request } from '@/core/api/client'
 import { useCallback, useState } from 'react'
 import { useFocusEffect } from 'expo-router'
 import * as SecureStore from 'expo-secure-store'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useResource } from '@/shared/hooks/useResource'
 import { appointmentPath } from '@/features/appointments/models'
-import { roleNotices, type NoticeData } from './noticeModel'
+import { roleNotices, type NoticeData, type Notice } from './noticeModel'
 export function useNotices() {
   const { session } = useAuth()
   const role = session?.user.role
@@ -25,14 +26,17 @@ export function useNotices() {
     }).catch(() => { if (active) setStorageError('No se pudieron recuperar los avisos vistos.') })
     return () => { active = false }
   }, [key]))
-  const notices = roleNotices(role, resource.data)
-  const unread = seen === null ? null : notices.filter(item => !seen.includes(item.id)).length
+  const inbox = useResource<{notices:Notice[]}>(session ? '/push/notices' : null)
+  const notices = [...(inbox.data?.notices || []),...roleNotices(role, resource.data)]
+  const unread = seen === null ? null : notices.filter(item => !item.seen && !seen.includes(item.id)).length
   async function markSeen() {
     if (saving || seen === null) return
     setSaving(true); setStorageError('')
     try {
       const ids = [...new Set([...seen, ...notices.map(n => n.id)])].slice(-100)
-      await SecureStore.setItemAsync(key, JSON.stringify(ids)); setSeen(ids)
+      const remoteIds = (inbox.data?.notices || []).filter(n=>!n.seen).map(n=>n.id)
+      if(remoteIds.length && session)await request('/push/notices/seen',{token:session.token,body:{ids:remoteIds}})
+      await SecureStore.setItemAsync(key, JSON.stringify(ids)); setSeen(ids);inbox.reload()
     } catch { setStorageError('No se pudo guardar el estado de los avisos.') }
     finally { setSaving(false) }
   }

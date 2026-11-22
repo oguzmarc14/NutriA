@@ -1,3 +1,5 @@
+import { PatientCardActions } from '../PatientCardActions'
+import { patientNotices, weightChange } from '../patientNotices'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useState } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
@@ -15,6 +17,9 @@ import { ListState } from '@/shared/ui/ListState'
 import { Page, colors, styles } from '@/shared/ui/primitives'
 
 type PatientSummary = Patient & {
+  progresoPeso?: { cambioKg: number | null; mediciones: number }
+  notes?: string
+  mediciones?: { peso?: number; fecha?: string; createdAt?: string }[]
   phone?: string
   birthDate?: string
   sex?: 'male' | 'female' | 'other' | 'unspecified'
@@ -32,7 +37,7 @@ const softBorder = '#d3e5d8'
 
 function formatDate(input?: string) {
   if (!input) return null
-  const date = new Date(input)
+  const date = new Date(/^\d{4}-\d{2}-\d{2}$/.test(input) ? input + 'T12:00:00' : input)
   if (Number.isNaN(date.getTime())) return null
   return new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }).format(date)
 }
@@ -74,7 +79,7 @@ function metric(label: string, value: string, icon: keyof typeof Ionicons.glyphM
   )
 }
 
-function PatientCard({ patient, selectMode, onSelect, onOpen, onResend, resending, working }: {
+function PatientCard({ patient, selectMode, onSelect, onOpen, onResend, resending, working, onChanged, onRemoved }: {
   patient: PatientSummary
   selectMode: boolean
   onSelect: () => void
@@ -82,7 +87,12 @@ function PatientCard({ patient, selectMode, onSelect, onOpen, onResend, resendin
   onResend: () => void
   resending: boolean
   working: boolean
+  onChanged: () => void
+  onRemoved: () => void
 }) {
+  const [noticesOpen, setNoticesOpen] = useState(false)
+  const notices = patientNotices(patient)
+  const change = patient.progresoPeso ? patient.progresoPeso.cambioKg : weightChange(patient.mediciones)
   const pending = patient.accountStatus === 'pending'
   const weight = Number(patient.ultimaMedicion?.peso)
   const height = Number(patient.ultimaMedicion?.estatura)
@@ -112,7 +122,7 @@ function PatientCard({ patient, selectMode, onSelect, onOpen, onResend, resendin
       <View style={local.cardHeader}>
         <View style={local.avatar}><Text style={local.avatarText}>{initials}</Text></View>
         <View style={local.identity}>
-          <Text style={local.patientName} numberOfLines={2}>{patient.name}</Text>
+          <Text style={local.patientName}>{patient.name}</Text>
           <View style={local.statusLine}>
             <View style={[local.statusDot, pending && local.pendingDot]} />
             <Text style={[local.statusText, pending && local.pendingText]}>
@@ -121,31 +131,16 @@ function PatientCard({ patient, selectMode, onSelect, onOpen, onResend, resendin
           </View>
           {!!details && <Text style={local.personalDetails}>{details}</Text>}
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel={'Abrir ficha de ' + patient.name}
-          onPress={onOpen} hitSlop={8} style={({ pressed }) => [local.headerArrow, pressed && styles.pressed]}>
-          <Ionicons name="chevron-forward" size={20} color={colors.ink} />
-        </Pressable>
+        <PatientCardActions patient={patient} noticesOpen={noticesOpen} onNotices={setNoticesOpen} onOpen={onOpen} onResend={onResend} resending={resending} onChanged={onChanged} onRemoved={onRemoved} />
       </View>
-
-      {pending && (
-        <View style={local.notice}>
-          <View style={local.noticeTitleRow}>
-            <Ionicons name="alert-circle-outline" size={18} color="#9d6629" />
-            <Text style={local.noticeTitle}>Atención pendiente</Text>
-          </View>
-          <Text style={local.noticeBody}>La cuenta todavía no está activada. Puedes reenviar la invitación al correo registrado.</Text>
-          <Pressable accessibilityRole="button"
-            accessibilityLabel={'Reenviar invitación a ' + patient.name}
-            disabled={resending} onPress={onResend}
-            style={({ pressed }) => [local.noticeLink, pressed && styles.pressed, resending && styles.disabled]}>
-            <Text style={local.noticeLinkText}>{resending ? 'Enviando…' : 'Reenviar invitación'}</Text>
-            <Ionicons name="arrow-forward" size={15} color={accent} />
-          </Pressable>
-        </View>
-      )}
+      {!!notices.length && <Pressable accessibilityRole="button" accessibilityLabel={'Ver ' + notices.length + ' avisos de ' + patient.name} onPress={() => setNoticesOpen(true)} style={local.notice}>
+        <View style={local.noticeTitleRow}><Ionicons name="alert-circle-outline" size={18} color="#5f6651" /><Text style={[local.noticeTitle, { flex: 1 }]}>Atención pendiente</Text><Text style={{ color: '#9d6629', backgroundColor: '#fce7d4', padding: 6, borderRadius: 12, fontSize: 11, fontWeight: '800' }}>Aviso</Text></View>
+        <Text style={local.noticeBody}>{notices[0].detail}</Text>
+        <View style={[local.noticeTitleRow, { justifyContent: 'space-between', minHeight: 44 }]}><Text style={[local.personalDetails, { flex: 1 }]}>{notices[0].title}</Text><Text style={local.noticeLinkText}>Ver {notices.length} {notices.length === 1 ? 'aviso' : 'avisos'} ›</Text></View>
+      </Pressable>}
 
       <View style={local.metricsGrid}>
-        {metric('Peso actual', weight > 0 ? weight.toFixed(1) + ' kg' : 'Sin mediciones', 'scale-outline')}
+        {metric('Cambio de peso', change === null ? 'Sin historial comparable' : (change > 0 ? '+' : '') + change.toFixed(1) + ' kg', 'trending-down-outline')}
         {metric('Última consulta', formatDate(patient.ultimaConsulta?.inicio) || 'Sin consultas', 'calendar-outline')}
         {metric('IMC actual', Number.isFinite(bmi) ? bmi.toFixed(1) : 'Sin medición', 'pulse-outline')}
         {metric('Próxima cita', formatDate(patient.proximaConsulta?.inicio) || 'Por programar', 'calendar-number-outline')}
@@ -348,7 +343,7 @@ export default function Patients() {
               onSelect={() => choose(patient)}
               onOpen={() => selectMode ? choose(patient) : router.push({ pathname: '/paciente', params: { id: patient._id } })}
               onResend={() => confirmResend(patient)}
-              resending={resendingId === patient._id} />
+              resending={resendingId === patient._id} onChanged={list.reload} onRemoved={() => { if (active?.id === patient._id) stop() }} />
           ))}
         </View>
       )}
@@ -409,11 +404,11 @@ const local = StyleSheet.create({
   cards: { gap: 14, paddingBottom: 14 },
   activePatientCard: { borderWidth: 2, borderColor: '#409166', backgroundColor: '#eaf6ed' },
   patientCard: { borderWidth: 1.3, borderColor: '#a6ceb3', borderRadius: 23, backgroundColor: '#f7fbf7', padding: 15, gap: 14, shadowColor: '#285e43', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.07, shadowRadius: 12, elevation: 2 },
-  cardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  avatar: { width: 50, height: 50, borderRadius: 16, backgroundColor: '#dceee3', alignItems: 'center', justifyContent: 'center' },
+  cardHeader: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: 8 },
+  avatar: { width: 44, height: 48, borderRadius: 16, backgroundColor: '#dceee3', alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontSize: 23, color: '#236e54', fontWeight: '800' },
-  identity: { flex: 1, minWidth: 0, paddingTop: 2 },
-  patientName: { color: colors.ink, fontSize: 16, fontWeight: '800', lineHeight: 21 },
+  identity: { flex: 1, minWidth: 120, paddingTop: 2 },
+  patientName: { color: colors.ink, fontSize: 15, fontWeight: '800', lineHeight: 21 },
   statusLine: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 5 },
   statusDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: '#48a472' },
   pendingDot: { backgroundColor: '#db9f4c' },
@@ -421,10 +416,10 @@ const local = StyleSheet.create({
   pendingText: { color: '#96652e' },
   personalDetails: { color: '#6d8778', fontSize: 11, marginTop: 6, lineHeight: 16 },
   headerArrow: { width: 31, height: 36, alignItems: 'center', justifyContent: 'center' },
-  notice: { padding: 13, gap: 7, backgroundColor: '#fff8eb', borderWidth: 1, borderColor: '#f0dfc2', borderRadius: 16 },
+  notice: { padding: 13, gap: 7, backgroundColor: '#eff5ef', borderWidth: 1, borderColor: '#cde1d2', borderRadius: 16 },
   noticeTitleRow: { flexDirection: 'row', gap: 7, alignItems: 'center' },
   noticeTitle: { fontSize: 12, fontWeight: '800', color: '#7d572a' },
-  noticeBody: { color: '#7e6751', fontSize: 12, lineHeight: 18 },
+  noticeBody: { color: '#526d5b', fontSize: 12, lineHeight: 18 },
   noticeLink: { alignSelf: 'flex-end', flexDirection: 'row', gap: 5, alignItems: 'center', paddingVertical: 5 },
   noticeLinkText: { fontSize: 12, fontWeight: '700', color: accent },
   metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

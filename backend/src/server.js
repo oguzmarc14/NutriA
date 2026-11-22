@@ -12,6 +12,9 @@ async function startServer() {
 
   await connectDatabase()
 
+  const {processReceipts}=require('./services/push.service')
+  void processReceipts()
+  const receipts=setInterval(()=>void processReceipts(),60000);receipts.unref()
   app.listen(port, () => {
     console.log(`NutriA API disponible en http://localhost:${port}`)
   })

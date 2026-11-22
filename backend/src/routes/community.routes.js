@@ -71,6 +71,7 @@ router.post('/:id/publicar', allowRoles('nutritionist'), async (req, res, next) 
       { new: true, runValidators: true },
     )
     if (!receta) return res.status(404).json({ message: 'Receta no encontrada o no publicable' })
+    void req.app?.locals?.notificarReceta?.(receta,receta.estado==='pendiente')
     res.json(receta)
   } catch (error) { next(error) }
 })
@@ -97,6 +98,7 @@ router.patch('/:id/moderar', allowRoles('admin'), async (req, res, next) => {
       { new: true, runValidators: true },
     )
     if (!receta) return res.status(404).json({ message: 'Receta pendiente no encontrada' })
+    void req.app?.locals?.notificarReceta?.(receta,receta.estado==='pendiente')
     res.json(receta)
   } catch (error) { next(error) }
 })

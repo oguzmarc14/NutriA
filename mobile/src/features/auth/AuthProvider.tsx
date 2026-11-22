@@ -1,6 +1,7 @@
-import { unregisterPush } from '@/features/notifications/pushRegistration'
+import { localSignOut } from './localSignOut'
+import { unregisterPush, reassignRegisteredDevice } from '@/features/notifications/pushRegistration'
 import { clearReminders } from '@/features/notifications/reminders'
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import * as SecureStore from 'expo-secure-store'
 import { ApiError, request, type Session, type User } from '@/core/api/client'
 import { isRole } from '@/features/auth/access'
@@ -24,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [restoreError, setRestoreError] = useState('')
   const [attempt, setAttempt] = useState(0)
+  const cleanup = useRef<Promise<unknown>>(Promise.resolve())
 
   useEffect(() => {
     const controller = new AbortController()
@@ -59,15 +61,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const next = await request<Session>(`/auth/${provider}`, { body })
     if (!next.token || !isRole(next.user?.role)) throw new Error('Sesión inválida.')
     await SecureStore.setItemAsync(key, next.token, storage)
+    await cleanup.current.catch(() => {})
+    await reassignRegisteredDevice(next.token,next.user.id).catch(() => {})
     setSession(next)
   }
 
   const signOut = useCallback(async () => {
-    if (session?.token) await unregisterPush(session.token)
-    await clearReminders()
-    await SecureStore.deleteItemAsync(key, storage)
-    setSession(null)
-    setRestoreError('')
+    const previous = session?.token
+    const result = await localSignOut(
+      () => SecureStore.deleteItemAsync(key, storage),
+      () => { setSession(null); setRestoreError('') },
+      [...(previous ? [() => unregisterPush(previous)] : []), clearReminders],
+    )
+    cleanup.current = result.cleanup
   }, [session?.token])
 
   return (

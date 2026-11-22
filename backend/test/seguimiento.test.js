@@ -81,7 +81,7 @@ test('listado de pacientes incluye última completada y siguiente activa, no dat
   const deps={
     zod:{z},crypto:require('node:crypto'),
     '../models/Pacientes':{find:()=>({sort:()=>({lean:async()=>[{_id:PID,name:'Juan'}]})})},
-    '../models/Medicion':{findOne:()=>({sort:()=>({select:()=>({lean:async()=>null})})})},
+    '../models/Medicion':{aggregate:async pipeline=>{assert.equal(String(pipeline[0].$match.nutritionist),ID);assert.equal(String(pipeline[0].$match.paciente.$in[0]),PID);return [{_id:PID,primera:{peso:90},ultima:{peso:82,estatura:1.7,imc:28.4,fecha:new Date('2026-11-09')},cantidad:2}]}},
     '../models/ExpedienteClinico':{find:()=>({select:()=>({lean:async()=>[]})})},
     '../models/PlanAlimenticio':{distinct:async()=>[]},
     '../models/Cita':{aggregate:async pipeline=>{
@@ -115,4 +115,7 @@ test('listado de pacientes incluye última completada y siguiente activa, no dat
   assert.equal(p.ultimaConsulta.inicio.toISOString(),'2026-11-01T15:00:00.000Z')
   assert.equal(p.proximaConsulta.inicio.toISOString(),'2026-12-15T17:00:00.000Z')
   assert.equal(p.tienePlan,false)
+  assert.equal(p.ultimaMedicion.peso,82)
+  assert.equal(p.progresoPeso.cambioKg,-8)
+  assert.equal(p.progresoPeso.mediciones,2)
 })

@@ -1,3 +1,4 @@
+import { NotificationSync } from '@/features/notifications/NotificationSync'
 import NotificationNavigation from '@/features/notifications/NotificationNavigation'
 import { StatusBar } from 'expo-status-bar'
 import { router, Stack } from 'expo-router'
@@ -45,6 +46,7 @@ function Navigation() {
         <Stack.Screen name="cuenta" options={{ ...clinicHeader, title: 'Mi cuenta' }} />
       </Stack.Protected>
       <Stack.Protected guard={session?.user.role === 'patient'}>
+        <Stack.Screen name="mi-expediente" options={{ ...clinicHeader, title: 'Mi expediente' }} />
         <Stack.Screen name="mis-pagos" options={{ ...clinicHeader, title: 'Mis pagos' }} />
         <Stack.Screen name="reportar-pago" options={{ ...clinicHeader, title: 'Reportar pago' }} />
         <Stack.Screen name="registrar-comida" options={{ ...clinicHeader, title: 'Registrar comida' }} />
@@ -57,6 +59,7 @@ function Navigation() {
         <Stack.Screen name="comunidad" options={{ ...clinicHeader, title: 'NutriA Community' }} />
       </Stack.Protected>
       <Stack.Protected guard={session?.user.role === 'nutritionist'}>
+        <Stack.Screen name="horarios" options={{ ...clinicHeader, title: 'Horarios y disponibilidad' }} />
         <Stack.Screen name="mi-clinica" options={{ ...clinicHeader, title: 'Mi clínica' }} />
       </Stack.Protected>
       <Stack.Protected guard={canViewClinic(session?.user.role)}>
@@ -83,6 +86,7 @@ export default function RootLayout() {
         <StatusBar style="dark" />
         <Navigation />
         <NotificationNavigation />
+        <NotificationSync />
       </PatientWorkProvider>
     </AuthProvider>
   )

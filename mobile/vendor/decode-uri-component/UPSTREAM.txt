@@ -1,0 +1,4 @@
+Upstream: decode-uri-component 0.5.1, npm registry tarball. MIT license retained.
+Only adaptation: default ESM export changed to module.exports for query-string 7 / Expo SDK 54.
+The decoding algorithm is unchanged, including the linear malformed-input fix.
+Re-evaluate this adapter when upgrading Expo / query-string to ESM.

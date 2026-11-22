@@ -39,6 +39,7 @@ export default function Account() {
     {session.user.role === 'nutritionist' && <>
       <Text style={s.section}>Configuración del consultorio</Text>
       <ClinicAccess />
+      <Pressable accessibilityRole="button" onPress={()=>router.push('/horarios')} style={s.clinicCard}><Ionicons name="calendar-outline" size={26} color={colors.green}/><Text style={s.linkTitle}>Horarios y disponibilidad</Text></Pressable>
     </>}
     <Pressable accessibilityRole="button" disabled={busy}
       style={({ pressed }) => [s.signOut, pressed && styles.pressed, busy && styles.disabled]}

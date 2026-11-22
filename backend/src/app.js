@@ -26,6 +26,7 @@ const recordatoriosRoutes = require('./routes/recordatorios.routes')
 
 const app = express()
 app.locals.notificarCita = require('./services/push.service').notificarCita
+app.locals.notificarReceta = require('./services/push.service').notificarReceta
 
 app.disable('x-powered-by')
 
@@ -56,6 +57,7 @@ app.get(
     res.json({
       service: 'NutriA API',
       status: 'ok',
+      mobileApiVersion: 2,
     })
   },
 )

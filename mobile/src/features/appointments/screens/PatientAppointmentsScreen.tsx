@@ -1,3 +1,4 @@
+import { refreshAppointments } from '@/features/notifications/reminderSync'
 import { useState } from 'react'
 import { ActivityIndicator, Alert, Text, View } from 'react-native'
 import { request } from '@/core/api/client'
@@ -32,7 +33,7 @@ export default function MyAppointments() {
       await request('/mi-perfil/citas/' + encodeURIComponent(appointment._id) + '/' + action, {
         token: session.token, method: 'PATCH',
       })
-      reload()
+      reload(); refreshAppointments()
       Alert.alert(action === 'confirmar' ? 'Cita confirmada' : 'Cita cancelada',
         action === 'confirmar' ? 'Tu asistencia quedó confirmada.' : 'La cita se canceló correctamente.',
         [{ text: 'Aceptar' }])

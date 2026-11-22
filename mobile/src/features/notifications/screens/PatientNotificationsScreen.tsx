@@ -1,5 +1,6 @@
-import { registerPush, unregisterPush } from '../pushRegistration'
-import { programReminders, clearReminders } from '../reminders'
+import { useNotices } from '../useNotices'
+import { PushControls } from '../PushControls'
+import { enableReminders, disableReminders } from '../reminders'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
 import * as SecureStore from 'expo-secure-store'
@@ -13,6 +14,7 @@ type Notices = { avisos: Notice[]; citas: { _id: string; inicio: string; estado:
 
 export default function PatientNotificationsScreen() {
   const { session } = useAuth()
+  const inbox = useNotices()
   const { data, loading, error, reload } = useResource<Notices>('/mi-perfil/citas')
   const [seen, setSeen] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
@@ -62,37 +64,23 @@ export default function PatientNotificationsScreen() {
     </View>)}
     {!!unread.length && <Button label={saving ? 'Guardando…' : 'Marcar como vistos'}
       disabled={saving || loading} selected={false} onPress={() => void markSeen()}/>}
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>Avisos de cambios de cita</Text>
-      <Text style={styles.body}>Recibe actualizaciones enviadas por tu consultorio.</Text>
-      <Button label="Activar notificaciones remotas" disabled={saving} onPress={() => {
-        if (!session) return
-        setSaving(true)
-        void registerPush(session.token).then(() => setStorageError('Teléfono registrado para notificaciones.'))
-          .catch(error => setStorageError(error instanceof Error ? error.message : 'No fue posible registrar el teléfono.'))
-          .finally(() => setSaving(false))
-      }}/>
-      <Button label="Desactivar avisos remotos" selected={false} disabled={saving} onPress={() => {
-        if (!session) return
-        setSaving(true)
-        void unregisterPush(session.token).then(() => setStorageError('Avisos remotos desactivados.'))
-          .catch(() => setStorageError('No se pudo desconectar este teléfono. Intenta de nuevo.'))
-          .finally(() => setSaving(false))
-      }}/>
-    </View>
+    {inbox.notices.filter(n=>n.route).map(n=><View key={n.id} style={styles.card}><Text style={styles.cardTitle}>{n.titulo}</Text><Text style={styles.body}>{n.detalle}</Text><Button selected={false} label="Ver mis citas" onPress={()=>router.navigate('/mis-citas')}/></View>)}
+    {!!inbox.unread&&<Button label="Marcar avisos de cambios como vistos" disabled={inbox.saving} selected={false} onPress={()=>void inbox.markSeen()}/>}
+    {!!inbox.storageError&&<Text style={styles.error}>{inbox.storageError}</Text>}
+    <PushControls />
     <View style={styles.card}>
       <Text style={styles.cardTitle}>Recordatorios del teléfono</Text>
-      <Text style={styles.body}>Programa avisos 24 y 2 horas antes de las citas sincronizadas. Vuelve a programarlos después de cambiar o cancelar una cita.</Text>
+      <Text style={styles.body}>Programa avisos 24 y 2 horas antes de las citas sincronizadas. Se sincronizan al abrir la app, al recibir cambios con la app abierta y después de confirmar o cancelar. Si cambian citas con la app cerrada, abre NutriA para actualizar los avisos locales.</Text>
       <Button label="Programar recordatorios" disabled={!data || loading || saving} onPress={() => {
         setSaving(true)
-        void programReminders(data!.citas).then(count => setStorageError(count
+        void enableReminders(session!.user.id, data!.citas).then(count => setStorageError(count
           ? 'Recordatorios programados en este teléfono.' : 'No hay recordatorios futuros para programar.'))
           .catch(error => setStorageError(error instanceof Error ? error.message : 'No se pudieron programar los avisos.'))
           .finally(() => setSaving(false))
       }}/>
       <Button label="Desactivar recordatorios" selected={false} disabled={saving} onPress={() => {
         setSaving(true)
-        void clearReminders().then(() => setStorageError('Recordatorios desactivados.'))
+        void disableReminders(session!.user.id).then(() => setStorageError('Recordatorios desactivados.'))
           .catch(() => setStorageError('No se pudieron desactivar los recordatorios.'))
           .finally(() => setSaving(false))
       }}/>
