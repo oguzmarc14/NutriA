@@ -22,6 +22,7 @@ function ClinicHome() {
       <Shortcut icon="time-outline" title="Ver agenda" detail="Día, semana y mes" onPress={() => router.navigate('/citas')} />
       <Shortcut icon="nutrition-outline" title="Crear o consultar dieta"
         detail="Elige un paciente y organiza su plan" onPress={() => router.push('/planes')} />
+      <Shortcut icon="wallet-outline" title="Pagos de pacientes" detail="Elige un paciente para revisar sus reportes" onPress={() => router.push('/pagos-paciente')} />
       <Shortcut icon="people-outline" title="Ver pacientes" onPress={() => router.navigate('/pacientes')} />
       <Text accessibilityRole="header" style={styles.cardTitle}>Próximas citas de hoy</Text>
       {today.loading || today.error || !upcoming.length ? (
@@ -48,6 +49,7 @@ export default function Dashboard() {
         <Text style={styles.body}>{user.email}</Text>
       </View>
       {canViewClinic(user.role) && <ClinicHome />}
+      {user.role === 'patient' && <Shortcut icon="wallet-outline" title="Mis pagos" detail="Reporta un pago y consulta su revisión" onPress={() => router.push('/mis-pagos')} />}
       {user.role === 'patient' && <Shortcut icon="notifications-outline" title="Mis notificaciones"
         detail="Avisos y recordatorios de tus consultas" onPress={() => router.push('/notificaciones')} />}
       {user.role === 'patient' && <Shortcut icon="nutrition-outline" title="Mi plan alimenticio"

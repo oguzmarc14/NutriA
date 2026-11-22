@@ -16,6 +16,7 @@ export default function Patients() {
   return (
     <Page>
       {(intent === 'plan' || intent === 'create-plan') && <Text style={styles.cardTitle}>Elige el paciente para su dieta</Text>}
+      {intent === 'payments' && <Text style={styles.cardTitle}>Elige el paciente para revisar sus pagos</Text>}
       <TextInput accessibilityLabel="Buscar pacientes" placeholder="Buscar por nombre o correo"
         style={styles.input} value={search} onChangeText={setSearch} autoCorrect={false}
         returnKeyType="search" />
@@ -24,7 +25,9 @@ export default function Patients() {
       ) : !results.length ? <Text style={styles.body}>No encontramos pacientes con esa búsqueda.</Text> :
         results.map(patient => (
           <Shortcut key={patient._id} icon="person-outline" title={patient.name} detail={patient.email}
-            onPress={() => intent === 'create-plan'
+            onPress={() => intent === 'payments'
+              ? router.replace({ pathname: '/pagos-paciente', params: { patient: patient._id } })
+              : intent === 'create-plan'
               ? router.replace({ pathname: '/dieta', params: { patient: patient._id } })
               : intent === 'plan'
               ? router.replace({ pathname: '/planes', params: { patient: patient._id } })
