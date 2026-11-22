@@ -30,8 +30,10 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Verificar SDK preinstalado en GitHub Actions
+        run: |
+          test -d "$ANDROID_HOME/platforms"
+          test -d "$ANDROID_HOME/build-tools"
       - name: Instalar dependencias
         run: npm ci
       - name: Validar TypeScript y tests
