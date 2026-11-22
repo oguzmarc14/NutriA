@@ -1,0 +1,65 @@
+name: NutriA React Native APK (prueba)
+on:
+  push:
+    branches: [react-mvp]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/mobile-apk.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    defaults:
+      run:
+        working-directory: mobile
+    env:
+      CI: '1'
+      EXPO_PUBLIC_API_URL: https://nutria-utdh.onrender.com/api
+      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: 664061363853-nt772bl1bh9o9q032cf679pjuhadta46.apps.googleusercontent.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Instalar dependencias
+        run: npm ci
+      - name: Validar TypeScript y tests
+        run: npm run typecheck && npm test
+      - name: Generar proyecto nativo Expo
+        run: npx expo prebuild --platform android --non-interactive
+      - name: Compilar APK independiente con JS incluido
+        run: bash ./gradlew --no-daemon --max-workers=2 assembleRelease
+        working-directory: mobile/android
+      - name: Firmar APK de pruebas y verificar
+        run: |
+          set -euo pipefail
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK"
+          keytool -genkeypair -v -keystore /tmp/nutria-preview.keystore \
+            -alias androiddebugkey -storepass android -keypass android \
+            -keyalg RSA -keysize 2048 -validity 365 \
+            -dname "CN=NutriA Preview,OU=Mobile,O=NutriA,C=MX" >/dev/null 2>&1
+          SDK_BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$SDK_BUILD_TOOLS/apksigner" sign --ks /tmp/nutria-preview.keystore \
+            --ks-key-alias androiddebugkey --ks-pass pass:android \
+            --key-pass pass:android --out NutriA-Mobile-preview.apk "$APK"
+          "$SDK_BUILD_TOOLS/apksigner" verify --verbose --print-certs NutriA-Mobile-preview.apk
+          test -s NutriA-Mobile-preview.apk
+      - name: Publicar APK instalable de prueba
+        uses: actions/upload-artifact@v4
+        with:
+          name: NutriA-ReactNative-APK-preview
+          path: mobile/NutriA-Mobile-preview.apk
+          if-no-files-found: error
+          retention-days: 14
