@@ -1,3 +1,4 @@
+import { AppHeader } from '@/features/navigation/AppHeader'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Tabs } from 'expo-router'
 import { BackButton, colors } from '@/shared/ui/primitives'
@@ -8,6 +9,7 @@ export default function TabsLayout() {
   const { session } = useAuth()
   return (
     <Tabs initialRouteName="index" backBehavior="initialRoute" screenOptions={{
+      header: () => <AppHeader />,
       headerStyle: { backgroundColor: colors.white },
       headerTintColor: colors.ink,
       headerShadowVisible: false,
@@ -15,10 +17,11 @@ export default function TabsLayout() {
       tabBarInactiveTintColor: colors.muted,
       tabBarActiveBackgroundColor: colors.background,
       tabBarLabelPosition: 'below-icon',
-      tabBarLabelStyle: { fontSize: 13, fontWeight: '600' },
+      tabBarLabelStyle: { fontSize: 10, fontWeight: '700' },
+      tabBarStyle: { backgroundColor: '#f7fbf8', borderTopColor: colors.border },
     }}>
       <Tabs.Screen name="index" options={{
-        title: 'Inicio',
+        title: 'Resumen',
         headerTitle: 'NutriA',
         tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" color={color} size={size} />,
       }} />
@@ -48,6 +51,7 @@ export default function TabsLayout() {
           headerLeft: () => <BackButton onPress={() => navigation.navigate('index')} />,
         })} />
       </Tabs.Protected>
+      <Tabs.Screen name="mas" options={{ title: 'Más', tabBarIcon: ({ color, size }) => <Ionicons name="menu-outline" color={color} size={size} /> }} />
     </Tabs>
   )
 }

@@ -4,8 +4,8 @@ import { Pressable, ScrollView, StyleSheet, Text } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 export const colors = {
-  background: '#f3f7f4',
-  ink: '#182d24',
+  background: '#dfede5',
+  ink: '#173f34',
   green: '#176344',
   muted: '#466255',
   white: '#ffffff',
@@ -15,7 +15,7 @@ export const colors = {
 
 export const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  screen: { padding: 24, gap: 16, flexGrow: 1 },
+  screen: { padding: 18, gap: 16, flexGrow: 1 },
   title: { color: colors.ink, fontSize: 32, fontWeight: '700' },
   body: { color: colors.muted, fontSize: 16 },
   error: { color: colors.error, fontSize: 16 },
@@ -23,8 +23,8 @@ export const styles = StyleSheet.create({
     padding: 14, minHeight: 48, fontSize: 16, color: colors.ink,
     borderWidth: 1, borderColor: colors.border, backgroundColor: colors.white, borderRadius: 12,
   },
-  card: { backgroundColor: colors.white, padding: 16, gap: 6, borderRadius: 14 },
-  cardTitle: { color: colors.ink, fontSize: 18, fontWeight: '600' },
+  card: { backgroundColor: colors.white, padding: 16, gap: 10, borderRadius: 24 },
+  cardTitle: { color: colors.ink, fontSize: 18, fontWeight: '700' },
   button: { backgroundColor: colors.green, borderRadius: 12, padding: 13, minHeight: 44 },
   secondary: { backgroundColor: colors.white },
   disabled: { opacity: 0.5 },

@@ -1,12 +1,12 @@
 module.exports = {
   name: 'NutriA',
-  version: '0.5.0',
+  version: '0.6.0',
   slug: 'nutria-oguzmarc',
   owner: 'oguzmarc',
   scheme: 'nutriamobile',
   orientation: 'portrait',
   ios: { bundleIdentifier: 'com.nutria.mobile' },
-  android: { versionCode: 6, package: 'com.nutria.mobile', googleServicesFile: process.env.GOOGLE_SERVICES_FILE || './google-services.json' },
+  android: { versionCode: 7, package: 'com.nutria.mobile', googleServicesFile: process.env.GOOGLE_SERVICES_FILE || './google-services.json' },
   extra: {
     eas: { projectId: 'b43c4e23-5353-4dc2-824a-fd4b19bc3453' },
   },

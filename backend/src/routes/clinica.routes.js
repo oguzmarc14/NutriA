@@ -1,7 +1,21 @@
+const Patient = require('../models/Pacientes')
+const Medicion = require('../models/Medicion')
+const { clinicSummary } = require('../utils/clinicSummary')
 const express = require('express')
 const { requireAuth, allowRoles } = require('../middleware/auth.middleware')
 const router = express.Router()
 router.use(requireAuth, allowRoles('nutritionist'))
+router.get('/resumen', async (req, res, next) => {
+  try {
+    const patients = await Patient.find({ nutritionist: req.user._id, active: true }).select('_id createdAt').lean()
+    const measurements = await Medicion.aggregate([
+      { $match: { nutritionist: req.user._id, paciente: { $in: patients.map(p => p._id) }, peso: { $gt: 0 } } },
+      { $sort: { fecha: 1, createdAt: 1, _id: 1 } },
+      { $group: { _id: '$paciente', count: { $sum: 1 }, firstWeight: { $first: '$peso' }, lastWeight: { $last: '$peso' } } },
+    ])
+    return res.json({ resumen: clinicSummary(patients, measurements) })
+  } catch (error) { return next(error) }
+})
 router.get('/', (req, res) => res.json({ clinica: req.user.clinica || {} }))
 router.put('/', async (req, res, next) => {
   try {

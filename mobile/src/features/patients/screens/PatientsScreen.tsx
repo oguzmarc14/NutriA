@@ -1,3 +1,4 @@
+import { isPatientIntent, patientDestinations } from '@/features/navigation/menu'
 import { useState } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
 import { Text, TextInput } from 'react-native'
@@ -15,8 +16,8 @@ export default function Patients() {
 
   return (
     <Page>
-      {(intent === 'plan' || intent === 'create-plan') && <Text style={styles.cardTitle}>Elige el paciente para su dieta</Text>}
-      {intent === 'payments' && <Text style={styles.cardTitle}>Elige el paciente para revisar sus pagos</Text>}
+      {isPatientIntent(intent) && <><Text style={styles.cardTitle}>Elige un paciente para continuar</Text>
+        <Text style={styles.body}>Abriremos el apartado seleccionado de su expediente.</Text></>}
       <TextInput accessibilityLabel="Buscar pacientes" placeholder="Buscar por nombre o correo"
         style={styles.input} value={search} onChangeText={setSearch} autoCorrect={false}
         returnKeyType="search" />
@@ -25,12 +26,8 @@ export default function Patients() {
       ) : !results.length ? <Text style={styles.body}>No encontramos pacientes con esa búsqueda.</Text> :
         results.map(patient => (
           <Shortcut key={patient._id} icon="person-outline" title={patient.name} detail={patient.email}
-            onPress={() => intent === 'payments'
-              ? router.replace({ pathname: '/pagos-paciente', params: { patient: patient._id } })
-              : intent === 'create-plan'
-              ? router.replace({ pathname: '/dieta', params: { patient: patient._id } })
-              : intent === 'plan'
-              ? router.replace({ pathname: '/planes', params: { patient: patient._id } })
+            onPress={() => isPatientIntent(intent)
+              ? router.replace({ pathname: patientDestinations[intent], params: { patient: patient._id } })
               : router.push({ pathname: '/paciente', params: { id: patient._id } })} />
         ))}
     </Page>
