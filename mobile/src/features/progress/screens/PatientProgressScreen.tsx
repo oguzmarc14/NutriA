@@ -1,6 +1,8 @@
 import { ActivityIndicator, Text, View } from 'react-native'
 import { Button, Page, styles } from '@/shared/ui/primitives'
 import { useResource } from '@/shared/hooks/useResource'
+import { MealHistory } from '@/features/nutrition/tracking/MealHistory'
+import type { TrackingData } from '@/features/nutrition/tracking/models'
 
 type Measurement = {
   _id: string
@@ -11,7 +13,7 @@ type Measurement = {
   imc?: number
   grasaCorporal?: number
 }
-type Profile = { mediciones: Measurement[] }
+type Profile = TrackingData & { mediciones: Measurement[] }
 
 function formatDate(value: string) {
   const date = new Date(value)
@@ -21,7 +23,7 @@ function formatDate(value: string) {
 }
 
 export default function PatientProgressScreen() {
-  const { data, loading, error, reload } = useResource<Profile>('/mi-perfil')
+  const { data, loading, error, reload } = useResource<Profile>('/seguimiento-comidas/mi-progreso')
   const measurements = [...(data?.mediciones || [])].sort((a, b) =>
     (b.fecha || b.createdAt).localeCompare(a.fecha || a.createdAt) ||
     b.createdAt.localeCompare(a.createdAt))
@@ -31,7 +33,7 @@ export default function PatientProgressScreen() {
 
   return <Page>
     <Text accessibilityRole="header" style={styles.title}>Mi progreso</Text>
-    <Text style={styles.body}>Mediciones registradas por tu nutriólogo.</Text>
+    <Text style={styles.body}>Consulta tus mediciones y registros diarios de comidas.</Text>
     <Button label="Actualizar" selected={false} disabled={loading} onPress={reload}/>
     {loading && <ActivityIndicator accessibilityLabel="Cargando mediciones"/>}
     {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
@@ -43,6 +45,7 @@ export default function PatientProgressScreen() {
         Cambio desde la medición anterior: {difference > 0 ? '+' : ''}{difference.toFixed(1)} kg
       </Text>}
     </View>}
+    {data && <MealHistory data={data} editable />}
     <Text accessibilityRole="header" style={styles.cardTitle}>Historial de mediciones</Text>
     {data && !measurements.length && <Text style={styles.body}>Todavía no tienes mediciones registradas.</Text>}
     {measurements.map(item => <View key={item._id} style={styles.card}>

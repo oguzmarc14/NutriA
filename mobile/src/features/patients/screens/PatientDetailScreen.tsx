@@ -27,6 +27,8 @@ export default function PatientDetail() {
           </View>
           <Shortcut primary icon="calendar-outline" title="Agendar cita"
             detail="Elige un horario disponible" onPress={() => router.push({ pathname: '/agendar', params: { patient: id } })} />
+          <Shortcut icon="checkmark-done-outline" title="Seguimiento de comidas" detail="Consulta los registros diarios del paciente"
+            onPress={() => router.push({ pathname: '/seguimiento-paciente', params: { patient: id } })} />
           <Shortcut icon="nutrition-outline" title="Dietas" detail="Crea y edita planes alimenticios"
             onPress={() => router.push({ pathname: '/planes', params: { patient: id } })} />
           <Shortcut icon="document-text-outline" title="Expediente clínico" detail="Consulta y registra datos clínicos principales"

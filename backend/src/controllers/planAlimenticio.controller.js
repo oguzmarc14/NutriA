@@ -783,14 +783,11 @@ async function actualizarPlanAlimenticio(req, res, next) {
       },
     })
 
-    const fechaSeguimiento = plan.fechaInicio.toISOString().slice(0, 10)
-
     await Promise.all(
       plan.comidas.map((comida) =>
         SeguimientoComida.updateMany(
           { plan: plan._id, comida: comida._id },
           {
-            fecha: fechaSeguimiento,
             nombreComida: comida.nombre,
             platillo: comida.platillo || '',
           },

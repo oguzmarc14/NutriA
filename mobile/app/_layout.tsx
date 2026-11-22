@@ -42,9 +42,11 @@ function Navigation() {
         <Stack.Screen name="(tabs)" />
       </Stack.Protected>
       <Stack.Protected guard={session?.user.role === 'patient'}>
+        <Stack.Screen name="registrar-comida" options={{ ...clinicHeader, title: 'Registrar comida' }} />
         <Stack.Screen name="notificaciones" options={{ ...clinicHeader, title: 'Mis notificaciones' }} />
       </Stack.Protected>
       <Stack.Protected guard={canViewClinic(session?.user.role)}>
+        <Stack.Screen name="seguimiento-paciente" options={{ ...clinicHeader, title: 'Seguimiento de comidas' }} />
         <Stack.Screen name="paciente" options={{ ...clinicHeader, title: 'Ficha del paciente' }} />
         <Stack.Screen name="consulta" options={{ ...clinicHeader, title: 'Detalle de cita' }} />
         <Stack.Screen name="elegir-paciente" options={{ ...clinicHeader, title: 'Elegir paciente' }} />

@@ -1,4 +1,5 @@
 const { z } = require('zod')
+const { fechaValida, finExclusivoDia, comidasProgramadas, planVigente } = require('../utils/seguimiento-diario.utils')
 
 const Medicion = require('../models/Medicion')
 const Paciente = require('../models/Pacientes')
@@ -8,7 +9,7 @@ const SeguimientoComida = require('../models/SeguimientoComida')
 const seguimientoSchema = z.object({
   planId: z.string().regex(/^[a-f\d]{24}$/i),
   comidaId: z.string().regex(/^[a-f\d]{24}$/i),
-  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  fecha: z.string().refine(fechaValida, 'Fecha de seguimiento inválida'),
   estado: z.enum([
     'completada',
     'parcial',
@@ -40,12 +41,8 @@ function construirResumen(
 ) {
   const total = registros.length
 
-  const totalProgramadas = planes.reduce(
-    (suma, plan) =>
-      suma +
-      (plan.comidas?.length || 0),
-    0,
-  )
+  // Conserva el resumen previo y añade las comidas de cada día registrado.
+  const totalProgramadas = comidasProgramadas(registros, planes)
 
   const completadas = registros.filter(
     (item) =>
@@ -225,12 +222,22 @@ async function guardarMiSeguimiento(
         .slice(0, 10)
 
     if (
-      parsed.data.fecha !== fechaPlan
+      parsed.data.fecha < fechaPlan
     ) {
       return res.status(400).json({
         message:
           'La fecha no corresponde al plan alimenticio',
       })
+    }
+
+    // La dieta se aplica desde su inicio hasta que otra la reemplaza.
+    const planesVigentes = await PlanAlimenticio.find({
+      paciente: paciente._id,
+      fechaInicio: { $lt: finExclusivoDia(parsed.data.fecha) },
+    }).select('_id fechaInicio createdAt').lean()
+    const vigente = planVigente(planesVigentes)
+    if (!vigente || String(vigente._id) !== String(plan._id)) {
+      return res.status(409).json({ message: 'La dieta cambió para esta fecha. Actualiza Mi plan antes de registrar la comida.' })
     }
 
     const comida =
@@ -358,7 +365,7 @@ async function obtenerMiProgreso(
           fechaInicio: -1,
         })
         .select(
-          'nombre objetivo fechaInicio activo comidas._id',
+          'nombre objetivo fechaInicio createdAt activo comidas._id',
         )
         .lean(),
     ])
@@ -448,7 +455,7 @@ async function obtenerProgresoPaciente(
           fechaInicio: -1,
         })
         .select(
-          'nombre objetivo fechaInicio activo comidas._id',
+          'nombre objetivo fechaInicio createdAt activo comidas._id',
         )
         .lean(),
     ])

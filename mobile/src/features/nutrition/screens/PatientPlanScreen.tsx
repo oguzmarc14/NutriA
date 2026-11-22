@@ -1,12 +1,14 @@
+import { router } from 'expo-router'
 import { useState } from 'react'
 import { ActivityIndicator, Text, TextInput, View } from 'react-native'
 import { Button, Page, styles } from '@/shared/ui/primitives'
 import { useResource } from '@/shared/hooks/useResource'
+import { activePlan, findTracking, states, validDay, type TrackingRecord } from '../tracking/models'
 
 type Food = { _id?: string; nombre: string; cantidad: number; porcion?: { descripcion?: string; unidad?: string } }
 type Meal = { _id: string; nombre: string; hora?: string; platillo?: string; alimentos: Food[] }
 type Plan = { _id: string; nombre: string; objetivo?: string; fechaInicio?: string; createdAt: string; comidas: Meal[] }
-type Profile = { planes: Plan[] }
+type Profile = { planes: Plan[]; seguimientosComida: TrackingRecord[] }
 
 function localDate() {
   const today = new Date()
@@ -18,11 +20,9 @@ const startDate = (plan: Plan) => (plan.fechaInicio || plan.createdAt).slice(0, 
 export default function PatientPlanScreen() {
   const { data, loading, error, reload } = useResource<Profile>('/mi-perfil')
   const [date, setDate] = useState(localDate)
-  const validDate = /^\d{4}-\d{2}-\d{2}$/.test(date) &&
-    !Number.isNaN(Date.parse(date)) && new Date(date).toISOString().slice(0, 10) === date
-  const plans = [...(data?.planes || [])].sort((a, b) =>
-    startDate(b).localeCompare(startDate(a)) || b.createdAt.localeCompare(a.createdAt))
-  const plan = validDate ? plans.find(item => startDate(item) <= date) : undefined
+  const validDate = validDay(date)
+  const plans = [...(data?.planes || [])].sort((a, b) => startDate(b).localeCompare(startDate(a)) || b.createdAt.localeCompare(a.createdAt))
+  const plan = activePlan(plans, date)
 
   return <Page>
     <Text accessibilityRole="header" style={styles.title}>Mi plan alimenticio</Text>
@@ -34,6 +34,7 @@ export default function PatientPlanScreen() {
     <Button label="Actualizar" selected={false} disabled={loading} onPress={reload}/>
     {loading && <ActivityIndicator accessibilityLabel="Cargando dieta"/>}
     {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
+    {validDate && date > localDate() && <Text style={styles.body}>Puedes consultar menús futuros; el registro de comidas se habilita cuando llegue ese día.</Text>}
     {plan ? <>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>{plan.nombre}</Text>
@@ -43,6 +44,9 @@ export default function PatientPlanScreen() {
       {[...(plan.comidas || [])].sort((a, b) => (a.hora || '99:99').localeCompare(b.hora || '99:99')).map(meal =>
         <View key={meal._id} style={styles.card}>
           <Text style={styles.cardTitle}>{meal.nombre}{meal.hora ? ' · ' + meal.hora : ''}</Text>
+          <Text style={styles.body}>{(() => { const saved = findTracking(data?.seguimientosComida || [], plan._id, meal._id, date); return saved ? states[saved.estado] : 'Sin registro para este día' })()}</Text>
+          <Button selected={false} disabled={date > localDate()} label="Registrar o actualizar seguimiento"
+            onPress={() => router.push({ pathname: '/registrar-comida', params: { plan: plan._id, meal: meal._id, date } })} />
           {!!meal.platillo && <Text style={styles.body}>{meal.platillo}</Text>}
           {(meal.alimentos || []).map((food, index) => <Text key={food._id || index} style={styles.body}>
             {food.nombre} · {food.cantidad} {food.porcion?.descripcion || food.porcion?.unidad || 'porciones'}

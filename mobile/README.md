@@ -55,3 +55,11 @@ Para verificar contra Render, usa cuentas de prueba ya activas y una cuenta de G
 - `tests/` contiene las comprobaciones de contratos, permisos y calendario.
 
 Los imports `@/` se resuelven desde `src/`. Cada pantalla vive dentro de su funcionalidad. Las rutas exportan esa pantalla y los layouts definen qué roles pueden acceder. El backend verifica de nuevo los permisos de cada operación.
+
+## Seguimiento diario en la versión 0.4.0
+
+Desde Mi plan, cada comida permite registrar completa, parcial u omitida, agrado y un comentario opcional de hasta 500 caracteres. Se requiere elegir estado y agrado explícitamente. El registro se identifica por paciente, dieta, comida y fecha. Actualizarlo no modifica otro día. Mi progreso muestra el historial y el resumen de la fecha elegida; la nutrióloga dispone de una consulta de solo lectura desde la ficha del paciente.
+
+El backend acepta fechas durante la vigencia de la dieta y rechaza una dieta reemplazada para ese día. Se conservan las fechas históricas de las comidas que permanecen al editar el plan. Quitar una comida conserva el comportamiento previo del backend: elimina sus registros de seguimiento, con aviso en el editor. El resumen acumulado incluye las comidas de las fechas iniciales de los planes y de los días adicionales con registros; no representa todos los días de calendario sin registro. La vista nativa muestra cifras diarias del menú vigente para evitar confundir ese acumulado con el cumplimiento de hoy.
+
+La app no permite registrar días futuros. Los cambios del formulario permanecen en memoria durante errores de red y se advierte al salir sin guardar; no constituyen almacenamiento offline persistente. Las pruebas automáticas usan fixtures. La verificación de sesión real, persistencia en MongoDB y revisión visual en dispositivo quedan pendientes de la APK y del despliegue del backend.
