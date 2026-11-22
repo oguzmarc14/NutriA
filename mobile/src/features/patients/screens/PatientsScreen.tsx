@@ -8,6 +8,7 @@ import {
 import { isPatientIntent, patientDestinations } from '@/features/navigation/menu'
 import { type Patient } from '@/features/appointments/models'
 import { useAuth } from '@/features/auth/AuthProvider'
+import { usePatientWork } from '@/features/patients/PatientWorkProvider'
 import { request } from '@/core/api/client'
 import { useList } from '@/shared/hooks/useList'
 import { ListState } from '@/shared/ui/ListState'
@@ -73,12 +74,14 @@ function metric(label: string, value: string, icon: keyof typeof Ionicons.glyphM
   )
 }
 
-function PatientCard({ patient, selectMode, onSelect, onResend, resending }: {
+function PatientCard({ patient, selectMode, onSelect, onOpen, onResend, resending, working }: {
   patient: PatientSummary
   selectMode: boolean
   onSelect: () => void
+  onOpen: () => void
   onResend: () => void
   resending: boolean
+  working: boolean
 }) {
   const pending = patient.accountStatus === 'pending'
   const weight = Number(patient.ultimaMedicion?.peso)
@@ -105,7 +108,7 @@ function PatientCard({ patient, selectMode, onSelect, onResend, resending }: {
   }
 
   return (
-    <View style={local.patientCard}>
+    <View style={[local.patientCard, working && local.activePatientCard]}>
       <View style={local.cardHeader}>
         <View style={local.avatar}><Text style={local.avatarText}>{initials}</Text></View>
         <View style={local.identity}>
@@ -113,13 +116,13 @@ function PatientCard({ patient, selectMode, onSelect, onResend, resending }: {
           <View style={local.statusLine}>
             <View style={[local.statusDot, pending && local.pendingDot]} />
             <Text style={[local.statusText, pending && local.pendingText]}>
-              {pending ? 'Invitación pendiente' : patient.accountStatus === 'active' ? 'Cuenta activa' : 'En seguimiento'}
+              {working ? 'En atención' : pending ? 'Invitación pendiente' : patient.accountStatus === 'active' ? 'Cuenta activa' : 'En seguimiento'}
             </Text>
           </View>
           {!!details && <Text style={local.personalDetails}>{details}</Text>}
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel={'Ver expediente de ' + patient.name}
-          onPress={onSelect} hitSlop={8} style={({ pressed }) => [local.headerArrow, pressed && styles.pressed]}>
+        <Pressable accessibilityRole="button" accessibilityLabel={'Abrir ficha de ' + patient.name}
+          onPress={onOpen} hitSlop={8} style={({ pressed }) => [local.headerArrow, pressed && styles.pressed]}>
           <Ionicons name="chevron-forward" size={20} color={colors.ink} />
         </Pressable>
       </View>
@@ -150,10 +153,10 @@ function PatientCard({ patient, selectMode, onSelect, onResend, resending }: {
 
       <View style={local.cardFooter}>
         <Pressable accessibilityRole="button"
-          accessibilityLabel={(selectMode ? 'Elegir paciente: ' : 'Trabajar con ') + patient.name}
+          accessibilityLabel={(selectMode ? 'Elegir paciente: ' : working ? 'Dejar de trabajar con ' : 'Trabajar con ') + patient.name}
           style={({ pressed }) => [local.workButton, pressed && styles.pressed]} onPress={onSelect}>
-          <Ionicons name={selectMode ? 'checkmark-circle-outline' : 'briefcase-outline'} size={18} color={colors.white} />
-          <Text style={local.workText}>{selectMode ? 'Elegir paciente' : 'Trabajar con paciente'}</Text>
+          <Ionicons name={selectMode ? 'checkmark-circle-outline' : working ? 'checkmark-done-outline' : 'briefcase-outline'} size={18} color={colors.white} />
+          <Text style={local.workText}>{selectMode ? 'Elegir paciente' : working ? 'Dejar de trabajar' : 'Trabajar con paciente'}</Text>
           <Ionicons name="arrow-forward-outline" size={16} color={colors.white} />
         </Pressable>
         <Pressable accessibilityRole="button"
@@ -172,6 +175,7 @@ export default function Patients() {
   const { intent } = useLocalSearchParams<{ intent?: string }>()
   const selectMode = isPatientIntent(intent)
   const { session } = useAuth()
+  const { active, start, stop } = usePatientWork()
   const list = useList<PatientSummary>('/pacientes', 'pacientes')
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
@@ -189,8 +193,34 @@ export default function Patients() {
   const pendingCount = list.rows.filter(item => item.accountStatus === 'pending').length
 
   function choose(patient: PatientSummary) {
-    if (selectMode) router.replace({ pathname: patientDestinations[intent], params: { patient: patient._id } })
-    else router.push({ pathname: '/paciente', params: { id: patient._id } })
+    if (selectMode) {
+      const goToTool = () => {
+        start(patient)
+        router.replace({ pathname: patientDestinations[intent], params: { patient: patient._id } })
+      }
+      if (active && active.id !== patient._id) {
+        Alert.alert('¿Cambiar de paciente?', 'Cambiarás desde ' + active.name + ' a ' + patient.name + '.', [
+          { text: 'Cancelar', style: 'cancel' }, { text: 'Aceptar', onPress: goToTool },
+        ])
+      } else goToTool()
+      return
+    }
+    if (active?.id === patient._id) {
+      Alert.alert('¿Dejar de trabajar?', '¿Confirmas que deseas dejar de trabajar con ' + patient.name + '?', [
+        { text: 'Cancelar', style: 'cancel' }, { text: 'Dejar de trabajar', style: 'destructive', onPress: stop },
+      ])
+      return
+    }
+    Alert.alert(active ? '¿Cambiar de paciente?' : '¿Quieres trabajar con este paciente?',
+      (active ? 'Cambiarás desde ' + active.name + ' a ' + patient.name + '. ' :
+        '¿Confirmas que deseas comenzar a trabajar con ' + patient.name + '? ') +
+      'No se eliminarán registros ni expedientes.', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Aceptar', onPress: () => {
+          start(patient)
+          router.push({ pathname: '/paciente', params: { id: patient._id } })
+        } },
+      ])
   }
 
   function confirmResend(patient: PatientSummary) {
@@ -314,7 +344,9 @@ export default function Patients() {
         <View style={local.cards}>
           {results.map(patient => (
             <PatientCard key={patient._id} patient={patient} selectMode={selectMode}
+              working={active?.id === patient._id}
               onSelect={() => choose(patient)}
+              onOpen={() => selectMode ? choose(patient) : router.push({ pathname: '/paciente', params: { id: patient._id } })}
               onResend={() => confirmResend(patient)}
               resending={resendingId === patient._id} />
           ))}
@@ -375,6 +407,7 @@ const local = StyleSheet.create({
   createButton: { minHeight: 48, backgroundColor: '#236a53', borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   createText: { color: colors.white, fontSize: 15, fontWeight: '700' },
   cards: { gap: 14, paddingBottom: 14 },
+  activePatientCard: { borderWidth: 2, borderColor: '#409166', backgroundColor: '#eaf6ed' },
   patientCard: { borderWidth: 1.3, borderColor: '#a6ceb3', borderRadius: 23, backgroundColor: '#f7fbf7', padding: 15, gap: 14, shadowColor: '#285e43', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.07, shadowRadius: 12, elevation: 2 },
   cardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   avatar: { width: 50, height: 50, borderRadius: 16, backgroundColor: '#dceee3', alignItems: 'center', justifyContent: 'center' },

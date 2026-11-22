@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar'
 import { router, Stack } from 'expo-router'
 import { ActivityIndicator, Text } from 'react-native'
 import { AuthProvider, useAuth } from '@/features/auth/AuthProvider'
+import { PatientWorkProvider } from '@/features/patients/PatientWorkProvider'
 import { BackButton, Button, colors, Page, styles } from '@/shared/ui/primitives'
 import { useState } from 'react'
 import { canViewClinic } from '@/features/auth/access'
@@ -75,9 +76,11 @@ function Navigation() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <StatusBar style="dark" />
-      <Navigation />
-      <NotificationNavigation />
+      <PatientWorkProvider>
+        <StatusBar style="dark" />
+        <Navigation />
+        <NotificationNavigation />
+      </PatientWorkProvider>
     </AuthProvider>
   )
 }

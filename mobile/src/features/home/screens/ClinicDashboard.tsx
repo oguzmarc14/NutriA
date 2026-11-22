@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { ActivityIndicator, Image, StyleSheet, Text, View, useWindowDimensions } from 'react-native'
 import { router } from 'expo-router'
 import { useAuth } from '@/features/auth/AuthProvider'
+import { usePatientWork } from '@/features/patients/PatientWorkProvider'
 import { useResource } from '@/shared/hooks/useResource'
 import { Button, colors, Page, styles } from '@/shared/ui/primitives'
 import { Shortcut } from '@/shared/ui/Shortcut'
@@ -10,6 +11,7 @@ type Summary = { totalPacientes: number; nuevosMes: number; nuevosAnterior: numb
   conHistorial: number; sinHistorialComparable: number; meses: { etiqueta: string; cantidad: number }[] }
 export default function ClinicDashboard() {
   const { session } = useAuth()
+  const { active } = usePatientWork()
   const clinic = useResource<{ clinica: { nombre?: string; nombreProfesional?: string; logo?: string } }>('/clinica')
   const stats = useResource<{ resumen: Summary }>('/clinica/resumen')
   const summary = stats.data?.resumen
@@ -51,10 +53,15 @@ export default function ClinicDashboard() {
           <Text style={s.caption}>{m.etiqueta}</Text></View>)}
       </View><Text style={s.caption}>El cambio de peso compara el primer y el último registro válido de cada paciente.</Text>
     </View>}
+    {active && <View style={[s.panel, { backgroundColor: '#e8f4eb', borderColor: '#9fc6af' }]}>
+      <Text style={s.eyebrow}>PACIENTE EN ATENCIÓN</Text>
+      <Text style={{ color: colors.ink, fontSize: 18, fontWeight: '800' }}>{active.name}</Text>
+      <Button label="Continuar con este paciente" onPress={() => router.push({ pathname: '/paciente', params: { id: active.id } })} />
+    </View>}
     <Text style={styles.cardTitle}>Tu consulta, en un toque</Text>
-    <Shortcut primary icon="calendar-outline" title="Crear cita" detail="Elige un paciente y un horario" onPress={() => router.push('/agendar')} />
-    <Shortcut icon="clipboard-outline" title="Expediente clínico" detail="Consulta y actualiza su información" onPress={() => router.push({ pathname: '/elegir-paciente', params: { intent: 'record' } })} />
-    <Shortcut icon="nutrition-outline" title="Crear dieta" detail="Continúa con el paciente elegido" onPress={() => router.push({ pathname: '/elegir-paciente', params: { intent: 'create-plan' } })} />
+    <Shortcut primary icon="calendar-outline" title="Crear cita" detail="Elige un paciente y un horario" onPress={() => active ? router.push({ pathname: '/agendar', params: { patient: active.id } }) : router.push('/agendar')} />
+    <Shortcut icon="clipboard-outline" title="Expediente clínico" detail="Consulta y actualiza su información" onPress={() => active ? router.push({ pathname: '/expediente', params: { patient: active.id } }) : router.push({ pathname: '/elegir-paciente', params: { intent: 'record' } })} />
+    <Shortcut icon="nutrition-outline" title="Crear dieta" detail="Continúa con el paciente elegido" onPress={() => active ? router.push({ pathname: '/dieta', params: { patient: active.id } }) : router.push({ pathname: '/elegir-paciente', params: { intent: 'create-plan' } })} />
     <Button label="Ver todos los apartados" selected={false} onPress={() => router.navigate('/mas')} />
   </Page>
 }

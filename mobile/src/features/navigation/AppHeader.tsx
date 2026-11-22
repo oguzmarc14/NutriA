@@ -9,8 +9,10 @@ import { useAuth } from '@/features/auth/AuthProvider'
 import { canViewClinic } from '@/features/auth/access'
 import { ClinicMenu } from './ClinicMenu'
 import { colors } from '@/shared/ui/primitives'
+import { usePatientWork } from '@/features/patients/PatientWorkProvider'
 export function AppHeader() {
   const { session } = useAuth()
+  const { active } = usePatientWork()
   const [open, setOpen] = useState(false)
   const notices = useNotices()
   const clinic = canViewClinic(session?.user.role)
@@ -19,8 +21,14 @@ export function AppHeader() {
       borderBottomWidth: 1, borderColor: colors.border }}>
       <Pressable accessibilityRole="button" accessibilityLabel="Abrir menú" onPress={() => setOpen(true)}
         style={{ padding: 12 }}><Ionicons name="menu-outline" size={25} color={colors.green} /></Pressable>
-      <View style={{ flex: 1 }}><Text style={{ color: colors.ink, fontSize: 19, fontWeight: '800' }}>NutriA</Text>
-        <Text numberOfLines={1} style={{ color: colors.green, fontSize: 11 }}>{session?.user.name}</Text></View>
+      <Pressable accessibilityRole="button" accessibilityLabel={active ? 'Paciente en atención: ' + active.name + '. Abrir ficha.' : 'NutriA'}
+        onPress={() => { if (active) router.push({ pathname: '/paciente', params: { id: active.id } }) }}
+        style={{ flex: 1, minWidth: 0 }}>
+        <Text style={{ color: colors.ink, fontSize: 19, fontWeight: '800' }}>NutriA</Text>
+        <Text numberOfLines={1} style={{ color: colors.green, fontSize: 11, fontWeight: active ? '700' : '400' }}>
+          {active ? 'En atención · ' + active.name : session?.user.name}
+        </Text>
+      </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel={notices.unread ? `Notificaciones: ${notices.unread} sin ver` : 'Notificaciones'}
         onPress={() => router.push('/notificaciones')} style={{ padding: 12 }}>
         <Ionicons name="notifications-outline" size={24} color={colors.green} />
