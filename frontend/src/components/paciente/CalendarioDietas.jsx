@@ -11,7 +11,7 @@ const dias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 const boton = 'nutria-agenda-secondary nutria-agenda-navegar'
 
 export default function CalendarioDietas({ planes, hoy, fecha, onFecha }) {
-  const [vista, setVista] = useState('semana')
+  const [vista, setVista] = useState('mes')
   const fechas = fechasDelRangoAgenda(rangoVistaAgenda(vista, fecha))
   const planDia = dietaParaFecha(planes, fecha)
 
@@ -48,14 +48,14 @@ export default function CalendarioDietas({ planes, hoy, fecha, onFecha }) {
               (distintoMes ? 'opacity-60 ' : '') +
               (dia === fecha ? 'bg-[#246b55] font-bold text-white ' : plan ? 'bg-[#e8f4ec] text-[#246b55] hover:bg-[#d5ecdf] ' : 'bg-white text-[#607a6c] hover:bg-[#f2f7f4] ')}>
             <span className="nutria-agenda-cal-numero">{Number(dia.slice(-2))}</span>
-            <span aria-hidden="true" className={'size-1.5 ' + (inicio ? 'rotate-45 rounded-[1px]' : 'rounded-full') +
+            <span aria-hidden="true" className={'rounded-full ' + (inicio ? 'size-2.5' : 'size-1.5') +
               (plan ? ' bg-current' : ' invisible')}/>
           </button>
         })}
       </div>
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#48685c]">
         <span className="inline-flex items-center gap-2"><span className="size-1.5 rounded-full bg-[#246b55]"/> Con dieta</span>
-        <span className="inline-flex items-center gap-2"><span className="size-1.5 rotate-45 bg-[#246b55]"/> Inicio de dieta</span>
+        <span className="inline-flex items-center gap-2"><span className="size-2.5 rounded-full bg-[#246b55]"/> Inicio de dieta</span>
       </div>
     </>}
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#edf6ee] px-3 py-2.5 text-sm text-[#246b55]">

@@ -9,6 +9,9 @@ import {
   Utensils,
   Wallet,
 } from "lucide-react";
+import MiCaminoNutriA from "../gamificacion/MiCaminoNutriA";
+import { dietaParaFecha, ordenarDietas, proximasDietas } from "../../utils/calendarioDietas";
+import { fechaActualDispositivo } from "../../utils/vistasAgenda";
 import { useNavigate } from "react-router-dom";
 import usePerfilPaciente from "../../hooks/usePerfilPaciente";
 import useMisCitas from "../../hooks/useMisCitas";
@@ -47,10 +50,9 @@ function DashboardPaciente({ nombre }) {
   const { perfil, loading, error } = usePerfilPaciente();
   const { datos: citasPaciente } = useMisCitas();
   const mediciones = perfil?.mediciones || [];
-  const ultima = mediciones[0];
-  const anterior = mediciones[1];
-  const planActual =
-    perfil?.planes?.find((plan) => plan.activo) || perfil?.planes?.[0];
+  const hoy = fechaActualDispositivo();
+  const planes = ordenarDietas(perfil?.planes || []);
+  const planActual = dietaParaFecha(planes, hoy);
   const nutriologo = perfil?.paciente?.nutritionist;
   const accesos = [
     {
@@ -101,7 +103,7 @@ function DashboardPaciente({ nombre }) {
           Hola, {nombre}
         </h1>
         <p className="mt-2 text-slate-500">
-          Aqui puedes consultar tu progreso y el plan preparado para ti.
+          Consulta tu alimentación de hoy, tus mediciones y tus reconocimientos.
         </p>
       </div>
 
@@ -155,21 +157,22 @@ function DashboardPaciente({ nombre }) {
           <CalendarDays size={28} className="shrink-0"/>
         </button>
 
+        <div className="mt-5">
+          <CardPlanActualPaciente plan={planActual} fecha={hoy}
+            registros={perfil?.seguimientosComida || []} proximos={proximasDietas(planes, hoy).length}
+            onVerPlan={() => navigate("/mi-plan")} />
+        </div>
+
         <div className="mt-5 grid gap-5 lg:grid-cols-2">
-          <CardComparacionMedicion ultima={ultima} anterior={anterior} />
+          <CardComparacionMedicion mediciones={mediciones} />
           <GraficaProgresoPeso mediciones={mediciones} />
         </div>
 
-        <div className="mt-5">
-          <CardPlanActualPaciente
-            plan={planActual}
-            onVerPlan={() => navigate("/mi-plan")}
-          />
-        </div>
+        <MiCaminoNutriA />
 
         <div className="mt-8">
           <h2 className="mb-4 text-xl font-extrabold text-[#173f34]">
-            Accesos rapidos
+            Accesos rápidos
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {accesos.map((acceso) => (

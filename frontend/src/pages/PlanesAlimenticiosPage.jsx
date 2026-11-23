@@ -1,3 +1,4 @@
+import { repartirDistribucion } from '../utils/repartirDistribucion'
 import {
   useEffect,
   useMemo,
@@ -272,7 +273,9 @@ function PlanesAlimenticiosPage() {
     comidas[0]
 
   function preparacionActiva(comida) {
-    return preparacionActivaPorComida[comida.id] || comida.preparaciones?.[0]?.id || ''
+    const seleccionada = preparacionActivaPorComida[comida.id]
+    return comida.preparaciones?.find(preparacion => preparacion.id === seleccionada)?.id ||
+      comida.preparaciones?.[0]?.id || ''
   }
   function agregarPreparacion(comidaId, tipo) {
     const nueva = crearPreparacion(tipo)
@@ -552,6 +555,11 @@ function PlanesAlimenticiosPage() {
    * ----------------------------------------------------
    */
 
+  function ajustarPorcentaje(indice, valor) {
+    if (!Number.isFinite(valor)) return
+    setDistribucion(actual => repartirDistribucion(comidas.map((_, i) => actual[i]), indice, valor))
+  }
+
   function agregarComida(tipo = 'Colación') {
     const personalizada = tipo === 'Otra / personalizada'
     const nueva = crearComidaInicial(
@@ -560,7 +568,9 @@ function PlanesAlimenticiosPage() {
     )
 
     setComidas((actuales) => [...actuales, nueva])
-    setDistribucion(actual => [...actual, 0])
+    setDistribucion(actual => repartirDistribucion(
+      [...comidas.map((_, i) => actual[i]), 0], comidas.length, 100 / (comidas.length + 1),
+    ))
     setComidaActivaId(nueva.id)
     setMostrarMenuComidas(false)
   }
@@ -569,7 +579,7 @@ function PlanesAlimenticiosPage() {
     comidaId,
   ) {
     if (!(await pedirConfirmacion('¿Eliminar este tiempo de comida y todos sus alimentos?', 'Eliminar comida', true))) return
-    setDistribucion(actual => actual.filter((_, i) => comidas[i]?.id !== comidaId))
+    setDistribucion(actual => repartirDistribucion(comidas.map((_, i) => actual[i]).filter((_, i) => comidas[i].id !== comidaId)))
     setComidas(
       (actuales) => {
         const restantes = actuales.filter(
@@ -1392,7 +1402,7 @@ function PlanesAlimenticiosPage() {
     ['Grasas', 'grasas', 'g', objetivosReferencia?.grasasGramos],
   ]
   const mostrarDistribucion = metaEnergiaPlan > 0 && comidas.length > 0
-  const totalDistribucion = comidas.reduce((total, _, indice) => total + (Number(distribucion[indice]) || 0), 0)
+  const totalDistribucion = Math.round(comidas.reduce((total, _, indice) => total + (Number(distribucion[indice]) || 0), 0) * 100) / 100
   const comidasBalance = comidas.map(comida => ({
     ...comida,
     totales: calcularTotales(comida.alimentos),
@@ -1571,14 +1581,17 @@ function PlanesAlimenticiosPage() {
       setError('')
       setMensaje('')
 
+      const distribucionGuardada = repartirDistribucion(
+        comidasValidas.map(comida => distribucion[comidas.findIndex(item => item.id === comida.id)]),
+      )
       const comidasPayload =
         comidasValidas.map(
-          (comida) => ({
+          (comida, indice) => ({
             ...(/^[a-f\d]{24}$/i.test(comida.id)
               ? { _id: comida.id }
               : {}),
 
-            porcentajeDistribucion: mostrarDistribucion ? (Number(distribucion[comidas.findIndex(item => item.id === comida.id)]) || 0) : null,
+            porcentajeDistribucion: mostrarDistribucion ? distribucionGuardada[indice] : null,
 
             nombre:
               comida.nombre.trim(),
@@ -2251,6 +2264,9 @@ function PlanesAlimenticiosPage() {
                       comida,
                     ) => {
                       const index = comidas.findIndex((item) => item.id === comida.id)
+                      const idPreparacion = preparacionActiva(comida)
+                      const ingredientesActivos = comida.alimentos.filter(alimento => alimento.preparacionId === idPreparacion)
+                      const subtotalActivo = calcularTotales(ingredientesActivos)
                       const subtotal =
                         calcularTotales(
                           comida.alimentos,
@@ -2378,8 +2394,9 @@ function PlanesAlimenticiosPage() {
                                       </button>
                                       {comida.preparaciones.length > 1 && <button type="button" onClick={() => quitarPreparacion(comida.id, p.id)} title="Eliminar preparación" aria-label="Eliminar preparación" className="text-red-500 hover:text-red-700"><Trash2 size={15}/></button>}
                                     </div>
-                                    <input aria-label={`Nombre de ${p.tipo} ${pi + 1}`} value={p.nombre} onFocus={() => setPreparacionActivaPorComida(actual => ({...actual, [comida.id]: p.id}))} onChange={e => renombrarPreparacion(comida.id, p.id, e.target.value)}
-                                      placeholder={p.tipo === 'bebida' ? 'Ej. Café con leche' : 'Ej. Huevos con verduras'} className="mt-2 w-full rounded-lg border border-[#cbded2] bg-white px-3 py-2 text-sm text-[#173f34] outline-none focus:border-[#246b55]"/>
+                                    {!seleccionado && !!p.nombre && <p className="mt-2 truncate text-xs text-[#52716a]">{p.nombre}</p>}
+                                    {seleccionado && <input aria-label={`Nombre de ${p.tipo} ${pi + 1}`} value={p.nombre} onFocus={() => setPreparacionActivaPorComida(actual => ({...actual, [comida.id]: p.id}))} onChange={e => renombrarPreparacion(comida.id, p.id, e.target.value)}
+                                      placeholder={p.tipo === 'bebida' ? 'Ej. Café con leche' : 'Ej. Huevos con verduras'} className="mt-2 w-full rounded-lg border border-[#cbded2] bg-white px-3 py-2 text-sm text-[#173f34] outline-none focus:border-[#246b55]"/>}
                                     <p className="mt-2 text-[11px] font-semibold text-[#52716a]">{activos.length} alimentos · {numero(subtotalPreparacion.kcal, 0)} kcal</p>
                                   </div>
                                 })}
@@ -2629,27 +2646,21 @@ function PlanesAlimenticiosPage() {
 
                                   <p className="text-xs text-slate-500">
                                     {
-                                      comida
-                                        .alimentos
-                                        .length
+                                      ingredientesActivos.length
                                     }{' '}
                                     alimento
-                                    {comida
-                                      .alimentos
-                                      .length !==
+                                    {ingredientesActivos.length !==
                                     1
                                       ? 's'
                                       : ''}
                                   </p>
                                 </div>
 
-                                {comida
-                                  .alimentos
-                                  .length >
+                                {ingredientesActivos.length >
                                   0 && (
                                   <p className="text-sm font-black text-[#246b55]">
                                     {numero(
-                                      subtotal.kcal,
+                                      subtotalActivo.kcal,
                                       0,
                                     )}{' '}
                                     kcal
@@ -2658,8 +2669,8 @@ function PlanesAlimenticiosPage() {
                               </div>
 
                               <div className="space-y-3">
-                                {(comida.preparaciones || []).map(p => {
-                                  const alimentosPreparacion = comida.alimentos.filter(a => a.preparacionId === p.id)
+                                {(comida.preparaciones || []).filter(p => p.id === idPreparacion).map(p => {
+                                  const alimentosPreparacion = ingredientesActivos
                                   const totalPreparacion = calcularTotales(alimentosPreparacion)
                                   return <div key={p.id} className="rounded-2xl border border-[#d8e8dd] bg-white p-3">
                                     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -2860,7 +2871,7 @@ function PlanesAlimenticiosPage() {
                   </div>
                   {mostrarDistribucion && <div className="border-t border-[#e3eee6] pt-3">
                     <h4 className="mb-2 flex items-center gap-2 text-xs font-extrabold text-[#173f34]"><ListChecks size={15} className="text-[#246b55]"/> Distribución por comida</h4>
-                    <p className="mb-3 text-[11px] text-[#648073]">Modifica el porcentaje y la meta se actualiza inmediatamente en cada comida.</p>
+                    <p className="mb-3 text-[11px] text-[#648073]">Al editar un porcentaje, el resto se ajusta automáticamente para mantener el 100%.</p>
                     <div className="space-y-3">{comidasBalance.map((comida, indice) => {
                       const porcentaje = Number(distribucion[indice]) || 0
                       const metaKcal = metaEnergiaPlan * porcentaje / 100
@@ -2868,13 +2879,13 @@ function PlanesAlimenticiosPage() {
                         <div className="mb-2 flex items-center justify-between gap-2">
                           <span className="min-w-0 flex-1 truncate text-xs font-bold text-[#173f34]">{comida.nombre || `Comida ${indice + 1}`}</span>
                           <label className="flex shrink-0 items-center gap-1 text-xs text-[#52716a]">
-                            <input aria-label={`Porcentaje para ${comida.nombre || `comida ${indice + 1}`}`} type="number" min="0" max="100" step="1" value={distribucion[indice] ?? 0}
-                              onChange={e => { const valor = e.target.value === '' ? 0 : Number(e.target.value); if (Number.isFinite(valor)) setDistribucion(actual => comidas.map((_, i) => i === indice ? Math.min(100, Math.max(0, valor)) : (actual[i] ?? 0))) }}
+                            <input aria-label={`Porcentaje para ${comida.nombre || `comida ${indice + 1}`}`} type="number" min="0" max="100" step="0.01" value={distribucion[indice] ?? 0}
+                              onChange={e => ajustarPorcentaje(indice, Number(e.target.value))}
                               className="w-14 rounded-lg border border-[#c8ddd2] bg-white px-1.5 py-1 text-right text-xs font-bold text-[#173f34]"/> %
                           </label>
                         </div>
-                        <input type="range" min="0" max="100" step="1" aria-label={`Ajustar distribución de ${comida.nombre || `comida ${indice + 1}`}`}
-                          value={porcentaje} onChange={e => setDistribucion(actual => comidas.map((_, i) => i === indice ? Number(e.target.value) : (actual[i] ?? 0)))}
+                        <input type="range" min="0" max="100" step="0.01" aria-label={`Ajustar distribución de ${comida.nombre || `comida ${indice + 1}`}`}
+                          value={porcentaje} onChange={e => ajustarPorcentaje(indice, Number(e.target.value))}
                           className="w-full accent-[#246b55]"/>
                         <p className="mt-1 text-[11px] tabular-nums text-[#52716a]">{numero(comida.totales.kcal, 0)} / {numero(metaKcal, 0)} kcal</p>
                       </div>

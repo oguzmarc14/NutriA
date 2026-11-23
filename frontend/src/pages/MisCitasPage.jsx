@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Bell, CalendarCheck2, CalendarClock, CalendarDays, CheckCircle2, Clock3, RefreshCw, XCircle } from 'lucide-react'
+import { Bell, CalendarCheck2, CalendarClock, CalendarDays, CalendarPlus, CheckCircle2, Clock3, RefreshCw, XCircle } from 'lucide-react'
 import useMisCitas from '../hooks/useMisCitas'
 import client from '../api/client'
 import ModalCancelarCitaPaciente from '../components/citas/ModalCancelarCitaPaciente'
 import { citaCancelable, estadoCitaPaciente, fechaCitaEnZona, formatearCitaPaciente, tipoCitaPaciente } from '../utils/fechasMisCitas'
+import { conGoogleCalendar, descargarCita } from '../utils/exportarCita'
 import CalendarioMisCitas from '../components/citas/CalendarioMisCitas'
 import { fechaActualDispositivo } from '../utils/vistasAgenda'
 import './misCitas.css'
@@ -49,6 +50,17 @@ function TarjetaCita({cita,zonaHoraria,onSolicitarCancelacion,onConfirmar,confir
     </p>
     {Number.isFinite(minutos) && minutos > 0 && <p className="mt-1 text-xs opacity-75">Duración: {minutos} min</p>}
     <AccionesCita cita={cita} onConfirmar={onConfirmar} onCancelar={onSolicitarCancelacion} confirmando={confirmando}/>
+    {citaCancelable(cita) && <details className="mt-4 border-t border-current/10 pt-3">
+      <summary className="flex min-h-10 cursor-pointer items-center gap-2 text-xs font-extrabold">
+        <CalendarPlus size={16} aria-hidden="true"/> Agregar al calendario
+      </summary>
+      <div className="flex flex-wrap gap-2">
+        <a href={conGoogleCalendar(cita)} target="_blank" rel="noreferrer"
+          className="nutria-mis-citas-accion inline-flex items-center rounded-xl border text-xs font-extrabold">Google Calendar</a>
+        <button type="button" onClick={() => descargarCita(cita)}
+          className="nutria-mis-citas-accion rounded-xl border text-xs font-extrabold">Descargar evento .ics</button>
+      </div>
+    </details>}
   </article>
 }
 
