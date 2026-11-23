@@ -32,10 +32,23 @@ export function editPlan(plan: Plan): DraftPlan {
 export function fromCatalog(food: CatalogFood): DraftFood {
   return { ...food, key: draftKey(), tipo: 'catalogo', alimento: food._id, cantidad: 1, quantity: '1', notas: '' }
 }
+/** Admite 0.5, 0,5, ½, 1/2, 1½ y 1 1/2 porciones. */
+export function parseQuantity(value: string): number {
+  const source = value.trim().replace(',', '.')
+    .replace(/¼/g, ' 1/4').replace(/½/g, ' 1/2').replace(/¾/g, ' 3/4')
+    .replace(/⅛/g, ' 1/8').replace(/⅜/g, ' 3/8')
+    .replace(/⅝/g, ' 5/8').replace(/⅞/g, ' 7/8').trim()
+  const numeric = numberInput(source)
+  if (Number.isFinite(numeric)) return numeric
+  const match = /^(?:(\d+)\s+)?(\d+)\/(\d+)$/.exec(source)
+  if (!match) return NaN
+  const whole = Number(match[1] || 0), top = Number(match[2]), bottom = Number(match[3])
+  return !bottom || top >= bottom ? NaN : whole + top / bottom
+}
 export function planTotals(meals: DraftMeal[]): Nutrients {
   const total = { kcal: 0, proteina: 0, carbohidratos: 0, grasas: 0 }
   for (const meal of meals) for (const food of meal.alimentos) {
-    const quantity = numberInput(food.quantity)
+    const quantity = parseQuantity(food.quantity)
     if (!Number.isFinite(quantity) || quantity < 0.1) continue
     for (const key of ['kcal', 'proteina', 'carbohidratos', 'grasas'] as const) {
       const amount = food.nutrimentos[key]
@@ -58,7 +71,7 @@ export function planPayload(draft: DraftPlan) {
       platillo: meal.platillo || '', descripcion: meal.descripcion || '', preparaciones: meal.preparaciones || [],
       porcentajeDistribucion: percentage,
       alimentos: meal.alimentos.map(food => {
-        const cantidad = numberInput(food.quantity)
+        const cantidad = parseQuantity(food.quantity)
         if (!Number.isFinite(cantidad) || cantidad < 0.1) throw new Error(`Revisa las porciones de ${food.nombre}: el mínimo es 0.1.`)
         const common = { cantidad, notas: food.notas || '', preparacionId: food.preparacionId || '' }
         if (food.tipo === 'catalogo') {

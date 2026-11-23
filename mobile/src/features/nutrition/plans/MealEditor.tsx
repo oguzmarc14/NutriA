@@ -13,7 +13,7 @@ import { FoodRow } from './FoodRow'
 import { mealIcon } from './MealNavigator'
 import { mealPreparations, normalizedFoods, preparationFoods } from './preparations'
 import { dietColors as c, dietStyles as s, DietAction, DietDisclosure, DietField, DietIconButton } from './dietUI'
-import { draftKey, fromCatalog, planTotals, type DraftFood, type DraftMeal } from './models'
+import { draftKey, fromCatalog, parseQuantity, planTotals, type DraftFood, type DraftMeal } from './models'
 export function MealEditor({ patient, meal, index, target, busy, onChange, onRemove }: {
   patient: string; meal: DraftMeal; index: number; target: number; busy: boolean; onChange: (meal: DraftMeal) => void; onRemove: () => void
 }) {
@@ -27,7 +27,7 @@ export function MealEditor({ patient, meal, index, target, busy, onChange, onRem
   function add(food: DraftFood) {
     const existing = food.tipo === 'catalogo' ? foods.find(f => f.tipo === 'catalogo' && (typeof f.alimento === 'string' ? f.alimento : f.alimento?._id) === food.alimento) : undefined
     const normalized = normalizedFoods(meal)
-    onChange({ ...meal, preparaciones: preparations, alimentos: existing ? normalized.map(f => f.key === existing.key ? { ...f, quantity: String((numberInput(f.quantity) || 0) + 1) } : f) : [...normalized, { ...food, preparacionId: current.id }] })
+    onChange({ ...meal, preparaciones: preparations, alimentos: existing ? normalized.map(f => f.key === existing.key ? { ...f, quantity: String((parseQuantity(f.quantity) || 0) + 1) } : f) : [...normalized, { ...food, preparacionId: current.id }] })
   }
   function addPreparation(tipo: 'platillo' | 'bebida') {
     const next = { id: draftKey(), tipo, nombre: '' }
