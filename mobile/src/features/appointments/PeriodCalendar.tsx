@@ -57,8 +57,7 @@ export function PeriodCalendar({ title, today, focus, selected, view, onView, on
               backgroundColor: active ? colors.green : info ? '#e3f2e7' : '#f5f8f5',
               opacity: locked || view === 'Mes' && day.slice(0,7) !== focus.slice(0,7) ? .5 : 1 }}>
             <Text style={{ color: active ? '#fff' : colors.ink, fontWeight: active || day === today ? '800' : '500' }}>{Number(day.slice(-2))}</Text>
-            {info && <View style={{ width: 6, height: 6, backgroundColor: active ? '#fff' : colors.green,
-              borderRadius: info.starts ? 1 : 3, transform: [{ rotate: info.starts ? '45deg' : '0deg' }] }} />}
+            {info && <View style={{ width: info.starts ? 9 : 6, height: info.starts ? 9 : 6, backgroundColor: active ? '#fff' : colors.green, borderRadius: 6 }} />}
           </Pressable>
         })}</View>
       </>}

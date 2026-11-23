@@ -1,7 +1,7 @@
 import { AppDialog } from '@/shared/ui/AppDialog'
 import { useRef, useState } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
-import { Alert, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { ApiError, request } from '@/core/api/client'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { appointmentPath, dateTime, type Appointment } from '@/features/appointments/models'
@@ -45,7 +45,9 @@ export default function AppointmentDetail() {
     }
   }
 
-  const canReschedule = appointment?.patient && ['programada', 'confirmada'].includes(appointment.estado) && Date.parse(appointment.inicio) > Date.now()
+  const canCancel = appointment && ['programada', 'confirmada'].includes(appointment.estado) && Date.parse(appointment.inicio) > Date.now()
+
+  const canReschedule = canCancel && appointment?.patient
 
   return (
     <Page bottomInset>
@@ -57,6 +59,11 @@ export default function AppointmentDetail() {
             <Text style={styles.body}>{appointment.tipo} · {appointment.estado}</Text>
             {!!appointment.notas && <Text style={styles.body}>{appointment.notas}</Text>}
           </View>
+          {canCancel && <View style={styles.card}>
+            <Text style={styles.cardTitle}>Gestionar cita</Text>
+            <Text style={styles.body}>Si cancelas, el paciente verá el cambio en sus avisos.</Text>
+            <Button selected={false} label="Cancelar cita" disabled={saving} onPress={() => setPending('cancelada')} />
+          </View>}
           {appointment.patient && (
             <Shortcut icon="person-outline" title="Abrir ficha del paciente"
               onPress={() => router.push({ pathname: '/paciente', params: { id: appointment.patient!._id } })} />
@@ -66,12 +73,12 @@ export default function AppointmentDetail() {
               onPress={() => router.push({ pathname: '/agendar', params: { id: appointment._id, start: appointment.inicio } })} />
           )}
           {appointment.estado === 'programada' && Date.parse(appointment.inicio) > Date.now() && <Button label="Confirmar asistencia" disabled={saving} onPress={() => setPending('confirmada')} />}
-          {canReschedule && <Button selected={false} label="Cancelar cita" disabled={saving} onPress={() => setPending('cancelada')} />}
+
           {['programada','confirmada'].includes(appointment.estado) && Date.parse(appointment.inicio) <= Date.now() && <Button label="Marcar consulta completada" disabled={saving} onPress={() => setPending('completada')} />}
         </>
       )}
-      <AppDialog visible={!!pending} title={pending === 'cancelada' ? '¿Cancelar cita?' : pending === 'completada' ? '¿Completar consulta?' : '¿Confirmar asistencia?'} message={pending === 'completada' ? 'Confirma que esta consulta ya fue atendida. Se conservará en el historial.' : 'El cambio se guardará en NutriA y se intentará sincronizar con Google Calendar.'} onClose={() => { if (!saving) setPending(null) }}>
-        <Button label={saving ? 'Guardando…' : 'Aceptar'} disabled={saving} onPress={() => { if (pending) { const next = pending; setPending(null); void changeState(next) } }} />
+      <AppDialog visible={!!pending} title={pending === 'cancelada' ? '¿Cancelar cita?' : pending === 'completada' ? '¿Completar consulta?' : '¿Confirmar asistencia?'} message={pending === 'completada' ? 'Confirma que esta consulta ya fue atendida. Se conservará en el historial.' : pending === 'cancelada' ? 'La cita quedará cancelada en el historial y se enviará un aviso al paciente.' : 'El cambio se guardará en NutriA y se intentará sincronizar con Google Calendar.'} onClose={() => { if (!saving) setPending(null) }}>
+        <Button label={saving ? 'Guardando…' : pending === 'cancelada' ? 'Sí, cancelar cita' : 'Aceptar'} disabled={saving} onPress={() => { if (pending) { const next = pending; setPending(null); void changeState(next) } }} />
         <Button label="Volver" selected={false} disabled={saving} onPress={() => setPending(null)} />
       </AppDialog>
       {!!message && <Text accessibilityLiveRegion="polite" style={styles.body}>{message}</Text>}

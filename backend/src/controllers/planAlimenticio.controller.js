@@ -800,7 +800,7 @@ async function actualizarPlanAlimenticio(req, res, next) {
       ),
     )
 
-    void req.app?.locals?.notificarDietaAsignada?.(paciente._id)
+    void req.app?.locals?.notificarDietaAsignada?.(paciente._id, true)
     return res.json({ message: 'Plan alimenticio actualizado correctamente', plan })
   } catch (error) {
     if (error.status) {

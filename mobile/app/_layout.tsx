@@ -43,6 +43,7 @@ function Navigation() {
       <Stack.Protected guard={!!session}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="notificaciones" options={{ ...clinicHeader, title: 'Notificaciones' }} />
+        <Stack.Screen name="preferencias" options={{ ...clinicHeader, title: 'Configuración' }} />
         <Stack.Screen name="cuenta" options={{ ...clinicHeader, title: 'Mi cuenta' }} />
       </Stack.Protected>
       <Stack.Protected guard={session?.user.role === 'patient'}>

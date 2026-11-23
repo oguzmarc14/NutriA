@@ -12,8 +12,8 @@ const router = express.Router()
 router.use(requireAuth, allowRoles('patient', 'nutritionist', 'admin'))
 router.get('/notices',async(req,res,next)=>{try{
   res.set('Cache-Control','no-store')
-  const notices=await Notice.find({user:req.user._id||req.user.id,expiresAt:{$gt:new Date()}}).sort({createdAt:-1}).limit(100).select('_id titulo detalle route seenAt').lean()
-  res.json({notices:notices.map(n=>({id:String(n._id),titulo:n.titulo,detalle:n.detalle,route:n.route,seen:!!n.seenAt}))})
+  const notices=await Notice.find({user:req.user._id||req.user.id,expiresAt:{$gt:new Date()}}).sort({createdAt:-1}).limit(100).select('_id titulo detalle route seenAt createdAt').lean()
+  res.json({notices:notices.map(n=>({id:String(n._id),titulo:n.titulo,detalle:n.detalle,route:n.route,seen:!!n.seenAt,createdAt:n.createdAt}))})
 }catch(error){next(error)}})
 router.post('/notices/seen',async(req,res,next)=>{try{
   const parsed=z.object({ids:z.array(z.string().regex(/^[a-f0-9]{24}$/i)).max(100)}).strict().safeParse(req.body)

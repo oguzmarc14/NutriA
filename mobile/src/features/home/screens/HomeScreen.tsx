@@ -1,3 +1,4 @@
+import PatientOverview from './PatientOverview'
 import AdminDashboard from '@/features/admin/AdminDashboard'
 import ClinicDashboard from './ClinicDashboard'
 import { useState } from 'react'
@@ -22,7 +23,8 @@ export default function Dashboard() {
         <Text style={styles.body}>{roleLabels[user.role]}</Text>
         <Text style={styles.body}>{user.email}</Text>
       </View>
-      <Text style={styles.cardTitle}>Tu salud, en un solo lugar</Text>
+      {user.role === 'patient' && <PatientOverview />}
+      <Text style={styles.cardTitle}>Accesos rápidos</Text>
       <Shortcut icon="stats-chart-outline" title="Mi progreso" detail="Gráficas de peso, IMC y composición corporal" onPress={() => router.navigate('/progreso')} />
       {user.role === 'patient' && <Shortcut icon="wallet-outline" title="Mis pagos" detail="Reporta un pago y consulta su revisión" onPress={() => router.push('/mis-pagos')} />}
       {user.role === 'patient' && <Shortcut icon="notifications-outline" title="Mis notificaciones"

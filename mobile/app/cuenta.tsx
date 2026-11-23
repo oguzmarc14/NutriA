@@ -41,6 +41,14 @@ export default function Account() {
       <ClinicAccess />
       <Pressable accessibilityRole="button" onPress={()=>router.push('/horarios')} style={s.clinicCard}><Ionicons name="calendar-outline" size={26} color={colors.green}/><Text style={s.linkTitle}>Horarios y disponibilidad</Text></Pressable>
     </>}
+    <Pressable accessibilityRole="button" onPress={() => router.push('/preferencias')} style={s.clinicCard}>
+      <View style={s.icon}><Ionicons name="settings-outline" size={26} color={colors.green} /></View>
+      <View style={{ flex: 1 }}>
+        <Text style={s.linkTitle}>Avisos y calendarios</Text>
+        <Text style={s.linkSubtitle}>Notificaciones, recordatorios y calendario</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={21} color={colors.green} />
+    </Pressable>
     <Pressable accessibilityRole="button" disabled={busy}
       style={({ pressed }) => [s.signOut, pressed && styles.pressed, busy && styles.disabled]}
       onPress={() => {

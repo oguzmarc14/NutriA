@@ -9,7 +9,7 @@ async function sendDevice(device, notice) {
     try {
       const response = await fetch('https://exp.host/--/api/v2/push/send', {
         method: 'POST', headers: headers(),
-        body: JSON.stringify({to:device.token,title:'NutriA',body:notice.body,sound:'default',channelId:notice.channelId||'appointments-v2',priority:'high',
+        body: JSON.stringify({to:device.token,title:'NutriA',body:notice.title?'Tienes un aviso nuevo. Abre NutriA para consultarlo.':notice.body,sound:'default',channelId:notice.channelId||'appointments-v2',priority:'high',
           data:{kind:notice.kind,route:notice.route,recipientUser:String(device.user)}}),signal:AbortSignal.timeout(8000),
       })
       if(response.status===429||response.status>=500)throw new Error('Servicio push temporalmente no disponible')
@@ -24,7 +24,7 @@ async function sendDevice(device, notice) {
 }
 async function notifyUsers(ids, notice) {
   if(!ids.length)return
-  await Notice.insertMany(ids.map(user=>({user,kind:notice.kind,titulo:'Actualización de NutriA',detalle:notice.body,route:notice.route,expiresAt:new Date(Date.now()+30*86400000)})))
+  await Notice.insertMany(ids.map(user=>({user,kind:notice.kind,titulo:notice.title||'Actualización de NutriA',detalle:notice.body,route:notice.route,expiresAt:new Date(Date.now()+30*86400000)})))
   if(!enabled())return
   const devices=await Device.find({user:{$in:ids}}).limit(100).lean()
   await Promise.allSettled(devices.map(device=>sendDevice(device,notice)))
@@ -34,7 +34,7 @@ async function notificarCita(cita) {
     const patient=cita.patient?._id||cita.patient, professional=cita.nutritionist?._id||cita.nutritionist
     const users=await User.find({active:true,$or:[{patient,role:'patient'},...professional?[{_id:professional,role:'nutritionist'}]:[]]}).select('_id role').lean()
     await Promise.allSettled(users.map(user=>notifyUsers([user._id],user.role==='patient'
-      ? {kind:'nutria-appointment',route:'/mis-citas',body:'Hay una actualización de tus citas. Abre Mis citas para ver los detalles.'}
+      ? {kind:'nutria-appointment',route:'/mis-citas',title:cita.estado==='cancelada'?'Cita cancelada':'Actualización de cita',body:cita.estado==='cancelada'?'Tu cita fue cancelada. Abre Mis citas para consultar el cambio.':'Hay una actualización de tus citas. Abre Mis citas para ver los detalles.'}
       : {kind:'nutria-appointment',route:'/citas',body:'Hay una actualización en tu agenda. Abre NutriA para revisar la cita.'})))
   }catch{console.error('No se pudo procesar un aviso de cita')}
 }
@@ -44,12 +44,13 @@ async function notificarReceta(receta, pending) {
     await notifyUsers(users.map(u=>u._id),{kind:'nutria-community',route:pending?'/moderacion':'/comunidad',body:pending?'Hay una receta pendiente de revisión en NutriA.':'Tu receta tiene una actualización. Abre NutriA Community.'})
   }catch{console.error('No se pudo procesar un aviso de Community')}
 }
-async function notificarDietaAsignada(patient) {
+async function notificarDietaAsignada(patient, actualizada = false) {
   try {
     const recipients = await User.find({ active: true, patient, role: 'patient' }).select('_id').lean()
     await notifyUsers(recipients.map(u => u._id), {
       kind:'nutria-diet-assigned',route:'/mi-plan',channelId:'nutrition-updates-v1',
-      body:'Tienes un plan alimenticio nuevo o actualizado. Abre Mi plan para revisarlo.',
+      title:actualizada?'Dieta actualizada':'Nueva dieta asignada',
+      body:actualizada?'Tu nutriólogo actualizó tu plan. Abre Mi plan para revisarlo.':'Tu nutriólogo te asignó una dieta. Abre Mi plan para consultarla.',
     })
   } catch (error) { console.error('No se pudo notificar un plan asignado:', error.message) }
 }

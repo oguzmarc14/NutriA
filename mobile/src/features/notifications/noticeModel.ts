@@ -1,4 +1,4 @@
-export type Notice = { id: string; titulo: string; detalle: string; route?: string; seen?: boolean }
+export type Notice = { id: string; titulo: string; detalle: string; route?: string; seen?: boolean; createdAt?: string }
 export type NoticeData = { avisos?: Notice[] } | { _id: string; titulo?: string; estado?: string; inicio?: string; patient?: { name: string } | null }[]
 export function roleNotices(role: string | undefined, data: NoticeData | undefined, now = Date.now()): Notice[] {
   if (!data) return []

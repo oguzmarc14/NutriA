@@ -5,3 +5,9 @@ dist/
 .verifyall*
 *.log
 *.apk
+
+android/
+ios/
+.env
+.env.*
+!.env.example

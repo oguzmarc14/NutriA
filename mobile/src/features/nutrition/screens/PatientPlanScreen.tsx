@@ -26,7 +26,7 @@ export default function PatientPlanScreen() {
   const [acceptError,setAcceptError] = useState('')
   const { data, loading, error, reload } = useResource<Profile>('/mi-perfil')
   const [date, setDate] = useState(localToday)
-  const [view, setView] = useState<CalendarView>('Semana')
+  const [view, setView] = useState<CalendarView>('Mes')
   const [exporting, setExporting] = useState(false)
   const [pdfError, setPdfError] = useState('')
   const [selectedPlanId, setSelectedPlanId] = useState('')
@@ -70,7 +70,7 @@ export default function PatientPlanScreen() {
           const menu = activePlan(plans, day)
           return menu ? { label: menu.nombre, starts: startDate(menu) === day } : undefined
         }} />
-      <Text style={styles.body}>Punto: día con dieta · Rombo: inicio de un plan</Text>
+      <Text style={styles.body}>● Dieta asignada · El círculo más grande indica el inicio de un plan</Text>
     </View>
     {!!data && <View style={styles.card}>
       <Text accessibilityRole="header" style={styles.cardTitle}>Próximas dietas</Text>

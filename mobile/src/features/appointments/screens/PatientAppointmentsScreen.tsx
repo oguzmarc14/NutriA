@@ -1,4 +1,5 @@
 import { refreshAppointments } from '@/features/notifications/reminderSync'
+import { exportAppointment } from '../calendarExport'
 import { useState } from 'react'
 import { PeriodCalendar } from '../PeriodCalendar'
 import { localToday } from '@/features/clinic/workCalendar'
@@ -73,10 +74,22 @@ export default function MyAppointments() {
       dateStyle: 'full', timeStyle: 'short', hour12: true, timeZone: item.zonaHoraria || data?.zonaHoraria,
     }).format(new Date(item.inicio))
     const duration = (Date.parse(item.fin || '') - Date.parse(item.inicio)) / 60000
+    const canExport = future && ['programada', 'confirmada'].includes(item.estado)
+    function addToCalendar(google: boolean) {
+      setActionError('')
+      void exportAppointment(item._id, item.inicio, item.fin, google).catch(cause =>
+        setActionError(cause instanceof Error ? cause.message : 'No se pudo abrir el calendario.'))
+    }
     return <View key={item._id} style={styles.card}>
       <Text style={styles.cardTitle}>{item.tipo === 'primera' ? 'Primera consulta' : 'Consulta'}</Text>
       <Text style={styles.body}>{date}</Text>
       <Text style={styles.body}>{labels[item.estado] || item.estado}{duration > 0 ? ' · ' + duration + ' min' : ''}</Text>
+      {canExport && <Button label="Agregar al calendario" selected={false} onPress={() =>
+        Alert.alert('Agregar consulta', 'Elige dónde guardar la cita.', [
+          { text: 'Calendario del teléfono', onPress: () => addToCalendar(false) },
+          { text: 'Google Calendar', onPress: () => addToCalendar(true) },
+          { text: 'Cerrar', style: 'cancel' },
+        ])} />}
       {future && item.estado === 'programada' && <Button label={busy === item._id ? 'Procesando…' : 'Confirmar cita'}
         disabled={!!busy} onPress={() => void update(item, 'confirmar')} />}
       {future && ['programada', 'confirmada'].includes(item.estado) && <Button label="Cancelar cita"

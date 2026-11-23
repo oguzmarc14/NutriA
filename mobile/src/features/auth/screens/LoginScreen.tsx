@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Linking, Platform, Text, TextInput } from 'react-native'
+import { Image, Linking, Platform, Pressable, Text, TextInput, View } from 'react-native'
+import Ionicons from '@expo/vector-icons/Ionicons'
 import { GoogleSignin, isSuccessResponse } from '@react-native-google-signin/google-signin'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { googleLoginError } from '@/features/auth/googleLoginError'
@@ -10,6 +11,7 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
 
   async function submit(google: boolean) {
@@ -42,22 +44,48 @@ export default function Login() {
     }
   }
 
-  return (
-    <Page title="NutriA">
-      {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
-      <Text style={styles.cardTitle}>Acceso de pacientes</Text>
-      <TextInput accessibilityLabel="Correo electrónico" placeholder="Correo electrónico"
-        autoCapitalize="none" keyboardType="email-address" autoComplete="email"
-        editable={!busy} style={styles.input} value={email} onChangeText={setEmail} />
-      <TextInput accessibilityLabel="Contraseña" placeholder="Contraseña" autoComplete="current-password"
-        secureTextEntry editable={!busy} style={styles.input} value={password} onChangeText={setPassword} />
+  function open(path: string) {
+    void Linking.openURL('https://nutri-a-six.vercel.app/' + path)
+      .catch(() => setError('No se pudo abrir la página. Intenta nuevamente.'))
+  }
+
+  return <Page bottomInset contentStyle={{ backgroundColor: '#faf8f1', width: '100%', maxWidth: 510, alignSelf: 'center', paddingTop: 30 }}>
+    <View style={{ alignItems: 'center', gap: 7 }}>
+      <Image source={require('../../../../assets/nutria-icon.png')} accessibilityLabel="NutriA" resizeMode="contain" style={{ width: 112, height: 112 }} />
+      <Text accessibilityRole="header" style={[styles.title, { textAlign: 'center' }]}>Inicia sesión</Text>
+      <Text style={[styles.body, { textAlign: 'center', fontSize: 14 }]}>Elige el acceso de tu cuenta.</Text>
+    </View>
+    {!!error && <Text accessibilityRole="alert" style={[styles.error, { padding: 12, borderRadius: 12, backgroundColor: '#fff0ec' }]}>{error}</Text>}
+    <View style={[styles.card, { backgroundColor: '#eaf2e5', borderWidth: 1, borderColor: '#cadbc5' }]}>
+      <View style={[styles.row, { alignItems: 'center' }]}>
+        <Ionicons name="shield-checkmark-outline" size={24} color="#176344" />
+        <View><Text style={styles.cardTitle}>Personal de NutriA</Text><Text style={styles.body}>Administradores y nutriólogos</Text></View>
+      </View>
+      <Button label={busy ? 'Conectando…' : 'Continuar con Google'} selected={false} disabled={busy} onPress={() => void submit(true)} />
+    </View>
+    <View style={[styles.card, { backgroundColor: '#f5efe2', borderWidth: 1, borderColor: '#e2d8c3' }]}>
+      <View style={[styles.row, { alignItems: 'center' }]}>
+        <Ionicons name="person-outline" size={24} color="#176344" />
+        <View><Text style={styles.cardTitle}>Paciente</Text><Text style={styles.body}>Accede con tu correo y contraseña</Text></View>
+      </View>
+      <Text style={styles.body}>Correo electrónico</Text>
+      <TextInput accessibilityLabel="Correo electrónico" placeholder="paciente@correo.com" autoCapitalize="none"
+        keyboardType="email-address" autoComplete="email" editable={!busy} style={styles.input} value={email} onChangeText={setEmail} />
+      <Text style={styles.body}>Contraseña</Text>
+      <View style={[styles.input, { flexDirection: 'row', alignItems: 'center', paddingVertical: 0 }]}>
+        <TextInput accessibilityLabel="Contraseña" placeholder="Mínimo 8 caracteres" autoComplete="current-password"
+          secureTextEntry={!showPassword} editable={!busy} style={{ flex: 1, minHeight: 48, color: '#173f34' }}
+          value={password} onChangeText={setPassword} />
+        <Pressable accessibilityRole="button" accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+          onPress={() => setShowPassword(value => !value)} style={{ padding: 10 }}>
+          <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={21} color="#176344" />
+        </Pressable>
+      </View>
+      <Button selected={false} label="¿Olvidaste tu contraseña?" disabled={busy} onPress={() => open('recuperar-contrasena')} />
       <Button label={busy ? 'Conectando…' : 'Iniciar sesión'} onPress={() => void submit(false)}
         disabled={busy || !email.trim() || password.length < 8} />
-      <Button selected={false} label="Olvidé mi contraseña" disabled={busy} onPress={() => { void Linking.openURL('https://nutri-a-six.vercel.app/recuperar-contrasena').catch(() => setError('No se pudo abrir la recuperación. Visita NutriA desde el navegador.')) }} />
-      <Text style={styles.cardTitle}>Administradores y nutriólogos</Text>
-      <Button label="Continuar con Google" disabled={busy} onPress={() => void submit(true)} />
-      <Button selected={false} label="Aviso de privacidad" onPress={() => { void Linking.openURL('https://nutri-a-six.vercel.app/privacidad').catch(() => setError('No se pudo abrir el aviso de privacidad.')) }} />
-      <Button selected={false} label="Términos de uso" onPress={() => { void Linking.openURL('https://nutri-a-six.vercel.app/terminos').catch(() => setError('No se pudieron abrir los términos.')) }} />
-    </Page>
-  )
+    </View>
+    <View style={styles.row}><Button expand selected={false} label="Privacidad" onPress={() => open('privacidad')} />
+      <Button expand selected={false} label="Términos de uso" onPress={() => open('terminos')} /></View>
+  </Page>
 }

@@ -40,5 +40,10 @@ export function useNotices() {
     } catch { setStorageError('No se pudo guardar el estado de los avisos.') }
     finally { setSaving(false) }
   }
-  return { ...resource, notices, unread, seen, saving, markSeen, storageError }
+  return {
+    loading: resource.loading || inbox.loading,
+    error: inbox.error || resource.error,
+    reload: () => { resource.reload(); inbox.reload() },
+    notices, unread, seen, saving, markSeen, storageError,
+  }
 }
