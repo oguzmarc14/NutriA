@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { CalendarDays, Clock3, Download, History, X } from 'lucide-react'
+import client from '../api/client'
 import { exportarPlanPDF } from '../utils/exportarPlanPDF'
 import CardPlanPaciente from '../components/paciente/CardPlanPaciente'
 import EstadoCargaPaciente from '../components/paciente/EstadoCargaPaciente'
@@ -22,6 +23,9 @@ function MiPlanPage() {
   const planes = perfil?.planes || []
   const [fechaSeleccionada, setFechaSeleccionada] = useState(hoyLocal)
   const [errorExportacion, setErrorExportacion] = useState('')
+  const [aceptando,setAceptando] = useState(false)
+  const [errorAceptacion,setErrorAceptacion] = useState('')
+  const [confirmarPlan,setConfirmarPlan] = useState(null)
 
   // fechaInicio define desde qué día se puede consultar cada plan.
   // No exigimos igualdad exacta: de otro modo la dieta desaparecía al día siguiente.
@@ -33,6 +37,16 @@ function MiPlanPage() {
   const planDelDia = planesOrdenados.find(plan => fechaInicio(plan) && fechaInicio(plan) <= fechaSeleccionada)
   const tienePlanes = planesOrdenados.length > 0
 
+  async function aceptarPlan() {
+    if (!confirmarPlan || aceptando) return
+    setAceptando(true);setErrorAceptacion('')
+    try {
+      await client.patch('/mi-perfil/planes/' + confirmarPlan._id + '/aceptar')
+      setConfirmarPlan(null)
+      await recargar()
+    } catch(error) {setErrorAceptacion(error.response?.data?.message||'No se pudo confirmar la dieta.')}
+    finally {setAceptando(false)}
+  }
   function guardarPDF() {
     if (!planDelDia) return
     try { exportarPlanPDF(planDelDia, perfil?.paciente) }
@@ -76,6 +90,21 @@ function MiPlanPage() {
           <button type="button" autoFocus onClick={() => setErrorExportacion('')} className="mt-5 w-full rounded-xl bg-[#246b55] px-5 py-3 text-sm font-bold text-white">Entendido</button>
         </div>
       </div>}
+      {confirmarPlan&&<div role="presentation" className="fixed inset-0 z-[160] grid place-items-center bg-black/60 p-4">
+        <div role="alertdialog" aria-modal="true" aria-labelledby="titulo-aceptacion" className="w-full max-w-md rounded-2xl bg-white p-6">
+          <h2 id="titulo-aceptacion" className="text-xl font-extrabold text-[#173f34]">¿Confirmar que recibiste tu dieta?</h2>
+          <p className="mt-2 text-sm text-[#536e61]">Avisaremos al nutriólogo que recibiste este plan. La confirmación no evalúa tu alimentación ni tus resultados.</p>
+          {!!errorAceptacion&&<p role="alert" className="text-red-700">{errorAceptacion}</p>}
+          <div className="mt-5 flex flex-wrap gap-2">
+            <button type="button" disabled={aceptando} onClick={()=>setConfirmarPlan(null)}
+              className="min-h-11 flex-1 rounded-xl border px-4">Cancelar</button>
+            <button type="button" disabled={aceptando} onClick={()=>void aceptarPlan()}
+              className="min-h-11 flex-1 rounded-xl bg-[#246b55] px-4 font-bold text-white">
+              {aceptando?'Confirmando…':'Confirmar recepción'}
+            </button>
+          </div>
+        </div>
+      </div>}
       <EstadoCargaPaciente loading={loading} error={error} vacio={!loading && !error && !tienePlanes}>
         {planDelDia
           ? <div className="space-y-4">
@@ -87,6 +116,18 @@ function MiPlanPage() {
                   <Download size={17}/>Guardar / imprimir PDF
                 </button>
               </div>
+              {planDelDia.aceptacionPaciente?.estado === 'aceptada' ?
+                <p className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-800">
+                  Dieta recibida y confirmada. Tu nutriólogo puede ver la confirmación.
+                </p> :
+                <div className="rounded-2xl border border-[#c9ddd3] bg-white p-4">
+                  <p className="text-sm text-[#476857]">Confirmar recepción no implica haber completado la dieta.</p>
+                  <button type="button" onClick={() => setConfirmarPlan(planDelDia)}
+                    className="mt-3 min-h-11 rounded-xl bg-[#246b55] px-4 py-2 text-sm font-bold text-white">
+                    Confirmar que recibí la dieta
+                  </button>
+                  {!!errorAceptacion&&<p role="alert" className="mt-2 text-sm text-red-700">{errorAceptacion}</p>}
+                </div>}
               <CardPlanPaciente key={planDelDia._id} fecha={fechaSeleccionada} plan={planDelDia}
                 seguimientos={perfil?.seguimientosComida || []} onSeguimientoGuardado={recargar}/>
             </div>

@@ -3,14 +3,17 @@ import type { Meal as PlanMeal } from '../plans/models'
 import { DateField } from '@/shared/ui/DateTimeField'
 import { router } from 'expo-router'
 import { useState } from 'react'
-import { ActivityIndicator, Text, TextInput, View } from 'react-native'
+import { ActivityIndicator, Alert, Text, TextInput, View } from 'react-native'
+import { request } from '@/core/api/client'
+import { useAuth } from '@/features/auth/AuthProvider'
 import { Button, Page, styles } from '@/shared/ui/primitives'
 import { useResource } from '@/shared/hooks/useResource'
 import { activePlan, findTracking, states, validDay, type TrackingRecord } from '../tracking/models'
 
 type Meal = PlanMeal & { _id: string }
 
-type Plan = { _id: string; nombre: string; objetivo?: string; fechaInicio?: string; createdAt: string; comidas: Meal[] }
+type Plan = { _id: string; nombre: string; objetivo?: string; fechaInicio?: string; createdAt: string; comidas: Meal[];
+  aceptacionPaciente?: { estado?: 'pendiente'|'aceptada'; fecha?: string|null } }
 type Profile = { planes: Plan[]; seguimientosComida: TrackingRecord[] }
 
 function localDate() {
@@ -21,6 +24,9 @@ function localDate() {
 const startDate = (plan: Plan) => (plan.fechaInicio || plan.createdAt).slice(0, 10)
 
 export default function PatientPlanScreen() {
+  const { session } = useAuth()
+  const [accepting,setAccepting] = useState(false)
+  const [acceptError,setAcceptError] = useState('')
   const { data, loading, error, reload } = useResource<Profile>('/mi-perfil')
   const [date, setDate] = useState(localDate)
   const [selectedPlanId, setSelectedPlanId] = useState('')
@@ -31,6 +37,18 @@ export default function PatientPlanScreen() {
   const plan = selectedPlanId ? plans.find(p => p._id === selectedPlanId) : assigned
   const trackable = !!plan && plan._id === assigned?._id && date <= localDate()
   function changeDate(next: string) { setDate(next); setSelectedPlanId('') }
+  async function acceptDiet() {
+    if (!session || !plan || accepting || plan.aceptacionPaciente?.estado === 'aceptada') return
+    setAccepting(true); setAcceptError('')
+    try {
+      await request('/mi-perfil/planes/' + plan._id + '/aceptar',
+        { token: session.token, method: 'PATCH' })
+      reload()
+      Alert.alert('Dieta recibida', 'Confirmaste que recibiste tu dieta. Tu nutriólogo recibirá una notificación.')
+    } catch (cause) {
+      setAcceptError(cause instanceof Error ? cause.message : 'No se pudo confirmar la dieta.')
+    } finally { setAccepting(false) }
+  }
 
   return <Page>
     <Text accessibilityRole="header" style={styles.title}>Mi plan alimenticio</Text>
@@ -45,6 +63,18 @@ export default function PatientPlanScreen() {
         <Text style={styles.cardTitle}>{plan.nombre}</Text>
         <Text style={styles.body}>Aplicable desde {startDate(plan)}</Text>
         {!!plan.objetivo && <Text style={styles.body}>{plan.objetivo}</Text>}
+        {plan.aceptacionPaciente?.estado === 'aceptada' ?
+          <Text style={[styles.body,{color:'#246b55',fontWeight:'700'}]}>Dieta recibida y confirmada</Text> :
+          <View style={{gap:8}}>
+            <Text style={[styles.body,{fontSize:13}]}>Confirma únicamente que recibiste y revisaste esta dieta. No significa que hayas cumplido todas las comidas.</Text>
+            <Button disabled={accepting} label={accepting?'Confirmando…':'Confirmar que recibí la dieta'} onPress={() =>
+              Alert.alert('Confirmar recepción de dieta',
+                'Tu nutriólogo sabrá que recibiste este plan. ¿Deseas confirmarlo?',[
+                  {text:'Cancelar',style:'cancel'},
+                  {text:'Confirmar',onPress:()=>void acceptDiet()},
+                ])} />
+          </View>}
+        {!!acceptError && <Text accessibilityRole="alert" style={styles.error}>{acceptError}</Text>}
       </View>
       {!trackable && <Text style={styles.body}>Consulta de un plan histórico o futuro. El seguimiento se registra en el plan vigente para cada fecha.</Text>}
       {(plan.comidas || []).map(meal =>

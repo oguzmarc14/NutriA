@@ -64,7 +64,12 @@ export default function PatientNotificationsScreen() {
     </View>)}
     {!!unread.length && <Button label={saving ? 'Guardando…' : 'Marcar como vistos'}
       disabled={saving || loading} selected={false} onPress={() => void markSeen()}/>}
-    {inbox.notices.filter(n=>n.route).map(n=><View key={n.id} style={styles.card}><Text style={styles.cardTitle}>{n.titulo}</Text><Text style={styles.body}>{n.detalle}</Text><Button selected={false} label="Ver mis citas" onPress={()=>router.navigate('/mis-citas')}/></View>)}
+    {inbox.notices.filter(n=>n.route).map(n=><View key={n.id} style={styles.card}>
+      <Text style={styles.cardTitle}>{n.titulo}</Text>
+      <Text style={styles.body}>{n.detalle}</Text>
+      <Button selected={false} label={n.route==='/mi-plan'?'Ver mi dieta':'Ver mis citas'}
+        onPress={()=>router.navigate(n.route==='/mi-plan'?'/mi-plan':'/mis-citas')}/>
+    </View>)}
     {!!inbox.unread&&<Button label="Marcar avisos de cambios como vistos" disabled={inbox.saving} selected={false} onPress={()=>void inbox.markSeen()}/>}
     {!!inbox.storageError&&<Text style={styles.error}>{inbox.storageError}</Text>}
     <PushControls />

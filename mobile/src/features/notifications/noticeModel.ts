@@ -14,6 +14,8 @@ export function roleNotices(role: string | undefined, data: NoticeData | undefin
 
 export function noticeDestination(role: string | undefined, route: unknown) {
   if (role === 'patient' && route === '/mis-citas') return '/mis-citas' as const
+  if (role === 'patient' && route === '/mi-plan') return '/mi-plan' as const
+  if (role === 'nutritionist' && route === '/planes') return '/planes' as const
   if (role === 'nutritionist' && route === '/citas') return '/citas' as const
   if (role === 'nutritionist' && route === '/comunidad') return '/comunidad' as const
   if (role === 'admin' && route === '/moderacion') return '/moderacion' as const

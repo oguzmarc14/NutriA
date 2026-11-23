@@ -12,7 +12,7 @@ export function PushControls() {
     catch(cause){setError(cause instanceof Error?cause.message:'No se pudo configurar el teléfono.')}
     finally{setBusy(false)}
   }
-  return <View style={styles.card}><Text style={styles.cardTitle}>Notificaciones del sistema</Text><Text style={styles.body}>{session?.user.role==='patient'?'Cambios de tus citas.':'Cambios de agenda y publicaciones que requieren atención, según tu rol.'}</Text>
+  return <View style={styles.card}><Text style={styles.cardTitle}>Notificaciones del sistema</Text><Text style={styles.body}>{session?.user.role==='patient'?'Nuevas dietas, cambios de citas y recordatorios.':'Confirmaciones de dietas, cambios de agenda y publicaciones que requieren atención, según tu rol.'}</Text>
     <Text style={styles.body}>{status.loading?'Consultando servicio…':status.error?'No se pudo consultar el estado del servicio.':!status.data?.enabled?'El servicio remoto aún no está habilitado.':status.data.registered?'Tu cuenta tiene dispositivos registrados.':'Activa este teléfono para recibir avisos.'}</Text>
     <Button label={busy?'Procesando…':'Activar en este teléfono'} disabled={busy||!status.data?.enabled} onPress={()=>void change(true)}/><Button label="Desactivar en este teléfono" selected={false} disabled={busy} onPress={()=>void change(false)}/>
     {!!status.error&&<Button label="Reintentar consulta" selected={false} onPress={status.reload}/>} {!!message&&<Text accessibilityLiveRegion="polite" style={styles.body}>{message}</Text>}{!!error&&<Text accessibilityRole="alert" style={styles.error}>{error}</Text>}

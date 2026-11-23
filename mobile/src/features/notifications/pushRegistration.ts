@@ -12,8 +12,13 @@ export async function registerPush(token: string, userId?: string) {
   if (!projectId) throw new Error('Falta vincular esta compilación al proyecto de notificaciones de Expo.')
   if (Platform.OS !== 'android' && Platform.OS !== 'ios') throw new Error('Dispositivo no compatible.')
   if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('appointments', {
-      name: 'Citas de NutriA', importance: Notifications.AndroidImportance.HIGH,
+    await Notifications.setNotificationChannelAsync('appointments-v2', {
+      name: 'Citas y recordatorios de NutriA', importance: Notifications.AndroidImportance.MAX,
+      sound: 'default', vibrationPattern: [0, 250, 180, 250], enableVibrate: true,
+    })
+    await Notifications.setNotificationChannelAsync('nutrition-updates-v1', {
+      name: 'Dietas y actividad clínica', importance: Notifications.AndroidImportance.MAX,
+      sound: 'default', vibrationPattern: [0, 250, 180, 250], enableVibrate: true,
     })
   }
   const permission = await Notifications.requestPermissionsAsync()

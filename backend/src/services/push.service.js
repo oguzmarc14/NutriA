@@ -9,7 +9,7 @@ async function sendDevice(device, notice) {
     try {
       const response = await fetch('https://exp.host/--/api/v2/push/send', {
         method: 'POST', headers: headers(),
-        body: JSON.stringify({to:device.token,title:'NutriA',body:notice.body,sound:'default',channelId:notice.channelId||'appointments',priority:'high',
+        body: JSON.stringify({to:device.token,title:'NutriA',body:notice.body,sound:'default',channelId:notice.channelId||'appointments-v2',priority:'high',
           data:{kind:notice.kind,route:notice.route,recipientUser:String(device.user)}}),signal:AbortSignal.timeout(8000),
       })
       if(response.status===429||response.status>=500)throw new Error('Servicio push temporalmente no disponible')

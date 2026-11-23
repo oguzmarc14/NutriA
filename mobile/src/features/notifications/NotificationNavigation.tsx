@@ -21,6 +21,10 @@ export default function NotificationNavigation() {
       if(data.kind==='nutria-appointment') {
         if(session!.user.role==='patient')router.navigate('/mis-citas')
         else if(session!.user.role==='nutritionist')router.navigate('/citas')
+      }else if(data.kind==='nutria-diet-assigned' && session!.user.role==='patient'){
+        router.navigate('/mi-plan')
+      }else if(data.kind==='nutria-diet-accepted' && session!.user.role==='nutritionist'){
+        router.navigate('/planes')
       }else if(data.kind==='nutria-community'){
         if(session!.user.role==='admin')router.push('/moderacion')
         else if(session!.user.role==='nutritionist')router.push('/comunidad')
