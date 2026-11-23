@@ -5,6 +5,8 @@ export type Measurement = {
 }
 export type Calculation = {
   _id: string; medicion: string; createdAt: string; fechaMedicion?: string
+  sexoCalculo?: 'male' | 'female'; factorActividad?: number; ajusteKcal?: number
+  porcentajes?: { carbohidratos: number; proteinas: number; grasas: number }
   observaciones?: string; peso: number; edad: number; estaturaCm: number
   resultado: { objetivoKcal: number; metabolismoBasal: number; gastoTotal: number;
     carbohidratosGramos: number; proteinasGramos: number; grasasGramos: number }
