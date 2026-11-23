@@ -71,8 +71,11 @@ export function MealEditor({ patient, meal, index, target, busy, onChange, onRem
       <DietDisclosure label="¿No lo encuentras? Agregar alimento personalizado" open={custom} disabled={busy} onPress={() => setCustom(!custom)}>
         <View style={s.inset}><CustomFoodForm onCancel={() => setCustom(false)} onAdd={food => { add(food); setCustom(false) }} /></View>
       </DietDisclosure>
-      <View style={{ gap: 3 }}><Text style={s.title}>Alimentos agregados</Text><Text style={s.caption}>{meal.alimentos.length} {meal.alimentos.length === 1 ? 'alimento' : 'alimentos'} en esta comida</Text></View>
-      {preparations.map(p => { const items = preparationFoods(meal, p.id), subtotal = planTotals([{ ...meal, alimentos: items }]).kcal
+      <View style={{ gap: 3 }}>
+        <Text style={s.title}>Ingredientes de {current.nombre || (current.tipo === 'bebida' ? 'esta bebida' : 'este platillo')}</Text>
+        <Text style={s.caption}>Solo se muestran los {foods.length} ingredientes de la preparación seleccionada. Los demás se conservan por separado.</Text>
+      </View>
+      {(() => { const p = current, items = foods, subtotal = planTotals([{ ...meal, alimentos: items }]).kcal
         return <View key={p.id} style={{ padding: 12, borderWidth: 1, borderColor: c.border, borderRadius: 18, gap: 9 }}>
           <View style={s.row}><Ionicons name={p.tipo === 'bebida' ? 'cafe-outline' : 'restaurant-outline'} size={17} color={c.green} /><Text style={[s.label, { flex: 1 }]}>{p.nombre || (p.tipo === 'bebida' ? 'Bebida sin nombre' : 'Platillo sin nombre')}</Text>
             <Text style={{ color: c.green, fontSize: 12, fontWeight: '700' }}>{subtotal.toFixed(0)} kcal</Text></View>
@@ -82,7 +85,7 @@ export function MealEditor({ patient, meal, index, target, busy, onChange, onRem
               onChange={next => onChange({ ...meal, alimentos: meal.alimentos.map(f => f.key === next.key ? next : f) })}
               onRemove={() => onChange({ ...meal, alimentos: meal.alimentos.filter(f => f.key !== food.key) })} />)}
         </View>
-      })}
+      })()}
       <View style={s.inset}><View style={[s.wrap, { justifyContent: 'space-between' }]}><Text style={s.label}>Meta de {meal.nombre || 'esta comida'}</Text>
         <Text style={{ color: c.green, fontSize: 12, fontWeight: '600' }}>{Number.isFinite(percent) ? percent + '%' : 'Sin distribución'}{goal > 0 ? ` · ${goal.toFixed(0)} kcal objetivo` : ''}</Text></View>
         <View style={{ height: 7, borderRadius: 4, backgroundColor: '#d9eade', overflow: 'hidden' }}><View style={{ height: 7, width: `${goal > 0 ? Math.min(100, totals.kcal / goal * 100) : 0}%`, backgroundColor: totals.kcal > goal && goal > 0 ? '#b47820' : '#79b593' }} /></View>
