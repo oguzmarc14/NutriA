@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CalendarDays, CalendarOff, Clock3, Plus, Save, Trash2 } from 'lucide-react'
+import { CalendarDays, Clock3, Save } from 'lucide-react'
 import client from '../api/client'
 import './horarioLaboral.css'
 import CalendarioNoLaborable from './CalendarioNoLaborable'
