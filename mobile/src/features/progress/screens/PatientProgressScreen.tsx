@@ -1,4 +1,5 @@
 import { MeasurementChart } from '../MeasurementChart'
+import { MeasurementComparison } from '../MeasurementComparison'
 import { GamificationPanel } from '@/features/gamification/GamificationPanel'
 import { ActivityIndicator, Text, View } from 'react-native'
 import { Button, Page, styles } from '@/shared/ui/primitives'
@@ -15,6 +16,9 @@ type Measurement = {
   imc?: number
   masaMuscular?: number
   grasaCorporal?: number
+  grasaVisceral?: number
+  masaOsea?: number
+  proteina?: number
 }
 type Profile = TrackingData & { mediciones: Measurement[] }
 
@@ -48,6 +52,7 @@ export default function PatientProgressScreen() {
       </Text>}
     </View>}
     {data && <MeasurementChart measurements={measurements} />}
+    {data && <MeasurementComparison measurements={measurements} />}
     {data && <MealHistory data={data} editable />}
     <GamificationPanel />
     <Text accessibilityRole="header" style={styles.cardTitle}>Historial de mediciones</Text>

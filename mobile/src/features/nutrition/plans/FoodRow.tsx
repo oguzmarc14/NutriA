@@ -23,12 +23,12 @@ export function FoodRow({ food, disabled, onChange, onRemove }: { food: DraftFoo
     </View>
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: valid ? c.border : c.danger, borderRadius: 13, overflow: 'hidden', backgroundColor: '#ffffff' }}>
-        <DietIconButton icon="remove" label={'Reducir porción de ' + food.nombre} disabled={disabled || valid && quantity <= 0.1} onPress={() => onChange({ ...food, quantity: stepPortion(food.quantity, -1) })} />
+        <DietIconButton icon="remove" label={'Reducir porción de ' + food.nombre} disabled={disabled || valid && quantity <= 0.1} onPress={() => onChange({ ...food, quantity: stepPortion(food.quantity, -1, 0.25) })} />
         <TextInput accessibilityLabel={'Porciones de ' + food.nombre} keyboardType="default" editable={!disabled} value={food.quantity}
           onChangeText={quantity => onChange({ ...food, quantity })} style={{ width: 72, minHeight: 44, textAlign: 'center', color: c.ink, fontSize: 15, fontWeight: '600', paddingHorizontal: 2 }} />
-        <DietIconButton icon="add" label={'Aumentar porción de ' + food.nombre} disabled={disabled} onPress={() => onChange({ ...food, quantity: stepPortion(food.quantity, 1) })} />
+        <DietIconButton icon="add" label={'Aumentar porción de ' + food.nombre} disabled={disabled} onPress={() => onChange({ ...food, quantity: stepPortion(food.quantity, 1, 0.25) })} />
       </View>
-      <Text style={s.caption}>porciones</Text>
+      <Text style={s.caption}>porciones · ±¼</Text>
     </View>
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7 }}>
       {(['¼', '½', '¾', '1', '1½', '2'] as const).map(value =>

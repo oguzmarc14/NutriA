@@ -21,3 +21,9 @@ test('portion stepper accepts decimal commas and never drops below the API minim
   assert.equal(stepPortion('0.1', -1), '0.1')
   assert.equal(stepPortion('', 1), '1')
 })
+
+test('food portion controls step in quarters without losing 0.1 minimum',()=>{
+  assert.equal(stepPortion('½',1,.25),'0.75')
+  assert.equal(stepPortion('¾',-1,.25),'0.5')
+  assert.equal(stepPortion('0.25',-1,.25),'0.1')
+})
