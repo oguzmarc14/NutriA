@@ -98,3 +98,12 @@ La API conserva un buzón de avisos por usuario durante 30 días y procesa recei
 Comprobaciones de esta entrega: TypeScript, 70 pruebas móviles, 115 pruebas de API, npm audit y exportación Hermes de Android/iOS. La exportación iOS no constituye una app firmada para iPhone: faltan firma Apple, configuración OAuth de iOS y prueba en dispositivo. Las pruebas automáticas y visuales previas usan fixtures; la entrega real de notificaciones y los flujos con sesiones de cada rol en la APK instalada requieren validación en dispositivos.
 
 Las adaptaciones de dependencias en vendor conservan la compatibilidad CommonJS de SDK 54; image-size delega el análisis al paquete original actualizado y solo adapta rutas de archivos de Metro a bytes.
+
+## Versión 0.12.0 — biblioteca de dietas y revisión nutricional
+
+- Después de guardar un plan, la app ofrece crear una copia privada con nombre y fecha en **NutriA Community → Mis dietas**.
+- Las copias se guardan en MongoDB por nutriólogo, sin copiar el identificador ni el nombre del paciente; desde la biblioteca pueden abrirse como un plan nuevo para un paciente activo.
+- Porciones fraccionarias (¼, ½, ¾, 1/2, 1 1/2) aplicadas proporcionalmente a calorías, macros y gramos. La selección de comidas no tiene flechas laterales; eliminar una comida requiere confirmación y la energía de cada comida indica su porcentaje del plan.
+- En cálculo nutricional se recuperan los valores guardados, se muestra una sola medición seleccionada y los resultados estimados de Mifflin-St Jeor antes de guardar. El historial se despliega mediante **Ver anteriores**.
+- Para utilizar **Mis dietas** con cuentas reales debe desplegarse también el backend con las rutas nuevas de `/community/mis-dietas`. No basta con compilar solamente la APK.
+- Las pruebas automatizadas no sustituyen la verificación con un nutriólogo, un paciente de pruebas y el backend desplegado.
