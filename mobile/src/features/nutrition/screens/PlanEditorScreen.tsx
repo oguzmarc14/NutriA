@@ -141,6 +141,10 @@ function Editor({ patient, patientName, initial, requirements, refreshRequiremen
       const meals = [...draft.meals], index = meals.findIndex(meal => meal.key === key), next = index + direction
       if (index < 0 || next < 0 || next >= meals.length) return
       ;[meals[index], meals[next]] = [meals[next], meals[index]]; change({ ...draft, meals })
+    }} onRemove={key => {
+      const meals = draft.meals.filter(meal => meal.key !== key)
+      change({ ...draft, meals })
+      if (activeMeal === key) setActiveMeal(meals[0]?.key || '')
     }} />
     <AppDialog visible={addMealOpen} title="Agregar tiempo de comida" message="Elige un tipo. Puedes cambiar su nombre y hora después." onClose={() => setAddMealOpen(false)}>
       {['Desayuno', 'Colación', 'Comida', 'Cena', 'Otra comida'].map(name => <Button key={name} label={name} selected={false} onPress={() => {

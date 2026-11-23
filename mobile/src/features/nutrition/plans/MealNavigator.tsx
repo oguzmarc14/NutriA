@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useRef, useState, type ReactNode } from 'react'
-import { Animated, PanResponder, Pressable, ScrollView, Text, View } from 'react-native'
+import { Alert, Animated, PanResponder, Pressable, ScrollView, Text, View } from 'react-native'
 import { dietColors as c, dietStyles as s, DietAction, DietIconButton } from './dietUI'
 import { planTotals, type DraftMeal } from './models'
 export function mealIcon(name: string): keyof typeof Ionicons.glyphMap {
@@ -26,14 +26,14 @@ function DraggableMeal({ children, disabled, label, onDrop, onDragging }: { chil
     {children}
   </Animated.View>
 }
-export function MealNavigator({ meals, active, disabled, onSelect, onMove, onAdd, onReorder }: {
-  meals: DraftMeal[]; active: string; disabled: boolean; onSelect: (key: string) => void; onMove: (key: string, direction: -1 | 1) => void; onAdd: () => void; onReorder: (from: number, to: number) => void
+export function MealNavigator({ meals, active, disabled, onSelect, onMove, onAdd, onReorder, onRemove }: {
+  meals: DraftMeal[]; active: string; disabled: boolean; onSelect: (key: string) => void; onMove: (key: string, direction: -1 | 1) => void; onAdd: () => void; onReorder: (from: number, to: number) => void; onRemove: (key: string) => void
 }) {
   const [dragging, setDragging] = useState(false)
   return <View style={{ gap: 10 }}>
     <View style={[s.row, { justifyContent: 'space-between' }]}><Text accessibilityRole="header" style={s.title}>Comidas</Text>
       <DietAction label="Agregar" icon="add" disabled={disabled} onPress={onAdd} /></View>
-    <Text style={s.caption}>Arrastra desde los puntos para ordenar. También puedes usar las flechas.</Text>
+    <Text style={s.caption}>Desliza para elegir la comida. Arrastra desde los puntos para reordenar.</Text>
     <ScrollView horizontal scrollEnabled={!dragging} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingBottom: 6 }} keyboardShouldPersistTaps="handled">
       {meals.map((meal, index) => { const totals = planTotals([meal]), selected = meal.key === active
         return <DraggableMeal key={meal.key} disabled={disabled} label={meal.nombre} onDragging={setDragging} onDrop={slots => onReorder(index, Math.max(0, Math.min(meals.length - 1, index + slots)))}><View style={{ width: 176, padding: 11, borderRadius: 18, borderWidth: 1, borderColor: selected ? c.green : c.border, backgroundColor: selected ? c.selected : '#ffffff' }}>
@@ -44,9 +44,13 @@ export function MealNavigator({ meals, active, disabled, onSelect, onMove, onAdd
             <View style={[s.row, { gap: 4 }]}><Ionicons name="time-outline" size={12} color={c.muted} /><Text style={s.caption}>{meal.hora || 'Sin hora'}</Text></View>
             <Text style={{ color: '#87683f', fontSize: 12, fontWeight: '700' }}>{totals.kcal.toFixed(0)} kcal · {meal.alimentos.length} alimentos</Text>
           </Pressable>
-          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 5 }}>
-            <DietIconButton icon="chevron-back" label={'Mover antes ' + meal.nombre} disabled={disabled || index === 0} outlined onPress={() => onMove(meal.key, -1)} />
-            <DietIconButton icon="chevron-forward" label={'Mover después ' + meal.nombre} disabled={disabled || index === meals.length - 1} outlined onPress={() => onMove(meal.key, 1)} />
+          <View style={{ alignSelf: 'flex-end' }}>
+            <DietIconButton icon="trash-outline" label={'Eliminar ' + meal.nombre} disabled={disabled} danger
+              onPress={() => Alert.alert('Eliminar comida',
+                meal._id ? 'Al guardar se eliminará esta comida y sus posibles registros de seguimiento.' : '¿Eliminar esta comida del borrador?', [
+                  { text: 'Cancelar', style: 'cancel' },
+                  { text: 'Eliminar', style: 'destructive', onPress: () => onRemove(meal.key) },
+                ])} />
           </View>
         </View></DraggableMeal>
       })}
