@@ -46,8 +46,8 @@ export default function ConfiguracionCitas({ onSave }) {
       setGuardado(Boolean(existente?.configurado))
       setPublicadoGuardado(Boolean(existente?.publicado))
       setForm({
-        franjas:existente?.configurado ? (existente.franjas || []).map(f=>({dia:f.dia,inicio:f.inicio,fin:f.fin})) : plantilla(data.horarioLaboral),
-        bloqueos:(existente?.bloqueos || []).map(f=>({dia:f.dia,inicio:f.inicio,fin:f.fin})),
+        franjas:existente?.configurado ? (existente.franjas || []).filter(f => data.horarioLaboral?.dias?.includes(f.dia)).map(f=>({dia:f.dia,inicio:f.inicio,fin:f.fin})) : plantilla(data.horarioLaboral),
+        bloqueos:(existente?.bloqueos || []).filter(f => data.horarioLaboral?.dias?.includes(f.dia)).map(f=>({dia:f.dia,inicio:f.inicio,fin:f.fin})),
         bloqueosPorFecha:(existente?.bloqueosPorFecha || []).map(f=>({fecha:f.fecha,inicio:f.inicio,fin:f.fin,motivo:f.motivo || ''})),
         publicado:Boolean(existente?.publicado),
         anticipacionHoras:existente?.anticipacionHoras ?? 2,
@@ -186,6 +186,11 @@ export default function ConfiguracionCitas({ onSave }) {
      !laboral?.configurado ? <p className="nutria-agenda-error mt-5 rounded-xl border p-4 text-sm">Primero guarda tus días y horas de trabajo en la sección superior de esta página.</p> :
      <form onSubmit={guardar} className="mt-5 min-w-0 space-y-5">
        <p className="nutria-agenda-muted break-words text-xs leading-relaxed">Jornada: {laboral.inicio}–{laboral.fin} · {laboral.zonaHoraria}. Cada consulta dura 60 minutos. Los bloqueos quitan espacios libres sin eliminar las citas existentes.</p>
+       {plantilla(laboral).some(bloque => !bloquesPorDia(bloque.dia).length) &&
+         <button type="button" className="nutria-agenda-secondary rounded-xl border px-4 py-2 text-sm font-bold"
+           onClick={() => setForm(f => ({ ...f, franjas: [...f.franjas, ...plantilla(laboral).filter(b => !f.franjas.some(a => a.dia === b.dia))].slice(0,21) }))}>
+           Usar jornada para días sin bloques
+         </button>}
        <div className="space-y-3">
          {DIAS.map((nombre,dia)=>{
            if(!diasLaborales.includes(dia))return null

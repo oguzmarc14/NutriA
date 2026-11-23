@@ -1,6 +1,8 @@
 const mongoose = require('mongoose')
 const { z } = require('zod')
 const Paciente = require('../models/Pacientes')
+const User = require('../models/User')
+const { fechaLocalAhora } = require('../utils/agenda-publica.utils')
 const SeguimientoComida = require('../models/SeguimientoComida')
 const { construirReconocimientos, preferenciasDe } = require('../services/gamificacion.service')
 
@@ -38,12 +40,14 @@ async function obtenerMiResumen(req, res, next) {
     if (!preferencias.activa) {
       return res.json({ preferencias, resumen: null })
     }
-    const registros = await SeguimientoComida.find({ paciente: paciente._id })
-      .select('fecha comentario')
-      .lean()
+    const [registros, profesional] = await Promise.all([
+      SeguimientoComida.find({ paciente: paciente._id }).select('fecha comentario').lean(),
+      User.findById(paciente.nutritionist).select('horarioLaboral.zonaHoraria').lean(),
+    ])
+    const hoy = fechaLocalAhora(profesional?.horarioLaboral?.zonaHoraria || 'America/Mexico_City')
     return res.json({
       preferencias,
-      resumen: construirReconocimientos(registros),
+      resumen: construirReconocimientos(registros, new Date(hoy + 'T12:00:00Z')),
     })
   } catch (error) {
     return next(error)

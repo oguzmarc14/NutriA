@@ -91,6 +91,21 @@ function construirDisponibilidad(fechaIso, horarioCitas, horarioLaboral, citasOc
   }
   return horas.sort((a,b)=>a.inicio.localeCompare(b.inicio))
 }
+function ajustarBloquesAJornada(anterior, jornada, citas) {
+  const inicio = Math.ceil(minutos(jornada.inicio) / 30) * 30
+  const fin = Math.floor(minutos(jornada.fin) / 30) * 30
+  const franjas = (citas?.franjas || []).filter(f => jornada.dias.includes(f.dia)).flatMap(f => {
+    const desde = Math.max(minutos(f.inicio), inicio)
+    const hasta = Math.min(minutos(f.fin), fin)
+    return hasta - desde >= 60 ? [{ dia: f.dia, inicio: horaDe(desde), fin: horaDe(hasta) }] : []
+  })
+  const diasConBloque = new Set(franjas.map(f => f.dia))
+  const nuevos = jornada.dias.filter(d => !diasConBloque.has(d) && (!franjas.length || !anterior?.dias?.includes(d)))
+  if (fin - inicio >= 60) {
+    for (const dia of nuevos.slice(0, Math.max(0, 21 - franjas.length))) franjas.push({ dia, inicio: horaDe(inicio), fin: horaDe(fin) })
+  }
+  return franjas.sort((a, b) => a.dia - b.dia || a.inicio.localeCompare(b.inicio))
+}
 function franjaDentroHorario(franjas,horarioLaboral){
   if(!horarioLaboral?.configurado)return false
   return franjas.every(f => horarioLaboral.dias.includes(f.dia) &&
@@ -99,4 +114,4 @@ function franjaDentroHorario(franjas,horarioLaboral){
 }
 module.exports = { DURACION_MINUTOS, minutos, partesLocales, fechaLocalAhora, sumarDias, diaSemana,
   horaLocalAUTC, horarioAdmite, construirDisponibilidad, franjaDentroHorario, esDiaNoLaborable,
-  bloqueadoPorHorario }
+  bloqueadoPorHorario, ajustarBloquesAJornada }

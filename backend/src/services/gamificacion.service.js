@@ -61,10 +61,11 @@ function construirReconocimientos(registros = [], hoy = new Date()) {
     if (indice === 0) return false
     return (fechaValida(fecha) - fechaValida(dias[indice - 1])) / UN_DIA >= 3
   })
-  const diasUltimos14 = dias.filter((fecha) => {
-    const tiempo = fechaValida(fecha).getTime()
-    return tiempo >= limite - 13 * UN_DIA && tiempo <= limite
-  }).length
+  const actividadReciente = Array.from({ length: 14 }, (_, index) => {
+    const fecha = new Date(limite - (13 - index) * UN_DIA).toISOString().slice(0, 10)
+    return { fecha, conRegistro: fechas.has(fecha) }
+  })
+  const diasUltimos14 = actividadReciente.filter(dia => dia.conRegistro).length
 
   const posibles = [
     { id: 'primer-paso', titulo: 'Mi primer paso', descripcion: 'Te diste un momento para registrar tu experiencia.', icono: 'sprout', cumple: dias.length >= 1 },
@@ -79,6 +80,7 @@ function construirReconocimientos(registros = [], hoy = new Date()) {
   return {
     diasConRegistro: dias.length,
     diasUltimos14,
+    actividadReciente,
     rachas,
     reconocimientos: posibles.filter(({ cumple }) => cumple).map(({ cumple, ...logro }) => logro),
     mensaje: dias.length

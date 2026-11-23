@@ -22,7 +22,8 @@ function setup(){
     })},
     zod:{z},
     '../models/User':{
-      findByIdAndUpdate:(_id,update)=> {
+      findById:()=>({select:()=>({lean:async()=>({horarioLaboral:base, horarioCitas:{franjas:[]}})})}),
+      findOneAndUpdate:(_filter,update)=> {
         modified=update
         return {select:async()=>({horarioLaboral:{
           ...base,diasNoLaborables:update.$set['horarioLaboral.diasNoLaborables']||[],
@@ -76,4 +77,21 @@ test('no permite fechas repetidas, inválidas o más de cien',async()=>{
     fecha:utilities.sumarDias('2027-01-01',i),motivo:'Cierre',
   }))
   assert.equal((await a.save({...base,diasNoLaborables:demasiadas})).statusCode,400)
+})
+
+test('agregar sábado y domingo reconfigura bloques conservando las horas explícitas', () => {
+  const { ajustarBloquesAJornada, construirDisponibilidad } = utilities
+  const anterior = { ...base, configurado: true }
+  const jornada = { ...anterior, dias: [0, 1, 6] }
+  const franjas = ajustarBloquesAJornada(anterior, jornada, { franjas: [
+    { dia: 1, inicio: '10:00', fin: '12:00' },
+    { dia: 2, inicio: '09:00', fin: '18:00' },
+  ] })
+  assert.deepEqual(franjas.map(f => f.dia), [0, 1, 6])
+  assert.deepEqual(franjas[1], { dia: 1, inicio: '10:00', fin: '12:00' })
+  const agenda = { configurado: true, franjas, anticipacionHoras: 0 }
+  const ahora = new Date('2026-11-22T16:00:00Z')
+  assert.equal(construirDisponibilidad('2026-11-28', agenda, jornada, [], ahora)[0].hora, '09:00')
+  assert.equal(construirDisponibilidad('2026-11-29', agenda, jornada, [], ahora)[0].hora, '09:00')
+  assert.equal(construirDisponibilidad('2026-11-27', agenda, jornada, [], ahora).length, 0)
 })

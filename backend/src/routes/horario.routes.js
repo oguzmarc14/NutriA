@@ -3,7 +3,7 @@ const { z } = require('zod')
 const User = require('../models/User')
 const { requireAuth, allowRoles } = require('../middleware/auth.middleware')
 const router = express.Router()
-const { minutos, franjaDentroHorario, fechaLocalAhora, sumarDias, construirDisponibilidad } = require('../utils/agenda-publica.utils')
+const { minutos, franjaDentroHorario, fechaLocalAhora, sumarDias, construirDisponibilidad, ajustarBloquesAJornada } = require('../utils/agenda-publica.utils')
 const Cita = require('../models/Cita')
 router.use(requireAuth, allowRoles('nutritionist'))
 const fechaNoLaborable = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
@@ -46,8 +46,17 @@ router.put('/', async (req,res,next) => {
     // Actualizar campos concretos evita eliminar excepciones con clientes viejos.
     if (parsed.data.diasNoLaborables !== undefined)
       cambios['horarioLaboral.diasNoLaborables'] = parsed.data.diasNoLaborables
-    const u = await User.findByIdAndUpdate(req.user._id, { $set: cambios }, { new:true, runValidators:true }).select('horarioLaboral')
-    res.json({horario:u.horarioLaboral})
+    const actual = await User.findById(req.user._id).select('horarioLaboral horarioCitas updatedAt').lean()
+    if (!actual) return res.status(404).json({ message: 'Nutriólogo no encontrado' })
+    const franjas = ajustarBloquesAJornada(actual.horarioLaboral, parsed.data, actual.horarioCitas)
+    cambios['horarioCitas.franjas'] = franjas
+    cambios['horarioCitas.configurado'] = franjas.length > 0
+    const u = await User.findOneAndUpdate(
+      { _id: req.user._id, updatedAt: actual.updatedAt },
+      { $set: cambios }, { new: true, runValidators: true },
+    ).select('horarioLaboral horarioCitas')
+    if (!u) return res.status(409).json({ message: 'El horario cambió en otra sesión. Recarga antes de guardar.' })
+    res.json({ horario: u.horarioLaboral, horarioCitas: u.horarioCitas })
   } catch(e) { next(e) }
 })
 const hora = z.string().regex(/^([01]\d|2[0-3]):(?:00|30)$/)

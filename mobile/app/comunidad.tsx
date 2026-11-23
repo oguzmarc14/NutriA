@@ -13,7 +13,7 @@ import { useList } from '@/shared/hooks/useList'
 import { Button, Page, styles } from '@/shared/ui/primitives'
 import { ListState } from '@/shared/ui/ListState'
 import { MealContent } from '@/features/nutrition/plans/MealContent'
-import { exportPlan } from '@/features/nutrition/plans/exportPlan'
+import { exportPlan, loadClinicBrand } from '@/features/nutrition/plans/exportPlan'
 import type { Plan } from '@/features/nutrition/plans/models'
 type Recipe = { _id: string; titulo: string; descripcion: string; estado: string; porciones: number;
   autor?: { name?: string }; ingredientes: { nombre: string; cantidad: number; unidad: string }[]; instrucciones: string[] }
@@ -47,11 +47,11 @@ export default function Community() {
     }
   }
   async function shareDiet(item: SavedDietDetail) {
-    if (lock.current) return
+    if (!session || lock.current) return
     lock.current = true
     setBusy(true)
     try {
-      await exportPlan({ ...item.plan, nombre: item.nombre }, '')
+      await exportPlan({ ...item.plan, nombre: item.nombre }, '', await loadClinicBrand(session.token))
     } catch (cause) {
       setDietPreview(null)
       setError(cause instanceof Error ? cause.message : 'No pudimos exportar la dieta.')

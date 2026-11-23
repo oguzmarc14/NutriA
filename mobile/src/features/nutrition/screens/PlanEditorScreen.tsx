@@ -61,6 +61,7 @@ function Editor({ patient, patientName, initial, templatePlan, requirements, ref
   const [templateName, setTemplateName] = useState('')
   const [templateError, setTemplateError] = useState('')
   const [templateBusy, setTemplateBusy] = useState(false)
+  const [savedTemplateName, setSavedTemplateName] = useState<string | null>(null)
   const [dirty, setDirty] = useState(!!templatePlan)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -132,11 +133,7 @@ function Editor({ patient, patientName, initial, templatePlan, requirements, ref
         token: session.token, method: 'POST', body: { planId, nombre },
       })
       setTemplateOpen(false)
-      Alert.alert('Dieta guardada', 'La copia privada «' + nombre + '» está en NutriA Community → Mis dietas.', [
-        { text: 'Continuar' },
-        { text: 'Ver Mis dietas', onPress: () =>
-          router.push({ pathname: '/comunidad', params: { tab: 'dietas' } }) },
-      ])
+      setSavedTemplateName(nombre)
     } catch (cause) {
       setTemplateError(cause instanceof Error ? cause.message : 'No pudimos guardar la copia privada.')
     } finally { setTemplateBusy(false) }
@@ -191,16 +188,33 @@ function Editor({ patient, patientName, initial, templatePlan, requirements, ref
       <Button label="Guardar en Mis dietas" onPress={() => { setSavedOpen(false); setTemplateOpen(true) }} />
       <Button label="Ahora no" selected={false} onPress={() => setSavedOpen(false)} />
     </AppDialog>
-    <AppDialog visible={templateOpen} title="Guardar en Mis dietas"
-      message="Elige un nombre para tu copia privada. La fecha de guardado se registra automáticamente."
-      onClose={() => { if (!templateBusy) setTemplateOpen(false) }}>
-      <FormField label="Nombre de la dieta *" value={templateName} disabled={templateBusy}
-        onChange={value => { setTemplateName(value); setTemplateError('') }} />
-      {!!templateError && <Text accessibilityRole="alert" style={styles.error}>{templateError}</Text>}
-      <Button label={templateBusy ? 'Guardando copia…' : 'Guardar copia privada'}
-        disabled={templateBusy} onPress={() => void saveTemplate()} />
-      <Button label="Cancelar" selected={false} disabled={templateBusy}
-        onPress={() => setTemplateOpen(false)} />
+    <AppDialog visible={templateOpen || savedTemplateName !== null}
+      title={savedTemplateName !== null ? 'Guardada en Mis dietas' : 'Guardar en Mis dietas'}
+      success={savedTemplateName !== null}
+      message={savedTemplateName === null ? 'Elige un nombre para tu copia privada. La fecha se registra automáticamente.' : undefined}
+      onClose={() => {
+        if (templateBusy) return
+        setTemplateOpen(false)
+        setSavedTemplateName(null)
+      }}>
+      {savedTemplateName !== null ? <>
+        <View style={[ds.inset, { alignItems: 'center' }]}>
+          <Text style={[ds.label, { textAlign: 'center' }]}>{savedTemplateName}</Text>
+          <Text style={[ds.caption, { textAlign: 'center' }]}>Copia privada en NutriA Community</Text>
+        </View>
+        <Button label="Ir a Mis dietas" onPress={() => {
+          setSavedTemplateName(null)
+          router.push({ pathname: '/comunidad', params: { tab: 'dietas' } })
+        }} />
+        <Button label="Seguir editando" selected={false} onPress={() => setSavedTemplateName(null)} />
+      </> : <>
+        <FormField label="Nombre de la dieta *" value={templateName} disabled={templateBusy}
+          onChange={value => { setTemplateName(value); setTemplateError('') }} />
+        {!!templateError && <Text accessibilityRole="alert" style={styles.error}>{templateError}</Text>}
+        <Button label={templateBusy ? 'Guardando copia…' : 'Guardar copia privada'}
+          disabled={templateBusy} onPress={() => void saveTemplate()} />
+        <Button label="Cancelar" selected={false} disabled={templateBusy} onPress={() => setTemplateOpen(false)} />
+      </>}
     </AppDialog>
     <AppDialog visible={!planId && !!requirements && blocked} title="Información del paciente incompleta" onClose={() => router.back()}>
       <Text style={styles.body}>Antes de crear el plan alimenticio</Text>

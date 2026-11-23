@@ -17,7 +17,12 @@ function scaled(food: Food, key: (typeof metrics)[number][0]) {
   return (Number(food.nutrimentos?.[key]) || 0) * (Number(food.cantidad) || 0)
 }
 
-export function planDocument(plan: Plan, patientName: string) {
+export type ClinicBrand = { nombre?: string; nombreProfesional?: string; logo?: string }
+
+export function planDocument(plan: Plan, patientName: string, clinic?: ClinicBrand) {
+  const name = clinic?.nombre?.trim() || clinic?.nombreProfesional?.trim() || 'Consultorio de nutrición'
+  const logo = clinic?.logo
+  const hasLogo = typeof logo === 'string' && logo.length <= 950000 && /^data:image\/(png|jpeg|webp);base64,[a-zA-Z0-9+/=]+$/.test(logo)
   if (!plan?.comidas?.length) throw new Error('Este plan no contiene comidas para exportar.')
   const groups = plan.comidas.map(mealPreparationGroups)
   const foods = groups.flatMap(meal => meal.flatMap(group => group.alimentos))
@@ -52,6 +57,8 @@ export function planDocument(plan: Plan, patientName: string) {
     body { margin: 0; font: 12px/1.5 Arial, sans-serif; color: #173f34; }
     .hero { padding: 0 0 16px; border-bottom: 3px solid #28785b; break-inside: avoid; }
     .brand { color: #246b55; font-size: 11px; font-weight: bold; letter-spacing: .14em; text-transform: uppercase; }
+    .clinic { display: flex; gap: 12px; align-items: center; font-size: 25px; font-weight: bold; line-height: 1.15; overflow-wrap: anywhere; }
+    .clinic img { width: 60px; height: 60px; object-fit: contain; border: 1px solid #d8e8df; border-radius: 9px; }
     h1 { font-size: 27px; line-height: 1.15; margin: 9px 0 12px; }
     h2 { font-size: 17px; margin: 0; }
     h3 { font-size: 12px; margin: 10px 0 4px; color: #246b55; }
@@ -78,7 +85,8 @@ export function planDocument(plan: Plan, patientName: string) {
     footer { border-top: 1px solid #dce9e1; padding-top: 8px; color: #49675b; font-size: 10px; }
     @media print { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
     </style></head><body>
-    <header class="hero"><div class="brand">NutriA · Plan alimenticio</div>
+    <header class="hero"><div class="brand">Plan alimenticio</div>
+    <div class="clinic">${hasLogo ? `<img src="${escapeHtml(logo)}" alt="Logotipo del consultorio">` : ''}<div>${escapeHtml(name)}</div></div>
     <h1>${escapeHtml(plan.nombre || 'Plan alimenticio')}</h1>
     <div class="meta">
       <span>${patientName ? 'Paciente · ' + escapeHtml(patientName) : 'Dieta guardada'}</span>
@@ -86,5 +94,5 @@ export function planDocument(plan: Plan, patientName: string) {
       ${plan.metaEnergiaKcal != null ? `<span>Meta · ${format.format(plan.metaEnergiaKcal)} kcal/día</span>` : ''}
     </div>${plan.objetivo ? `<p><strong>Objetivo</strong> · ${escapeHtml(plan.objetivo)}</p>` : ''}</header>
     <div class="summary">${summary}</div>${meals}
-    <footer>NutriA · Los valores nutricionales son estimados.</footer></body></html>`
+    <footer><strong>Tecnología de NutriA</strong> · Los valores nutricionales son estimados.</footer></body></html>`
 }

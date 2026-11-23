@@ -90,3 +90,11 @@ test('HU-30: siete días consecutivos desbloquean reconocimiento y compartir',()
   assert.equal(resumen.rachas.maxima,7)
   assert.ok(resumen.reconocimientos.some(x=>x.id==='siete-dias-seguidos'))
 })
+
+test('las dos semanas de actividad son consecutivas y representan días, no cantidad de comidas', () => {
+  const resumen = construirReconocimientos([registro('2026-11-10'), registro('2026-11-10'), registro('2026-11-11')], hoy)
+  assert.equal(resumen.actividadReciente.length, 14)
+  assert.deepEqual(resumen.actividadReciente[0], { fecha: '2026-10-28', conRegistro: false })
+  assert.deepEqual(resumen.actividadReciente.at(-1), { fecha: '2026-11-10', conRegistro: true })
+  assert.equal(resumen.actividadReciente.filter(dia => dia.conRegistro).length, 1)
+})

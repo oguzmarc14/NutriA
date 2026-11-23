@@ -1,9 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useEffect, useRef, useState } from 'react'
 import { router, Stack, useLocalSearchParams } from 'expo-router'
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { DateField } from '@/shared/ui/DateTimeField'
-import { dayValue, parseDay } from '@/shared/ui/dateTimeModel'
+import { clockLabel, dayValue, parseDay } from '@/shared/ui/dateTimeModel'
+import { PeriodCalendar } from '../PeriodCalendar'
+import { calendarDays, localToday, type CalendarView } from '@/features/clinic/workCalendar'
 import { ApiError, request } from '@/core/api/client'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { usePatientWork } from '@/features/patients/PatientWorkProvider'
@@ -69,7 +71,8 @@ function AppointmentForm({ initialPatient, initialDate, existing }: {
   const [patient, setPatient] = useState(initialPatient || active?.id || '')
   const [search, setSearch] = useState('')
   const [date, setDate] = useState(initialValidDate)
-  const [from, setFrom] = useState(initialValidDate)
+  const [focus, setFocus] = useState(initialValidDate || localToday())
+  const [view, setView] = useState<CalendarView>('Semana')
   const [calendarDate, setCalendarDate] = useState(initialValidDate)
   const [slot, setSlot] = useState('')
   const [type, setType] = useState<AppointmentType>(
@@ -81,9 +84,11 @@ function AppointmentForm({ initialPatient, initialDate, existing }: {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState<{ calendarSynced: boolean; summary: string }>()
   const locked = useRef(false)
-  const availability = useResource<Availability>('/horario/disponibilidad?dias=7' + (from ? '&desde=' + from : ''))
+  const range = calendarDays(focus, view)
+  const availability = useResource<Availability>('/horario/disponibilidad?dias=' + range.length + '&desde=' + range[0])
   const data = availability.data
-  const day = data?.dias.find(item => item.fecha === date) || data?.dias[0]
+  const day = data?.dias.find(item => item.fecha === date)
+  const spacesByDay = new Map(data?.dias.map(item => [item.fecha, item.espacios.length]))
   const calendarValid = !calendarDate || Boolean(parseDay(calendarDate) &&
     data && calendarDate >= data.hoy && calendarDate <= shiftDate(data.hoy, 180))
   const selected = calendarValid ? day?.espacios.find(item => item.inicio === slot) : undefined
@@ -107,19 +112,13 @@ function AppointmentForm({ initialPatient, initialDate, existing }: {
   function chooseDate(value: string) {
     setCalendarDate(value)
     setDate(value)
+    setFocus(value)
     setSlot('')
     setError('')
-    if (!data || !data.dias.some(item => item.fecha === value)) setFrom(value)
   }
-  function changeWeek(direction: -1 | 1) {
-    if (!data) return
-    const desired = shiftDate(data.desde, 7 * direction)
-    if (desired < data.hoy || desired > shiftDate(data.hoy, 180)) return
-    setDate(desired)
-    setCalendarDate(desired)
-    setFrom(desired)
-    setSlot('')
-    setError('')
+  function changeView(next: CalendarView) {
+    setView(next)
+    if (date && parseDay(date)) setFocus(date)
   }
 
   async function save() {
@@ -137,7 +136,7 @@ function AppointmentForm({ initialPatient, initialDate, existing }: {
       })
       setSaved({
         calendarSynced: result.calendarSynced,
-        summary: selectedPatient.name + ' · ' + dayLabel(day.fecha) + ' · ' + selected.hora,
+        summary: selectedPatient.name + ' · ' + dayLabel(day.fecha) + ' · ' + clockLabel(selected.hora),
       })
     } catch (cause) {
       if (cause instanceof ApiError && cause.status === 401) {
@@ -224,38 +223,20 @@ function AppointmentForm({ initialPatient, initialDate, existing }: {
         {!!availability.error && /configur|horario|bloques/i.test(availability.error) &&
           <View style={{gap:8}}><Text style={s.hint}>Configura tu horario laboral y los bloques de consulta para habilitar la agenda.</Text><Button label="Configurar horarios" selected={false} onPress={()=>router.push('/horarios')}/></View>}
       </View> : data && <View style={{ gap: 13 }}>
-        <View style={s.weekNav}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Semana anterior" style={s.weekButton}
-            disabled={data.desde <= data.hoy} onPress={() => changeWeek(-1)}>
-            <Ionicons name="chevron-back" size={22} color={colors.green} />
-          </Pressable>
-          <Text style={s.weekTitle}>{dayLabel(data.desde, true)} · 7 días</Text>
-          <Pressable accessibilityRole="button" accessibilityLabel="Semana siguiente" style={s.weekButton}
-            disabled={shiftDate(data.desde, 7) > shiftDate(data.hoy, 180)}
-            onPress={() => changeWeek(1)}>
-            <Ionicons name="chevron-forward" size={22} color={colors.green} />
-          </Pressable>
-        </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.days}>
-          {data.dias.map(item => {
-            const selectedDay = day?.fecha === item.fecha
-            const dayDate = new Date(item.fecha + 'T12:00:00')
-            const enabled = item.espacios.length > 0 && item.fecha >= data.hoy
-            return <Pressable key={item.fecha} accessibilityRole="button"
-              accessibilityLabel={dayLabel(item.fecha) + ', ' + item.espacios.length + ' espacios'}
-              accessibilityState={{ selected: selectedDay, disabled: !enabled }}
-              disabled={!enabled || saving} onPress={() => chooseDate(item.fecha)}
-              style={[s.dayChip, selectedDay && s.dayChipSelected, !enabled && s.dayChipDisabled]}>
-              <Text style={[s.dayChipWeek, selectedDay && s.dayChipTextSelected]}>
-                {new Intl.DateTimeFormat('es-MX', { weekday: 'short' }).format(dayDate).slice(0, 3)}
-              </Text>
-              <Text style={[s.dayChipDate, selectedDay && s.dayChipTextSelected]}>{dayDate.getDate()}</Text>
-              <Text style={[s.dayChipSpaces, selectedDay && s.dayChipTextSelected]}>
-                {item.espacios.length ? item.espacios.length + ' libres' : 'Sin cupo'}
-              </Text>
-            </Pressable>
-          })}
-        </ScrollView>
+        <PeriodCalendar title="Disponibilidad" today={data.hoy} focus={focus} selected={date}
+          view={view} onView={changeView} onSelect={chooseDate}
+          onFocus={value => chooseDate(value < data.hoy ? data.hoy : value)}
+          canMove={value => {
+            const dates = calendarDays(value, view)
+            return dates.at(-1)! >= data.hoy && value <= shiftDate(data.hoy, 180)
+          }}
+          selectable={value => value >= data.hoy && value <= shiftDate(data.hoy, 180)}
+          disabled={saving}
+          mark={value => {
+            const count = spacesByDay.get(value) || 0
+            return count > 0 && value <= shiftDate(data.hoy, 180) ? { label: count + (count === 1 ? ' espacio libre' : ' espacios libres') } : undefined
+          }} />
+        <Text style={s.hint}>El punto verde indica disponibilidad. Elige una fecha para ver sus horas.</Text>
         <DateField label="Elegir otra fecha en el calendario"
           disabled={saving} value={calendarDate || day?.fecha || data.desde}
           onChange={value => {
@@ -282,18 +263,25 @@ function AppointmentForm({ initialPatient, initialDate, existing }: {
         !day?.espacios.length ? <View style={s.noSlots}>
           <Ionicons name="calendar-clear-outline" size={28} color="#7aa589" />
           <Text style={s.hint}>No hay horarios disponibles para esta fecha. Elige otro día.</Text>
-        </View> : <View style={s.slots}>
-          {day.espacios.map(space => <Pressable key={space.inicio}
-            accessibilityRole="button" accessibilityLabel={'Reservar horario ' + space.hora}
-            accessibilityState={{ selected: selected?.inicio === space.inicio }}
-            disabled={saving} onPress={() => { setSlot(space.inicio); setError('') }}
-            style={({ pressed }) => [s.slot, selected?.inicio === space.inicio && s.slotSelected,
-              pressed && styles.pressed]}>
-            <Ionicons name={selected?.inicio === space.inicio ? 'checkmark-circle' : 'time-outline'}
-              color={selected?.inicio === space.inicio ? '#fff' : colors.green} size={16} />
-            <Text style={[s.slotText, selected?.inicio === space.inicio && s.slotTextSelected]}>{space.hora}</Text>
-          </Pressable>)}
-        </View>}
+        </View> : (['AM', 'PM'] as const).map(period => {
+          const slots = day.espacios.filter(space => clockLabel(space.hora).endsWith(period))
+          if (!slots.length) return null
+          return <View key={period} style={{ gap: 7 }}>
+            <Text accessibilityRole="header" style={s.fieldLabel}>{period === 'AM' ? 'Mañana · AM' : 'Tarde · PM'}</Text>
+            <View style={s.slots}>
+              {slots.map(space => <Pressable key={space.inicio}
+                accessibilityRole="button" accessibilityLabel={'Reservar horario ' + clockLabel(space.hora)}
+                accessibilityState={{ selected: selected?.inicio === space.inicio }}
+                disabled={saving} onPress={() => { setSlot(space.inicio); setError('') }}
+                style={({ pressed }) => [s.slot, selected?.inicio === space.inicio && s.slotSelected,
+                  pressed && styles.pressed]}>
+                <Ionicons name={selected?.inicio === space.inicio ? 'checkmark-circle' : 'time-outline'}
+                  color={selected?.inicio === space.inicio ? '#fff' : colors.green} size={16} />
+                <Text style={[s.slotText, selected?.inicio === space.inicio && s.slotTextSelected]}>{clockLabel(space.hora)}</Text>
+              </Pressable>)}
+            </View>
+          </View>
+        })}
     </View>
 
     <View style={s.stepCard}>
@@ -328,7 +316,7 @@ function AppointmentForm({ initialPatient, initialDate, existing }: {
       <Text style={s.reviewText}>
         {selectedPatient?.name || 'Selecciona un paciente'}
         {'\n'}
-        {day && selected ? dayLabel(day.fecha) + ' · ' + selected.hora : 'Fecha y horario pendientes'}
+        {day && selected ? dayLabel(day.fecha) + ' · ' + clockLabel(selected.hora) : 'Fecha y horario pendientes'}
       </Text>
       {!!data && <Text style={s.hint}>{data.zonaHoraria} · 60 minutos</Text>}
     </View>
@@ -338,7 +326,7 @@ function AppointmentForm({ initialPatient, initialDate, existing }: {
       onPress={() => {
         if (!selectedPatient || !selected || !day) return
         Alert.alert(existing ? 'Reprogramar cita' : 'Confirmar cita',
-          selectedPatient.name + ' · ' + dayLabel(day.fecha) + ' · ' + selected.hora, [
+          selectedPatient.name + ' · ' + dayLabel(day.fecha) + ' · ' + clockLabel(selected.hora), [
             { text: 'Volver', style: 'cancel' },
             { text: existing ? 'Reprogramar' : 'Agendar', onPress: () => void save() },
           ])
@@ -377,17 +365,6 @@ const s = StyleSheet.create({
   smallAvatar: { width: 33, height: 33, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#ddf0e3' },
   smallAvatarText: { fontWeight: '800', color: colors.green },
   optionName: { flex: 1, fontSize: 13, fontWeight: '700', color: colors.ink },
-  weekNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 },
-  weekButton: { width: 41, height: 42, borderRadius: 12, backgroundColor: '#e6f2e8', justifyContent: 'center', alignItems: 'center' },
-  weekTitle: { color: colors.ink, fontWeight: '800', fontSize: 14 },
-  days: { flexDirection: 'row', gap: 7 },
-  dayChip: { minWidth: 76, minHeight: 96, borderRadius: 14, paddingHorizontal: 7, paddingVertical: 10, borderWidth: 1, borderColor: '#cbded2', backgroundColor: '#f3f8f4', alignItems: 'center', justifyContent: 'center', gap: 5 },
-  dayChipSelected: { backgroundColor: '#236c52', borderColor: '#236c52' },
-  dayChipDisabled: { opacity: 0.46 },
-  dayChipWeek: { fontSize: 11, fontWeight: '700', color: '#5c826d', textTransform: 'capitalize' },
-  dayChipDate: { fontSize: 21, fontWeight: '800', color: colors.ink },
-  dayChipSpaces: { fontSize: 10, fontWeight: '700', color: '#638675' },
-  dayChipTextSelected: { color: '#fff' },
   timeHeading: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   timeHeadingText: { color: colors.ink, fontWeight: '700', fontSize: 13 },
   slots: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

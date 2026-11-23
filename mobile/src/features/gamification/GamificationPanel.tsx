@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useState } from 'react'
-import { Alert, Pressable, Text, View } from 'react-native'
+import { Alert, Share, Text, View } from 'react-native'
+import { router } from 'expo-router'
 import { request } from '@/core/api/client'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useResource } from '@/shared/hooks/useResource'
@@ -12,11 +13,13 @@ type Badge = { id: string; titulo: string; descripcion: string; icono: string }
 type Summary = {
   diasConRegistro: number
   diasUltimos14: number
+  actividadReciente?: { fecha: string; conRegistro: boolean }[]
   rachas?: { actual: number; maxima: number; ultimoRegistro: string | null; registroHoy: boolean }
   reconocimientos: Badge[]
   mensaje: string
 }
 type Data = { preferencias: Preferences; resumen: Summary | null }
+const activityDate = new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeZone: 'UTC' })
 const icons: Record<string, keyof typeof Ionicons.glyphMap> = {
   sprout: 'leaf-outline', heart: 'heart-outline', message: 'chatbubble-ellipses-outline',
   sun: 'sunny-outline', flower: 'flower-outline', flame: 'flame-outline',
@@ -85,6 +88,21 @@ export function GamificationPanel() {
               <Text style={styles.title}>{data.resumen.diasUltimos14}</Text>
             </View>
           </View>
+          {!!data.resumen.actividadReciente?.length && <View style={[styles.card, { backgroundColor: '#fff' }]}>
+            <Text accessibilityRole="header" style={styles.cardTitle}>Tu actividad reciente</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+              {data.resumen.actividadReciente.map(day => <View key={day.fecha} accessible
+                accessibilityLabel={activityDate.format(new Date(day.fecha + 'T12:00:00Z')) + (day.conRegistro ? ', con registro' : ', sin registro')}
+                style={{ width: '14.285%', padding: 2 }}>
+                <View style={{ minHeight: 36, borderRadius: 8, alignItems: 'center', justifyContent: 'center',
+                  backgroundColor: day.conRegistro ? colors.green : '#edf4ee' }}>
+                  <Text style={{ color: day.conRegistro ? '#fff' : colors.muted, fontWeight: '700' }}>{Number(day.fecha.slice(-2))}</Text>
+                </View>
+              </View>)}
+            </View>
+            <Text style={[styles.body, { fontSize: 13 }]}>Los días marcados tienen una experiencia registrada.</Text>
+            <Button label="Ir a mi plan" onPress={() => router.navigate('/mi-plan')} />
+          </View>}
           {!!data.resumen.rachas && <View style={[styles.card, { backgroundColor: '#e0f0e3' }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Ionicons name="flame-outline" color={colors.green} size={23} />
@@ -104,6 +122,9 @@ export function GamificationPanel() {
             <View style={{ flex: 1, gap: 4 }}>
               <Text style={styles.cardTitle}>{item.titulo}</Text>
               <Text style={[styles.body, { fontSize: 13 }]}>{item.descripcion}</Text>
+              <Button label="Compartir reconocimiento" selected={false} onPress={() =>
+                void Share.share({ message: 'Desbloqueé «' + item.titulo + '» en Mi camino en NutriA.' })
+                  .catch(() => setError('No se pudo abrir la opción de compartir.'))} />
             </View>
           </View>)}
         </>}

@@ -3,7 +3,7 @@ import Ionicons from '@expo/vector-icons/Ionicons'
 import { Modal, Pressable, ScrollView, Text, TextInput, View, type StyleProp, type TextStyle } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Button, colors, styles } from './primitives'
-import { calendarDays, dayValue, parseDay } from './dateTimeModel'
+import { calendarDays, clockLabel, clockParts, clockValue, dayValue, parseDay } from './dateTimeModel'
 type Props = { label: string; value: string; onChange: (value: string) => void; disabled?: boolean; labelStyle?: StyleProp<TextStyle> }
 export function DateField({ label, value, onChange, disabled, labelStyle }: Props) {
   const [open, setOpen] = useState(false)
@@ -42,26 +42,53 @@ export function DateField({ label, value, onChange, disabled, labelStyle }: Prop
     </Modal>
   </View>
 }
-export function TimeField({ label, value, onChange, disabled, labelStyle }: Props) {
+export function TimeField({ label, value, onChange, disabled, labelStyle, halfHour }: Props & { halfHour?: boolean }) {
   const [open, setOpen] = useState(false)
-  const [hour, setHour] = useState('08'), [minute, setMinute] = useState('00')
-  return <View style={{ gap: 6 }}><Text style={[styles.body, labelStyle]}>{label}</Text>
-    <View style={{ flexDirection: 'row', gap: 8 }}><TextInput accessibilityLabel={label} value={value} onChangeText={onChange}
-      placeholder="HH:MM" maxLength={5} keyboardType="numbers-and-punctuation" editable={!disabled} style={[styles.input, { flex: 1 }]} />
-      <Pressable disabled={disabled} accessibilityRole="button" accessibilityLabel={'Elegir hora: ' + label} style={{ padding: 14 }} onPress={() => {
-        const valid = /^([01]\d|2[0-3]):[0-5]\d$/.test(value); setHour(valid ? value.slice(0, 2) : '08'); setMinute(valid ? value.slice(3) : '00'); setOpen(true)
-      }}><Ionicons name="time-outline" size={24} color={colors.green} /></Pressable></View>
+  const [clock, setClock] = useState(() => clockParts(''))
+  const [custom, setCustom] = useState(false)
+  const time = clockValue(clock.hour, clock.minute, clock.period)
+  const validMinute = halfHour ? ['00','30'].includes(clock.minute) : /^[0-5]\d$/.test(clock.minute)
+  return <View style={{ gap: 6 }}>
+    <Text style={[styles.body, labelStyle]}>{label}</Text>
+    <Pressable disabled={disabled} accessibilityRole="button"
+      accessibilityLabel={label + ', ' + (clockLabel(value) || 'sin hora')}
+      onPress={() => { setClock(clockParts(value)); setCustom(false); setOpen(true) }}
+      style={[styles.input, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}>
+      <Ionicons name="time-outline" size={22} color={colors.green} />
+      <Text style={[styles.body, { flex: 1, color: colors.ink }]}>{clockLabel(value) || 'Elegir hora'}</Text>
+      <Ionicons name="chevron-down" size={18} color={colors.green} />
+    </Pressable>
     <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
       <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#173f3477' }}>
-        <SafeAreaView edges={['bottom']} style={[styles.card, { maxHeight: '85%' }]}><ScrollView contentContainerStyle={{ gap: 12 }}>
-          <Text style={styles.cardTitle}>{label}</Text><Text style={styles.title}>{hour}:{minute}</Text>
-          <Text style={styles.body}>Hora (24 horas)</Text><View style={styles.row}>{Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map(h =>
-            <Button key={h} label={h} selected={h === hour} onPress={() => setHour(h)} />)}</View>
-          <Text style={styles.body}>Minutos</Text><View style={styles.row}>{Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0')).map(m =>
-            <Button key={m} label={m} selected={m === minute} onPress={() => setMinute(m)} />)}</View>
-          <View style={styles.row}><Button expand label="Aceptar" onPress={() => { onChange(hour + ':' + minute); setOpen(false) }} />
-            <Button expand selected={false} label="Cancelar" onPress={() => setOpen(false)} /></View>
-        </ScrollView></SafeAreaView>
+        <SafeAreaView edges={['bottom']} style={[styles.card, { maxHeight: '88%' }]}>
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 12 }}>
+            <Text accessibilityRole="header" style={styles.cardTitle}>{label}</Text>
+            <View style={[styles.row, { alignItems: 'center', justifyContent: 'space-between' }]}>
+              <Text style={styles.title}>{validMinute ? clockLabel(time) : clock.hour + ':— ' + clock.period}</Text>
+              <View style={styles.row}>{(['AM', 'PM'] as const).map(period =>
+                <Button key={period} label={period} selected={clock.period === period}
+                  onPress={() => setClock(current => ({ ...current, period }))} />)}</View>
+            </View>
+            <Text style={styles.body}>Hora</Text>
+            <View style={styles.row}>{Array.from({ length: 12 }, (_, i) => i + 1).map(hour =>
+              <Button key={hour} label={String(hour)} selected={clock.hour === hour}
+                onPress={() => setClock(current => ({ ...current, hour }))} />)}</View>
+            <Text style={styles.body}>Minutos</Text>
+            <View style={styles.row}>{(halfHour ? ['00', '30'] : ['00', '15', '30', '45']).map(minute =>
+              <Button key={minute} label={minute} selected={!custom && clock.minute === minute}
+                onPress={() => { setCustom(false); setClock(current => ({ ...current, minute })) }} />)}
+              {!halfHour && <Button label="Otros" selected={custom} onPress={() => setCustom(true)} />}
+            </View>
+            {custom && <TextInput accessibilityLabel="Minutos de 00 a 59" value={clock.minute} selectTextOnFocus
+              onChangeText={minute => setClock(current => ({ ...current, minute }))} maxLength={2}
+              keyboardType="number-pad" style={styles.input} />}
+            <View style={styles.row}>
+              <Button expand label="Aceptar" disabled={!validMinute} onPress={() => { onChange(time); setOpen(false) }} />
+              <Button expand selected={false} label="Cancelar" onPress={() => setOpen(false)} />
+              {!!value && <Button selected={false} label="Quitar hora" onPress={() => { onChange(''); setOpen(false) }} />}
+            </View>
+          </ScrollView>
+        </SafeAreaView>
       </View>
     </Modal>
   </View>

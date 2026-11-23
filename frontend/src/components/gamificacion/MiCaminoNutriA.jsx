@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Award, CalendarCheck2, Flame, Heart, Leaf, MessageCircle, PauseCircle, PlayCircle, Sparkles, Sun } from 'lucide-react'
 import client from '../../api/client'
+import { Link } from 'react-router-dom'
 import CompartirReconocimiento from './CompartirReconocimiento.jsx'
+
+const fechaActividad = new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeZone: 'UTC' })
 
 const ICONOS = {
   sprout: Leaf,
@@ -110,6 +113,23 @@ export default function MiCaminoNutriA() {
                   <p className="text-xs text-[#60766b]">Días con algún registro, sin objetivos obligatorios.</p>
                 </article>
               </div>
+              {!!resumen.actividadReciente?.length && <section className="mt-4 rounded-2xl border border-[#c7dfce] bg-white/75 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="font-extrabold text-[#173f34]">Tu actividad reciente</h3>
+                  <Link to="/mi-plan" className="min-h-10 content-center rounded-xl bg-[#246b55] px-3 text-sm font-bold text-white">Ir a mi plan</Link>
+                </div>
+                <div className="mt-3 grid grid-cols-7 gap-1.5" role="list" aria-label="Registro de los últimos 14 días">
+                  {resumen.actividadReciente.map(dia => {
+                    const label = fechaActividad.format(new Date(dia.fecha + 'T12:00:00Z')) + (dia.conRegistro ? ', con registro' : ', sin registro')
+                    return <div key={dia.fecha} role="listitem" aria-label={label} title={label}
+                      className={'grid min-h-9 place-items-center rounded-lg text-xs font-bold ' +
+                        (dia.conRegistro ? 'bg-[#246b55] text-white' : 'bg-[#eef4f0] text-[#567162]')}>
+                      {Number(dia.fecha.slice(-2))}
+                    </div>
+                  })}
+                </div>
+                <p className="mt-2 text-xs text-[#52695f]">Los días marcados tienen al menos una experiencia registrada.</p>
+              </section>}
               {resumen.rachas && (
                 <div className="mt-4 rounded-2xl border border-[#c7dfce] bg-[#eaf4eb] p-4 dark:border-[#568268] dark:bg-[#2b4838]">
                   <div className="flex flex-wrap items-center gap-2">

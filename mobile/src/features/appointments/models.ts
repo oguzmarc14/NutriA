@@ -39,3 +39,12 @@ export function dayLabel(date: string, compact = false) {
     weekday: compact ? 'short' : 'long', day: 'numeric', month: 'short', timeZone: 'UTC',
   }).format(new Date(date + 'T12:00:00Z'))
 }
+
+export function dateInZone(instant: string, timeZone?: string) {
+  const date = new Date(instant)
+  if (!Number.isFinite(+date)) return ''
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date)
+    return ['year','month','day'].map(part => parts.find(item => item.type === part)?.value).join('-')
+  } catch { return date.toISOString().slice(0,10) }
+}

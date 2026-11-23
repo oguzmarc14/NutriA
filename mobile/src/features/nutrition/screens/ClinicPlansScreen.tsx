@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { AppDialog } from '@/shared/ui/AppDialog'
 import { MealContent } from '../plans/MealContent'
-import { exportPlan } from '../plans/exportPlan'
+import { exportPlan, loadClinicBrand } from '../plans/exportPlan'
 import type { Plan } from '../plans/models'
 import { request } from '@/core/api/client'
 import { useAuth } from '@/features/auth/AuthProvider'
@@ -19,7 +19,7 @@ export default function ClinicPlansScreen() {
   const [remove,setRemove] = useState<Plan | null>(null)
   const [busy,setBusy] = useState(false)
   const [error,setError] = useState('')
-  async function download(plan: Plan) { if (busy) return; setBusy(true); setError(''); try { await exportPlan(plan,resource.data?.paciente.name || 'Paciente') } catch(cause) { setError(cause instanceof Error ? cause.message : 'No se pudo exportar el plan.') } finally { setBusy(false) } }
+  async function download(plan: Plan) { if (!session || busy) return; setBusy(true); setError(''); try { await exportPlan(plan,resource.data?.paciente.name || 'Paciente', await loadClinicBrand(session.token)) } catch(cause) { setError(cause instanceof Error ? cause.message : 'No se pudo exportar el plan.') } finally { setBusy(false) } }
   async function deletePlan() { if (busy || !remove || !session) return; setBusy(true); setError(''); try { await request('/planes/'+patient+'/'+remove._id,{token:session.token,method:'DELETE'}); setRemove(null); resource.reload() } catch(cause) { setError(cause instanceof Error ? cause.message : 'No se pudo eliminar el plan.') } finally { setBusy(false) } }
   const valid = typeof patient === 'string' && /^[a-f\d]{24}$/i.test(patient)
   const resource = useResource<PlanData>(valid ? '/planes/' + patient : null)
