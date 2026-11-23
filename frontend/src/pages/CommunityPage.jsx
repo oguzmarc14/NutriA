@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BookOpen, Plus, Search, Send, ShieldCheck, X } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 import client from '../api/client'
 import MisDietasPanel from '../components/community/MisDietasPanel'
 
@@ -7,7 +8,15 @@ const empty = { titulo: '', descripcion: '', porciones: 1, ingredientes: [{ nomb
 const message = error => error.response?.data?.message || 'No fue posible completar la operación'
 
 export default function CommunityPage() {
-  const [tab, setTab] = useState('explorar')
+  const [params, setParams] = useSearchParams()
+  const selectedTab = params.get('tab')
+  const tab = selectedTab === 'dietas' || selectedTab === 'mias' ? selectedTab : 'explorar'
+  function setTab(next) {
+    const updated = new URLSearchParams(params)
+    if (next === 'explorar') updated.delete('tab')
+    else updated.set('tab', next)
+    setParams(updated)
+  }
   const [publicas, setPublicas] = useState([])
   const [mias, setMias] = useState([])
   const [busqueda, setBusqueda] = useState('')

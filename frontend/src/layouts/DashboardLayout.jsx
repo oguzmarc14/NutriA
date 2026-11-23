@@ -7,6 +7,8 @@ import {
   CalendarDays,
   CalendarPlus,
   BookOpen,
+  Bookmark,
+  CalendarClock,
   ShieldCheck,
   ArrowLeft,
   LayoutDashboard,
@@ -15,14 +17,11 @@ import {
   TrendingUp,
   UserCog,
   UserRound,
-  ChevronDown,
   Settings,
   UserPen,
   Users,
   Building2,
-  Leaf,
   ClipboardPlus,
-  CircleCheck,
   X,
   ArrowLeftRight,
   UserRoundCheck,
@@ -34,7 +33,6 @@ import {
 } from 'lucide-react'
 
 import {
-  NavLink,
   Outlet,
   useLocation,
   useNavigate,
@@ -46,6 +44,7 @@ import BotonInstalarApp from '../components/pwa/BotonInstalarApp'
 import CentroAvisosNutriologo from '../components/avisos/CentroAvisosNutriologo'
 import CentroAvisosPaciente from '../components/avisos/CentroAvisosPaciente'
 import MenuMovil from '../components/navigation/MenuMovil'
+import NavigationGroups from '../components/navigation/NavigationGroups'
 import ActualizacionPWA from '../components/pwa/ActualizacionPWA'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
@@ -175,6 +174,9 @@ function DashboardLayout() {
             shortLabel: 'Dietas',
             to: '/dietas',
           },
+          { icon: Bookmark, label: 'Mis dietas', to: '/community?tab=dietas' },
+          { icon: Building2, label: 'Mi clínica', to: '/mi-clinica' },
+          { icon: CalendarClock, label: 'Horarios y días no laborables', to: '/editar-perfil' },
           {
             icon: Wallet,
             label: 'Pagos de pacientes',
@@ -254,6 +256,22 @@ function DashboardLayout() {
         ]
       : []),
   ]
+
+  const sections = [
+    { label: 'Inicio', routes: ['/', '/pacientes'] },
+    { label: 'Expediente y mediciones', routes: [
+      ...(pacienteTrabajo ? [`/pacientes/${pacienteTrabajo.id}/expediente`] : []),
+      '/mediciones', '/calculo-nutricional', '/progreso', '/mi-expediente', '/mis-mediciones', '/mi-progreso',
+    ] },
+    { label: 'Dietas', routes: ['/planes', '/dietas', '/community?tab=dietas', '/mi-plan'] },
+    { label: 'Citas', routes: ['/citas', '/citas/nueva', '/mis-citas'] },
+    { label: 'Configuración de la clínica', routes: ['/mi-clinica', '/editar-perfil', '/pagos'] },
+    { label: 'Comunidad', routes: ['/community', '/community/moderacion'] },
+    { label: 'Administración', routes: ['/usuarios'] },
+    { label: 'Pagos', routes: ['/mis-pagos'] },
+  ].map(({ label, routes }) => ({
+    label, links: routes.map(route => navigationVisible.find(item => item.to === route)).filter(Boolean),
+  })).filter(section => section.links.length)
 
   /*
    * ----------------------------------------------------
@@ -342,10 +360,10 @@ function DashboardLayout() {
           SIDEBAR DESKTOP
       ============================================ */}
 
-      <aside className={`hidden min-h-screen overflow-hidden border-r border-[#c8dbd0] bg-[#eaf0e9] p-5 shadow-[6px_0_30px_rgba(36,107,85,0.05)] md:flex md:flex-col ${enEditorPlanes && !sidebarPlanesVisible ? "md:invisible md:p-0 md:border-0" : ""}`}>
+      <aside className={`hidden overflow-hidden border-r border-[#c8dbd0] bg-[#eaf0e9] p-5 shadow-[6px_0_30px_rgba(36,107,85,0.05)] md:sticky md:top-0 md:flex md:h-dvh md:self-start md:flex-col ${enEditorPlanes && !sidebarPlanesVisible ? "md:invisible md:p-0 md:border-0" : ""}`}>
         {/* MARCA */}
 
-        <div className="mb-9 flex items-center gap-3 px-2">
+        <div className="mb-6 flex shrink-0 items-center gap-3 px-2">
           <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white shadow-[0_8px_20px_rgba(36,107,85,0.14)]">
             <img src="/imagenes/logo-nutria.png" alt="Logotipo de NutriA" className="h-full w-full object-contain" />
           </div>
@@ -363,39 +381,8 @@ function DashboardLayout() {
 
         {/* NAVEGACIÓN */}
 
-        <nav className="space-y-2">
-          {navigationVisible.map(
-            ({
-              icon: Icon,
-              label,
-              to,
-              marca,
-            }) => (
-              <NavLink
-                key={label}
-                to={to}
-                end={to === '/' || to === '/pacientes' || to === '/citas'}
-                className={({
-                  isActive,
-                }) =>
-                  `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-all duration-200 ${
-                    isActive
-                      ? 'bg-gradient-to-r from-[#d8ebe0] to-[#e7f2eb] text-[#246b55] shadow-sm'
-                      : 'text-slate-500 hover:bg-[#eef5f1] hover:text-[#173f34]'
-                  }`
-                }
-              >
-                <Icon
-                  size={19}
-                  className="shrink-0"
-                />
-
-                <span className="truncate">
-                  {label}
-                </span>
-              </NavLink>
-            ),
-          )}
+        <nav aria-label="Navegación principal" className="min-h-0 overflow-y-auto overscroll-contain pb-2">
+          <NavigationGroups sections={sections} />
         </nav>
 
       </aside>
@@ -491,7 +478,7 @@ function DashboardLayout() {
       </main>
 
       {configurarHorario && <div className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto bg-[#102d26]/70 p-3 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Configuración inicial del horario"><div className="my-auto w-full max-w-2xl"><HorarioLaboral primerIngreso onSaved={()=>setConfigurarHorario(false)}/></div></div>}
-      <MenuMovil enlaces={navigationVisible} rol={user.role} pacienteTrabajo={pacienteTrabajo}
+      <MenuMovil sections={sections} rol={user.role} pacienteTrabajo={pacienteTrabajo}
         abierto={menuMovilAbierto} setAbierto={setMenuMovilAbierto} />
       <ActualizacionPWA />
     </div>
