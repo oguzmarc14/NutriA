@@ -13,7 +13,7 @@ import { dietaParaFecha, fechaDietaLegible, inicioDieta, ordenarDietas, proximas
 const sinPlanes = []
 
 function MiPlanPage() {
-  const { perfil, loading, error, recargar } = usePerfilPaciente()
+  const { perfil, loading, error, recargar, guardarRegistroLocal } = usePerfilPaciente()
   const planes = perfil?.planes || sinPlanes
   const hoy = fechaActualDispositivo()
   const [fechaSeleccionada, setFechaSeleccionada] = useState(fechaActualDispositivo)
@@ -151,7 +151,7 @@ function MiPlanPage() {
               <CardPlanPaciente key={planDelDia._id + ':' + fechaSeleccionada} fecha={fechaSeleccionada} plan={planDelDia}
                 seguimientoDisponible={seguimientoDisponible}
                 estadoPlan={fechaSeleccionada > hoy ? 'Próximo menú' : planDelDia._id !== planVigente?._id || fechaSeleccionada < hoy ? 'Menú del historial' : 'Menú de hoy'}
-                seguimientos={perfil?.seguimientosComida || []} onSeguimientoGuardado={recargar}/>
+                seguimientos={perfil?.seguimientosComida || []} onSeguimientoGuardado={guardarRegistroLocal}/>
             </div>
           : <div className="rounded-3xl border border-dashed border-[#bdd3c7] bg-white/55 p-10 text-center">
               <CalendarDays className="mx-auto mb-3 text-[#4d816f]" size={32}/>

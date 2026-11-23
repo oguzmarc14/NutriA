@@ -1572,7 +1572,12 @@ function PlanesAlimenticiosPage() {
       setError(`La distribución de comidas debe sumar 100 %. Actualmente suma ${totalPorcentajes} %.`)
       return
     }
-    if (!(await pedirConfirmacion(planEditandoId ? '¿Quieres guardar los cambios de este plan alimenticio?' : '¿Quieres guardar este nuevo plan alimenticio?', planEditandoId ? 'Guardar cambios' : 'Guardar plan'))) return
+    const confirmacion = planEditandoId ? '¿Quieres guardar los cambios de este plan alimenticio?' : '¿Quieres guardar este nuevo plan alimenticio?'
+    const omitidas = comidas.length - comidasValidas.length
+    const avisoOmitidas = omitidas
+      ? ' Las comidas incompletas se omitirán.' + (mostrarDistribucion ? ' Sus porcentajes se repartirán entre las comidas guardadas.' : '')
+      : ''
+    if (!(await pedirConfirmacion(confirmacion + avisoOmitidas, planEditandoId ? 'Guardar cambios' : 'Guardar plan'))) return
 
     try {
       const tipoGuardado = planEditandoId ? 'editado' : 'creado'

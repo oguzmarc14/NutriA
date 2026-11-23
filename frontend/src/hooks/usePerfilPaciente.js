@@ -34,7 +34,19 @@ function usePerfilPaciente() {
     cargarPerfilInicial()
   }, [])
 
-  return { perfil, loading, error, recargar }
+  function guardarRegistroLocal(registro) {
+    if (!registro) return
+    setPerfil(actual => {
+      if (!actual) return actual
+      const restantes = (actual.seguimientosComida || []).filter(item =>
+        String(item.plan) !== String(registro.plan) || String(item.comida) !== String(registro.comida) ||
+        item.fecha !== registro.fecha,
+      )
+      return { ...actual, seguimientosComida: [registro, ...restantes] }
+    })
+  }
+
+  return { perfil, loading, error, recargar, guardarRegistroLocal }
 }
 
 export default usePerfilPaciente
