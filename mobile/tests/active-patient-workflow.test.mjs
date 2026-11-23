@@ -14,7 +14,9 @@ test('patient context is per nutritionist and persisted securely', () => {
 })
 test('patient choice confirms changes and keeps context before navigation', () => {
   assert.match(patients, /¿Cambiar de paciente\?/)
-  assert.match(patients, /¿Dejar de trabajar\?/)
+  assert.match(patients, /¿Finalizar atención\?/)
+  assert.match(patients, /<AppDialog visible=\{!!selection\}/)
+  assert.match(patients, /onPress=\{confirmSelection\}/)
   assert.match(patients, /start\(patient\)/)
   assert.match(patients, /pathname: '\/paciente'/)
 })

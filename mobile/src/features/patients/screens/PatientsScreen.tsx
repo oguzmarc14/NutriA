@@ -14,7 +14,8 @@ import { usePatientWork } from '@/features/patients/PatientWorkProvider'
 import { request } from '@/core/api/client'
 import { useList } from '@/shared/hooks/useList'
 import { ListState } from '@/shared/ui/ListState'
-import { Page, colors, styles } from '@/shared/ui/primitives'
+import { AppDialog } from '@/shared/ui/AppDialog'
+import { Button, Page, colors, styles } from '@/shared/ui/primitives'
 
 type PatientSummary = Patient & {
   progresoPeso?: { cambioKg: number | null; mediciones: number }
@@ -172,6 +173,7 @@ export default function Patients() {
   const { session } = useAuth()
   const { active, start, stop } = usePatientWork()
   const list = useList<PatientSummary>('/pacientes', 'pacientes')
+  const [selection, setSelection] = useState<PatientSummary | null>(null)
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [name, setName] = useState('')
@@ -187,35 +189,28 @@ export default function Patients() {
       String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(normalized)))
   const pendingCount = list.rows.filter(item => item.accountStatus === 'pending').length
 
+  function activate(patient: PatientSummary) {
+    start(patient)
+    if (isPatientIntent(intent)) {
+      router.replace({ pathname: patientDestinations[intent], params: { patient: patient._id } })
+    } else {
+      router.push({ pathname: '/paciente', params: { id: patient._id } })
+    }
+  }
+
   function choose(patient: PatientSummary) {
-    if (selectMode) {
-      const goToTool = () => {
-        start(patient)
-        router.replace({ pathname: patientDestinations[intent], params: { patient: patient._id } })
-      }
-      if (active && active.id !== patient._id) {
-        Alert.alert('¿Cambiar de paciente?', 'Cambiarás desde ' + active.name + ' a ' + patient.name + '.', [
-          { text: 'Cancelar', style: 'cancel' }, { text: 'Aceptar', onPress: goToTool },
-        ])
-      } else goToTool()
-      return
-    }
-    if (active?.id === patient._id) {
-      Alert.alert('¿Dejar de trabajar?', '¿Confirmas que deseas dejar de trabajar con ' + patient.name + '?', [
-        { text: 'Cancelar', style: 'cancel' }, { text: 'Dejar de trabajar', style: 'destructive', onPress: stop },
-      ])
-      return
-    }
-    Alert.alert(active ? '¿Cambiar de paciente?' : '¿Quieres trabajar con este paciente?',
-      (active ? 'Cambiarás desde ' + active.name + ' a ' + patient.name + '. ' :
-        '¿Confirmas que deseas comenzar a trabajar con ' + patient.name + '? ') +
-      'No se eliminarán registros ni expedientes.', [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Aceptar', onPress: () => {
-          start(patient)
-          router.push({ pathname: '/paciente', params: { id: patient._id } })
-        } },
-      ])
+    if (selectMode && (!active || active.id === patient._id)) activate(patient)
+    else setSelection(patient)
+  }
+
+  const ending = !!selection && !selectMode && selection._id === active?.id
+  const switching = !!selection && !!active && active.id !== selection._id
+
+  function confirmSelection() {
+    if (!selection) return
+    setSelection(null)
+    if (ending) stop()
+    else activate(selection)
   }
 
   function confirmResend(patient: PatientSummary) {
@@ -281,6 +276,23 @@ export default function Patients() {
 
   return (
     <Page>
+      <AppDialog visible={!!selection} onClose={() => setSelection(null)}
+        title={ending ? '¿Finalizar atención?' : switching ? '¿Cambiar de paciente?' : 'Trabajar con paciente'}
+        message={ending ? 'El paciente dejará de estar en atención.' : switching
+          ? 'Paciente en atención: ' + active?.name : 'Abre la ficha y activa el contexto de este paciente.'}>
+        {selection && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12,
+          padding: 12, borderRadius: 14, backgroundColor: pale, borderWidth: 1, borderColor: softBorder }}>
+          <Ionicons name="person-circle-outline" size={30} color={accent} />
+          <View style={{ flex: 1, gap: 3 }}>
+            <Text style={[styles.body, { fontSize: 12 }]}>{ending ? 'Paciente en atención' : 'Paciente seleccionado'}</Text>
+            <Text style={styles.cardTitle}>{selection.name}</Text>
+          </View>
+        </View>}
+        <View style={styles.row}>
+          <Button expand selected={false} label="Cancelar" onPress={() => setSelection(null)} />
+          <Button expand label={ending ? 'Finalizar atención' : selectMode ? 'Continuar' : 'Abrir ficha'} onPress={confirmSelection} />
+        </View>
+      </AppDialog>
       <View style={local.pageHeader}>
         <View style={{ flex: 1 }}>
           <Text accessibilityRole="header" style={local.pageTitle}>
