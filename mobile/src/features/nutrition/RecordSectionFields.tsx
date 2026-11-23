@@ -1,57 +1,60 @@
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { Button, colors, styles } from '@/shared/ui/primitives'
+import Ionicons from '@expo/vector-icons/Ionicons'
+import { colors, styles } from '@/shared/ui/primitives'
 import { FormField } from '@/shared/ui/FormField'
 import { TimeField } from '@/shared/ui/DateTimeField'
 import { DietDisclosure } from './plans/dietUI'
-import { recordSections } from './recordSections'
+import { habitDetails, recordSections } from './recordSections'
 import { optionalNutritionFields } from './clinicalRecordModel'
 
 export function YesNoDetail({label,value,checked,onChange,onToggle,disabled}:{
   label:string;value:string;checked:boolean;onChange:(value:string)=>void;onToggle:(yes:boolean)=>void;disabled:boolean
 }) {
   return <View style={{gap:8,padding:12,backgroundColor:'#f5faf6',borderRadius:16,borderWidth:1,borderColor:'#d8e7dc'}}>
-    <Text style={[styles.body,{fontSize:14,fontWeight:'700',color:colors.ink}]}>{label}</Text>
-    <View style={{flexDirection:'row',gap:8}}>
+    <View style={{flexDirection:'row',alignItems:'center',gap:8}}>
+    <Ionicons name="clipboard-outline" size={17} color={colors.green} />
+    <Text style={[styles.body,{flex:1,fontSize:14,fontWeight:'700',color:colors.ink}]}>{label}</Text>
+    <View style={{flexDirection:'row',backgroundColor:'#e8f0eb',borderRadius:12,padding:2}}>
       {([false,true] as const).map(yes=><Pressable key={String(yes)}
         accessibilityRole="button" accessibilityLabel={label+': '+(yes?'Sí':'No')}
         accessibilityState={{selected:checked===yes,disabled}}
         disabled={disabled} onPress={()=>onToggle(yes)}
-        style={{minHeight:44,flex:1,borderRadius:12,alignItems:'center',justifyContent:'center',
-          borderWidth:1,borderColor:checked===yes?colors.green:'#cadaD1',
-          backgroundColor:checked===yes?colors.green:'#fff'}}>
-        <Text style={{fontWeight:'800',color:checked===yes?'white':colors.green}}>{yes?'Sí':'No'}</Text>
+        style={{minHeight:44,minWidth:44,borderRadius:10,alignItems:'center',justifyContent:'center',
+          backgroundColor:checked===yes?(yes?colors.green:'white'):'transparent'}}>
+        <Text style={{fontWeight:checked===yes?'800':'500',color:checked===yes?(yes?'white':colors.ink):colors.muted}}>{yes?'Sí':'No'}</Text>
       </Pressable>)}
+    </View>
     </View>
     {checked&&<FormField label={'Detalles de '+label.toLowerCase()+' (opcional)'} multiline
       value={value} onChange={onChange} disabled={disabled}/>}
   </View>
 }
 
-const optionDetails:Record<string,string>={
-  'tratamientoFarmacologico.descripcion':'tratamientoFarmacologico.usa',
-  'tabaquismo.frecuenciaSemanal':'tabaquismo.fuma',
-  'alcohol.frecuencia':'alcohol.consume',
-  'drogas.descripcion':'drogas.consume',
-  'anabolicos.descripcion':'anabolicos.consume',
-  'suplementos.descripcion':'suplementos.consume',
-}
 const optional=new Set<string>(optionalNutritionFields)
 
 export function RecordSectionFields({form,active,disabled,onChange,onToggle}:{
   form:Record<string,string>;active:readonly string[];disabled:boolean;
   onChange:(key:string,value:string)=>void;onToggle:(key:string,yes:boolean)=>void
 }){
-  const [open,setOpen]=useState<string|null>('Nutrición y objetivos')
+  const [collapsed,setCollapsed]=useState<string[]>([])
   return <>{recordSections.map(section=><View key={section.label} style={{backgroundColor:'#fff',borderRadius:20,padding:14,
     borderWidth:1,borderColor:'#cfe0d5'}}>
-    <DietDisclosure label={section.label} open={open===section.label}
-      onPress={()=>setOpen(open===section.label?null:section.label)} disabled={disabled}>
+    <DietDisclosure label={section.label} open={!collapsed.includes(section.label)}
+      onPress={()=>setCollapsed(previous=>previous.includes(section.label)
+        ? previous.filter(label=>label!==section.label) : [...previous,section.label])} disabled={disabled}>
       <View style={{gap:15}}>
         {section.fields.map(field=>{
           const name=field.path
           if(name==='nutricion.objetivoPrincipal')return null // se calcula del primer objetivo elegido
-          if(optionDetails[name] && form[optionDetails[name]]!=='true')return null
+          if(habitDetails[name])return null
+          const detail=section.fields.find(item=>habitDetails[item.path]===name)
+          if(detail)return <YesNoDetail key={name} label={field.label} checked={form[name]==='true'}
+            value={form[detail.path]||''} disabled={disabled}
+            onChange={value=>onChange(detail.path,value)} onToggle={yes=>{
+              onChange(name,String(yes))
+              if(!yes)onChange(detail.path,'')
+            }}/>
           if(name==='deporte.lugarOtro'&&form['deporte.lugarEntrenamiento']!=='otro')return null
           if(name==='nutricion.objetivoOtro'&&!(form['nutricion.objetivos']||'').split(',').includes('otro'))return null
           if(optional.has(name))return <YesNoDetail key={name} label={field.label} checked={active.includes(name)}
@@ -71,10 +74,6 @@ export function RecordSectionFields({form,active,disabled,onChange,onToggle}:{
                     onPress={()=>{
                       if(field.type!=='multiple'){
                         onChange(name,value)
-                        if(field.type==='boolean'&&value==='false'){
-                          const dependent=Object.entries(optionDetails).find(([_,parent])=>parent===name)?.[0]
-                          if(dependent)onChange(dependent,'')
-                        }
                         if(name==='deporte.lugarEntrenamiento'&&value!=='otro')onChange('deporte.lugarOtro','')
                       }else{
                         const previous=(form[name]||'').split(',').filter(Boolean)

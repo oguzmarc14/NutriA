@@ -1,13 +1,21 @@
 export type RecordField = { path: string; label: string; type?: 'number' | 'boolean' | 'time' | 'options' | 'multiple'; options?: readonly (readonly [string, string])[] }
+export const habitDetails: Record<string,string> = {
+  'tratamientoFarmacologico.descripcion':'tratamientoFarmacologico.usa',
+  'tabaquismo.frecuenciaSemanal':'tabaquismo.fuma',
+  'alcohol.frecuencia':'alcohol.consume',
+  'drogas.descripcion':'drogas.consume',
+  'anabolicos.descripcion':'anabolicos.consume',
+  'suplementos.descripcion':'suplementos.consume',
+}
 export const objectives = [['perdida_peso','Pérdida de peso'],['incremento_masa','Incremento de masa'],['imagen_personal','Imagen personal'],['salud','Salud'],['rendimiento_deportivo','Rendimiento deportivo'],['control_enfermedades','Control de enfermedades'],['otro','Otro']] as const
 export const recordSections: { label: string; fields: RecordField[] }[] = [
-  { label: 'Tratamientos y hábitos', fields: [
-    {path:'tratamientoFarmacologico.usa',label:'¿Usa tratamiento farmacológico?',type:'boolean'}, {path:'tratamientoFarmacologico.descripcion',label:'Tratamiento farmacológico'},
-    {path:'tabaquismo.fuma',label:'¿Fuma?',type:'boolean'}, {path:'tabaquismo.frecuenciaSemanal',label:'Frecuencia semanal de tabaquismo'},
-    {path:'alcohol.consume',label:'¿Consume alcohol?',type:'boolean'}, {path:'alcohol.frecuencia',label:'Frecuencia de alcohol'},
-    {path:'drogas.consume',label:'¿Consume drogas?',type:'boolean'}, {path:'drogas.descripcion',label:'Descripción del consumo'},
-    {path:'anabolicos.consume',label:'¿Consume anabólicos?',type:'boolean'}, {path:'anabolicos.descripcion',label:'Anabólicos'},
-    {path:'suplementos.consume',label:'¿Consume suplementos?',type:'boolean'}, {path:'suplementos.descripcion',label:'Suplementos'},
+  { label: 'Farmacológico y hábitos', fields: [
+    {path:'tratamientoFarmacologico.usa',label:'Tratamiento farmacológico actual',type:'boolean'}, {path:'tratamientoFarmacologico.descripcion',label:'Tratamiento farmacológico'},
+    {path:'tabaquismo.fuma',label:'Tabaquismo',type:'boolean'}, {path:'tabaquismo.frecuenciaSemanal',label:'Frecuencia semanal de tabaquismo'},
+    {path:'alcohol.consume',label:'Consumo de alcohol',type:'boolean'}, {path:'alcohol.frecuencia',label:'Frecuencia de alcohol'},
+    {path:'drogas.consume',label:'Uso de drogas',type:'boolean'}, {path:'drogas.descripcion',label:'Descripción del consumo'},
+    {path:'anabolicos.consume',label:'Uso de anabólicos',type:'boolean'}, {path:'anabolicos.descripcion',label:'Anabólicos'},
+    {path:'suplementos.consume',label:'Suplementos',type:'boolean'}, {path:'suplementos.descripcion',label:'Suplementos'},
   ] },
   { label: 'Nutrición y objetivos', fields: [
     {path:'nutricion.primeraComida',label:'Primera comida',type:'time'}, {path:'nutricion.ultimaComida',label:'Última comida',type:'time'},

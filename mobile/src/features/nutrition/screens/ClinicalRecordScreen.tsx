@@ -11,10 +11,11 @@ import {FormField} from '@/shared/ui/FormField'
 import {ListState} from '@/shared/ui/ListState'
 import {DietDisclosure} from '../plans/dietUI'
 import {RecordSectionFields,YesNoDetail} from '../RecordSectionFields'
-import {clinicalActive,clinicalFields,clinicalForm,clinicalUpdate,optionalClinicalFields} from '../clinicalRecordModel'
+import {clinicalActive,clinicalFields,clinicalForm,clinicalUpdate} from '../clinicalRecordModel'
 
 type Patient={name:string;sex?:'male'|'female'|'other'|'unspecified';birthDate?:string|null;phone?:string;email?:string}
-type LastMeasurement={peso:number;estatura:number;imc?:number;edad?:number;nivelActividadFisica?:number;fecha?:string}
+type LastMeasurement={peso:number;estatura:number;imc?:number;edad?:number;nivelActividadFisica?:number;fecha?:string;
+  grasaCorporal?:number|null;masaMuscular?:number|null;grasaVisceral?:number|null;masaOsea?:number|null}
 type RecordData={paciente:Patient;ultimaMedicion:LastMeasurement|null;expediente:Record<string,unknown>|null}
 const gender:Record<string,string>={male:'Masculino',female:'Femenino',other:'Otro',unspecified:'Sin especificar'}
 const activity:Record<number,string>={1:'Sedentario',2:'Ligero',3:'Moderado',4:'Activo',5:'Muy activo'}
@@ -79,7 +80,7 @@ function RecordForm({patient,initial,profile,measurement}:{patient:string;initia
         <DataRow label="Nombre" value={profile.name}/>
         <DataRow label="Género" value={gender[profile.sex||'unspecified']}/>
         <DataRow label="Fecha de nacimiento" value={birthLabel(profile.birthDate)}/>
-        <DataRow label="Edad" value={ageYears(profile.birthDate)==null?'Sin registrar':String(ageYears(profile.birthDate))+' años'}/>
+        <DataRow label="Edad" value={measurement?.edad ?? ageYears(profile.birthDate)}/>
         <DataRow label="Teléfono" value={profile.phone}/>
         <DataRow label="Correo electrónico" value={profile.email}/>
       </View>
@@ -95,6 +96,11 @@ function RecordForm({patient,initial,profile,measurement}:{patient:string;initia
         <DataRow label="Estatura" value={measurement.estatura+' m'}/>
         <DataRow label="IMC" value={measurement.imc==null?(measurement.peso/measurement.estatura**2).toFixed(2):measurement.imc.toFixed(2)}/>
         <DataRow label="Actividad física" value={activity[measurement.nivelActividadFisica||0]||'Sin registrar'}/>
+        {measurement.fecha&&<DataRow label="Fecha de medición" value={birthLabel(measurement.fecha)}/>}
+        {measurement.grasaCorporal!=null&&<DataRow label="Grasa corporal" value={measurement.grasaCorporal+' %'}/>}
+        {measurement.masaMuscular!=null&&<DataRow label="Masa muscular" value={measurement.masaMuscular+' kg'}/>}
+        {measurement.grasaVisceral!=null&&<DataRow label="Grasa visceral" value={measurement.grasaVisceral}/>}
+        {measurement.masaOsea!=null&&<DataRow label="Masa ósea" value={measurement.masaOsea+' kg'}/>}
       </View>:<Text style={styles.body}>Aún no hay mediciones registradas.</Text>}
     </View>
     <View style={[styles.card,{gap:8}]}>
@@ -125,7 +131,7 @@ export default function ClinicalRecordScreen(){
     <Button label="Elegir paciente" onPress={()=>router.replace('/pacientes')}/></Page>
   return <Page bottomInset>
     <ListState loading={resource.loading} error={resource.error} reload={resource.reload}/>
-    {resource.data&&<><Text style={styles.title}>{resource.data.paciente.name}</Text>
+    {resource.data&&<><Text accessibilityRole="header" style={styles.title}>{resource.data.paciente.name}</Text>
       <RecordForm key={patient} patient={patient!} profile={resource.data.paciente}
         measurement={resource.data.ultimaMedicion} initial={resource.data.expediente}/></>}
   </Page>

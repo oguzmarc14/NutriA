@@ -31,7 +31,11 @@ export default function ClinicPlansScreen() {
   return <Page bottomInset>
     <AppDialog visible={!!error} title="No se pudo completar la acción" message={error} onClose={() => setError('')} />
     <AppDialog visible={!!preview} title={preview?.nombre || 'Plan alimenticio'} onClose={() => setPreview(null)}>
-      {preview?.comidas.map((meal,index) => <View key={meal._id || index} style={styles.card}><Text style={styles.cardTitle}>{meal.nombre} · {meal.hora}</Text><MealContent meal={meal} /></View>)}
+      {preview && (preview.comidas?.length ? preview.comidas.map((meal,index) =>
+        <View key={meal._id || index} style={styles.card}>
+          <Text style={styles.cardTitle}>{[meal.nombre, meal.hora].filter(Boolean).join(' · ')}</Text>
+          <MealContent meal={meal} />
+        </View>) : <Text style={styles.body}>Este plan no tiene comidas registradas.</Text>)}
       <Button label="Volver" onPress={() => setPreview(null)} />
     </AppDialog>
     <AppDialog visible={!!remove} title="¿Eliminar este plan?" message={'Se eliminará '+(remove?.nombre || '')+' y sus seguimientos asociados. Esta acción no se puede deshacer.'} onClose={() => { if (!busy) setRemove(null) }}>

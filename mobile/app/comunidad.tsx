@@ -12,9 +12,13 @@ import { Text, TextInput, View } from 'react-native'
 import { useList } from '@/shared/hooks/useList'
 import { Button, Page, styles } from '@/shared/ui/primitives'
 import { ListState } from '@/shared/ui/ListState'
+import { MealContent } from '@/features/nutrition/plans/MealContent'
+import { exportPlan } from '@/features/nutrition/plans/exportPlan'
+import type { Plan } from '@/features/nutrition/plans/models'
 type Recipe = { _id: string; titulo: string; descripcion: string; estado: string; porciones: number;
   autor?: { name?: string }; ingredientes: { nombre: string; cantidad: number; unidad: string }[]; instrucciones: string[] }
 type SavedDiet = { _id: string; nombre: string; fechaGuardado: string; comidasCount: number; metaEnergiaKcal?: number | null }
+type SavedDietDetail = SavedDiet & { plan: Plan }
 
 export default function Community() {
   const { session } = useAuth()
@@ -27,6 +31,35 @@ export default function Community() {
   const blank = ():RecipeDraft=>({title:'',description:'',portions:'1',ingredients:[{name:'',amount:'1',unit:''}],steps:'',tags:''})
   const [form,setForm] = useState(blank), [creating,setCreating] = useState(false), [busy,setBusy] = useState(false), [error,setError] = useState(''), [publish,setPublish] = useState<Recipe|null>(null)
   const lock=useRef(false)
+  const [dietPreview, setDietPreview] = useState<SavedDietDetail | null>(null)
+  const [openingDiet, setOpeningDiet] = useState(false)
+  async function openDiet(item: SavedDiet) {
+    if (!session || lock.current) return
+    lock.current = true
+    setOpeningDiet(true)
+    try {
+      setDietPreview(await request<SavedDietDetail>('/community/mis-dietas/' + item._id, { token: session.token }))
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'No pudimos abrir la dieta.')
+    } finally {
+      lock.current = false
+      setOpeningDiet(false)
+    }
+  }
+  async function shareDiet(item: SavedDietDetail) {
+    if (lock.current) return
+    lock.current = true
+    setBusy(true)
+    try {
+      await exportPlan({ ...item.plan, nombre: item.nombre }, '')
+    } catch (cause) {
+      setDietPreview(null)
+      setError(cause instanceof Error ? cause.message : 'No pudimos exportar la dieta.')
+    } finally {
+      lock.current = false
+      setBusy(false)
+    }
+  }
   async function create() {
     if(!session || lock.current)return
     let body:ReturnType<typeof recipePayload>
@@ -96,6 +129,8 @@ export default function Community() {
             dateStyle: 'medium' }).format(new Date(item.fechaGuardado))}</Text>
           <Text style={styles.body}>{item.comidasCount} comidas
             {item.metaEnergiaKcal ? ' · ' + item.metaEnergiaKcal + ' kcal objetivo' : ''}</Text>
+          <Button label={openingDiet ? 'Cargando dieta…' : 'Ver dieta'} selected={false}
+            disabled={openingDiet} onPress={() => void openDiet(item)} />
           <Button label="Usar con paciente" onPress={() => useDiet(item)} />
           <Pressable accessibilityRole="button" onPress={() => Alert.alert('Eliminar dieta guardada',
             'Se eliminará solo la copia privada «' + item.nombre + '», no el plan de ningún paciente.', [
@@ -114,6 +149,20 @@ export default function Community() {
         {section === 'recetas' && ['privada','rechazada'].includes(item.estado) && <Button label="Enviar a publicación" disabled={busy} onPress={()=>setPublish(item)}/>}
         <Button selected={false} label={expanded === item._id ? 'Ocultar receta' : 'Ver receta'} onPress={() => setExpanded(expanded === item._id ? null : item._id)} />
       </View>)}
+    <AppDialog visible={!!dietPreview} title={dietPreview?.nombre || 'Dieta guardada'} onClose={() => setDietPreview(null)}>
+      {dietPreview && <>
+        {!!dietPreview.plan?.objetivo && <Text style={styles.body}>{dietPreview.plan.objetivo}</Text>}
+        {dietPreview.plan?.comidas?.length ? dietPreview.plan.comidas.map((meal, index) =>
+          <View key={meal._id || index} style={styles.card}>
+            <Text style={styles.cardTitle}>{[meal.nombre, meal.hora].filter(Boolean).join(' · ')}</Text>
+            <MealContent meal={meal} />
+          </View>
+        ) : <Text style={styles.body}>Esta dieta no tiene comidas registradas.</Text>}
+        <Button label="PDF / compartir" selected={false} disabled={busy || !dietPreview.plan?.comidas?.length}
+          onPress={() => void shareDiet(dietPreview)} />
+      </>}
+      <Button label="Cerrar dieta" disabled={busy} onPress={() => setDietPreview(null)} />
+    </AppDialog>
     <AppDialog visible={creating} title="Nueva receta" message="Se guardará como privada. Después puedes enviarla a publicación." onClose={()=>{if(!busy)setCreating(false)}}>
       <FormField label="Título *" value={form.title} disabled={busy} onChange={title=>setForm({...form,title})}/><FormField label="Descripción" multiline value={form.description} disabled={busy} onChange={description=>setForm({...form,description})}/><FormField label="Porciones *" numeric value={form.portions} disabled={busy} onChange={portions=>setForm({...form,portions})}/>
       <Text style={styles.cardTitle}>Ingredientes</Text>

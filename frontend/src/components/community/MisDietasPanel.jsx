@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BookOpen, CalendarDays, Copy, Trash2, X } from 'lucide-react'
 import client from '../../api/client'
+import { agruparPreparaciones } from '../../utils/agruparPreparaciones'
+import { exportarPlanPDF } from '../../utils/exportarPlanPDF'
 
 const errorMessage = error => error.response?.data?.message || 'No se pudo completar la operación.'
 const fmt = date => date && !Number.isNaN(Date.parse(date))
@@ -16,6 +18,7 @@ export default function MisDietasPanel() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [opened, setOpened] = useState(null)
+  const [exportError, setExportError] = useState('')
   const [toDelete, setToDelete] = useState(null)
 
   useEffect(() => {
@@ -33,6 +36,7 @@ export default function MisDietasPanel() {
   async function openDiet(item) {
     if (busy) return
     setBusy(true); setError('')
+    setExportError('')
     try {
       const { data } = await client.get('/community/mis-dietas/' + item._id)
       setOpened(data)
@@ -114,15 +118,29 @@ export default function MisDietasPanel() {
             <p className="text-xs text-[#52715e]">Guardada {fmt(opened.fechaGuardado)}</p></div>
           <button type="button" aria-label="Cerrar" onClick={() => setOpened(null)}><X /></button>
         </div>
+        {!opened.plan?.comidas?.length && <p className="text-sm text-[#52715e]">Esta dieta no tiene comidas registradas.</p>}
         {(opened.plan?.comidas || []).map((meal, index) => <div key={index} className="rounded-xl bg-[#f0f7f0] p-4">
           <h4 className="font-bold text-[#173f34]">{meal.nombre} {meal.hora ? '· ' + meal.hora : ''}</h4>
-          <p className="text-sm text-[#52715e]">{meal.platillo}</p>
-          <ul className="mt-2 list-inside list-disc text-sm text-[#315c49]">
-            {(meal.alimentos || []).map((food,i) => <li key={i}>
-              {food.cantidad} porciones de {food.nombre}</li>)}
-          </ul>
           {!!meal.descripcion && <p className="mt-2 text-sm text-[#52715e]">{meal.descripcion}</p>}
+          {!meal.alimentos?.length && <p className="mt-2 text-sm text-[#52715e]">Comida sin ingredientes registrados.</p>}
+          {agruparPreparaciones(meal).map(group => <div key={group.id} className="mt-3 rounded-xl bg-white p-3">
+            <h5 className="text-sm font-bold text-[#246b55]">{group.tipo === 'bebida' ? 'Bebida' : 'Platillo'} · {group.nombre || 'Sin nombre'}</h5>
+            <ul className="mt-2 space-y-2 text-sm text-[#315c49]">
+              {group.alimentos.map((food, i) => <li key={i}>
+                <strong>{food.nombre}</strong> · {food.cantidad} {food.cantidad === 1 ? 'porción' : 'porciones'}
+                {food.notas && <p>{food.notas}</p>}
+              </li>)}
+            </ul>
+          </div>)}
         </div>)}
+        {exportError && <p role="alert" className="text-sm text-red-700">{exportError}</p>}
+        {!!opened.plan?.comidas?.length && <button type="button" onClick={() => {
+          setExportError('')
+          try { exportarPlanPDF({ ...opened.plan, nombre: opened.nombre }, null, { plantilla: true }) }
+          catch (cause) { setExportError(cause.message) }
+        }} className="w-full rounded-xl border border-emerald-200 px-4 py-3 text-sm font-bold text-emerald-800">
+          Exportar PDF
+        </button>}
         <button type="button" onClick={() => reuse(opened)}
           className="w-full rounded-xl bg-[#246b55] px-4 py-3 text-sm font-bold text-white">Usar esta dieta con paciente</button>
       </div>
