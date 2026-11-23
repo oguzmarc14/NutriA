@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useRef, useState } from 'react'
-import { Modal, PanResponder, Pressable, ScrollView, Text, View } from 'react-native'
+import { Modal, PanResponder, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { FormField } from '@/shared/ui/FormField'
 import { RangeBar } from '@/shared/ui/RangeBar'
@@ -9,8 +9,22 @@ import { numberInput, type Calculation } from '../clinicalModels'
 import { mealPercentage, parseQuantity, planDistribution, planTotals, type DraftPlan } from './models'
 import { dietColors as c, dietStyles as s } from './dietUI'
 
-export function PlanTracker({ draft, reference, active, disabled, open, onOpenChange, onChange }: {
-  draft: DraftPlan; reference?: Calculation; active: string; disabled: boolean; open: boolean; onOpenChange: (open: boolean) => void; onChange: (plan: DraftPlan) => void
+function PercentageInput({ label, value, disabled, onCommit }: {
+  label: string; value: string; disabled: boolean; onCommit: (value: number) => void
+}) {
+  const [entry, setEntry] = useState<string | null>(null)
+  return <TextInput accessibilityLabel={label} editable={!disabled} keyboardType="decimal-pad"
+    returnKeyType="done" maxLength={7} value={entry ?? value} selectTextOnFocus
+    onChangeText={setEntry} onEndEditing={({ nativeEvent }) => {
+      const percent = numberInput(nativeEvent.text)
+      setEntry(null)
+      if (Number.isFinite(percent)) onCommit(percent)
+    }}
+    style={[s.input, { minWidth: 74, minHeight: 44, paddingVertical: 7, textAlign: 'right' }]} />
+}
+
+export function PlanTracker({ draft, reference, active, disabled, open, onOpenChange, onPercentageChange, onChange }: {
+  draft: DraftPlan; reference?: Calculation; active: string; disabled: boolean; open: boolean; onOpenChange: (open: boolean) => void; onPercentageChange: (key: string, percent: number) => void; onChange: (plan: DraftPlan) => void
 }) {
   const { total, error } = planDistribution(draft.meals)
   const totalLabel = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 8 }).format(total) + '%'
@@ -62,11 +76,18 @@ export function PlanTracker({ draft, reference, active, disabled, open, onOpenCh
             <View style={{ gap: 5 }}>
               <Text accessibilityRole="header" style={s.title}>Distribución por comida</Text>
               <Text accessibilityLiveRegion="polite" style={[s.label, { color: error ? '#8b4b15' : c.green }]}>Total: {totalLabel}</Text>
+              <Text style={s.caption}>Al cambiar un porcentaje, los demás se ajustan para conservar el 100%.</Text>
               {!!error && <Text style={s.caption}>{error}</Text>}
             </View>
             {draft.meals.map(meal => { const percent = mealPercentage(meal.percentage); return <View key={meal.key} style={s.inset}>
-              <FormField label={meal.nombre + ' (%)'} numeric value={meal.percentage} disabled={disabled} onChange={percentage => onChange({ ...draft, meals: draft.meals.map(m => m.key === meal.key ? { ...m, percentage } : m) })} />
-              <RangeBar label={'Porcentaje de ' + meal.nombre} value={percent} max={100} disabled={disabled} onChange={v => onChange({ ...draft, meals: draft.meals.map(m => m.key === meal.key ? { ...m, percentage: String(v) } : m) })} />
+              <View style={[s.row, { justifyContent: 'space-between' }]}>
+                <Text style={[s.label, { flex: 1 }]}>{meal.nombre || 'Comida'}</Text>
+                <PercentageInput label={'Porcentaje de ' + meal.nombre} value={meal.percentage}
+                  disabled={disabled || draft.meals.length === 1} onCommit={value => onPercentageChange(meal.key, value)} />
+                <Text style={s.caption}>%</Text>
+              </View>
+              <RangeBar label={'Ajustar porcentaje de ' + meal.nombre} value={percent} max={100}
+                disabled={disabled || draft.meals.length === 1} onChange={value => onPercentageChange(meal.key, value)} />
               <Text style={s.caption}>{planTotals([meal]).kcal.toFixed(0)} / {Number.isFinite(percent) ? (target * percent / 100).toFixed(0) : '—'} kcal</Text>
             </View> })}
             {metrics.map(m => <View key={m.label} style={{ gap: 6 }}><View style={[s.row, { justifyContent: 'space-between' }]}><Text style={s.label}>{m.label}</Text><Text style={s.caption}>{m.actual.toFixed(1)} / {m.goal && m.goal > 0 ? m.goal.toFixed(1) : '—'} {m.unit}</Text></View>{!!m.goal && m.goal > 0 && <><View style={{ height: 7, borderRadius: 4, backgroundColor: c.border, overflow: 'hidden' }}><View style={{ height: 7, width: `${Math.min(100, m.actual / m.goal * 100)}%`, backgroundColor: m.actual > m.goal ? '#b47820' : c.green }} /></View><Text style={s.caption}>{m.actual > m.goal ? 'Excedente' : 'Pendiente'}: {Math.abs(m.goal - m.actual).toFixed(1)} {m.unit}</Text></>}</View>)}

@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { AppDialog } from '@/shared/ui/AppDialog'
 import { Button, styles } from '@/shared/ui/primitives'
-import { FormField } from '@/shared/ui/FormField'
 import { TimeField } from '@/shared/ui/DateTimeField'
 import { EquivalentPanel } from './EquivalentPanel'
 import { InlineFoodSearch } from './InlineFoodSearch'
@@ -98,7 +97,7 @@ export function MealEditor({ patient, meal, index, target, busy, onChange, onRem
         <DietField label="Indicaciones · opcional" multiline placeholder="Recomendaciones para el paciente" value={meal.descripcion || ''} onChange={descripcion => onChange({ ...meal, descripcion })} disabled={busy} />
       </DietDisclosure>
       <DietDisclosure label="Opciones avanzadas y equivalentes" open={advanced} onPress={() => setAdvanced(!advanced)} disabled={busy}>
-        <View style={s.inset}><FormField numeric label="Distribución de energía (%)" value={meal.percentage} disabled={busy} onChange={percentage => onChange({ ...meal, percentage })} />
+        <View style={s.inset}>
           <EquivalentPanel patient={patient} disabled={busy} onChoose={food => add(fromCatalog(food))} /></View>
       </DietDisclosure>
     </View>

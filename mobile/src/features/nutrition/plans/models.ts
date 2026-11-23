@@ -64,10 +64,44 @@ export function mealPercentage(value: string) {
   return value.trim() ? numberInput(value) : 0
 }
 
+const fullShare = 10_000
+
+export function balanceMealDistribution(meals: DraftMeal[], fixed?: { key: string; percent: number }): DraftMeal[] {
+  if (meals.length < 2) return meals.map(meal => ({ ...meal, percentage: '100' }))
+  const selected = fixed && Number.isFinite(fixed.percent) ? meals.find(meal => meal.key === fixed.key) : undefined
+  const fixedShare = selected ? Math.round(Math.min(100, Math.max(0, fixed!.percent)) * 100) : 0
+  const others = meals.filter(meal => meal !== selected)
+  const weights = others.map(meal => {
+    const value = mealPercentage(meal.percentage)
+    return Number.isFinite(value) && value > 0 && value <= 100 ? value : 0
+  })
+  const weightSum = weights.reduce((total, weight) => total + weight, 0)
+  const available = fullShare - fixedShare
+  const amounts = weights.map(weight => available * (weightSum ? weight / weightSum : 1 / others.length))
+  const rounded = amounts.map(Math.floor)
+  const remainder = available - rounded.reduce((total, units) => total + units, 0)
+  const byRemainder = amounts.map((amount, index) => ({ index, fraction: amount - rounded[index] }))
+    .sort((a, b) => b.fraction - a.fraction)
+  for (const { index } of byRemainder.slice(0, remainder)) rounded[index]++
+  const shares = new Map(others.map((meal, index) => [meal.key, rounded[index]]))
+  if (selected) shares.set(selected.key, fixedShare)
+  return meals.map(meal => ({ ...meal, percentage: String(shares.get(meal.key)! / 100) }))
+}
+
+export function suggestedPlanName(patientName: string, date: string, plans: Pick<Plan, 'nombre' | 'fechaInicio'>[]) {
+  const day = plans.filter(plan => plan.fechaInicio.slice(0, 10) === date)
+  const prefix = `Plan nutricional ${patientName.trim()} ${date} #`
+  const previous = day.reduce((highest, plan) => {
+    const suffix = plan.nombre.startsWith(prefix) ? plan.nombre.slice(prefix.length) : ''
+    const folio = /^\d+$/.test(suffix) ? Number(suffix) : 0
+    return Number.isSafeInteger(folio) ? Math.max(highest, folio) : highest
+  }, day.length)
+  return prefix + String(previous + 1).padStart(3, '0')
+}
+
 export function planDistribution(meals: DraftMeal[]) {
   let total = 0
   let invalid = false
-  let emptyWithShare = false
   for (const meal of meals) {
     const percent = mealPercentage(meal.percentage)
     if (!Number.isFinite(percent) || percent < 0 || percent > 100) {
@@ -75,13 +109,11 @@ export function planDistribution(meals: DraftMeal[]) {
       continue
     }
     total += percent
-    if (percent > 0 && !meal.alimentos.length) emptyWithShare = true
   }
   const balanced = Math.abs(total - 100) < 1e-8
   const difference = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 8 }).format(Math.abs(100 - total))
   const error = invalid ? 'Cada comida debe tener un porcentaje entre 0 y 100.'
     : !balanced ? (total < 100 ? 'Faltan ' : 'Sobran ') + difference + ' puntos porcentuales.'
-    : emptyWithShare ? 'Agrega ingredientes a las comidas con porcentaje o asígnales 0% y redistribuye.'
     : ''
   return { total, error }
 }
@@ -89,12 +121,17 @@ export function planDistribution(meals: DraftMeal[]) {
 export function editablePlanPayload(draft: DraftPlan) {
   const distribution = planDistribution(draft.meals)
   if (distribution.error) throw new Error(distribution.error)
-  return planPayload(draft)
+  const payload = planPayload(draft)
+  const included = balanceMealDistribution(draft.meals.filter(meal => meal.alimentos.length > 0))
+  return { ...payload, comidas: payload.comidas.map((meal, index) => ({
+    ...meal, porcentajeDistribucion: mealPercentage(included[index].percentage),
+  })) }
 }
 
 export function planPayload(draft: DraftPlan) {
   const fechaInicio = measurementDate(draft.date)
-  if (!fechaInicio || draft.name.trim().length < 2) throw new Error('Escribe un nombre de al menos dos caracteres y una fecha válida.')
+  if (!fechaInicio) throw new Error('Selecciona una fecha válida para el inicio.')
+  if (draft.name.trim().length < 2) throw new Error('Escribe un nombre de al menos dos caracteres o usa el sugerido.')
   const energy = draft.energy.trim() ? numberInput(draft.energy) : null
   if (energy !== null && (!Number.isFinite(energy) || energy <= 0)) throw new Error('La meta de energía debe ser positiva; déjala vacía para quitarla.')
   if (!draft.meals.length || !draft.meals.some(meal => meal.alimentos.length)) throw new Error('Agrega al menos una comida con alimentos antes de guardar.')

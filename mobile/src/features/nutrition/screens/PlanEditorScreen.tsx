@@ -17,7 +17,7 @@ import { ListState } from '@/shared/ui/ListState'
 import { FormField } from '@/shared/ui/FormField'
 import { Button, Page, styles } from '@/shared/ui/primitives'
 import { MealEditor } from '../plans/MealEditor'
-import { assistedPlan, duplicatePlan, editPlan, newMeal, newPlan, editablePlanPayload, planDistribution, planTotals, type DraftPlan, type Plan, type PlanData } from '../plans/models'
+import { assistedPlan, balanceMealDistribution, duplicatePlan, editPlan, newMeal, newPlan, editablePlanPayload, planDistribution, planTotals, suggestedPlanName, type DraftPlan, type Plan, type PlanData } from '../plans/models'
 import { measurementChanged, numberInput, type Calculation, type Measurement } from '../clinicalModels'
 
 type Requirements = { expediente: { alergias?: string; nutricion?: Parameters<typeof assistedPlan>[0] & { intoleranciasAlimentarias?: string } } | null; mediciones: Measurement[]; calculos: Calculation[] }
@@ -45,7 +45,11 @@ function Editor({ patient, patientName, initial, templatePlan, requirements, ref
 }) {
   const { session } = useAuth()
   const [planId, setPlanId] = useState(initial?._id)
-  const [draft, setDraft] = useState(() => initial ? editPlan(initial) : templatePlan ? duplicatePlan(templatePlan) : newPlan())
+  const [draft, setDraft] = useState(() => {
+    const plan = initial ? editPlan(initial) : templatePlan ? { ...duplicatePlan(templatePlan), name: '' } : newPlan()
+    return { ...plan, meals: balanceMealDistribution(plan.meals.length ? plan.meals : [newMeal()]) }
+  })
+  const [nameOpen, setNameOpen] = useState(false)
   const [activeMeal, setActiveMeal] = useState(draft.meals[0]?.key || '')
   const [goalOpen, setGoalOpen] = useState(!!initial?.objetivo)
   const [addMealOpen, setAddMealOpen] = useState(false)
@@ -69,7 +73,7 @@ function Editor({ patient, patientName, initial, templatePlan, requirements, ref
   const [trackerOpen, setTrackerOpen] = useState(false)
   const distribution = planDistribution(draft.meals)
   const submitting = useRef(false)
-  useUnsavedChanges(dirty, busy)
+  useUnsavedChanges(dirty, busy, dirty ? distribution.error : undefined)
   const totals = planTotals(draft.meals)
   const reference = requirements?.calculos[0]
   const current = draft.meals.find(meal => meal.key === activeMeal)
@@ -77,7 +81,25 @@ function Editor({ patient, patientName, initial, templatePlan, requirements, ref
   const missingRecord = !requirements?.expediente
   const missingMeasurements = !requirements?.mediciones.some(item => item.peso > 0 && item.estatura >= 0.5 && item.estatura <= 3 && item.edad >= 1 && item.edad <= 120 && item.nivelActividadFisica >= 1 && item.nivelActividadFisica <= 5)
   const blocked = !planId && (!requirements || missingRecord || missingMeasurements)
+  const suggestedName = suggestedPlanName(patientName, draft.date, previousPlans)
+  const name = draft.name.trim() || suggestedName
+  let savePayload: ReturnType<typeof editablePlanPayload> | undefined
+  let saveReason = blocked ? 'Completa el expediente y las mediciones del paciente.' : ''
+  if (!saveReason) {
+    try { savePayload = editablePlanPayload({ ...draft, name }) }
+    catch (cause) { saveReason = cause instanceof Error ? cause.message : 'Revisa los datos del plan.' }
+  }
   function change(next: DraftPlan) { setDraft(next); setDirty(true); setError('') }
+  function changePercentage(key: string, percent: number) {
+    setDraft(current => ({ ...current, meals: balanceMealDistribution(current.meals, { key, percent }) }))
+    setDirty(true); setError('')
+  }
+  function removeMeal(key: string) {
+    if (draft.meals.length === 1) { setError('El plan debe conservar al menos una comida.'); return }
+    const meals = balanceMealDistribution(draft.meals.filter(meal => meal.key !== key))
+    change({ ...draft, meals })
+    if (activeMeal === key) setActiveMeal(meals[0].key)
+  }
   async function persist(body: ReturnType<typeof editablePlanPayload>) {
     if (!session || submitting.current) return
     submitting.current = true; setBusy(true); setError('')
@@ -120,14 +142,12 @@ function Editor({ patient, patientName, initial, templatePlan, requirements, ref
     } finally { setTemplateBusy(false) }
   }
   function save() {
-    if (busy || blocked) return
-    try {
-      editablePlanPayload(draft)
-      setConfirmSave(true)
-    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Revisa los datos del plan.') }
+    if (busy) return
+    if (saveReason) { setError(saveReason); return }
+    setConfirmSave(true)
   }
   function begin(next: DraftPlan) {
-    const apply = () => { change(next); setActiveMeal(next.meals[0]?.key || ''); setModeOpen(false) }
+    const apply = () => { change({ ...next, name: draft.name, meals: balanceMealDistribution(next.meals) }); setActiveMeal(next.meals[0]?.key || ''); setModeOpen(false) }
     if (dirty) Alert.alert('Reemplazar borrador', 'Se reemplazarán las comidas actuales. ¿Continuar?', [{ text: 'Cancelar', style: 'cancel' }, { text: 'Aceptar', onPress: apply }])
     else apply()
   }
@@ -136,7 +156,7 @@ function Editor({ patient, patientName, initial, templatePlan, requirements, ref
     <Text style={ds.caption}>Paciente · {patientName}</Text>
     {!!draftMessage&&<Text style={ds.caption}>{draftMessage}</Text>}
     <AppDialog visible={!!recovery} title="Recuperar borrador" message={recovery?'Hay un borrador protegido de este paciente guardado el '+new Date(recovery.savedAt).toLocaleString('es-MX')+'. Comprueba los datos antes de guardarlo en NutriA.':''} onClose={()=>{void removeDraft(draftStorageKey).catch(()=>{});setRecovery(null);setDraftReady(true)}}>
-      <Button label="Recuperar borrador" onPress={()=>{if(recovery){const restored=restoreDraftIds(recovery.draft);change(restored);setActiveMeal(restored.meals[0]?.key||'');setModeOpen(false)}setRecovery(null);setDraftReady(true)}}/>
+      <Button label="Recuperar borrador" onPress={()=>{if(recovery){const restored=restoreDraftIds(recovery.draft);const meals=balanceMealDistribution(restored.meals.length?restored.meals:[newMeal()]);change({...restored,meals});setActiveMeal(meals[0].key);setModeOpen(false)}setRecovery(null);setDraftReady(true)}}/>
       <Button label="Conservar formulario actual" selected={false} onPress={()=>{void removeDraft(draftStorageKey).catch(()=>{});setRecovery(null);setDraftReady(true)}}/>
     </AppDialog>
     <AppDialog visible={modeOpen && !blocked && draftReady && !recovery} title="Crear dieta"
@@ -161,9 +181,9 @@ function Editor({ patient, patientName, initial, templatePlan, requirements, ref
       </View>
       <Button selected={false} label="Cancelar" onPress={() => setModeOpen(false)} />
     </AppDialog>
-    <AppDialog visible={confirmSave} title={planId ? 'Guardar cambios' : 'Guardar plan'} message="El plan alimenticio quedará disponible para el paciente. ¿Confirmas el guardado?" onClose={() => setConfirmSave(false)}>
+    <AppDialog visible={confirmSave} title={planId ? 'Guardar cambios' : 'Guardar plan'} message={name + (draft.meals.some(meal => !meal.alimentos.length) ? "\n\nLas comidas nuevas sin ingredientes se omitirán y se redistribuirá su porcentaje entre las guardadas." : "")} onClose={() => setConfirmSave(false)}>
       <View style={styles.row}><Button expand selected={false} label="Cancelar" onPress={() => setConfirmSave(false)} />
-        <Button expand label="Aceptar" onPress={() => { setConfirmSave(false); try { void persist(editablePlanPayload(draft)) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Revisa los datos.') } }} /></View>
+        <Button expand label="Aceptar" onPress={() => { setConfirmSave(false); if (savePayload) void persist(savePayload); else setError(saveReason) }} /></View>
     </AppDialog>
     <AppDialog visible={savedOpen} title="¡Dieta creada!" success
       message="El plan del paciente se guardó correctamente. ¿Deseas guardar una copia reutilizable en Mis dietas?"
@@ -192,7 +212,6 @@ function Editor({ patient, patientName, initial, templatePlan, requirements, ref
     </AppDialog>
     <View style={[ds.card, ds.body]}>
       <Text style={ds.title}>Datos del plan</Text>
-      <FormField label="Nombre del plan *" value={draft.name} disabled={busy} onChange={name => change({ ...draft, name })} />
       <DateField label="Fecha de inicio" value={draft.date} disabled={busy} onChange={date => change({ ...draft, date })} />
       <DietDisclosure label="Objetivo e indicaciones generales" open={goalOpen} disabled={busy} onPress={() => setGoalOpen(!goalOpen)}>
         <FormField label="Indicaciones · opcional" multiline value={draft.goal} disabled={busy} onChange={goal => change({ ...draft, goal })} />
@@ -215,29 +234,35 @@ function Editor({ patient, patientName, initial, templatePlan, requirements, ref
     <MealNavigator meals={draft.meals} active={activeMeal} disabled={busy} onReorder={(from, to) => {
       if (from === to) return
       change({ ...draft, meals: reorderMeals(draft.meals, from, to) })
-    }} onSelect={setActiveMeal} onAdd={() => setAddMealOpen(true)} onRemove={key => {
-      const meals = draft.meals.filter(meal => meal.key !== key)
-      change({ ...draft, meals })
-      if (activeMeal === key) setActiveMeal(meals[0]?.key || '')
-    }} />
+    }} onSelect={setActiveMeal} onAdd={() => setAddMealOpen(true)} onRemove={removeMeal} />
     <AppDialog visible={addMealOpen} title="Agregar tiempo de comida" message="Elige un tipo. Puedes cambiar su nombre y hora después." onClose={() => setAddMealOpen(false)}>
       {['Desayuno', 'Colación', 'Comida', 'Cena', 'Otra comida'].map(name => <Button key={name} label={name} selected={false} onPress={() => {
         const meal = { ...newMeal(name), percentage: '0', hora: ({ Desayuno: '08:00', Colación: '11:30', Comida: '14:30', Cena: '20:30' } as Record<string, string>)[name] || '' }
-        change({ ...draft, meals: [...draft.meals, meal] }); setActiveMeal(meal.key); setAddMealOpen(false)
+        change({ ...draft, meals: balanceMealDistribution([...draft.meals, meal], { key: meal.key, percent: 100 / (draft.meals.length + 1) }) }); setActiveMeal(meal.key); setAddMealOpen(false)
       }} />)}
     </AppDialog>
     {current && <MealEditor key={current.key} patient={patient} meal={current} index={draft.meals.findIndex(m => m.key === current.key)} target={target} busy={busy}
       onChange={meal => change({ ...draft, meals: draft.meals.map(item => item.key === meal.key ? meal : item) })}
-      onRemove={() => { const meals = draft.meals.filter(item => item.key !== current.key); change({ ...draft, meals }); setActiveMeal(meals[0]?.key || '') }} />}
+      onRemove={() => removeMeal(current.key)} />}
     <AppDialog visible={!!error} title="Revisa los datos del plan" message={error} onClose={() => setError('')} />
-    {!!distribution.error && <View style={ds.inset}>
-      <Text accessibilityLiveRegion="polite" style={ds.caption}>{distribution.error}</Text>
-      <Button label="Ajustar distribución" selected={false} disabled={busy || blocked} onPress={() => setTrackerOpen(true)} />
+    <View style={[ds.card, ds.body]}>
+      <DietDisclosure label="Nombre del plan · opcional" open={nameOpen} disabled={busy} onPress={() => setNameOpen(!nameOpen)}>
+        <Text style={ds.caption}>Nombre sugerido: {suggestedName}</Text>
+        <FormField label="Nombre personalizado" value={draft.name} disabled={busy} onChange={name => change({ ...draft, name })} />
+      </DietDisclosure>
+      <Text style={ds.caption}>{name}</Text>
+    </View>
+    </Page>
+    {!!saveReason && <View style={{ paddingHorizontal: 18, paddingVertical: 8, backgroundColor: '#fff4e7' }}>
+      <Text accessibilityLiveRegion="polite" style={[ds.caption, { color: '#804619' }]}>{saveReason}</Text>
     </View>}
-    <View style={styles.row}><Button expand selected={false} disabled={busy} label="Cancelar" onPress={() => router.back()} />
-    <Button expand disabled={busy || blocked || !dirty || !!distribution.error} label={busy ? 'Guardando…' : planId ? 'Guardar cambios' : 'Guardar plan'} onPress={save} /></View>
-
-  </Page><PlanTracker draft={draft} reference={reference} active={activeMeal} disabled={busy || blocked} open={trackerOpen} onOpenChange={setTrackerOpen} onChange={change} /></View>
+    <View style={[styles.row, { paddingHorizontal: 18, paddingVertical: 8, backgroundColor: '#f7fcf8' }]}>
+      <Button expand selected={false} disabled={busy} label="Cancelar" onPress={() => router.back()} />
+      <Button expand disabled={busy} label={busy ? 'Guardando…' : planId ? 'Guardar cambios' : 'Guardar plan'} onPress={save} />
+    </View>
+    <PlanTracker draft={draft} reference={reference} active={activeMeal} disabled={busy || blocked} open={trackerOpen}
+      onOpenChange={setTrackerOpen} onPercentageChange={changePercentage} onChange={change} />
+  </View>
 }
 
 export default function PlanEditorScreen() {

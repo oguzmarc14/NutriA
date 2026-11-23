@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {newPlan, newMeal, fromCatalog, planPayload, planDistribution, editablePlanPayload} from '../src/features/nutrition/plans/models.ts'
+import {newPlan, newMeal, fromCatalog, planPayload, planDistribution, editablePlanPayload, balanceMealDistribution, suggestedPlanName} from '../src/features/nutrition/plans/models.ts'
 
 test('default proposed meals without ingredients are omitted, never shown as empty to the patient',()=>{
   const draft=newPlan()
@@ -37,11 +37,34 @@ test('new meals join the running distribution and only a balanced plan can be su
   assert.equal(planDistribution(draft.meals).total, 107.5)
   assert.throws(() => editablePlanPayload(draft), /Sobran 7.5/)
   draft.meals[0].percentage = '17,5'
-  assert.throws(() => editablePlanPayload(draft), /Agrega ingredientes/)
+  const withoutEmpty = editablePlanPayload(draft)
+  assert.equal(withoutEmpty.comidas.length, 3)
+  assert.ok(Math.abs(withoutEmpty.comidas.reduce((sum, meal) => sum + meal.porcentajeDistribucion, 0) - 100) < 1e-8)
   for (const meal of draft.meals.slice(3)) meal.alimentos = [fromCatalog(catalog)]
   const saved = editablePlanPayload(draft)
   assert.equal(saved.comidas.length, 5)
   assert.equal(saved.comidas.reduce((sum, meal) => sum + meal.porcentajeDistribucion, 0), 100)
   draft.meals.pop()
   assert.throws(() => editablePlanPayload(draft), /Faltan 2.5/)
+})
+
+test('rebalancing preserves the edited share and keeps one hundred percent across additions and removals', () => {
+  const draft = newPlan()
+  const extra = newMeal('Colación')
+  const added = balanceMealDistribution([...draft.meals, extra], { key: extra.key, percent: 25 })
+  assert.equal(added.at(-1).percentage, '25')
+  assert.equal(planDistribution(added).total, 100)
+  const edited = balanceMealDistribution(added, { key: added[0].key, percent: 47.25 })
+  assert.equal(edited[0].percentage, '47.25')
+  assert.ok(Math.abs(planDistribution(edited).total - 100) < 1e-8)
+  assert.equal(balanceMealDistribution(edited.slice(-1))[0].percentage, '100')
+})
+
+test('suggested names include patient, plan date and next daily folio', () => {
+  const date = '2026-11-23'
+  const previous = [{ nombre: 'Plan nutricional Ana Pérez 2026-11-23 #005', fechaInicio: date },
+    { nombre: 'Personalizado', fechaInicio: date },
+    { nombre: 'Plan nutricional Ana Pérez 2026-11-22 #010', fechaInicio: '2026-11-22' }]
+  assert.equal(suggestedPlanName('Ana Pérez', date, previous), 'Plan nutricional Ana Pérez 2026-11-23 #006')
+  assert.equal(suggestedPlanName('Ana Pérez', '2026-11-24', previous), 'Plan nutricional Ana Pérez 2026-11-24 #001')
 })
