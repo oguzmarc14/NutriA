@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, Pencil, Trash2, Download } from 'lucide-react'
+import { agruparPreparaciones } from '../../utils/agruparPreparaciones'
 
 function MiniNutrimento({ label, value }) {
   return <div className="rounded-xl bg-[#f7f2e7] px-3 py-2"><p className="text-[11px] text-slate-500">{label}</p><p className="mt-0.5 text-xs font-black text-[#173f34]">{value}</p></div>
@@ -41,14 +42,28 @@ function CardPlanRegistrado({ plan, formatearFecha, numero, calcularTotales, onE
           <div key={comida._id || `${plan._id}-${index}`} className="rounded-xl bg-[#f7f2e7] p-3">
             <p className="text-xs font-bold uppercase tracking-wide text-[#8a6840]">{comida.nombre}</p>{comida.hora && <p className="mt-1 text-xs font-extrabold text-[#246b55]">Hora: {comida.hora}</p>}
             <p className="mt-0.5 font-bold text-[#173f34]">{comida.platillo || 'Platillo sin nombre'}</p>
-            {comida.alimentos?.length > 0 ? <div className="mt-3 space-y-2">{comida.alimentos.map((alimento, alimentoIndex) => {
-              const cantidad = Number(alimento.cantidad) || 1
-              const kcal = (Number(alimento.nutrimentos?.kcal) || 0) * cantidad
-              return <div key={alimento._id || `${index}-${alimentoIndex}`} className="flex items-center justify-between gap-3 rounded-lg bg-white/75 px-3 py-2">
-                <div className="min-w-0"><p className="break-words text-xs font-bold text-[#173f34]">{alimento.nombre}</p><p className="mt-0.5 text-[11px] text-slate-500">{numero(cantidad)} porción{cantidad !== 1 ? 'es' : ''}</p></div>
-                <p className="shrink-0 text-xs font-black text-[#8a6840]">{numero(kcal, 0)} kcal</p>
+            {agruparPreparaciones(comida).length ? agruparPreparaciones(comida).map((grupo,index) =>
+              <div key={grupo.id || index} className="mt-3 rounded-xl border border-[#dce9df] bg-[#f1f7f2] p-3">
+                <p className="mb-2 text-xs font-extrabold text-[#246b55]">
+                  {grupo.tipo==='bebida'?'🥤 Bebida':'🍽️ Platillo'}: {grupo.nombre || 'Sin nombre'}
+                </p>
+                <div className="space-y-2">{grupo.alimentos.map((alimento,alimentoIndex)=>{
+                  const cantidad=Number(alimento.cantidad) || 0
+                  const kcal=(Number(alimento.nutrimentos?.kcal)||0)*cantidad
+                  return <div key={alimento._id || alimentoIndex}
+                    className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="break-words text-xs font-bold text-[#173f34]">{alimento.nombre}</p>
+                      <p className="mt-0.5 text-[11px] text-slate-500">{numero(cantidad)} porción(es)</p>
+                    </div>
+                    <p className="shrink-0 text-xs font-black text-[#8a6840]">{numero(kcal,0)} kcal</p>
+                  </div>
+                })}</div>
               </div>
-            })}</div> : <p className="mt-2 text-xs text-slate-400">Plan anterior sin alimentos individualizados.</p>}
+            ) : <p className="mt-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-900">
+              Esta comida se guardó sin ingredientes; es necesario editar la dieta.
+            </p>}
+
           </div>
         )) : <p className="text-sm text-slate-500">Sin comidas registradas.</p>}
       </div>}

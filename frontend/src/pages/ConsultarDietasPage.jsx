@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import client from '../api/client'
 import { exportarPlanPDF } from '../utils/exportarPlanPDF'
+import { agruparPreparaciones } from '../utils/agruparPreparaciones'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
 const formatoNumero = (valor, decimales = 1) =>
@@ -97,20 +98,36 @@ function TarjetaDieta({ plan, paciente, esReciente, onEditar, onEliminar, onErro
                     </div>
                   </div>
                   <div className="space-y-2 p-3 sm:p-4">
-                    {(comida.alimentos || []).length ? comida.alimentos.map((alimento, i) =>
-                      <div key={alimento._id || i} className="flex flex-wrap justify-between gap-2 rounded-xl bg-[#f7faf7] px-3 py-2">
-                        <div className="min-w-0">
-                          <p className="break-words text-sm font-bold text-[#173f34]">{alimento.nombre}</p>
-                          <p className="text-xs text-[#74897c]">{formatoNumero(alimento.cantidad || 0)} porción(es){alimento.porcion?.gramos != null ? ' · ' + formatoNumero(Number(alimento.porcion.gramos) * (Number(alimento.cantidad) || 0), 0) + ' g' : ''}</p>
-                        </div>
-                        <span className="text-xs font-bold text-[#416c54]">{formatoNumero((Number(alimento.nutrimentos?.kcal) || 0) * (Number(alimento.cantidad) || 0), 0)} kcal</span>
-                      </div>
-                    ) : <p className="text-sm text-[#74897c]">Sin alimentos individualizados.</p>}
-                    {(comida.preparaciones || []).some(item => item.nombre?.trim()) && <div className="rounded-xl border border-[#e0eae2] bg-[#fbfdfb] p-3">
-                      <p className="mb-2 text-xs font-extrabold text-[#416d52]">Preparaciones y bebidas</p>
-                      <ul className="space-y-1 text-xs text-[#607c6a]">{comida.preparaciones.filter(item => item.nombre?.trim()).map((item, i) => <li key={item.id || i} className="flex flex-wrap gap-2"><span className="font-bold">{item.tipo === 'bebida' ? 'Bebida' : 'Platillo'}:</span>{item.nombre}</li>)}</ul>
-                    </div>}
-                    {(comida.alimentos || []).some(item => item.notas) && <div className="space-y-1">{comida.alimentos.filter(item => item.notas).map((item,i)=><p key={item._id || i} className="text-xs text-[#607c6a]"><strong>{item.nombre}:</strong> {item.notas}</p>)}</div>}
+                    {agruparPreparaciones(comida).length ?
+                      agruparPreparaciones(comida).map((grupo,index) =>
+                        <section key={grupo.id || index} className="rounded-2xl border border-[#d7e7db] bg-[#f1f8f3] p-3">
+                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                            <h4 className="text-sm font-extrabold text-[#246b55]">
+                              {grupo.tipo === 'bebida' ? '🥤 Bebida' : '🍽️ Platillo'}: {grupo.nombre || 'Sin nombre'}
+                            </h4>
+                            <span className="text-xs text-[#648072]">{grupo.alimentos.length} ingredientes</span>
+                          </div>
+                          <div className="space-y-2">
+                            {grupo.alimentos.map((alimento, i) =>
+                              <div key={alimento._id || i} className="flex flex-wrap justify-between gap-2 rounded-xl bg-white px-3 py-2">
+                                <div className="min-w-0">
+                                  <p className="break-words text-sm font-bold text-[#173f34]">{alimento.nombre}</p>
+                                  <p className="text-xs text-[#74897c]">
+                                    {formatoNumero(alimento.cantidad ?? 0)} porción(es)
+                                    {alimento.porcion?.gramos != null ? ' · ' +
+                                      formatoNumero(Number(alimento.porcion.gramos) * (Number(alimento.cantidad) || 0), 0) + ' g' : ''}
+                                  </p>
+                                  {alimento.notas && <p className="text-xs text-[#648072]">{alimento.notas}</p>}
+                                </div>
+                                <span className="text-xs font-bold text-[#416c54]">
+                                  {formatoNumero((Number(alimento.nutrimentos?.kcal) || 0) * (Number(alimento.cantidad) || 0), 0)} kcal
+                                </span>
+                              </div>)}
+                          </div>
+                        </section>)
+                      : <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                          Esta comida se guardó sin ingredientes. Edita la dieta para completarla.
+                        </p>}
                     {comida.descripcion && <p className="rounded-lg border-l-2 border-[#8cb79b] pl-3 text-xs text-[#647e70]">{comida.descripcion}</p>}
                   </div>
                 </li>
