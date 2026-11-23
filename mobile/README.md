@@ -107,3 +107,13 @@ Las adaptaciones de dependencias en vendor conservan la compatibilidad CommonJS 
 - En cálculo nutricional se recuperan los valores guardados, se muestra una sola medición seleccionada y los resultados estimados de Mifflin-St Jeor antes de guardar. El historial se despliega mediante **Ver anteriores**.
 - Para utilizar **Mis dietas** con cuentas reales debe desplegarse también el backend con las rutas nuevas de `/community/mis-dietas`. No basta con compilar solamente la APK.
 - Las pruebas automatizadas no sustituyen la verificación con un nutriólogo, un paciente de pruebas y el backend desplegado.
+
+## Versión 0.13.0 — cierre funcional web y móvil
+
+- Gamificación móvil: «Mi camino en NutriA» en Progreso; opt-in del paciente, días con registro, rachas y reconocimientos sin calificar peso ni calorías. El nutriólogo puede permitir o pausar este espacio desde la ficha del paciente.
+- La web también incluye «Mis dietas» privadas en Community, con consulta, eliminación de copia y reutilización de una plantilla en el editor, y pregunta para guardarla después de crear o editar una dieta.
+- Corrección de fechas clínicas al editarlas; la fecha no depende de la zona horaria local.
+- Comparación de mediciones en móvil y control de porciones en pasos de ¼; historial de dietas del paciente plegable.
+- Backend: rutas de biblioteca privada ya implementadas en /community/mis-dietas.
+- La nueva versión móvil usa versionCode 14. Generar una APK EAS preview con credenciales de firma estables para actualizar la instalación anterior.
+- Para cerrar: verificar sesiones reales de Nutriólogo y Paciente, recepción de avisos, uso de plantillas web/móvil, persistencia en MongoDB y comprobación de privacidad. No se ejecutaron pruebas contra expedientes reales.
