@@ -30,10 +30,14 @@ export function MealNavigator({ meals, active, disabled, onSelect, onMove, onAdd
   meals: DraftMeal[]; active: string; disabled: boolean; onSelect: (key: string) => void; onMove: (key: string, direction: -1 | 1) => void; onAdd: () => void; onReorder: (from: number, to: number) => void; onRemove: (key: string) => void
 }) {
   const [dragging, setDragging] = useState(false)
+  const allCalories = planTotals(meals).kcal
   return <View style={{ gap: 10 }}>
     <View style={[s.row, { justifyContent: 'space-between' }]}><Text accessibilityRole="header" style={s.title}>Comidas</Text>
       <DietAction label="Agregar" icon="add" disabled={disabled} onPress={onAdd} /></View>
     <Text style={s.caption}>Desliza para elegir la comida. Arrastra desde los puntos para reordenar.</Text>
+    <Text style={[s.caption, { color: c.green, fontWeight: '700' }]}>
+      Total del plan: {allCalories.toFixed(1)} kcal · Porcentaje real por comida según sus porciones
+    </Text>
     <ScrollView horizontal scrollEnabled={!dragging} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingBottom: 6 }} keyboardShouldPersistTaps="handled">
       {meals.map((meal, index) => { const totals = planTotals([meal]), selected = meal.key === active
         return <DraggableMeal key={meal.key} disabled={disabled} label={meal.nombre} onDragging={setDragging} onDrop={slots => onReorder(index, Math.max(0, Math.min(meals.length - 1, index + slots)))}><View style={{ width: 176, padding: 11, borderRadius: 18, borderWidth: 1, borderColor: selected ? c.green : c.border, backgroundColor: selected ? c.selected : '#ffffff' }}>
@@ -42,7 +46,10 @@ export function MealNavigator({ meals, active, disabled, onSelect, onMove, onAdd
               {selected && <Ionicons name="checkmark-circle" size={15} color={c.green} />}</View>
             <Text style={s.caption} numberOfLines={1}>{meal.preparaciones?.find(p => p.nombre)?.nombre || meal.platillo || 'Platillo sin nombre'}</Text>
             <View style={[s.row, { gap: 4 }]}><Ionicons name="time-outline" size={12} color={c.muted} /><Text style={s.caption}>{meal.hora || 'Sin hora'}</Text></View>
-            <Text style={{ color: '#87683f', fontSize: 12, fontWeight: '700' }}>{totals.kcal.toFixed(0)} kcal · {meal.alimentos.length} alimentos</Text>
+            <Text style={{ color: '#87683f', fontSize: 12, fontWeight: '700' }}>
+              {totals.kcal.toFixed(0)} kcal · {allCalories > 0 ? (100 * totals.kcal / allCalories).toFixed(1) : '0'}% del plan
+            </Text>
+            <Text style={s.caption}>{meal.alimentos.length} alimentos</Text>
           </Pressable>
           <View style={{ alignSelf: 'flex-end' }}>
             <DietIconButton icon="trash-outline" label={'Eliminar ' + meal.nombre} disabled={disabled} danger
