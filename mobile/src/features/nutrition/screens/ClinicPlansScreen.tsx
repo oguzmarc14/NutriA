@@ -46,6 +46,12 @@ export default function ClinicPlansScreen() {
       {resource.data.planes.map(plan => <View key={plan._id} style={styles.card}>
         <Text style={styles.cardTitle}>{plan.nombre}</Text>
         <Text style={styles.body}>Desde {plan.fechaInicio.slice(0, 10)} · {plan.comidas.length} comidas</Text>
+        <Text style={[styles.body, { fontSize: 13, fontWeight: '700',
+          color: plan.aceptacionPaciente?.estado === 'aceptada' ? '#176344' : '#846d3e' }]}>
+          {plan.aceptacionPaciente?.estado === 'aceptada'
+            ? '✓ El paciente confirmó que recibió la dieta'
+            : 'Pendiente de confirmación del paciente'}
+        </Text>
         {plan.metaEnergiaKcal != null && <Text style={styles.body}>Meta: {plan.metaEnergiaKcal} kcal</Text>}
         {!!plan.objetivo && <Text style={styles.body}>{plan.objetivo}</Text>}
         <Button selected={false} label="Ver plan completo" disabled={busy} onPress={() => setPreview(plan)} />

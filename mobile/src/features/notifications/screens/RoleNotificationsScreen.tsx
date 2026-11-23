@@ -12,7 +12,7 @@ function StaffNotices() {
   const notices = useNotices()
   const admin = session?.user.role === 'admin'
   return <Page><Text style={styles.title}>Notificaciones</Text>
-    <Text style={styles.body}>{admin ? 'Publicaciones que esperan revisión.' : 'Citas pendientes de confirmar durante los próximos 14 días.'}</Text>
+    <Text style={styles.body}>{admin ? 'Publicaciones que esperan revisión.' : 'Confirmaciones de dietas, cambios de citas y avisos de tu agenda.'}</Text>
     <ListState {...notices} empty={!notices.notices.length ? 'No tienes avisos pendientes en esta sección.' : undefined} />
     {!!notices.storageError && <Text accessibilityRole="alert" style={styles.error}>{notices.storageError}</Text>}
     {notices.notices.map(item => <View key={item.id} style={styles.card}><Text style={styles.cardTitle}>{item.titulo}</Text>

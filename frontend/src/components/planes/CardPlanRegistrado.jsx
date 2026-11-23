@@ -18,6 +18,9 @@ function CardPlanRegistrado({ plan, formatearFecha, numero, calcularTotales, onE
           <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#9a7446]">{formatearFecha(plan.fechaInicio || plan.createdAt)}</p>
           <h3 className="mt-1 break-words text-lg font-extrabold text-[#173f34]">{plan.nombre}</h3>
           <p className="mt-1 text-sm text-slate-500">{plan.objetivo || 'Sin objetivo registrado'}</p>
+          <p className={'mt-2 text-xs font-bold ' + (plan.aceptacionPaciente?.estado === 'aceptada' ? 'text-emerald-800' : 'text-amber-800')}>
+            {plan.aceptacionPaciente?.estado === 'aceptada' ? '✓ Recepción confirmada por el paciente' : 'Pendiente de confirmación de recepción'}
+          </p>
         </div>
         <div className="flex shrink-0 gap-1">
           <button type="button" onClick={() => onExportarPDF?.(plan)} className="grid h-9 w-9 place-items-center rounded-xl bg-[#e5f2eb] text-[#246b55]" aria-label="Exportar dieta a PDF" title="Exportar dieta a PDF"><Download size={16} /></button>
@@ -41,7 +44,8 @@ function CardPlanRegistrado({ plan, formatearFecha, numero, calcularTotales, onE
         {plan.comidas?.length > 0 ? plan.comidas.map((comida, index) => (
           <div key={comida._id || `${plan._id}-${index}`} className="rounded-xl bg-[#f7f2e7] p-3">
             <p className="text-xs font-bold uppercase tracking-wide text-[#8a6840]">{comida.nombre}</p>{comida.hora && <p className="mt-1 text-xs font-extrabold text-[#246b55]">Hora: {comida.hora}</p>}
-            <p className="mt-0.5 font-bold text-[#173f34]">{comida.platillo || 'Platillo sin nombre'}</p>
+            {(comida.platillo || !(comida.preparaciones || []).length) &&
+              <p className="mt-0.5 font-bold text-[#173f34]">{comida.platillo || 'Preparaciones'}</p>}
             {agruparPreparaciones(comida).length ? agruparPreparaciones(comida).map((grupo,index) =>
               <div key={grupo.id || index} className="mt-3 rounded-xl border border-[#dce9df] bg-[#f1f7f2] p-3">
                 <p className="mb-2 text-xs font-extrabold text-[#246b55]">

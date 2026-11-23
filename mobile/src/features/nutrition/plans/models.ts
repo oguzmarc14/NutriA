@@ -8,7 +8,7 @@ export type Food = Omit<CatalogFood, '_id'> & { tipo: 'catalogo' | 'personalizad
 export type Meal = { _id?: string; nombre: string; hora?: string; platillo?: string; descripcion?: string;
   porcentajeDistribucion?: number | null; preparaciones?: { id: string; nombre: string; tipo: 'platillo' | 'bebida' }[]; alimentos: Food[] }
 export type Plan = { _id: string; nombre: string; objetivo?: string; fechaInicio: string; createdAt: string;
-  metaEnergiaKcal?: number | null; comidas: Meal[] }
+  metaEnergiaKcal?: number | null; comidas: Meal[]; aceptacionPaciente?: { estado?: 'pendiente' | 'aceptada'; fecha?: string | null } }
 export type PlanData = { paciente: { _id: string; name: string }; planes: Plan[] }
 export type DraftFood = Food & { key: string; quantity: string }
 export type DraftMeal = Omit<Meal, 'alimentos' | 'porcentajeDistribucion'> & { key: string; percentage: string; alimentos: DraftFood[] }

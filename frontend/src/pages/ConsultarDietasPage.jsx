@@ -56,6 +56,9 @@ function TarjetaDieta({ plan, paciente, esReciente, onEditar, onEliminar, onErro
               <span className={'rounded-full px-3 py-1 text-xs font-bold ' + (esReciente ? 'bg-[#e1f1e6] text-[#246b55]' : 'bg-[#f0ece7] text-[#746d66]')}>{esReciente ? 'Más reciente' : 'Histórico'}</span>
             </div>
             <h3 className="break-words text-xl font-black text-[#173f34]">{plan.nombre || 'Plan sin nombre'}</h3>
+            <p className={'mt-1 text-xs font-bold ' + (plan.aceptacionPaciente?.estado === 'aceptada' ? 'text-emerald-800' : 'text-amber-800')}>
+              {plan.aceptacionPaciente?.estado === 'aceptada' ? '✓ Recepción confirmada por el paciente' : 'Esperando confirmación de recepción'}
+            </p>
             {plan.objetivo && <p className="mt-1 break-words text-sm text-[#647e70]">{plan.objetivo}</p>}
           </div>
           <div className="flex items-center gap-2">
