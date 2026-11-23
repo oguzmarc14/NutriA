@@ -22,20 +22,24 @@ import { measurementChanged, numberInput, type Calculation, type Measurement } f
 type Requirements = { expediente: { alergias?: string; nutricion?: Parameters<typeof assistedPlan>[0] & { intoleranciasAlimentarias?: string } } | null; mediciones: Measurement[]; calculos: Calculation[] }
 const validId = (value: unknown): value is string => typeof value === 'string' && /^[a-f\d]{24}$/i.test(value)
 
-function Editor({ patient, patientName, initial, requirements, refreshRequirements, previousPlans }: {
-  patient: string; patientName: string; initial?: Plan; requirements?: Requirements; refreshRequirements: () => void; previousPlans: Plan[]
+function Editor({ patient, patientName, initial, templatePlan, requirements, refreshRequirements, previousPlans }: {
+  patient: string; patientName: string; initial?: Plan; templatePlan?: Plan; requirements?: Requirements; refreshRequirements: () => void; previousPlans: Plan[]
 }) {
   const { session } = useAuth()
   const [planId, setPlanId] = useState(initial?._id)
-  const [draft, setDraft] = useState(() => initial ? editPlan(initial) : newPlan())
+  const [draft, setDraft] = useState(() => initial ? editPlan(initial) : templatePlan ? duplicatePlan(templatePlan) : newPlan())
   const [activeMeal, setActiveMeal] = useState(draft.meals[0]?.key || '')
   const [goalOpen, setGoalOpen] = useState(!!initial?.objetivo)
   const [addMealOpen, setAddMealOpen] = useState(false)
   const [guideOpen, setGuideOpen] = useState(false)
-  const [modeOpen, setModeOpen] = useState(!initial)
+  const [modeOpen, setModeOpen] = useState(!initial && !templatePlan)
   const [confirmSave, setConfirmSave] = useState(false)
   const [savedOpen, setSavedOpen] = useState(false)
-  const [dirty, setDirty] = useState(false)
+  const [templateOpen, setTemplateOpen] = useState(false)
+  const [templateName, setTemplateName] = useState('')
+  const [templateError, setTemplateError] = useState('')
+  const [templateBusy, setTemplateBusy] = useState(false)
+  const [dirty, setDirty] = useState(!!templatePlan)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const draftStorageKey = 'nutria.diet-draft.'+session!.user.id+'.'+patient+'.'+(initial?._id||'new')
@@ -65,11 +69,35 @@ function Editor({ patient, patientName, initial, requirements, refreshRequiremen
       setPlanId(plan._id)
       const saved = editPlan(plan)
       setDraft(saved); setActiveMeal(saved.meals[0]?.key || ''); setDirty(false)
+      setTemplateName(plan.nombre)
       setSavedOpen(true)
     } catch (cause) {
       if (cause instanceof ApiError && cause.status === 409) refreshRequirements()
       setError(cause instanceof Error ? cause.message : 'No se pudo guardar la dieta. Tus cambios siguen en esta pantalla.')
     } finally { submitting.current = false; setBusy(false) }
+  }
+  async function saveTemplate() {
+    if (!session?.token || !planId || templateBusy) return
+    const nombre = templateName.trim()
+    if (nombre.length < 3 || nombre.length > 100) {
+      setTemplateError('Escribe un nombre de 3 a 100 caracteres para guardar la dieta.')
+      return
+    }
+    setTemplateBusy(true)
+    setTemplateError('')
+    try {
+      await request('/community/mis-dietas', {
+        token: session.token, method: 'POST', body: { planId, nombre },
+      })
+      setTemplateOpen(false)
+      Alert.alert('Dieta guardada', 'La copia privada «' + nombre + '» está en NutriA Community → Mis dietas.', [
+        { text: 'Continuar' },
+        { text: 'Ver Mis dietas', onPress: () =>
+          router.push({ pathname: '/comunidad', params: { tab: 'dietas' } }) },
+      ])
+    } catch (cause) {
+      setTemplateError(cause instanceof Error ? cause.message : 'No pudimos guardar la copia privada.')
+    } finally { setTemplateBusy(false) }
   }
   function save() {
     if (busy || blocked) return
@@ -103,7 +131,23 @@ function Editor({ patient, patientName, initial, requirements, refreshRequiremen
       <View style={styles.row}><Button expand selected={false} label="Cancelar" onPress={() => setConfirmSave(false)} />
         <Button expand label="Aceptar" onPress={() => { setConfirmSave(false); try { void persist(planPayload(draft)) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Revisa los datos.') } }} /></View>
     </AppDialog>
-    <AppDialog visible={savedOpen} title="Plan guardado correctamente" message="El paciente ya puede consultar su plan alimenticio." success onClose={() => setSavedOpen(false)} />
+    <AppDialog visible={savedOpen} title="¡Dieta creada!" success
+      message="El plan del paciente se guardó correctamente. ¿Deseas guardar una copia reutilizable en Mis dietas?"
+      onClose={() => setSavedOpen(false)}>
+      <Button label="Guardar en Mis dietas" onPress={() => { setSavedOpen(false); setTemplateOpen(true) }} />
+      <Button label="Ahora no" selected={false} onPress={() => setSavedOpen(false)} />
+    </AppDialog>
+    <AppDialog visible={templateOpen} title="Guardar en Mis dietas"
+      message="Elige un nombre para tu copia privada. La fecha de guardado se registra automáticamente."
+      onClose={() => { if (!templateBusy) setTemplateOpen(false) }}>
+      <FormField label="Nombre de la dieta *" value={templateName} disabled={templateBusy}
+        onChange={value => { setTemplateName(value); setTemplateError('') }} />
+      {!!templateError && <Text accessibilityRole="alert" style={styles.error}>{templateError}</Text>}
+      <Button label={templateBusy ? 'Guardando copia…' : 'Guardar copia privada'}
+        disabled={templateBusy} onPress={() => void saveTemplate()} />
+      <Button label="Cancelar" selected={false} disabled={templateBusy}
+        onPress={() => setTemplateOpen(false)} />
+    </AppDialog>
     <AppDialog visible={!planId && !!requirements && blocked} title="Información del paciente incompleta" onClose={() => router.back()}>
       <Text style={styles.body}>Antes de crear el plan alimenticio</Text>
       <Text accessibilityRole="header" style={styles.cardTitle}>Completa los datos del paciente</Text>
@@ -163,16 +207,23 @@ function Editor({ patient, patientName, initial, requirements, refreshRequiremen
 }
 
 export default function PlanEditorScreen() {
-  const { patient, id } = useLocalSearchParams<{ patient?: string; id?: string }>()
-  const valid = validId(patient) && (!id || validId(id))
+  const { patient, id, template } = useLocalSearchParams<{ patient?: string; id?: string; template?: string }>()
+  const valid = validId(patient) && (!id || validId(id)) && (!template || validId(template))
   const resource = useResource<PlanData>(valid ? '/planes/' + patient : null)
   const requirements = useResource<Requirements>(valid ? '/calculo-nutricional/' + patient : null)
+  const templateResource = useResource<{ plan: Plan }>(valid && template ? '/community/mis-dietas/' + template : null)
   if (!valid) return <Page><Text style={styles.cardTitle}>Elige un paciente para crear una dieta.</Text><Button label="Elegir paciente" onPress={() => router.replace({ pathname: '/elegir-paciente', params: { intent: 'create-plan' } })} /></Page>
   const existing = id ? resource.data?.planes.find(plan => plan._id === id) : undefined
-  if (resource.data && (!id || existing) && (id || (!requirements.loading && !requirements.error))) return <Editor key={`${patient}-${id || 'new'}`} patient={patient!} patientName={resource.data.paciente.name} initial={existing} requirements={requirements.data} refreshRequirements={requirements.reload} previousPlans={resource.data.planes} />
+  if (resource.data && (!id || existing) && (!template || templateResource.data) &&
+    (id || (!requirements.loading && !requirements.error))) return <Editor
+      key={String(patient) + '-' + (id || 'new') + '-' + (template || 'blank')}
+      patient={patient!} patientName={resource.data.paciente.name} initial={existing}
+      templatePlan={templateResource.data?.plan} requirements={requirements.data}
+      refreshRequirements={requirements.reload} previousPlans={resource.data.planes} />
   return <Page bottomInset>
     <ListState loading={resource.loading} error={resource.error} reload={resource.reload} />
     {!id && <ListState loading={requirements.loading} error={requirements.error} reload={requirements.reload} />}
+    {template && <ListState loading={templateResource.loading} error={templateResource.error} reload={templateResource.reload} />}
     {resource.data && <View style={{ gap: 5 }}><Text style={{ color: dc.ink, fontSize: 25, fontWeight: '800' }}>{id ? 'Editar plan alimenticio' : 'Crear plan alimenticio'}</Text>
       <Text style={ds.caption}>Paciente · {resource.data.paciente.name}</Text></View>}
     {resource.data && id && !existing && <Text style={styles.error}>Esta dieta no está disponible. Regresa a los planes del paciente.</Text>}
