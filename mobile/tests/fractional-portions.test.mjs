@@ -4,10 +4,10 @@ import { parseQuantity, planTotals, planPayload, newPlan, fromCatalog } from '..
 import { stepPortion } from '../src/features/nutrition/plans/preparations.ts'
 
 test('fraction and mixed-portion values are parsed accurately', () => {
-  for (const [value, n] of [['½',.5],['¼',.25],['¾',.75],['1/2',.5],['1 1/2',1.5],['1½',1.5],['2,5',2.5]]) {
+  for (const [value, n] of [['½',.5],['¼',.25],['¾',.75],['1/2',.5],['1 1/2',1.5],['1½',1.5],['2,5',2.5],['3/2',1.5],['1/1',1]]) {
     assert.equal(parseQuantity(value), n, value)
   }
-  for (const value of ['1/0','3/2','nada','']) assert.ok(Number.isNaN(parseQuantity(value)))
+  for (const value of ['1/0','nada','']) assert.ok(Number.isNaN(parseQuantity(value)))
   assert.equal(stepPortion('½',1),'1.5')
 })
 test('fractional portions scale calories, macros and payload quantities', () => {

@@ -43,7 +43,7 @@ export function parseQuantity(value: string): number {
   const match = /^(?:(\d+)\s+)?(\d+)\/(\d+)$/.exec(source)
   if (!match) return NaN
   const whole = Number(match[1] || 0), top = Number(match[2]), bottom = Number(match[3])
-  return !bottom || top >= bottom ? NaN : whole + top / bottom
+  return !bottom ? NaN : whole + top / bottom
 }
 export function planTotals(meals: DraftMeal[]): Nutrients {
   const total = { kcal: 0, proteina: 0, carbohidratos: 0, grasas: 0 }
