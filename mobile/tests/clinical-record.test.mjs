@@ -21,3 +21,31 @@ test('an empty form cannot create a placeholder clinical record', () => {
   const form = clinicalForm(null); form.observaciones = '  Datos revisados  '
   assert.deepEqual(clinicalUpdate(null, form), { observaciones: 'Datos revisados', camposConDetalle: ['observaciones'] })
 })
+
+test('positive optional clinical fields retain a Sí without forcing free text',()=>{
+  const form=clinicalForm(null)
+  const result=clinicalUpdate(null,form,['alergias'])
+  assert.deepEqual(result,{camposConDetalle:['alergias']})
+})
+test('changing Sí to No clears hidden notes and preserves unrelated clinical history',()=>{
+  const base={alergias:'Pólen',camposConDetalle:['alergias','antecedentesFamiliares'],
+    tratamientoFarmacologico:{usa:true,descripcion:'Anterior'}}
+  const form=clinicalForm(base)
+  form.alergias=''
+  form['tratamientoFarmacologico.usa']='false'
+  form['tratamientoFarmacologico.descripcion']=''
+  const result=clinicalUpdate(base,form,['antecedentesFamiliares'])
+  assert.equal(result.alergias,'')
+  assert.deepEqual(result.tratamientoFarmacologico,{usa:false,descripcion:''})
+  assert.deepEqual(result.camposConDetalle,['antecedentesFamiliares'])
+})
+test('goals and training choices are transmitted with backend enum keys',()=>{
+  const form=clinicalForm(null)
+  form['nutricion.objetivos']='salud,incremento_masa'
+  form['nutricion.objetivoPrincipal']='salud'
+  form['deporte.nivelExperiencia']='intermedio'
+  const update=clinicalUpdate(null,form)
+  assert.deepEqual(update.nutricion.objetivos,['salud','incremento_masa'])
+  assert.equal(update.nutricion.objetivoPrincipal,'salud')
+  assert.equal(update.deporte.nivelExperiencia,'intermedio')
+})

@@ -14,7 +14,7 @@ export const recordSections: { label: string; fields: RecordField[] }[] = [
     {path:'nutricion.numeroComidasDia',label:'Comidas al día',type:'number'}, {path:'nutricion.comidaFavorita',label:'Comida favorita'}, {path:'nutricion.comidaDisgusta',label:'Comidas que no le gustan'},
     {path:'nutricion.cafePorDia',label:'Café por día'}, {path:'nutricion.bebidasEnergeticasSemana',label:'Bebidas energéticas por semana'},
     {path:'nutricion.bebidasAzucaradasSemana',label:'Bebidas azucaradas por semana'}, {path:'nutricion.intoleranciasAlimentarias',label:'Intolerancias alimentarias'},
-    {path:'nutricion.objetivoPrincipal',label:'Objetivo principal',type:'options',options:objectives}, {path:'nutricion.objetivos',label:'Objetivos',type:'multiple',options:objectives}, {path:'nutricion.objetivoOtro',label:'Otro objetivo'},
+    {path:'nutricion.objetivoPrincipal',label:'Objetivo principal',type:'options',options:objectives}, {path:'nutricion.objetivos',label:'Objetivos de la dieta',type:'multiple',options:objectives}, {path:'nutricion.objetivoOtro',label:'Describe otro objetivo'},
   ] },
   { label: 'Actividad física y deporte', fields: [
     {path:'deporte.lugarEntrenamiento',label:'Lugar de entrenamiento',type:'options',options:[['casa','Casa'],['gym','Gimnasio'],['parque','Parque'],['otro','Otro']]},
