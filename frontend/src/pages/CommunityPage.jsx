@@ -102,7 +102,7 @@ export default function CommunityPage() {
         <div className="mt-4 flex flex-wrap gap-2"><button type="button" className="rounded-lg border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-800" onClick={() => setSeleccionada(r)}>Ver receta</button>
         {tab === 'mias' && ['privada','rechazada'].includes(r.estado) && <button type="button" className="inline-flex items-center gap-1 rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white" onClick={() => publicar(r._id)}><Send size={14}/> Compartir</button>}</div>
       </article>)}
-    </div>
+    </div>}
     {tab !== 'dietas' && !cargando && !recetas.length && <p className="rounded-2xl bg-white p-6 text-center text-sm text-slate-500">Todavía no hay recetas en esta sección.</p>}
     {seleccionada && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => setSeleccionada(null)}>
       <div role="dialog" aria-modal="true" aria-label="Detalle de receta" className="max-h-[85vh] w-full max-w-xl overflow-auto rounded-2xl bg-white p-6" onClick={e => e.stopPropagation()}>
