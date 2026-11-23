@@ -94,7 +94,12 @@ test('editing diet labels does not rewrite the dates of tracking history', async
     require: name => { if (!(name in deps)) throw Error(name); return deps[name] }, module: mod, Date, Number, Promise, Set,
   })
   let error
-  await mod.exports.actualizarPlanAlimenticio({ params: { pacienteId: PID, planId: PLAN }, user: { id: 'staff' }, body: { nombre: 'Plan nuevo', fechaInicio: '2026-12-01', comidas: [] } },
+  await mod.exports.actualizarPlanAlimenticio({ params: { pacienteId: PID, planId: PLAN }, user: { id: 'staff' }, body: { nombre: 'Plan nuevo', fechaInicio: '2026-12-01', comidas: [{
+      _id: MEAL, nombre: 'Nuevo desayuno', alimentos: [{
+        tipo: 'personalizado', nombre: 'Tortilla casera', cantidad: 1,
+        nutrimentos: { kcal: 70, proteina: 2, carbohidratos: 14, grasas: 1 },
+      }],
+    }] } },
     { json: () => {}, status: () => { throw Error('unexpected status') } }, value => { error = value })
   if (error) throw error
   assert.deepEqual(history.map(item => item.fecha), ['2026-11-02', '2026-11-03'])
