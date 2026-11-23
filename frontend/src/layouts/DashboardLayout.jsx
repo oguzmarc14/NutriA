@@ -461,13 +461,12 @@ function DashboardLayout() {
         <div className="relative min-h-[calc(100vh-56px)] bg-[#dfece4]">
           {/* DECORACIONES */}
 
-          <div className="pointer-events-none hidden md:block absolute -right-32 -top-36 h-[420px] w-[420px] rounded-full bg-[#b5d2bf]/45 blur-3xl" />
-
-          <div className="pointer-events-none absolute -bottom-48 -left-32 h-[480px] w-[480px] rounded-full bg-[#cbdcbd]/40 blur-3xl" />
-
-          <div className="pointer-events-none absolute left-[42%] top-[30%] h-[420px] w-[420px] rounded-full bg-[#eef5e9]/45 blur-3xl" />
-
-          <div className="pointer-events-none absolute right-[18%] top-[48%] h-[280px] w-[280px] rounded-full bg-[#bfd9ca]/25 blur-3xl" />
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute -right-32 -top-36 hidden h-[420px] w-[420px] rounded-full bg-[#b5d2bf]/45 blur-3xl md:block" />
+            <div className="absolute -bottom-48 -left-32 h-[480px] w-[480px] rounded-full bg-[#cbdcbd]/40 blur-3xl" />
+            <div className="absolute left-[42%] top-[30%] h-[420px] w-[420px] rounded-full bg-[#eef5e9]/45 blur-3xl" />
+            <div className="absolute right-[18%] top-[48%] h-[280px] w-[280px] rounded-full bg-[#bfd9ca]/25 blur-3xl" />
+          </div>
 
           {/* CONTENIDO */}
 
