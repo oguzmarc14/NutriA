@@ -1,0 +1,13 @@
+const test = require('node:test')
+const assert = require('node:assert/strict')
+const fs = require('node:fs')
+const path = require('node:path')
+test('private diet routes are scoped to authenticated nutritionist and snapshot excludes patient identity', () => {
+  const source = fs.readFileSync(path.resolve(__dirname, '../src/routes/community.routes.js'), 'utf8')
+  assert.match(source, /router\.get\('\/mis-dietas', allowRoles\('nutritionist'\)/)
+  assert.match(source, /router\.post\('\/mis-dietas', allowRoles\('nutritionist'\)/)
+  assert.match(source, /nutritionist: req\.user\._id/)
+  assert.match(source, /autor: req\.user\._id/)
+  assert.match(source, /plan: snapshot/)
+  assert.doesNotMatch(source, /snapshot = \{[\s\S]*?paciente: original\.paciente/)
+})
