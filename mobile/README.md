@@ -117,3 +117,13 @@ Las adaptaciones de dependencias en vendor conservan la compatibilidad CommonJS 
 - Backend: rutas de biblioteca privada ya implementadas en /community/mis-dietas.
 - La nueva versión móvil usa versionCode 14. Generar una APK EAS preview con credenciales de firma estables para actualizar la instalación anterior.
 - Para cerrar: verificar sesiones reales de Nutriólogo y Paciente, recepción de avisos, uso de plantillas web/móvil, persistencia en MongoDB y comprobación de privacidad. No se ejecutaron pruebas contra expedientes reales.
+
+## Versión 0.14.0 — expediente, calendario, preparaciones y notificaciones
+
+- Expediente clínico nativo completo, alineado con la web: identificación del paciente y última medición automáticas; ocho antecedentes con Sí/No y detalles condicionales; tratamiento y hábitos; nutrición, objetivos múltiples, actividad física, entrenamiento y observaciones. Se conservan explícitamente los Sí sin descripción.
+- Horario no laborable día/semana/mes y selección de vacaciones por rangos en web y Android. Las fechas bloqueadas se guardan con el horario existente; las citas previamente agendadas no se cancelan por sí solas.
+- Dietas: ingredientes separados por platillo o bebida en Android, web y PDF. Comidas predeterminadas sin ingredientes se omiten del nuevo plan; el backend rechaza planes o comidas vacías. No se inventan ingredientes en planes antiguos.
+- El paciente confirma la **recepción** de la dieta en Android o web. El estado es idempotente y visible al nutriólogo; confirmación no equivale a adherencia nutricional.
+- Avisos persistentes en MongoDB y envío remoto condicionado a PUSH_NOTIFICATIONS_ENABLED=true, tokens de dispositivo válidos y permisos. Nuevas citas y cambios usan el canal de citas; dietas nuevas y recibidas usan canal de dieta, ambos con sonido de sistema Android.
+- No se expiden comprobantes de entrega del sistema operativo sin probar con cuentas reales y un dispositivo físico. Verificar permisos, canales, cuenta de Expo, Android FCM, Render y sincronización de notificaciones.
+- Instalar la APK con firma de Expo EAS preview (no la APK temporal de GitHub Actions) para actualizar la versión anterior.
