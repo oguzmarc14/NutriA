@@ -134,9 +134,9 @@ export default function MisDietasPanel() {
           </div>)}
         </div>)}
         {exportError && <p role="alert" className="text-sm text-red-700">{exportError}</p>}
-        {!!opened.plan?.comidas?.length && <button type="button" onClick={() => {
+        {!!opened.plan?.comidas?.length && <button type="button" onClick={async () => {
           setExportError('')
-          try { exportarPlanPDF({ ...opened.plan, nombre: opened.nombre }, null, { plantilla: true }) }
+          try { await exportarPlanPDF({ ...opened.plan, nombre: opened.nombre }, null, { plantilla: true, cargarClinica: async () => (await client.get('/clinica', { timeout: 5000 })).data.clinica }) }
           catch (cause) { setExportError(cause.message) }
         }} className="w-full rounded-xl border border-emerald-200 px-4 py-3 text-sm font-bold text-emerald-800">
           Exportar PDF

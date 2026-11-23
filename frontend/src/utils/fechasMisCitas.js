@@ -21,3 +21,16 @@ export function citaCancelable(cita,ahora=new Date()){
   return Boolean(cita && ['programada','confirmada'].includes(cita.estado) &&
     Number.isFinite(new Date(cita.inicio).getTime()) && new Date(cita.inicio)>ahora)
 }
+
+
+export function fechaCitaEnZona(inicio, zonaHoraria) {
+  const fecha = new Date(inicio)
+  if (!inicio || !Number.isFinite(fecha.getTime())) return ''
+  try {
+    const partes = new Intl.DateTimeFormat('en-CA', {
+      timeZone: zonaHoraria, year: 'numeric', month: '2-digit', day: '2-digit',
+    }).formatToParts(fecha)
+    const parte = tipo => partes.find(item => item.type === tipo).value
+    return parte('year') + '-' + parte('month') + '-' + parte('day')
+  } catch { return fecha.toISOString().slice(0, 10) }
+}

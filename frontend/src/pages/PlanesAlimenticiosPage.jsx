@@ -1895,9 +1895,9 @@ function PlanesAlimenticiosPage() {
             setAvisoPlanGuardado(null)
             setMensaje('Dieta «' + nombreCopia + '» guardada como copia privada en NutriA Community → Mis dietas.')
           }}
-          onExportarPDF={() => {
+          onExportarPDF={async () => {
             try {
-              exportarPlanPDF(avisoPlanGuardado.plan, avisoPlanGuardado.paciente)
+              await exportarPlanPDF(avisoPlanGuardado.plan, avisoPlanGuardado.paciente, { cargarClinica: async () => (await client.get('/clinica', { timeout: 5000 })).data.clinica })
               setAvisoPlanGuardado(null)
             } catch (error) {
               setError(error.message || 'No fue posible exportar la dieta.')

@@ -3,7 +3,9 @@ import { Bell, CalendarCheck2, CalendarClock, CalendarDays, CheckCircle2, Clock3
 import useMisCitas from '../hooks/useMisCitas'
 import client from '../api/client'
 import ModalCancelarCitaPaciente from '../components/citas/ModalCancelarCitaPaciente'
-import { citaCancelable, estadoCitaPaciente, formatearCitaPaciente, tipoCitaPaciente } from '../utils/fechasMisCitas'
+import { citaCancelable, estadoCitaPaciente, fechaCitaEnZona, formatearCitaPaciente, tipoCitaPaciente } from '../utils/fechasMisCitas'
+import CalendarioMisCitas from '../components/citas/CalendarioMisCitas'
+import { fechaActualDispositivo } from '../utils/vistasAgenda'
 import './misCitas.css'
 
 function AccionesCita({ cita, onConfirmar, onCancelar, confirmando }) {
@@ -33,6 +35,7 @@ function AccionesCita({ cita, onConfirmar, onCancelar, confirmando }) {
 
 function TarjetaCita({cita,zonaHoraria,onSolicitarCancelacion,onConfirmar,confirmando}){
   const estado=estadoCitaPaciente(cita.estado)
+  const minutos = (new Date(cita.fin) - new Date(cita.inicio)) / 60000
   return <article className="nutria-mis-citas-tarjeta min-w-0 rounded-2xl border p-4">
     <div className="flex flex-wrap items-start justify-between gap-2">
       <h3 className="text-sm font-extrabold">{tipoCitaPaciente(cita.tipo)}</h3>
@@ -44,12 +47,14 @@ function TarjetaCita({cita,zonaHoraria,onSolicitarCancelacion,onConfirmar,confir
       <CalendarDays className="mt-0.5 shrink-0" size={17}/>
       {formatearCitaPaciente(cita.inicio,zonaHoraria)}
     </p>
+    {Number.isFinite(minutos) && minutos > 0 && <p className="mt-1 text-xs opacity-75">Duración: {minutos} min</p>}
     <AccionesCita cita={cita} onConfirmar={onConfirmar} onCancelar={onSolicitarCancelacion} confirmando={confirmando}/>
   </article>
 }
 
 export default function MisCitasPage(){
   const {datos,cargando,error,actualizar}=useMisCitas()
+  const [fechaCalendario, setFechaCalendario] = useState(null)
   const [aCancelar,setACancelar]=useState(null)
   const [guardando,setGuardando]=useState(false)
   const [errorCancelacion,setErrorCancelacion]=useState('')
@@ -90,7 +95,9 @@ export default function MisCitasPage(){
   }
   const citas=datos?.citas||[]
   const zona=datos?.zonaHoraria || 'America/Mexico_City'
+  const hoy = datos?.hoy || fechaActualDispositivo()
   const proxima=datos?.proxima
+  const fechaProxima = fechaCitaEnZona(proxima?.inicio, zona)
   const avisos=datos?.avisos||[]
   const futuras=citas.filter(c=>['programada','confirmada'].includes(c.estado) && new Date(c.inicio)>new Date())
     .sort((a,b)=>new Date(a.inicio)-new Date(b.inicio))
@@ -137,6 +144,10 @@ export default function MisCitasPage(){
           {proxima.estado==='confirmada'?'Esta consulta está confirmada.':
             'Confirma que podrás asistir a esta consulta.'}
         </p>
+        {fechaProxima && <a href="#mi-calendario-de-citas" onClick={() => setFechaCalendario(fechaProxima)}
+          className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-bold underline underline-offset-4">
+          <CalendarDays size={16} aria-hidden="true"/>Ver en el calendario
+        </a>}
         <AccionesCita cita={proxima} onConfirmar={confirmarCita} onCancelar={solicitarCancelacion} confirmando={confirmando}/>
       </section> : <section className="nutria-mis-citas-tarjeta rounded-[24px] border p-5">
         <div className="flex items-center gap-2"><CalendarClock size={21}/><h2 className="text-lg font-extrabold">Sin próxima cita</h2></div>
@@ -148,6 +159,10 @@ export default function MisCitasPage(){
         <p className="mt-2 text-sm leading-6">{aviso.detalle}</p>
         <p className="mt-2 text-xs opacity-75">Este aviso es un seguimiento sugerido, no una cita reservada ni el vencimiento de tu dieta.</p>
       </section>)}
+
+      <CalendarioMisCitas citas={citas} fecha={fechaCalendario || hoy} hoy={hoy} zona={zona} onFecha={setFechaCalendario}
+        renderCita={cita => <TarjetaCita key={cita._id} cita={cita} zonaHoraria={zona}
+          onSolicitarCancelacion={solicitarCancelacion} onConfirmar={confirmarCita} confirmando={confirmando}/>}/>
 
       <section className="space-y-3">
         <h2 className="flex items-center gap-2 text-lg font-extrabold"><Clock3 size={19}/>Próximas consultas</h2>

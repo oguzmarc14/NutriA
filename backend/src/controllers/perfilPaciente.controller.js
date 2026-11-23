@@ -62,6 +62,24 @@ async function obtenerMiPerfil(req, res, next) {
 
 // Sólo datos mínimos de citas asociadas a la cuenta Patient autenticada.
 // Nunca se acepta un patientId de la URL ni se devuelven notas privadas.
+async function obtenerMarcaMiPlan(req, res, next) {
+  try {
+    res.set('Cache-Control', 'no-store')
+    if (!req.user.patient || !isValidObjectId(req.params.id)) {
+      return res.status(404).json({ message: 'Plan alimenticio no encontrado' })
+    }
+    const paciente = await Paciente.exists({ _id: req.user.patient, active: true })
+    const plan = paciente && await PlanAlimenticio.findOne({ _id: req.params.id, paciente: paciente._id })
+      .select('nutritionist').lean()
+    if (!plan) return res.status(404).json({ message: 'Plan alimenticio no encontrado' })
+    const autor = await User.findById(plan.nutritionist).select('name clinica.nombre clinica.logo').lean()
+    return res.json({ clinica: {
+      nombre: autor?.clinica?.nombre || autor?.name || '',
+      logo: autor?.clinica?.logo || '',
+    } })
+  } catch (error) { return next(error) }
+}
+
 async function obtenerMisCitas(req,res,next) {
   try {
     res.set('Cache-Control','no-store')
@@ -118,4 +136,4 @@ async function confirmarMiCita(req, res, next) {
   }
 }
 
-module.exports = { obtenerMiPerfil, obtenerMisCitas, confirmarMiCita }
+module.exports = { obtenerMiPerfil, obtenerMarcaMiPlan, obtenerMisCitas, confirmarMiCita }

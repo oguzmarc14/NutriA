@@ -42,8 +42,8 @@ function TarjetaDieta({ plan, paciente, esReciente, onEditar, onEliminar, onErro
   [plan.comidas])
   const total = useMemo(() =>
     totales(comidas.flatMap(comida => comida.alimentos || [])), [comidas])
-  function exportar() {
-    try { exportarPlanPDF(plan, paciente) }
+  async function exportar() {
+    try { await exportarPlanPDF(plan, paciente, { cargarClinica: async () => (await client.get('/clinica', { timeout: 5000 })).data.clinica }) }
     catch (error) { onError(error.message || 'No fue posible exportar la dieta.') }
   }
   return (

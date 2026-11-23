@@ -1,6 +1,6 @@
 const express = require('express')
 
-const { obtenerMiPerfil, obtenerMisCitas, confirmarMiCita } = require('../controllers/perfilPaciente.controller')
+const { obtenerMiPerfil, obtenerMarcaMiPlan, obtenerMisCitas, confirmarMiCita } = require('../controllers/perfilPaciente.controller')
 const { cancelarMiCita } = require('../controllers/cancelarCitaPaciente.controller')
 const { requireAuth, allowRoles } = require('../middleware/auth.middleware')
 
@@ -11,6 +11,7 @@ router.use(allowRoles('patient'))
 
 router.get('/', obtenerMiPerfil)
 router.get('/citas', obtenerMisCitas)
+router.get('/planes/:id/marca', obtenerMarcaMiPlan)
 router.patch('/planes/:id/aceptar', require('../controllers/aceptarPlanPaciente.controller').aceptarMiPlan)
 router.patch('/citas/:id/confirmar', confirmarMiCita)
 router.patch('/citas/:id/cancelar', cancelarMiCita)

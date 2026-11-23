@@ -6,36 +6,38 @@ import CardPlanPaciente from '../components/paciente/CardPlanPaciente'
 import EstadoCargaPaciente from '../components/paciente/EstadoCargaPaciente'
 import usePerfilPaciente from '../hooks/usePerfilPaciente'
 
-function hoyLocal() {
-  const hoy = new Date()
-  const diferencia = hoy.getTimezoneOffset() * 60000
-  return new Date(hoy.getTime() - diferencia).toISOString().slice(0, 10)
-}
-const fechaInicio = plan => (plan.fechaInicio || plan.createdAt || '').slice(0, 10)
-const fechaLegible = valor => {
-  if (!valor) return 'Sin fecha'
-  const [anio, mes, dia] = valor.split('-').map(Number)
-  return new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(anio, mes - 1, dia))
-}
+import CalendarioDietas from '../components/paciente/CalendarioDietas'
+import { fechaActualDispositivo } from '../utils/vistasAgenda'
+import { dietaParaFecha, fechaDietaLegible, inicioDieta, ordenarDietas, proximasDietas } from '../utils/calendarioDietas'
+
+const sinPlanes = []
 
 function MiPlanPage() {
   const { perfil, loading, error, recargar } = usePerfilPaciente()
-  const planes = perfil?.planes || []
-  const [fechaSeleccionada, setFechaSeleccionada] = useState(hoyLocal)
+  const planes = perfil?.planes || sinPlanes
+  const hoy = fechaActualDispositivo()
+  const [fechaSeleccionada, setFechaSeleccionada] = useState(fechaActualDispositivo)
+  const [planElegido, setPlanElegido] = useState(null)
   const [errorExportacion, setErrorExportacion] = useState('')
   const [aceptando,setAceptando] = useState(false)
   const [errorAceptacion,setErrorAceptacion] = useState('')
   const [confirmarPlan,setConfirmarPlan] = useState(null)
 
-  // fechaInicio define desde qué día se puede consultar cada plan.
-  // No exigimos igualdad exacta: de otro modo la dieta desaparecía al día siguiente.
-  const planesOrdenados = useMemo(() =>
-    [...planes].sort((a, b) =>
-      fechaInicio(b).localeCompare(fechaInicio(a)) ||
-      (b.createdAt || '').localeCompare(a.createdAt || '')
-    ), [planes])
-  const planDelDia = planesOrdenados.find(plan => fechaInicio(plan) && fechaInicio(plan) <= fechaSeleccionada)
+  const planesOrdenados = useMemo(() => ordenarDietas(planes), [planes])
+  const planVigente = dietaParaFecha(planesOrdenados, fechaSeleccionada)
+  const planDelDia = planesOrdenados.find(plan => plan._id === planElegido) || planVigente
+  const futuras = proximasDietas(planesOrdenados, hoy)
+  const historial = planesOrdenados.filter(plan => inicioDieta(plan) <= hoy)
   const tienePlanes = planesOrdenados.length > 0
+  const seguimientoDisponible = fechaSeleccionada <= hoy && planDelDia?._id === planVigente?._id
+  function elegirFecha(fecha) {
+    setFechaSeleccionada(fecha)
+    setPlanElegido(null)
+  }
+  function elegirPlan(plan) {
+    setFechaSeleccionada(inicioDieta(plan))
+    setPlanElegido(plan._id)
+  }
 
   async function aceptarPlan() {
     if (!confirmarPlan || aceptando) return
@@ -47,9 +49,13 @@ function MiPlanPage() {
     } catch(error) {setErrorAceptacion(error.response?.data?.message||'No se pudo confirmar la dieta.')}
     finally {setAceptando(false)}
   }
-  function guardarPDF() {
+  async function guardarPDF() {
     if (!planDelDia) return
-    try { exportarPlanPDF(planDelDia, perfil?.paciente) }
+    try {
+      await exportarPlanPDF(planDelDia, perfil?.paciente, {
+        cargarClinica: async () => (await client.get('/mi-perfil/planes/' + encodeURIComponent(planDelDia._id) + '/marca', { timeout: 5000 })).data.clinica,
+      })
+    }
     catch (err) { setErrorExportacion(err.message || 'No se pudo generar la dieta para imprimir.') }
   }
 
@@ -61,25 +67,36 @@ function MiPlanPage() {
           <h1 className="text-3xl font-extrabold tracking-tight text-[#173f34]">Mi plan alimenticio</h1>
           <p className="mt-2 max-w-xl text-sm text-slate-500">Consulta la dieta correspondiente al día y registra el cumplimiento de cada comida.</p>
         </div>
-        <label className="block w-full max-w-56 min-w-0">
-          <span className="mb-2 flex items-center gap-2 text-sm font-bold text-[#48685c]"><CalendarDays size={17}/>Fecha del menú</span>
-          <input type="date" value={fechaSeleccionada} onChange={event => setFechaSeleccionada(event.target.value)}
-            className="block min-w-0 w-full rounded-xl border border-[#c9ddd3] bg-white px-3 py-2 text-sm font-bold text-[#173f34] outline-none focus:border-[#4d816f]"/>
-        </label>
       </div>
-      {tienePlanes && <details className="mb-5 overflow-hidden rounded-2xl border border-[#c9ddd3] bg-white/80">
+      {perfil && <div className="mb-5 grid gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] lg:items-start">
+        <CalendarioDietas planes={planesOrdenados} hoy={hoy} fecha={fechaSeleccionada} onFecha={elegirFecha}/>
+        <section aria-labelledby="proximas-dietas" className="min-w-0 rounded-3xl border border-[#c9ddd3] bg-white/85 p-4 sm:p-5">
+          <h2 id="proximas-dietas" className="flex items-center gap-2 font-extrabold text-[#173f34]"><Clock3 size={18}/>Próximas dietas</h2>
+          {futuras.length ? <ul className="mt-3 max-h-72 space-y-2 overflow-y-auto">
+            {futuras.map(plan => <li key={plan._id}>
+              <button type="button" onClick={() => elegirPlan(plan)}
+                aria-pressed={planDelDia?._id === plan._id}
+                className="w-full rounded-xl border border-[#d6e7dc] bg-[#f2f8f4] px-3 py-2.5 text-left hover:bg-[#e6f2e8] aria-pressed:border-[#4d816f]">
+                <span className="block text-xs font-bold text-[#426f58]">{fechaDietaLegible(inicioDieta(plan))}</span>
+                <span className="mt-1 block break-words text-sm font-bold text-[#173f34]">{plan.nombre}</span>
+              </button>
+            </li>)}
+          </ul> : <p className="mt-3 text-sm text-slate-600">No hay nuevos planes programados.</p>}
+        </section>
+      </div>}
+      {!!historial.length && <details className="mb-5 overflow-hidden rounded-2xl border border-[#c9ddd3] bg-white/80">
         <summary className="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm font-extrabold text-[#246b55]">
-          <History size={17}/>Historial de dietas ({planesOrdenados.length})
+          <History size={17}/>Historial de dietas ({historial.length})
         </summary>
         <div className="max-h-64 space-y-1 overflow-y-auto border-t border-[#e0ebe3] p-2">
-          {planesOrdenados.map(plan => <button key={plan._id} type="button"
+          {historial.map(plan => <button key={plan._id} type="button"
             onClick={event => {
-              setFechaSeleccionada(fechaInicio(plan))
+              elegirPlan(plan)
               event.currentTarget.closest('details').open = false
             }}
             className="flex w-full flex-wrap items-center justify-between gap-2 rounded-xl px-3 py-3 text-left text-sm hover:bg-[#edf5ef]">
             <span className="font-bold text-[#173f34]">{plan.nombre}</span>
-            <span className="text-xs font-semibold text-[#648073]">{fechaLegible(fechaInicio(plan))}</span>
+            <span className="text-xs font-semibold text-[#648073]">{fechaDietaLegible(inicioDieta(plan))}</span>
           </button>)}
         </div>
       </details>}
@@ -105,12 +122,12 @@ function MiPlanPage() {
           </div>
         </div>
       </div>}
-      <EstadoCargaPaciente loading={loading} error={error} vacio={!loading && !error && !tienePlanes}>
+      <EstadoCargaPaciente loading={loading} error={error} vacio={false}>
         {planDelDia
-          ? <div className="space-y-4">
+          ? <div id="menu-del-dia" className="scroll-mt-20 space-y-4">
               <div className="flex flex-col gap-3 rounded-2xl border border-[#cfe2d5] bg-[#edf6ee] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="flex min-w-0 items-center gap-2 text-xs font-semibold text-[#416d52]">
-                  <Clock3 size={16} className="shrink-0"/>Dieta aplicable desde el {fechaLegible(fechaInicio(planDelDia))}. Las horas de cada comida aparecen debajo.
+                  <Clock3 size={16} className="shrink-0"/>Menú del {fechaDietaLegible(fechaSeleccionada)} · Inicio del plan: {fechaDietaLegible(inicioDieta(planDelDia))}
                 </p>
                 <button type="button" onClick={guardarPDF} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#246b55] px-4 py-2.5 text-sm font-extrabold text-white hover:bg-[#1c5a45]">
                   <Download size={17}/>Guardar / imprimir PDF
@@ -128,7 +145,12 @@ function MiPlanPage() {
                   </button>
                   {!!errorAceptacion&&<p role="alert" className="mt-2 text-sm text-red-700">{errorAceptacion}</p>}
                 </div>}
-              <CardPlanPaciente key={planDelDia._id} fecha={fechaSeleccionada} plan={planDelDia}
+              {!seguimientoDisponible && <p className="text-sm text-[#48685c]">{fechaSeleccionada > hoy
+                ? 'Puedes consultar este menú por adelantado. El seguimiento estará disponible el día correspondiente.'
+                : 'Esta dieta fue reemplazada para la fecha seleccionada. Puedes consultar el menú y tus registros anteriores.'}</p>}
+              <CardPlanPaciente key={planDelDia._id + ':' + fechaSeleccionada} fecha={fechaSeleccionada} plan={planDelDia}
+                seguimientoDisponible={seguimientoDisponible}
+                estadoPlan={fechaSeleccionada > hoy ? 'Próximo menú' : planDelDia._id !== planVigente?._id || fechaSeleccionada < hoy ? 'Menú del historial' : 'Menú de hoy'}
                 seguimientos={perfil?.seguimientosComida || []} onSeguimientoGuardado={recargar}/>
             </div>
           : <div className="rounded-3xl border border-dashed border-[#bdd3c7] bg-white/55 p-10 text-center">
