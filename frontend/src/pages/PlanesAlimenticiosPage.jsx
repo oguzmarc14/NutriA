@@ -217,6 +217,8 @@ function PlanesAlimenticiosPage() {
     usePacienteTrabajo()
   const pacienteSolicitado = searchParams.get('paciente') || ''
   const planSolicitado = searchParams.get('editar') || ''
+  const plantillaSolicitada = searchParams.get('plantilla') || ''
+  const plantillaCargadaDesdeUrl = useRef('')
   const planCargadoDesdeUrl = useRef('')
   /*
    * PACIENTES
@@ -451,6 +453,22 @@ function PlanesAlimenticiosPage() {
     planCargadoDesdeUrl.current = clave
     editarPlan(plan)
   }, [pacienteId, pacienteSolicitado, planSolicitado, planes, cargandoPlanes])
+  // Carga una copia PRIVADA de Community como nuevo plan. Jamás cambia el paciente original.
+  useEffect(() => {
+    if (!plantillaSolicitada || !/^[a-f\d]{24}$/i.test(plantillaSolicitada) || !pacienteId ||
+      planSolicitado) return
+    const key = pacienteId + ':' + plantillaSolicitada
+    if (plantillaCargadaDesdeUrl.current === key) return
+    let active = true
+    client.get('/community/mis-dietas/' + plantillaSolicitada)
+      .then(async ({ data }) => {
+        if (!active || plantillaCargadaDesdeUrl.current === key) return
+        const copied = await duplicarPlan(data.plan)
+        if (active && copied) plantillaCargadaDesdeUrl.current = key
+      })
+      .catch(error => { if (active) setError(error.response?.data?.message || 'No se pudo cargar la dieta guardada.') })
+    return () => { active = false }
+  }, [plantillaSolicitada, pacienteId, planSolicitado])
 
 
   useEffect(() => {
@@ -1872,6 +1890,11 @@ function PlanesAlimenticiosPage() {
         <ModalPlanGuardado
           tipo={avisoPlanGuardado.tipo}
           mensaje={avisoPlanGuardado.mensaje}
+          onGuardarEnMisDietas={async nombreCopia => {
+            await client.post('/community/mis-dietas', { planId: avisoPlanGuardado.plan._id, nombre: nombreCopia })
+            setAvisoPlanGuardado(null)
+            setMensaje('Dieta «' + nombreCopia + '» guardada como copia privada en NutriA Community → Mis dietas.')
+          }}
           onExportarPDF={() => {
             try {
               exportarPlanPDF(avisoPlanGuardado.plan, avisoPlanGuardado.paciente)
