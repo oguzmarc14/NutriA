@@ -230,7 +230,7 @@ const comidaSchema =
       z.array(
         alimentoPlanSchema,
       )
-        .optional(),
+        .min(1, 'Agrega al menos un ingrediente a cada comida.'),
   })
 
 /*
@@ -260,7 +260,7 @@ const planSchema =
       z.array(
         comidaSchema,
       )
-        .optional(),
+        .min(1, 'El plan necesita al menos una comida con ingredientes.'),
 
     fechaInicio:
       z.coerce

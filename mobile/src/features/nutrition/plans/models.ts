@@ -63,6 +63,8 @@ export function planPayload(draft: DraftPlan) {
   const energy = draft.energy.trim() ? numberInput(draft.energy) : null
   if (energy !== null && (!Number.isFinite(energy) || energy <= 0)) throw new Error('La meta de energía debe ser positiva; déjala vacía para quitarla.')
   if (!draft.meals.length || !draft.meals.some(meal => meal.alimentos.length)) throw new Error('Agrega al menos una comida con alimentos antes de guardar.')
+  const incomplete = draft.meals.find(meal => !meal.alimentos.length)
+  if(incomplete)throw new Error('Agrega ingredientes a «' + (incomplete.nombre || 'Comida') + '» o elimina ese tiempo de comida vacío antes de guardar.')
   const comidas = draft.meals.map(meal => {
     if (meal.nombre.trim().length < 2 || (meal.hora && !/^([01]\d|2[0-3]):[0-5]\d$/.test(meal.hora))) throw new Error('Revisa el nombre y la hora de cada comida (HH:MM).')
     const percentage = meal.percentage.trim() ? numberInput(meal.percentage) : null

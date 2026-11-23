@@ -37,7 +37,9 @@ function fixture({expediente=true,medicion=true,pertenece=true}={}){
     const res={statusCode:200,body:null,status(n){this.statusCode=n;return this},
       json(data){this.body=data;return this}}
     const req={params:{pacienteId:PID},user:{id:UID},body:{
-      nombre:'Dieta seguimiento',fechaInicio:'2026-11-14',comidas:[],...overrides,
+      nombre:'Dieta seguimiento',fechaInicio:'2026-11-14',
+      comidas:[{nombre:'Desayuno',alimentos:[{tipo:'personalizado',nombre:'Alimento de prueba',cantidad:1,nutrimentos:{kcal:90,proteina:2,carbohidratos:10,grasas:3}}]}],
+      ...overrides,
     }}
     await mod.exports.crearPlanAlimenticio(req,res,e=>error=e)
     if(error)throw error
@@ -92,4 +94,14 @@ test('alimentos personalizados conservan el vínculo al platillo o bebida al gua
   assert.equal(r.statusCode, 201)
   assert.equal(r.body.plan.comidas[0].alimentos[0].preparacionId, 'prep-bebida')
   assert.equal(r.body.plan.comidas[0].alimentos[0].cantidad, 1.5)
+})
+
+test('no permite crear un plan vacío ni comidas sin ingredientes',async()=>{
+  const f=fixture()
+  const empty=await f.invoke({comidas:[]})
+  assert.equal(empty.statusCode,400)
+  assert.equal(f.calls.created,0)
+  const withoutFood=await f.invoke({comidas:[{nombre:'Desayuno',alimentos:[]}]})
+  assert.equal(withoutFood.statusCode,400)
+  assert.equal(f.calls.created,0)
 })
