@@ -650,6 +650,7 @@ async function crearPlanAlimenticio(
         },
       )
 
+    void req.app?.locals?.notificarDietaAsignada?.(paciente._id)
     return res
       .status(201)
       .json({
@@ -770,6 +771,8 @@ async function actualizarPlanAlimenticio(req, res, next) {
         ...(parsed.data.metaEnergiaKcal !== undefined && { metaEnergiaKcal: parsed.data.metaEnergiaKcal }),
         comidas,
         fechaInicio: parsed.data.fechaInicio,
+        'aceptacionPaciente.estado': 'pendiente',
+        'aceptacionPaciente.fecha': null,
       },
       { new: true, runValidators: true },
     )
@@ -797,6 +800,7 @@ async function actualizarPlanAlimenticio(req, res, next) {
       ),
     )
 
+    void req.app?.locals?.notificarDietaAsignada?.(paciente._id)
     return res.json({ message: 'Plan alimenticio actualizado correctamente', plan })
   } catch (error) {
     if (error.status) {

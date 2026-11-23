@@ -1,0 +1,16 @@
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path')
+const read=p=>fs.readFileSync(path.join(__dirname,p),'utf8')
+test('acceptance is patient-owned, atomic and idempotent; notification happens after persistence',()=>{
+  const source=read('../src/controllers/aceptarPlanPaciente.controller.js')
+  assert.match(source,/req\.user\.patient/)
+  assert.match(source,/paciente: patient\._id, nutritionist: patient\.nutritionist/)
+  assert.match(source,/'aceptacionPaciente\.estado': \{ \$ne: 'aceptada' \}/)
+  assert.match(source,/if \(plan\) \{/)
+  assert.match(source,/notificarDietaAceptada/)
+  assert.match(source,/notified: false/)
+})
+test('creating and modifying plans informs patients and edits require fresh acceptance',()=>{
+  const routes=read('../src/controllers/planAlimenticio.controller.js')
+  assert.match(routes,/notificarDietaAsignada/)
+  assert.match(routes,/'aceptacionPaciente\.estado': 'pendiente'/)
+})

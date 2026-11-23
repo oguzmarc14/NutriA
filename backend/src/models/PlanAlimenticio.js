@@ -277,6 +277,10 @@ const planAlimenticioSchema =
         type: Boolean,
         default: true,
       },
+      aceptacionPaciente: {
+        estado: { type: String, enum: ['pendiente','aceptada'], default: 'pendiente' },
+        fecha: { type: Date, default: null },
+      },
     },
     {
       timestamps: true,

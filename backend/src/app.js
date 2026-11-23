@@ -27,6 +27,8 @@ const recordatoriosRoutes = require('./routes/recordatorios.routes')
 const app = express()
 app.locals.notificarCita = require('./services/push.service').notificarCita
 app.locals.notificarReceta = require('./services/push.service').notificarReceta
+app.locals.notificarDietaAsignada = require('./services/push.service').notificarDietaAsignada
+app.locals.notificarDietaAceptada = require('./services/push.service').notificarDietaAceptada
 
 app.disable('x-powered-by')
 

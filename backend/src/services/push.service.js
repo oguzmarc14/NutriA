@@ -9,7 +9,7 @@ async function sendDevice(device, notice) {
     try {
       const response = await fetch('https://exp.host/--/api/v2/push/send', {
         method: 'POST', headers: headers(),
-        body: JSON.stringify({to:device.token,title:'NutriA',body:notice.body,sound:'default',channelId:'appointments',priority:'high',
+        body: JSON.stringify({to:device.token,title:'NutriA',body:notice.body,sound:'default',channelId:notice.channelId||'appointments',priority:'high',
           data:{kind:notice.kind,route:notice.route,recipientUser:String(device.user)}}),signal:AbortSignal.timeout(8000),
       })
       if(response.status===429||response.status>=500)throw new Error('Servicio push temporalmente no disponible')
@@ -44,6 +44,24 @@ async function notificarReceta(receta, pending) {
     await notifyUsers(users.map(u=>u._id),{kind:'nutria-community',route:pending?'/moderacion':'/comunidad',body:pending?'Hay una receta pendiente de revisión en NutriA.':'Tu receta tiene una actualización. Abre NutriA Community.'})
   }catch{console.error('No se pudo procesar un aviso de Community')}
 }
+async function notificarDietaAsignada(patient) {
+  try {
+    const recipients = await User.find({ active: true, patient, role: 'patient' }).select('_id').lean()
+    await notifyUsers(recipients.map(u => u._id), {
+      kind:'nutria-diet-assigned',route:'/mi-plan',channelId:'nutrition-updates-v1',
+      body:'Tienes un plan alimenticio nuevo o actualizado. Abre Mi plan para revisarlo.',
+    })
+  } catch (error) { console.error('No se pudo notificar un plan asignado:', error.message) }
+}
+async function notificarDietaAceptada(nutritionist, planId) {
+  try {
+    const recipients = await User.find({ _id:nutritionist,active:true,role:'nutritionist' }).select('_id').lean()
+    await notifyUsers(recipients.map(u => u._id), {
+      kind:'nutria-diet-accepted',route:'/planes',channelId:'nutrition-updates-v1',
+      body:'Un paciente confirmó que recibió su dieta. Abre Planes alimenticios para consultar el registro.',
+    })
+  } catch (error) { console.error('No se pudo notificar la aceptación de dieta:', error.message) }
+}
 let processing=false
 async function processReceipts() {
   if(!enabled()||processing)return
@@ -64,4 +82,4 @@ async function processReceipts() {
   }catch{console.error('No se pudieron consultar receipts push')}
   finally{processing=false}
 }
-module.exports={notificarCita,notificarReceta,processReceipts}
+module.exports={notificarCita,notificarReceta,notificarDietaAsignada,notificarDietaAceptada,processReceipts}
