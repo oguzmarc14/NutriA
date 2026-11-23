@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router'
+import { NutritionistGamificationControl } from '@/features/gamification/NutritionistGamificationControl'
 import { Alert, Text, View } from 'react-native'
 import { dateTime, type Appointment, type Patient } from '@/features/appointments/models'
 import { Shortcut } from '@/shared/ui/Shortcut'
@@ -61,6 +62,7 @@ export default function PatientDetail() {
             onPress={() => router.push({ pathname: '/calculo', params: { patient: patientId } })} />
           <Shortcut icon="fitness-outline" title="Mediciones" detail="Registra medidas y consulta el historial"
             onPress={() => router.push({ pathname: '/mediciones', params: { patient: patientId } })} />
+          <NutritionistGamificationControl patientId={patientId!} />
           <View style={styles.card}>
             <Text accessibilityRole="header" style={styles.cardTitle}>Próxima cita</Text>
             <Text style={styles.body}>{next ? dateTime.format(new Date(next.inicio)) :

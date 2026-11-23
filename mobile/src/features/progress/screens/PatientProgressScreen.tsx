@@ -1,4 +1,5 @@
 import { MeasurementChart } from '../MeasurementChart'
+import { GamificationPanel } from '@/features/gamification/GamificationPanel'
 import { ActivityIndicator, Text, View } from 'react-native'
 import { Button, Page, styles } from '@/shared/ui/primitives'
 import { useResource } from '@/shared/hooks/useResource'
@@ -48,6 +49,7 @@ export default function PatientProgressScreen() {
     </View>}
     {data && <MeasurementChart measurements={measurements} />}
     {data && <MealHistory data={data} editable />}
+    <GamificationPanel />
     <Text accessibilityRole="header" style={styles.cardTitle}>Historial de mediciones</Text>
     {data && !measurements.length && <Text style={styles.body}>Todavía no tienes mediciones registradas.</Text>}
     {measurements.map(item => <View key={item._id} style={styles.card}>

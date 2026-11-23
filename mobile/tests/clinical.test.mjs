@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { measurementDate, numberInput, measurementChanged } from '../src/features/nutrition/clinicalModels.ts'
+import { measurementDate, measurementDay, numberInput, measurementChanged } from '../src/features/nutrition/clinicalModels.ts'
 
 test('clinical numbers accept decimal comma without silently treating empty input as zero', () => {
   assert.equal(numberInput(' 1,72 '), 1.72)
@@ -21,4 +21,10 @@ test('saved calculations detect newly registered and edited measurements', () =>
   assert.equal(measurementChanged(calculation, [{ ...original, peso: 72 }]), true)
   assert.equal(measurementChanged(calculation, [{ ...original, _id: 'two', createdAt: '2026-11-02T01:00:00Z' }]), true)
   assert.equal(measurementChanged(calculation, [{ ...original, _id: 'two', fecha: '2026-11-10T18:00:00Z' }]), true)
+})
+
+test('clinical dates survive UTC offsets and editing preserves their original calendar day',()=>{
+  assert.equal(measurementDay('2026-11-22T00:00:00.000Z'), '2026-11-22')
+  assert.equal(measurementDay('2026-11-22T12:00:00.000Z'), '2026-11-22')
+  assert.equal(measurementDate('2026-11-22'), '2026-11-22T12:00:00.000Z')
 })

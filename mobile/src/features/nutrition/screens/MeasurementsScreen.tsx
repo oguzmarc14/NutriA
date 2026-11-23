@@ -9,7 +9,7 @@ import { useResource } from '@/shared/hooks/useResource'
 import { Button, Page, styles } from '@/shared/ui/primitives'
 import { FormField } from '@/shared/ui/FormField'
 import { ListState } from '@/shared/ui/ListState'
-import { clinicalDate, localDate, measurementDate, numberInput, type Measurement } from '../clinicalModels'
+import { clinicalDate, localDate, measurementDate, measurementDay, numberInput, type Measurement } from '../clinicalModels'
 
 const fields = [
   ['edad', 'Edad (años)'], ['peso', 'Peso (kg)'], ['estatura', 'Estatura (metros)'],
@@ -74,7 +74,7 @@ export default function Measurements() {
         <Text style={styles.cardTitle}>{clinicalDate.format(new Date(item.fecha))}</Text>
         <Text style={styles.body}>{item.peso} kg · {item.estatura} m · IMC {item.imc ?? '—'}</Text>
         <Button disabled={busy} selected={false} label="Editar medición" onPress={() => {
-          setEditing(item._id); setDate(localDate(new Date(item.fecha))); setError('')
+          setEditing(item._id); setDate(measurementDay(item.fecha)); setError('')
           setForm(Object.fromEntries(fields.map(([key]) => [key, item[key] == null ? '' : String(item[key])])))
         }} />
       </View>)}

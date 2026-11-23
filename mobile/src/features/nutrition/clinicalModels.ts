@@ -19,13 +19,18 @@ export function numberInput(value: string): number {
 export function measurementDate(value: string): string | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null
   const [y, m, d] = value.split('-').map(Number)
-  const date = new Date(y, m - 1, d, 12)
-  return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d ? date.toISOString() : null
+  const date = new Date(Date.UTC(y, m - 1, d, 12))
+  return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d ? date.toISOString() : null
 }
 export function localDate(value = new Date()): string {
   return `${value.getFullYear()}-${String(value.getMonth()+1).padStart(2,'0')}-${String(value.getDate()).padStart(2,'0')}`
 }
-export const clinicalDate = new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium' })
+export const clinicalDate = new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeZone: 'UTC' })
+export function measurementDay(value: string): string {
+  // La fecha clínica es un día de calendario, no la hora local del registro.
+  const date = /^\d{4}-\d{2}-\d{2}/.exec(value)
+  return date ? date[0] : ''
+}
 export const clinicalTime = new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeStyle: 'short' })
 
 export function measurementChanged(calculation: Calculation, measurements: Measurement[]): boolean {

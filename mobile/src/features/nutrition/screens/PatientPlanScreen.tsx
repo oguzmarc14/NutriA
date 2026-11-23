@@ -24,6 +24,7 @@ export default function PatientPlanScreen() {
   const { data, loading, error, reload } = useResource<Profile>('/mi-perfil')
   const [date, setDate] = useState(localDate)
   const [selectedPlanId, setSelectedPlanId] = useState('')
+  const [showHistory, setShowHistory] = useState(false)
   const validDate = validDay(date)
   const plans = [...(data?.planes || [])].sort((a, b) => startDate(b).localeCompare(startDate(a)) || b.createdAt.localeCompare(a.createdAt))
   const assigned = activePlan(plans, date)
@@ -56,9 +57,10 @@ export default function PatientPlanScreen() {
         </View>)}
     </> : data && validDate && <Text style={styles.body}>No tienes una dieta asignada para esta fecha.</Text>}
     {!!plans.length && <>
-      <Text accessibilityRole="header" style={styles.cardTitle}>Historial de dietas</Text>
-      {plans.map(item => <Button key={item._id} selected={false}
-        label={item.nombre + ' · ' + startDate(item)} onPress={() => { setDate(startDate(item)); setSelectedPlanId(item._id) }}/>)}
+      <Button selected={false} label={showHistory ? 'Ocultar dietas anteriores' : 'Ver dietas anteriores (' + plans.length + ')'}
+        onPress={() => setShowHistory(value => !value)} />
+      {showHistory && plans.map(item => <Button key={item._id} selected={false}
+        label={item.nombre + ' · ' + startDate(item)} onPress={() => { setDate(startDate(item)); setSelectedPlanId(item._id); setShowHistory(false) }}/>)}
     </>}
   </Page>
 }
