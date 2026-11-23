@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { CalendarDays, CalendarOff, Clock3, Plus, Save, Trash2 } from 'lucide-react'
 import client from '../api/client'
 import './horarioLaboral.css'
+import CalendarioNoLaborable from './CalendarioNoLaborable'
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const inicial = {
@@ -157,65 +158,8 @@ export default function HorarioLaboral({ primerIngreso = false, onSaved }) {
             Zona horaria: {form.zonaHoraria}. Las consultas deben finalizar antes de la hora de salida.
           </p>
 
-          {!primerIngreso && (
-            <section id="dias-no-laborables" className="nutria-horario-excepciones rounded-2xl border p-3 sm:p-4">
-              <div className="flex items-start gap-2">
-                <CalendarOff size={21} className="mt-0.5 shrink-0" aria-hidden="true"/>
-                <div>
-                  <h3 className="text-base font-extrabold">Días no laborables y vacaciones</h3>
-                  <p className="nutria-horario-muted mt-1 text-xs leading-relaxed">
-                    Agrega festivos, vacaciones o cierres especiales. Esas fechas dejarán de aparecer como disponibles para nuevas citas.
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 grid gap-2 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto] sm:items-end">
-                <label className="grid gap-1 text-xs font-bold">
-                  Fecha
-                  <input type="date" value={nuevaFecha}
-                    onChange={e => setNuevaFecha(e.target.value)}
-                    className="nutria-horario-input min-h-11 min-w-0 rounded-xl border p-3 text-sm"/>
-                </label>
-                <label className="grid gap-1 text-xs font-bold">
-                  Motivo (opcional)
-                  <input type="text" maxLength={80} value={nuevoMotivo}
-                    onChange={e => setNuevoMotivo(e.target.value)}
-                    placeholder="Festivo, vacaciones, descanso..."
-                    className="nutria-horario-input min-h-11 min-w-0 rounded-xl border p-3 text-sm"/>
-                </label>
-                <button type="button" onClick={agregarFecha}
-                  className="nutria-horario-secondary flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-xs font-extrabold">
-                  <Plus size={16}/>Agregar
-                </button>
-              </div>
-              {form.diasNoLaborables.length > 0 ? (
-                <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-                  {form.diasNoLaborables.map(item => (
-                    <li key={item.fecha}
-                      className="nutria-horario-excepcion flex min-w-0 items-center justify-between gap-3 rounded-xl border p-3">
-                      <div className="min-w-0">
-                        <p className="text-xs font-extrabold">{item.fecha}</p>
-                        {item.motivo && <p className="nutria-horario-muted mt-1 break-words text-xs">{item.motivo}</p>}
-                      </div>
-                      <button type="button"
-                        onClick={() => { setForm(f => ({
-                          ...f,diasNoLaborables:f.diasNoLaborables.filter(d => d.fecha !== item.fecha),
-                        }));setSuccess('') }}
-                        title={'Quitar el día no laborable ' + item.fecha}
-                        aria-label={'Quitar día no laborable ' + item.fecha}
-                        className="nutria-horario-secondary grid size-10 shrink-0 place-items-center rounded-xl border">
-                        <Trash2 size={16}/>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="nutria-horario-muted mt-3 text-xs">Aún no has añadido fechas no laborables.</p>
-              )}
-              <p className="nutria-horario-muted mt-3 text-[11px] leading-relaxed">
-                Las citas ya registradas en esos días no se borran ni se cancelan automáticamente. Revísalas en Ver citas si necesitas reprogramarlas.
-              </p>
-            </section>
-          )}
+          {!primerIngreso && <CalendarioNoLaborable form={form} disabled={saving}
+            onChange={diasNoLaborables=>{setForm(current=>({...current,diasNoLaborables}));setSuccess('')}}/>}
 
           {error && <p role="alert" className="nutria-horario-error rounded-xl border p-3 text-sm font-semibold">{error}</p>}
           {success && <p role="status" className="nutria-horario-success rounded-xl p-3 text-sm font-semibold">{success}</p>}
