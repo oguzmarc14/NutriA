@@ -26,8 +26,8 @@ function DraggableMeal({ children, disabled, label, onDrop, onDragging }: { chil
     {children}
   </Animated.View>
 }
-export function MealNavigator({ meals, active, disabled, onSelect, onMove, onAdd, onReorder, onRemove }: {
-  meals: DraftMeal[]; active: string; disabled: boolean; onSelect: (key: string) => void; onMove: (key: string, direction: -1 | 1) => void; onAdd: () => void; onReorder: (from: number, to: number) => void; onRemove: (key: string) => void
+export function MealNavigator({ meals, active, disabled, onSelect, onAdd, onReorder, onRemove }: {
+  meals: DraftMeal[]; active: string; disabled: boolean; onSelect: (key: string) => void; onAdd: () => void; onReorder: (from: number, to: number) => void; onRemove: (key: string) => void
 }) {
   const [dragging, setDragging] = useState(false)
   const allCalories = planTotals(meals).kcal
@@ -41,7 +41,15 @@ export function MealNavigator({ meals, active, disabled, onSelect, onMove, onAdd
     <ScrollView horizontal scrollEnabled={!dragging} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingBottom: 6 }} keyboardShouldPersistTaps="handled">
       {meals.map((meal, index) => { const totals = planTotals([meal]), selected = meal.key === active
         return <DraggableMeal key={meal.key} disabled={disabled} label={meal.nombre} onDragging={setDragging} onDrop={slots => onReorder(index, Math.max(0, Math.min(meals.length - 1, index + slots)))}><View style={{ width: 176, padding: 11, borderRadius: 18, borderWidth: 1, borderColor: selected ? c.green : c.border, backgroundColor: selected ? c.selected : '#ffffff' }}>
-          <Pressable accessibilityRole="button" accessibilityState={{ selected, disabled }} disabled={disabled} accessibilityLabel={`${meal.nombre}, ${meal.hora || 'sin hora'}, ${totals.kcal.toFixed(0)} kilocalorías`} onPress={() => onSelect(meal.key)} style={{ gap: 6, minHeight: 82 }}>
+          <View style={{ position: 'absolute', top: 3, right: 3, zIndex: 3 }}>
+            <DietIconButton icon="trash-outline" label={'Eliminar ' + meal.nombre} disabled={disabled} danger
+              onPress={() => Alert.alert('Eliminar comida',
+                meal._id ? 'Al guardar se eliminará esta comida y sus posibles registros de seguimiento.' : '¿Eliminar esta comida del borrador?', [
+                  { text: 'Cancelar', style: 'cancel' },
+                  { text: 'Eliminar', style: 'destructive', onPress: () => onRemove(meal.key) },
+                ])} />
+          </View>
+          <Pressable accessibilityRole="button" accessibilityState={{ selected, disabled }} disabled={disabled} accessibilityLabel={`${meal.nombre}, ${meal.hora || 'sin hora'}, ${totals.kcal.toFixed(0)} kilocalorías`} onPress={() => onSelect(meal.key)} style={{ gap: 6, minHeight: 90, paddingTop: 32 }}>
             <View style={s.row}><Ionicons name={mealIcon(meal.nombre)} size={18} color={c.green} /><Text numberOfLines={2} style={[s.label, { flex: 1 }]}>{meal.nombre || 'Sin nombre'}</Text>
               {selected && <Ionicons name="checkmark-circle" size={15} color={c.green} />}</View>
             <Text style={s.caption} numberOfLines={1}>{meal.preparaciones?.find(p => p.nombre)?.nombre || meal.platillo || 'Platillo sin nombre'}</Text>
@@ -51,14 +59,7 @@ export function MealNavigator({ meals, active, disabled, onSelect, onMove, onAdd
             </Text>
             <Text style={s.caption}>{meal.alimentos.length} alimentos</Text>
           </Pressable>
-          <View style={{ alignSelf: 'flex-end' }}>
-            <DietIconButton icon="trash-outline" label={'Eliminar ' + meal.nombre} disabled={disabled} danger
-              onPress={() => Alert.alert('Eliminar comida',
-                meal._id ? 'Al guardar se eliminará esta comida y sus posibles registros de seguimiento.' : '¿Eliminar esta comida del borrador?', [
-                  { text: 'Cancelar', style: 'cancel' },
-                  { text: 'Eliminar', style: 'destructive', onPress: () => onRemove(meal.key) },
-                ])} />
-          </View>
+
         </View></DraggableMeal>
       })}
     </ScrollView>

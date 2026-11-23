@@ -181,11 +181,7 @@ function Editor({ patient, patientName, initial, templatePlan, requirements, ref
     <MealNavigator meals={draft.meals} active={activeMeal} disabled={busy} onReorder={(from, to) => {
       if (from === to) return
       change({ ...draft, meals: reorderMeals(draft.meals, from, to) })
-    }} onSelect={setActiveMeal} onAdd={() => setAddMealOpen(true)} onMove={(key, direction) => {
-      const meals = [...draft.meals], index = meals.findIndex(meal => meal.key === key), next = index + direction
-      if (index < 0 || next < 0 || next >= meals.length) return
-      ;[meals[index], meals[next]] = [meals[next], meals[index]]; change({ ...draft, meals })
-    }} onRemove={key => {
+    }} onSelect={setActiveMeal} onAdd={() => setAddMealOpen(true)} onRemove={key => {
       const meals = draft.meals.filter(meal => meal.key !== key)
       change({ ...draft, meals })
       if (activeMeal === key) setActiveMeal(meals[0]?.key || '')
