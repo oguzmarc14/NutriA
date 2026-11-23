@@ -22,10 +22,13 @@ export function newPlan(): DraftPlan {
   return { name: '', goal: '', date: localDate(), energy: '', meals: [['Desayuno', '08:00'], ['Comida', '14:30'], ['Cena', '20:30']].map(([nombre, hora], i) => ({ ...newMeal(nombre), hora, percentage: String([25, 40, 35][i]) })) }
 }
 export function editPlan(plan: Plan): DraftPlan {
+  const hasDistribution = plan.comidas.some(meal => meal.porcentajeDistribucion != null)
+  const equalShare = Math.floor(100 / Math.max(1, plan.comidas.length))
   return { name: plan.nombre, goal: plan.objetivo || '', date: plan.fechaInicio.slice(0, 10),
     energy: plan.metaEnergiaKcal == null ? '' : String(plan.metaEnergiaKcal),
-    meals: plan.comidas.map(meal => ({ ...meal, key: draftKey(),
-      percentage: meal.porcentajeDistribucion == null ? '' : String(meal.porcentajeDistribucion),
+    meals: plan.comidas.map((meal, index) => ({ ...meal, key: draftKey(),
+      percentage: String(hasDistribution ? meal.porcentajeDistribucion ?? 0
+        : index === plan.comidas.length - 1 ? 100 - equalShare * index : equalShare),
       alimentos: meal.alimentos.map(food => ({ ...food, key: draftKey(), quantity: String(food.cantidad) })),
     })) }
 }
@@ -57,6 +60,38 @@ export function planTotals(meals: DraftMeal[]): Nutrients {
   }
   return total
 }
+export function mealPercentage(value: string) {
+  return value.trim() ? numberInput(value) : 0
+}
+
+export function planDistribution(meals: DraftMeal[]) {
+  let total = 0
+  let invalid = false
+  let emptyWithShare = false
+  for (const meal of meals) {
+    const percent = mealPercentage(meal.percentage)
+    if (!Number.isFinite(percent) || percent < 0 || percent > 100) {
+      invalid = true
+      continue
+    }
+    total += percent
+    if (percent > 0 && !meal.alimentos.length) emptyWithShare = true
+  }
+  const balanced = Math.abs(total - 100) < 1e-8
+  const difference = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 8 }).format(Math.abs(100 - total))
+  const error = invalid ? 'Cada comida debe tener un porcentaje entre 0 y 100.'
+    : !balanced ? (total < 100 ? 'Faltan ' : 'Sobran ') + difference + ' puntos porcentuales.'
+    : emptyWithShare ? 'Agrega ingredientes a las comidas con porcentaje o asígnales 0% y redistribuye.'
+    : ''
+  return { total, error }
+}
+
+export function editablePlanPayload(draft: DraftPlan) {
+  const distribution = planDistribution(draft.meals)
+  if (distribution.error) throw new Error(distribution.error)
+  return planPayload(draft)
+}
+
 export function planPayload(draft: DraftPlan) {
   const fechaInicio = measurementDate(draft.date)
   if (!fechaInicio || draft.name.trim().length < 2) throw new Error('Escribe un nombre de al menos dos caracteres y una fecha válida.')

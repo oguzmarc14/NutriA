@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { router } from 'expo-router'
 import { Alert, Pressable, Text, View } from 'react-native'
-import { clinicMenu, patientDestinations } from './menu'
+import { clinicMenuSections, patientDestinations } from './menu'
 import { colors, styles } from '@/shared/ui/primitives'
 import { usePatientWork } from '@/features/patients/PatientWorkProvider'
 
@@ -28,12 +28,17 @@ export function ClinicMenu({ close }: { close?: () => void }) {
         <Text style={{ color: '#4a6d57', fontWeight: '700', fontSize: 12 }}>Dejar de trabajar con este paciente</Text>
       </Pressable>
     </View>}
-    {clinicMenu.map(item => <Pressable key={item.label}
+    {clinicMenuSections.map(section => <View key={section.label}
+      style={{ marginTop: 5, padding: 5, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: '#f8fcf9' }}>
+      <Text accessibilityRole="header" style={{ color: colors.green, fontSize: 13, fontWeight: '800', paddingHorizontal: 12, paddingTop: 8 }}>{section.label}</Text>
+      {section.items.map(item => <Pressable key={item.label}
       accessibilityRole="button" onPress={() => {
         close?.()
         if ('intent' in item) {
           if (active) router.push({ pathname: patientDestinations[item.intent], params: { patient: active.id } })
           else router.push({ pathname: '/elegir-paciente', params: { intent: item.intent } })
+        } else if ('tab' in item) {
+          router.push({ pathname: item.path, params: { tab: item.tab } })
         } else if (item.path === '/agendar' && active) {
           router.push({ pathname: '/agendar', params: { patient: active.id } })
         } else router.navigate(item.path)
@@ -43,5 +48,6 @@ export function ClinicMenu({ close }: { close?: () => void }) {
       <Text style={{ color: colors.ink, fontSize: 15, fontWeight: '600', flex: 1 }}>{item.label}</Text>
       <Ionicons name="chevron-forward" color={colors.muted} size={16} />
     </Pressable>)}
+    </View>)}
   </View>
 }

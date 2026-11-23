@@ -7,7 +7,8 @@ import { AppDialog } from '@/shared/ui/AppDialog'
 import { DateField } from '@/shared/ui/DateTimeField'
 import { useEffect, useRef, useState } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
-import { Alert, Text, View } from 'react-native'
+import { Alert, Pressable, Text, View } from 'react-native'
+import Ionicons from '@expo/vector-icons/Ionicons'
 import { ApiError, request } from '@/core/api/client'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useResource } from '@/shared/hooks/useResource'
@@ -16,11 +17,28 @@ import { ListState } from '@/shared/ui/ListState'
 import { FormField } from '@/shared/ui/FormField'
 import { Button, Page, styles } from '@/shared/ui/primitives'
 import { MealEditor } from '../plans/MealEditor'
-import { assistedPlan, duplicatePlan, editPlan, newMeal, newPlan, planPayload, planTotals, type DraftPlan, type Plan, type PlanData } from '../plans/models'
+import { assistedPlan, duplicatePlan, editPlan, newMeal, newPlan, editablePlanPayload, planDistribution, planTotals, type DraftPlan, type Plan, type PlanData } from '../plans/models'
 import { measurementChanged, numberInput, type Calculation, type Measurement } from '../clinicalModels'
 
 type Requirements = { expediente: { alergias?: string; nutricion?: Parameters<typeof assistedPlan>[0] & { intoleranciasAlimentarias?: string } } | null; mediciones: Measurement[]; calculos: Calculation[] }
 const validId = (value: unknown): value is string => typeof value === 'string' && /^[a-f\d]{24}$/i.test(value)
+
+function PlanModeOption({ icon, label, description, disabled, onPress }: {
+  icon: keyof typeof Ionicons.glyphMap; label: string; description: string; disabled?: boolean; onPress: () => void
+}) {
+  return <Pressable accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled}
+    onPress={onPress} style={({ pressed }) => [{
+      flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 68, padding: 11,
+      borderWidth: 1, borderColor: dc.border, borderRadius: 15, backgroundColor: disabled ? '#fff' : dc.soft,
+    }, pressed && styles.pressed]}>
+    <View style={ds.iconTile}><Ionicons name={icon} size={20} color={dc.green} /></View>
+    <View style={{ flex: 1, gap: 3 }}>
+      <Text style={[ds.label, { color: disabled ? dc.muted : dc.green }]}>{label}</Text>
+      <Text style={ds.caption}>{description}</Text>
+    </View>
+    {!disabled && <Ionicons name="chevron-forward" size={17} color={dc.green} />}
+  </Pressable>
+}
 
 function Editor({ patient, patientName, initial, templatePlan, requirements, refreshRequirements, previousPlans }: {
   patient: string; patientName: string; initial?: Plan; templatePlan?: Plan; requirements?: Requirements; refreshRequirements: () => void; previousPlans: Plan[]
@@ -48,6 +66,8 @@ function Editor({ patient, patientName, initial, templatePlan, requirements, ref
   const [draftMessage,setDraftMessage]=useState('')
   useEffect(()=>{let active=true;void loadDraft(draftStorageKey).then(saved=>{if(!active)return;if(saved)setRecovery(saved);else setDraftReady(true)}).catch(()=>{if(active){setDraftMessage('No se pudo recuperar el borrador local. Puedes continuar y guardar el plan en NutriA.');setDraftReady(true)}});return()=>{active=false}},[draftStorageKey])
   useEffect(()=>{if(!draftReady||!dirty||busy)return;let active=true;const timer=setTimeout(()=>{void saveDraft(draftStorageKey,draft).then(()=>{if(active)setDraftMessage('Borrador protegido guardado en este teléfono.')}).catch(cause=>{if(active)setDraftMessage(cause instanceof Error?cause.message:'No se pudo guardar el borrador local.')})},1500);return()=>{active=false;clearTimeout(timer)}},[draftStorageKey,draftReady,draft,dirty,busy])
+  const [trackerOpen, setTrackerOpen] = useState(false)
+  const distribution = planDistribution(draft.meals)
   const submitting = useRef(false)
   useUnsavedChanges(dirty, busy)
   const totals = planTotals(draft.meals)
@@ -58,7 +78,7 @@ function Editor({ patient, patientName, initial, templatePlan, requirements, ref
   const missingMeasurements = !requirements?.mediciones.some(item => item.peso > 0 && item.estatura >= 0.5 && item.estatura <= 3 && item.edad >= 1 && item.edad <= 120 && item.nivelActividadFisica >= 1 && item.nivelActividadFisica <= 5)
   const blocked = !planId && (!requirements || missingRecord || missingMeasurements)
   function change(next: DraftPlan) { setDraft(next); setDirty(true); setError('') }
-  async function persist(body: ReturnType<typeof planPayload>) {
+  async function persist(body: ReturnType<typeof editablePlanPayload>) {
     if (!session || submitting.current) return
     submitting.current = true; setBusy(true); setError('')
     try {
@@ -102,7 +122,7 @@ function Editor({ patient, patientName, initial, templatePlan, requirements, ref
   function save() {
     if (busy || blocked) return
     try {
-      planPayload(draft)
+      editablePlanPayload(draft)
       setConfirmSave(true)
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Revisa los datos del plan.') }
   }
@@ -119,17 +139,31 @@ function Editor({ patient, patientName, initial, templatePlan, requirements, ref
       <Button label="Recuperar borrador" onPress={()=>{if(recovery){const restored=restoreDraftIds(recovery.draft);change(restored);setActiveMeal(restored.meals[0]?.key||'');setModeOpen(false)}setRecovery(null);setDraftReady(true)}}/>
       <Button label="Conservar formulario actual" selected={false} onPress={()=>{void removeDraft(draftStorageKey).catch(()=>{});setRecovery(null);setDraftReady(true)}}/>
     </AppDialog>
-    <AppDialog visible={modeOpen && !blocked && draftReady && !recovery} title="¿Cómo quieres crear este plan?" message="Elige cómo comenzar. Puedes cambiar de modalidad antes de guardar." onClose={() => setModeOpen(false)}>
-      <Button label="Plan asistido" disabled={!requirements?.calculos[0]} onPress={() => begin(assistedPlan(requirements?.expediente?.nutricion || {}, requirements!.calculos[0].resultado.objetivoKcal))} />
-      <Text style={styles.body}>Usa objetivos, cantidad de comidas y horarios del expediente. Requiere un cálculo guardado.</Text>
-      <Button label="Duplicar último plan" disabled={!previousPlans.length} onPress={() => begin(duplicatePlan([...previousPlans].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]))} />
-      <Text style={styles.body}>Recupera alimentos y cantidades para ajustarlos en una copia independiente.</Text>
-      <Button label="Desde cero" onPress={() => begin(newPlan())} />
+    <AppDialog visible={modeOpen && !blocked && draftReady && !recovery} title="Crear dieta"
+      onClose={() => setModeOpen(false)}>
+      <View style={{ gap: 8 }}>
+        <PlanModeOption icon="sparkles-outline" label="Plan asistido"
+          description={requirements?.calculos[0] ? 'Empieza con la meta, las comidas y los horarios del expediente.' : 'Guarda un cálculo nutricional para usar esta opción.'}
+          disabled={!requirements?.calculos[0]}
+          onPress={() => {
+            const calculation = requirements?.calculos[0]
+            if (calculation) begin(assistedPlan(requirements.expediente?.nutricion || {}, calculation.resultado.objetivoKcal))
+          }} />
+        <PlanModeOption icon="copy-outline" label="Duplicar último plan"
+          description={previousPlans.length ? 'Empieza con una copia editable de las comidas y porciones.' : 'Disponible cuando el paciente tenga una dieta guardada.'}
+          disabled={!previousPlans.length}
+          onPress={() => {
+            const previous = [...previousPlans].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
+            if (previous) begin(duplicatePlan(previous))
+          }} />
+        <PlanModeOption icon="add-circle-outline" label="Desde cero"
+          description="Crea el menú y elige tus propios ingredientes." onPress={() => begin(newPlan())} />
+      </View>
       <Button selected={false} label="Cancelar" onPress={() => setModeOpen(false)} />
     </AppDialog>
     <AppDialog visible={confirmSave} title={planId ? 'Guardar cambios' : 'Guardar plan'} message="El plan alimenticio quedará disponible para el paciente. ¿Confirmas el guardado?" onClose={() => setConfirmSave(false)}>
       <View style={styles.row}><Button expand selected={false} label="Cancelar" onPress={() => setConfirmSave(false)} />
-        <Button expand label="Aceptar" onPress={() => { setConfirmSave(false); try { void persist(planPayload(draft)) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Revisa los datos.') } }} /></View>
+        <Button expand label="Aceptar" onPress={() => { setConfirmSave(false); try { void persist(editablePlanPayload(draft)) } catch (cause) { setError(cause instanceof Error ? cause.message : 'Revisa los datos.') } }} /></View>
     </AppDialog>
     <AppDialog visible={savedOpen} title="¡Dieta creada!" success
       message="El plan del paciente se guardó correctamente. ¿Deseas guardar una copia reutilizable en Mis dietas?"
@@ -188,7 +222,7 @@ function Editor({ patient, patientName, initial, templatePlan, requirements, ref
     }} />
     <AppDialog visible={addMealOpen} title="Agregar tiempo de comida" message="Elige un tipo. Puedes cambiar su nombre y hora después." onClose={() => setAddMealOpen(false)}>
       {['Desayuno', 'Colación', 'Comida', 'Cena', 'Otra comida'].map(name => <Button key={name} label={name} selected={false} onPress={() => {
-        const meal = { ...newMeal(name), hora: ({ Desayuno: '08:00', Colación: '11:30', Comida: '14:30', Cena: '20:30' } as Record<string, string>)[name] || '' }
+        const meal = { ...newMeal(name), percentage: '0', hora: ({ Desayuno: '08:00', Colación: '11:30', Comida: '14:30', Cena: '20:30' } as Record<string, string>)[name] || '' }
         change({ ...draft, meals: [...draft.meals, meal] }); setActiveMeal(meal.key); setAddMealOpen(false)
       }} />)}
     </AppDialog>
@@ -196,10 +230,14 @@ function Editor({ patient, patientName, initial, templatePlan, requirements, ref
       onChange={meal => change({ ...draft, meals: draft.meals.map(item => item.key === meal.key ? meal : item) })}
       onRemove={() => { const meals = draft.meals.filter(item => item.key !== current.key); change({ ...draft, meals }); setActiveMeal(meals[0]?.key || '') }} />}
     <AppDialog visible={!!error} title="Revisa los datos del plan" message={error} onClose={() => setError('')} />
+    {!!distribution.error && <View style={ds.inset}>
+      <Text accessibilityLiveRegion="polite" style={ds.caption}>{distribution.error}</Text>
+      <Button label="Ajustar distribución" selected={false} disabled={busy || blocked} onPress={() => setTrackerOpen(true)} />
+    </View>}
     <View style={styles.row}><Button expand selected={false} disabled={busy} label="Cancelar" onPress={() => router.back()} />
-    <Button expand disabled={busy || blocked || !dirty} label={busy ? 'Guardando…' : planId ? 'Guardar cambios' : 'Guardar plan'} onPress={save} /></View>
+    <Button expand disabled={busy || blocked || !dirty || !!distribution.error} label={busy ? 'Guardando…' : planId ? 'Guardar cambios' : 'Guardar plan'} onPress={save} /></View>
 
-  </Page><PlanTracker draft={draft} reference={reference} active={activeMeal} disabled={busy || blocked} onChange={change} /></View>
+  </Page><PlanTracker draft={draft} reference={reference} active={activeMeal} disabled={busy || blocked} open={trackerOpen} onOpenChange={setTrackerOpen} onChange={change} /></View>
 }
 
 export default function PlanEditorScreen() {

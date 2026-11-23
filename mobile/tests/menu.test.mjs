@@ -1,10 +1,12 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { existsSync } from 'node:fs'
-import { clinicMenu, patientDestinations, isPatientIntent } from '../src/features/navigation/menu.ts'
-test('all twelve clinic sections lead to an existing mobile route', () => {
-  assert.equal(clinicMenu.length, 12)
-  assert.equal(new Set(clinicMenu.map(item => item.label)).size, 12)
+import { clinicMenuSections, patientDestinations, isPatientIntent } from '../src/features/navigation/menu.ts'
+test('grouped clinic menu preserves unique destinations and exposes clinic availability', () => {
+  const clinicMenu = clinicMenuSections.flatMap(section => [...section.items])
+  assert.equal(new Set(clinicMenu.map(item => item.label)).size, clinicMenu.length)
+  assert.ok(clinicMenu.some(item => item.path === '/horarios'))
+  assert.ok(clinicMenu.some(item => item.path === '/comunidad' && item.tab === 'dietas'))
   for (const item of clinicMenu) {
     const path = 'intent' in item ? patientDestinations[item.intent] : item.path
     const file = path === '/' ? '/index' : path

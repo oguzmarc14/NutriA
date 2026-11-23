@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
+import { router } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
 import { useEffect, useState } from 'react'
 import { Alert, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
@@ -100,6 +101,15 @@ export default function ClinicProfileScreen() {
       <Text accessibilityRole="alert" style={styles.error}>{resource.error}</Text>
       <Pressable accessibilityRole="button" onPress={resource.reload}><Text style={s.link}>Reintentar</Text></Pressable>
     </View>}
+    <Pressable accessibilityRole="button" onPress={() => router.push('/horarios')}
+      style={({ pressed }) => [s.card, { flexDirection: 'row', alignItems: 'center' }, pressed && styles.pressed]}>
+      <Ionicons name="calendar-outline" size={24} color={colors.green} />
+      <View style={{flex:1,gap:4}}>
+        <Text style={s.logoTitle}>Horarios y días no laborables</Text>
+        <Text style={s.caption}>Jornada semanal, vacaciones y disponibilidad de citas</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={18} color={colors.green} />
+    </Pressable>
     {resource.data && <>
       <View style={s.card}>
         <Text style={s.label}>Identidad del consultorio</Text>
