@@ -5,8 +5,8 @@ function enlaceDePago(value) {
   try {
     const url = new URL(value)
     if (url.protocol !== 'https:' || url.port || url.username || url.password || url.hash) return false
-    if (url.hostname === 'mpago.la') return /^\/[a-zA-Z0-9_-]+$/.test(url.pathname) && !url.search
-    return url.hostname === 'link.mercadopago.com.mx' && /^\/[a-zA-Z0-9_-]+$/.test(url.pathname) && !url.search
+    const dominios = ['mpago.la', 'mpago.mx', 'link.mercadopago.com.mx']
+    return dominios.includes(url.hostname) && /^\/[a-zA-Z0-9_-]+$/.test(url.pathname) && !url.search
   } catch { return false }
 }
 
