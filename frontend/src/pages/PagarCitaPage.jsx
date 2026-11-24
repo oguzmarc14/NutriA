@@ -46,7 +46,8 @@ function BankChallenge({ challenge }) {
 }
 
 export default function PagarCitaPage() {
-  const { hash } = useLocation()
+  const { hash, search } = useLocation()
+  const embedded = new URLSearchParams(search).get('app') === 'android'
   const id = hash.slice(1)
   const valid = /^[a-f0-9-]{36}\.[a-zA-Z0-9_-]{43}$/i.test(id)
   const container = 'mp-card-' + useId().replace(/[^a-zA-Z0-9-]/g, '')
@@ -133,7 +134,7 @@ export default function PagarCitaPage() {
       {booking && statusLabel[booking.status] && <p role="status" className="rounded-xl bg-[#e9f4ec] p-3">{statusLabel[booking.status]}</p>}
       {(!valid || error) && <p role="alert" className="rounded-xl bg-red-50 p-3 text-red-800">{valid ? error : 'La reserva no está disponible.'}</p>}
       {booking?.status === 'reserved' && !publicKey && <p>El consultorio no puede recibir este pago en línea.</p>}
-      <Link to="/mis-citas" className="inline-flex min-h-11 items-center font-bold underline">Ver mis citas</Link>
+      {!embedded && <Link to="/mis-citas" className="inline-flex min-h-11 items-center font-bold underline">Ver mis citas</Link>}
     </section>
   </main>
 }
