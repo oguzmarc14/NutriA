@@ -38,6 +38,7 @@ function bookingFixture({ blocked = false } = {}) {
       construirDisponibilidad: () => [{ inicio: date.toISOString() }],
     },
     './mercadoPago.service': {},
+    './mercadoPagoOrders': require('../src/services/mercadoPagoOrders'),
     './push.service': {},
     './calendar.service': {},
   }
@@ -103,4 +104,33 @@ test('un webhook alterado o vencido no puede confirmar un pago', () => {
   assert.equal(validWebhook({ id, requestId, signature: signature(now) }), true)
   assert.equal(validWebhook({ id: '123457', requestId, signature: signature(now) }), false)
   assert.equal(validWebhook({ id, requestId, signature: signature(now - 15 * 60000) }), false)
+})
+
+test('una orden pendiente no crea cita; su confirmación acreditada crea una sola cita y dos avisos', async () => {
+  const f = bookingFixture()
+  const order = {
+    id: 'ORD_TEST',
+    user_id: '123',
+    external_reference: 'reserva',
+    currency_id: 'MXN',
+    total_amount: '750.00',
+    status: 'processing',
+  }
+  await f.applyOrder('123', order)
+  assert.equal(f.current.orderId, order.id)
+  assert.equal(f.current.status, 'processing')
+  assert.equal(f.appointments.length, 0)
+  const approved = {
+    ...order,
+    status: 'processed',
+    transactions: { payments: [{ amount: '750.00', status: 'processed', status_detail: 'accredited' }] },
+  }
+  await f.applyOrder('123', { ...approved, user_id: '987' })
+  await f.applyOrder('123', { ...approved, id: 'ORD_DISTINTA' })
+  assert.equal(f.appointments.length, 0)
+  await f.applyOrder('123', approved)
+  await f.applyOrder('123', approved)
+  assert.equal(f.current.status, 'confirmed')
+  assert.equal(f.appointments.length, 1)
+  assert.equal(f.notices.length, 2)
 })

@@ -20,6 +20,7 @@ const bookingSchema = new mongoose.Schema({
   challengeUrl: String,
   challengeRequest: String,
   notifyAt: Date,
+  orderId: { type: String, unique: true, sparse: true },
   paymentId: { type: String, unique: true, sparse: true },
   cita: id,
   status: { type: String, enum: ['reserved', 'processing', 'confirmed', 'review', 'rejected'], default: 'reserved' },

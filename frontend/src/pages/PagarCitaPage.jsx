@@ -92,7 +92,7 @@ export default function PagarCitaPage() {
         callbacks: {
           onReady: () => { if (active) setError('') },
           onError: () => { if (active) setError('No se pudo mostrar el formulario de tarjeta.') },
-          onSubmit: async data => {
+          onSubmit: async (data, card) => {
             if (lock.current) return
             lock.current = true
             setSending(true)
@@ -101,7 +101,7 @@ export default function PagarCitaPage() {
               const { data: result } = await client.post('/agenda-cobros/pagar', {
                 token: data.token, payment_method_id: data.payment_method_id,
                 installments: Number(data.installments),
-                ...(data.issuer_id && { issuer_id: String(data.issuer_id) }),
+                type: card?.paymentTypeId,
               }, { headers: { 'X-Booking-Token': id } })
               setBooking(result)
               setChallenge(safeChallenge(result))

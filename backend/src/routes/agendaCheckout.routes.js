@@ -7,6 +7,7 @@ const { Booking, Seller } = require('../models/AgendaCheckout')
 const { requireAuth, allowRoles } = require('../middleware/auth.middleware')
 const mp = require('../services/mercadoPago.service')
 const checkout = require('../services/agendaCheckout.service')
+const { cardOrder, orderIdPattern } = require('../services/mercadoPagoOrders')
 
 const router = express.Router()
 const staff = [requireAuth, allowRoles('nutritionist')]
@@ -23,7 +24,7 @@ const reserveInput = z.object({ nutritionist: objectId, inicio: z.iso.datetime({
 const card = z.object({
   token: z.string().min(12).max(512),
   payment_method_id: z.string().regex(/^[a-z0-9_-]{1,40}$/i),
-  issuer_id: z.coerce.string().regex(/^\d{1,20}$/).optional(),
+  type: z.enum(['credit_card', 'debit_card']),
   installments: z.number().int().min(1).max(1),
 }).strict()
 router.use((_req, res, next) => { res.set('Cache-Control', 'no-store'); next() })
@@ -103,35 +104,35 @@ router.post('/pagar', async (req, res) => {
     _id: booking._id, status: 'reserved', expiresAt: { $gt: new Date() },
   }, { $set: { status: 'processing', nextCheckAt: new Date(Date.now() + 30000) } }, { new: true })
   if (!started) return res.json(summary(await loadBooking(req)))
-  let payment
+  let order
   try {
-    payment = await mp.provider('/v1/payments', { access, idempotency: booking._id, body: {
-      ...data, transaction_amount: booking.montoCentavos / 100, description: 'Consulta NutriA',
-      payer: { email: buyer.email }, external_reference: booking._id,
-      notification_url: process.env.MP_WEBHOOK_URL, three_d_secure_mode: 'optional',
-      capture: true, binary_mode: false,
-    } })
+    order = await mp.provider('/v1/orders', { access, idempotency: booking._id, body: cardOrder({
+      reference: booking._id, cents: booking.montoCentavos, email: buyer.email, card: data,
+    }) })
   } catch (error) {
     if ([400, 422].includes(error.providerStatus)) {
       await Booking.updateOne({ _id: booking._id, status: 'processing', paymentId: { $exists: false } }, { status: 'rejected' })
     }
     return res.json(summary(await loadBooking(req)))
   }
-  const current = await checkout.applyPayment(booking.merchant, payment) || await loadBooking(req)
+  const current = await checkout.applyOrder(booking.merchant, order) || await loadBooking(req)
   res.json(summary(current))
 })
 router.post('/webhook', async (req, res) => {
   const id = String(req.query['data.id'] || '')
-  if (req.query.type !== 'payment' || !mp.validWebhook({ id, requestId: req.get('x-request-id'), signature: req.get('x-signature') })) return res.sendStatus(401)
+  const type = req.query.type || req.body?.type
+  if (!['order', 'payment'].includes(type) || !orderIdPattern.test(id) ||
+      !mp.validWebhook({ id, requestId: req.get('x-request-id'), signature: req.get('x-signature') })) return res.sendStatus(401)
   const merchant = String(req.body?.user_id || '')
   if (!/^\d{1,24}$/.test(merchant) || !await Seller.exists({ merchant })) return res.sendStatus(200)
-  await checkout.verifiedPayment(merchant, id)
+  if (type === 'order') await checkout.verifiedOrder(merchant, id)
+  else if (/^\d{1,24}$/.test(id)) await checkout.verifiedPayment(merchant, id)
   res.sendStatus(200)
 })
 
 router.get('/revision', ...staff, async (req, res) => {
   const reviews = await Booking.find({ nutritionist: req.user._id, status: 'review' })
-    .select('inicio zonaHoraria tipo montoCentavos paymentId changeReason patient').populate('patient', 'name').sort({ createdAt: -1 }).limit(50).lean()
+    .select('inicio zonaHoraria tipo montoCentavos paymentId orderId changeReason patient').populate('patient', 'name').sort({ createdAt: -1 }).limit(50).lean()
   const citas = await Cita.find({ nutritionist: req.user._id, estado: 'confirmada',
     cobroAgenda: { $exists: true }, enteradoAt: null,
   }).select('inicio zonaHoraria tipo montoPagadoCentavos patient').populate('patient', 'name').sort({ inicio: 1 }).limit(50).lean()

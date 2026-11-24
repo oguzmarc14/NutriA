@@ -100,13 +100,13 @@ async function accessFor(merchant) {
 }
 
 function validWebhook({ id, requestId, signature }) {
-  if (!configured() || !/^\d{1,24}$/.test(id) || !requestId || !signature) return false
+  if (!configured() || !/^[a-z0-9_-]{1,100}$/i.test(id) || !requestId || !signature) return false
   const parts = Object.fromEntries(signature.split(',').map(item => item.trim().split('=')))
   if (!/^\d{10,13}$/.test(parts.ts || '') || !/^[a-f0-9]{64}$/i.test(parts.v1 || '')) return false
   const timestamp = Number(parts.ts) * (parts.ts.length === 10 ? 1000 : 1)
   if (Math.abs(Date.now() - timestamp) > 10 * 60000) return false
   const expected = crypto.createHmac('sha256', process.env.MP_WEBHOOK_SECRET)
-    .update(`id:${id};request-id:${requestId};ts:${parts.ts};`).digest()
+    .update(`id:${id.toLowerCase()};request-id:${requestId};ts:${parts.ts};`).digest()
   return crypto.timingSafeEqual(expected, Buffer.from(parts.v1, 'hex'))
 }
 

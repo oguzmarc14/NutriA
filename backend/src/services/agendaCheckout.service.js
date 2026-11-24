@@ -7,6 +7,7 @@ const Notice = require('../models/Notification')
 const { Seller, Booking } = require('../models/AgendaCheckout')
 const { partesLocales, sumarDias, construirDisponibilidad } = require('../utils/agenda-publica.utils')
 const mp = require('./mercadoPago.service')
+const { orderResult } = require('./mercadoPagoOrders')
 const { sendAppointmentPush } = require('./push.service')
 const { syncAppointment } = require('./calendar.service')
 
@@ -97,10 +98,29 @@ async function applyPayment(merchant, payment) {
   if (!payment?.external_reference || !/^\d+$/.test(String(payment.id)) || String(payment.collector_id) !== merchant) return
   const booking = await Booking.findOne({ _id: payment.external_reference, merchant })
   if (!booking) return
+  return applySettlement(booking, merchant, payment)
+}
+
+async function applyOrder(merchant, order) {
+  if (!order?.external_reference || (order.user_id != null && String(order.user_id) !== merchant)) return
+  const booking = await Booking.findOne({ _id: order.external_reference, merchant })
+  if (!booking) return
+  const result = orderResult(order, { reference: booking._id, cents: booking.montoCentavos })
+  if (!result) return
+  return applySettlement(booking, merchant, { status: result.status }, result.id)
+}
+
+async function applySettlement(booking, merchant, payment, orderId) {
   return lockClinic(booking.nutritionist, async session => {
     const current = await Booking.findOne({ _id: booking._id, merchant }).session(session)
-    if (!current || current.status !== 'processing' || (current.paymentId && current.paymentId !== String(payment.id))) return
-    current.paymentId = String(payment.id)
+    if (!current || current.status !== 'processing') return
+    if (orderId) {
+      if (current.paymentId || (current.orderId && current.orderId !== orderId)) return
+      current.orderId = orderId
+    } else {
+      if (current.orderId || (current.paymentId && current.paymentId !== String(payment.id))) return
+      current.paymentId = String(payment.id)
+    }
     const challenge = payment.status_detail === 'pending_challenge' && payment.three_ds_info
     current.challengeUrl = challenge && /^https:\/\//.test(challenge.external_resource_url || '')
       ? challenge.external_resource_url : undefined
@@ -108,8 +128,9 @@ async function applyPayment(merchant, payment) {
       ? challenge.creq : undefined
     if (['rejected', 'cancelled'].includes(payment.status)) {
       current.status = 'rejected'
-    } else if (payment.status === 'approved') {
-      const amountOK = payment.currency_id === 'MXN' && Math.round(Number(payment.transaction_amount) * 100) === current.montoCentavos
+    } else if (['approved', 'review'].includes(payment.status)) {
+      const amountOK = orderId ? payment.status === 'approved' :
+        payment.currency_id === 'MXN' && Math.round(Number(payment.transaction_amount) * 100) === current.montoCentavos
       const activePatient = await Patient.exists({ _id: current.patient, nutritionist: current.nutritionist, active: true }).session(session)
       const clinic = await User.findOne({ _id: current.nutritionist, role: 'nutritionist', active: true }).session(session).lean()
       const start = new Date(current.inicio)
@@ -147,6 +168,12 @@ async function applyPayment(merchant, payment) {
   })
 }
 
+async function verifiedOrder(merchant, id) {
+  const access = await mp.accessFor(merchant)
+  const order = await mp.provider('/v1/orders/' + encodeURIComponent(id), { access })
+  if (order.id === id) return applyOrder(merchant, order)
+}
+
 async function verifiedPayment(merchant, paymentId) {
   const access = await mp.accessFor(merchant)
   const payment = await mp.provider('/v1/payments/' + paymentId, { access })
@@ -177,16 +204,19 @@ async function reconcile() {
     for (const booking of pending) {
       await Booking.updateOne({ _id: booking._id, status: 'processing' }, { nextCheckAt: new Date(Date.now() + 120000) })
       try {
-        if (booking.paymentId) await verifiedPayment(booking.merchant, booking.paymentId)
+        if (booking.orderId) await verifiedOrder(booking.merchant, booking.orderId)
+        else if (booking.paymentId) await verifiedPayment(booking.merchant, booking.paymentId)
         else {
           const access = await mp.accessFor(booking.merchant)
-          const result = await mp.provider('/v1/payments/search?' + new URLSearchParams({ external_reference: booking._id }), { access })
-          const payment = result.results?.find(item => item.external_reference === booking._id)
-          if (payment) await verifiedPayment(booking.merchant, String(payment.id))
+          const query = new URLSearchParams({ external_reference: booking._id,
+            begin_date: booking.createdAt.toISOString(), end_date: new Date().toISOString(), limit: '10' })
+          const result = await mp.provider('/v1/orders?' + query, { access })
+          const order = result.data?.find(item => item.external_reference === booking._id)
+          if (order?.id) await verifiedOrder(booking.merchant, order.id)
         }
       } catch { /* Webhooks and subsequent scheduled checks can recover a connection failure. */ }
     }
   } finally { checking = false }
 }
 
-module.exports = { fail, lockClinic, occupied, visibleHolds, publicCheckoutEnabled, quote, reserve, applyPayment, verifiedPayment, reconcile }
+module.exports = { fail, lockClinic, occupied, visibleHolds, publicCheckoutEnabled, quote, reserve, applyPayment, applyOrder, verifiedPayment, verifiedOrder, reconcile }
