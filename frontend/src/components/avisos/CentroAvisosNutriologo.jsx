@@ -21,6 +21,7 @@ export default function CentroAvisosNutriologo({ modo = 'escritorio' }) {
   const [busqueda, setBusqueda] = useState('')
   const [pacientes, setPacientes] = useState([])
   const [citas, setCitas] = useState([])
+  const [pagos, setPagos] = useState({ citas: [], reviews: [] })
   const [configSeguimiento, setConfigSeguimiento] = useState(null)
   const [hoySeguimiento, setHoySeguimiento] = useState(null)
   const [zonaSeguimiento, setZonaSeguimiento] = useState(null)
@@ -54,6 +55,7 @@ export default function CentroAvisosNutriologo({ modo = 'escritorio' }) {
         client.get('/pacientes'),
         client.get('/citas', { params: { desde: ahora.toISOString(), hasta: hasta.toISOString() } }),
         client.get('/horario/seguimiento'),
+        client.get('/agenda-cobros/revision'),
       ])
       if (!activo) return
 
@@ -77,6 +79,10 @@ export default function CentroAvisosNutriologo({ modo = 'escritorio' }) {
       } else {
         setConfigSeguimiento(null)
         fallos.push('No se pudo cargar la configuración de seguimiento.')
+      }
+      if (respuestas[3].status === 'fulfilled') {
+        const pago = respuestas[3].value.data
+        setPagos({ citas: pago.citas || [], reviews: pago.reviews || [] })
       }
       setErrores(fallos)
       setActualizando(false)
@@ -135,9 +141,18 @@ export default function CentroAvisosNutriologo({ modo = 'escritorio' }) {
     }
   }, [abierto])
 
-  const avisos = useMemo(() => reunirAvisos(pacientes,citas,new Date(),
-    configSeguimiento,hoySeguimiento,zonaSeguimiento),
-    [pacientes,citas,configSeguimiento,hoySeguimiento,zonaSeguimiento])
+  const avisos = useMemo(() => {
+    const pagosPendientes = [
+      ...pagos.citas.map(cita => ({ ...cita, titulo: 'Cita confirmada y pagada', detalle: 'Marca la cita como enterado en la agenda.' })),
+      ...pagos.reviews.map(pago => ({ ...pago, titulo: 'Pago recibido · Requiere revisión', detalle: pago.changeReason })),
+    ].map(item => ({
+      id: 'pago:' + item._id, tipo: 'pago', filtro: 'citas', categoria: 'Pagos de citas',
+      titulo: item.titulo, detalle: item.detalle, pacienteNombre: item.patient?.name || 'Paciente',
+    }))
+    const citasEnRevision = new Set(pagos.citas.map(cita => cita._id))
+    return [...pagosPendientes, ...reunirAvisos(pacientes, citas.filter(cita => !citasEnRevision.has(cita._id)),
+      new Date(), configSeguimiento, hoySeguimiento, zonaSeguimiento)]
+  }, [pacientes, citas, pagos, configSeguimiento, hoySeguimiento, zonaSeguimiento])
   const visibles = useMemo(() => {
     const termino = busqueda.trim().toLocaleLowerCase('es')
     return avisos.filter((aviso) =>
@@ -156,7 +171,7 @@ export default function CentroAvisosNutriologo({ modo = 'escritorio' }) {
 
   function atender(aviso) {
     setAbierto(false)
-    if (aviso.tipo === 'cita') {
+    if (aviso.tipo === 'cita' || aviso.tipo === 'pago') {
       navigate('/citas')
     } else {
       // No cambiar silenciosamente de paciente; se abre el panel ya existente.
@@ -188,7 +203,7 @@ export default function CentroAvisosNutriologo({ modo = 'escritorio' }) {
               <div className="min-w-0 flex-1">
                 <h2 id="nutria-centro-titulo" className="text-xl font-black">Centro de atención</h2>
                 <p id="nutria-centro-descripcion" className="mt-1 text-xs leading-5 opacity-80">
-                  Avisos privados para organizar tu atención. No indican fallas del paciente ni se envían automáticamente.
+                  Revisa citas, pagos y avisos de seguimiento de tu consultorio.
                 </p>
               </div>
               <button ref={cierreRef} type="button" onClick={() => setAbierto(false)}

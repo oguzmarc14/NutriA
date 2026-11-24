@@ -29,6 +29,19 @@ async function conflicto(nutritionist, inicio, fin, excluir) {
     inicio: { $lt: fin }, fin: { $gt: inicio },
     ...(excluir ? { _id: { $ne: excluir } } : {}) })
 }
+async function guardarSinSolapamiento(req, data, action, excluir) {
+  const nutritionist = req.user._id
+  const checkout = req.app?.locals?.checkoutAgenda
+  if (checkout && req.app.locals.mercadoPagoHabilitado?.()) {
+    return checkout.lockClinic(nutritionist, async session => {
+      if (data.estado !== 'cancelada' && await checkout.occupied(nutritionist, data.inicio, data.fin,
+        { session, excludeAppointment: excluir })) return null
+      return action(session)
+    })
+  }
+  if (data.estado !== 'cancelada' && await conflicto(nutritionist, data.inicio, data.fin, excluir)) return null
+  return action()
+}
 function cumpleHorario(horario, inicio) {
   if (!horario?.configurado) return true
   const partes = Object.fromEntries(new Intl.DateTimeFormat('en-GB', {
@@ -110,8 +123,13 @@ router.get('/', async (req,res,next) => {
 router.post('/', async (req,res,next) => {
   try {
     const data = await validar(req,res); if (!data) return
-    if (data.estado !== 'cancelada' && await conflicto(req.user._id, data.inicio, data.fin)) return res.status(409).json({ message: 'Ya existe una cita en ese horario' })
-    const cita = await Cita.create({ ...data, nutritionist: req.user._id })
+    const cita = await guardarSinSolapamiento(req, data, async session => {
+      const values = { ...data, nutritionist: req.user._id }
+      if (!session) return Cita.create(values)
+      const [created] = await Cita.create([values], { session })
+      return created
+    })
+    if (!cita) return res.status(409).json({ message: 'Ese horario tiene una cita o una reserva en curso' })
     const calendarSynced = await intentarSincronizar(cita)
     void req.app?.locals?.notificarCita?.(cita)
     res.status(201).json({ ...cita.toObject(), calendarSynced })
@@ -126,16 +144,18 @@ router.put('/:id', async (req,res,next) => {
     if (new Date(cita.inicio).getTime() <= Date.now())
       return res.status(409).json({ message: 'Una cita pasada es de solo lectura. Si se realizó, puedes marcarla completada.' })
     const data = await validar(req,res,cita); if (!data) return
-    if (data.estado !== 'cancelada' && await conflicto(req.user._id, data.inicio, data.fin, cita._id))
-      return res.status(409).json({ message: 'Ya existe una cita en ese horario' })
-
     const reiniciarRecordatorios = requiereReiniciarRecordatorios(cita, data)
     Object.assign(cita, data)
     if (reiniciarRecordatorios) {
       cita.recordatorio24hEnviado = null
       cita.recordatorio2hEnviado = null
     }
-    await cita.save()
+    const saved = await guardarSinSolapamiento(req, data, async session => {
+      if (session) await cita.save({ session })
+      else await cita.save()
+      return cita
+    }, cita._id)
+    if (!saved) return res.status(409).json({ message: 'Ese horario tiene una cita o una reserva en curso' })
     const calendarSynced = await intentarSincronizar(cita)
     void req.app?.locals?.notificarCita?.(cita)
     res.json({ ...cita.toObject(), calendarSynced })
@@ -175,12 +195,23 @@ router.patch('/:id/estado', async (req,res,next) => {
           !horarioAdmite({...nutricionista.horarioCitas,zonaHoraria:nutricionista.horarioLaboral.zonaHoraria},cita.inicio)))
         return res.status(400).json({ message: 'El horario original ya no está disponible; reprograma esta cita antes de activarla.' })
     }
-    if (['programada','confirmada'].includes(estado) && await conflicto(req.user._id,cita.inicio,cita.fin,cita._id))
-      return res.status(409).json({ message: 'Ya existe una cita en ese horario' })
-    cita.estado = estado
-    cita.recordatorio24hEnviado = null
-    cita.recordatorio2hEnviado = null
-    await cita.save()
+    const change = async session => {
+      const appointment = session
+        ? await Cita.findOne({ _id: cita._id, nutritionist: req.user._id }).session(session)
+        : cita
+      if (!appointment) return null
+      appointment.estado = estado
+      appointment.recordatorio24hEnviado = null
+      appointment.recordatorio2hEnviado = null
+      if (session) await appointment.save({ session })
+      else await appointment.save()
+      return appointment
+    }
+    const saved = ['programada', 'confirmada'].includes(estado)
+      ? await guardarSinSolapamiento(req, { estado, inicio: cita.inicio, fin: cita.fin }, change, cita._id)
+      : await change()
+    if (!saved) return res.status(409).json({ message: 'Ese horario tiene una cita o una reserva en curso' })
+    Object.assign(cita, { estado: saved.estado, recordatorio24hEnviado: null, recordatorio2hEnviado: null })
     const calendarSynced = await intentarSincronizar(cita)
     void req.app?.locals?.notificarCita?.(cita)
     res.json({ ...cita.toObject(), calendarSynced })

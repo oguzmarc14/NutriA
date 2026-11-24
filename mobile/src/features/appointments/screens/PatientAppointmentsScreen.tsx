@@ -1,3 +1,4 @@
+import { router } from 'expo-router'
 import { refreshAppointments } from '@/features/notifications/reminderSync'
 import { exportAppointment } from '../calendarExport'
 import { useState } from 'react'
@@ -18,7 +19,7 @@ type Appointment = {
   estado: string
   tipo: string
 }
-type Appointments = { citas: Appointment[]; zonaHoraria: string; profesional: string; hoy?: string; agendaPublicaId?: string | null }
+type Appointments = { citas: Appointment[]; zonaHoraria: string; profesional: string; hoy?: string; agendaPublicaId?: string | null; pagoEnLinea?: boolean }
 const labels: Record<string, string> = {
   programada: 'Pendiente de confirmar', confirmada: 'Confirmada',
   cancelada: 'Cancelada', completada: 'Completada',
@@ -104,7 +105,9 @@ export default function MyAppointments() {
   return <Page>
     <Text accessibilityRole="header" style={styles.title}>Mis citas</Text>
     {data && <Text style={styles.body}>Consultas con {data.profesional}</Text>}
-    {data?.agendaPublicaId && <Button label="Solicitar cita y consultar opciones de pago" selected={false}
+    {data?.pagoEnLinea && data.agendaPublicaId && <Button label="Reservar y pagar con tarjeta"
+      onPress={() => router.push({ pathname: '/reservar-cita', params: { clinic: data.agendaPublicaId! } })} />}
+    {data?.agendaPublicaId && <Button label="Ver agenda y solicitar cita por WhatsApp" selected={false}
       onPress={() => {
         setActionError('')
         void Linking.openURL('https://nutri-a-six.vercel.app/agenda/' + encodeURIComponent(data.agendaPublicaId!))

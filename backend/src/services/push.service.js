@@ -29,6 +29,15 @@ async function notifyUsers(ids, notice) {
   const devices=await Device.find({user:{$in:ids}}).limit(100).lean()
   await Promise.allSettled(devices.map(device=>sendDevice(device,notice)))
 }
+async function sendAppointmentPush(recipients) {
+  if (!enabled()) return
+  const users = [...new Set(recipients.map(item => String(item.user)))]
+  const devices = await Device.find({ user: { $in: users } }).limit(100).lean()
+  await Promise.allSettled(devices.map(device => {
+    const target = recipients.find(item => String(item.user) === String(device.user))
+    return sendDevice(device, { kind: 'nutria-appointment', route: target.route, title: 'NutriA' })
+  }))
+}
 async function notificarCita(cita) {
   try {
     const patient=cita.patient?._id||cita.patient, professional=cita.nutritionist?._id||cita.nutritionist
@@ -83,4 +92,4 @@ async function processReceipts() {
   }catch{console.error('No se pudieron consultar receipts push')}
   finally{processing=false}
 }
-module.exports={notificarCita,notificarReceta,notificarDietaAsignada,notificarDietaAceptada,processReceipts}
+module.exports={sendAppointmentPush,notificarCita,notificarReceta,notificarDietaAsignada,notificarDietaAceptada,processReceipts}

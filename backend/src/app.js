@@ -20,11 +20,14 @@ const asistenteEquivalentesRoutes = require('./routes/asistenteEquivalentes.rout
 const communityRoutes = require('./routes/community.routes')
 const citasRoutes = require('./routes/citas.routes')
 const horarioRoutes = require('./routes/horario.routes')
+const agendaCheckoutRoutes = require('./routes/agendaCheckout.routes')
 const agendaPublicaRoutes = require('./routes/agendaPublica.routes')
 const calendarRoutes = require('./routes/calendar.routes')
 const recordatoriosRoutes = require('./routes/recordatorios.routes')
 
 const app = express()
+app.locals.checkoutAgenda = require('./services/agendaCheckout.service')
+app.locals.mercadoPagoHabilitado = require('./services/mercadoPago.service').configured
 app.locals.notificarCita = require('./services/push.service').notificarCita
 app.locals.notificarReceta = require('./services/push.service').notificarReceta
 app.locals.notificarDietaAsignada = require('./services/push.service').notificarDietaAsignada
@@ -138,6 +141,7 @@ app.use('/api/community', communityRoutes)
 app.use('/api/citas', citasRoutes)
 app.use('/api/horario', horarioRoutes)
 app.use('/api/agenda-publica', agendaPublicaRoutes)
+app.use('/api/agenda-cobros', agendaCheckoutRoutes)
 app.use('/api/calendar', calendarRoutes)
 app.use('/api/recordatorios', recordatoriosRoutes)
 app.use('/api/push', require('./routes/push.routes'))

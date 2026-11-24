@@ -51,6 +51,7 @@ function Navigation() {
         <Stack.Screen name="mi-expediente" options={{ ...clinicHeader, title: 'Mi expediente' }} />
         <Stack.Screen name="mis-pagos" options={{ ...clinicHeader, title: 'Mis pagos' }} />
         <Stack.Screen name="reportar-pago" options={{ ...clinicHeader, title: 'Reportar pago' }} />
+        <Stack.Screen name="reservar-cita" options={{ ...clinicHeader, title: 'Reservar y pagar' }} />
         <Stack.Screen name="registrar-comida" options={{ ...clinicHeader, title: 'Registrar comida' }} />
       </Stack.Protected>
       <Stack.Protected guard={session?.user.role === 'admin'}>

@@ -24,7 +24,8 @@ router.put('/cobros', async (req, res, next) => {
     if (!parsed.success) return res.status(400).json({ message: parsed.error.issues[0].message })
     if (parsed.data.enlaceMercadoPago && !parsed.data.whatsapp)
       return res.status(400).json({ message: 'Agrega el WhatsApp del consultorio para confirmar el horario antes de cobrar.' })
-    req.user.cobrosAgenda = parsed.data
+    req.user.set('cobrosAgenda.whatsapp', parsed.data.whatsapp)
+    req.user.set('cobrosAgenda.enlaceMercadoPago', parsed.data.enlaceMercadoPago)
     await req.user.save()
     return res.json({ cobros: cobrosPublicos(req.user.cobrosAgenda) })
   } catch (error) { next(error) }

@@ -92,12 +92,14 @@ async function obtenerMisCitas(req,res,next) {
         .select('_id inicio fin zonaHoraria tipo estado')
         .sort({inicio:-1}).limit(200).lean(),
       User.findById(paciente.nutritionist)
-        .select('name active clinica recordatoriosSeguimiento horarioLaboral horarioCitas').lean(),
+        .select('name active clinica recordatoriosSeguimiento horarioLaboral horarioCitas cobrosAgenda').lean(),
     ])
     const zona=profesional?.horarioLaboral?.zonaHoraria || 'America/Mexico_City'
     const resumen=resumenCitasPaciente(citas,profesional?.recordatoriosSeguimiento,zona)
+    const pagoEnLinea = Boolean(profesional?.active && profesional.horarioCitas?.publicado &&
+      profesional.horarioLaboral?.configurado && await req.app?.locals?.checkoutAgenda?.publicCheckoutEnabled(profesional))
     res.json({
-      citas,proxima:resumen.proxima,ultima:resumen.ultima,
+      pagoEnLinea, citas,proxima:resumen.proxima,ultima:resumen.ultima,
       avisos:resumen.avisos,hoy:resumen.hoy,zonaHoraria:resumen.zonaHoraria,
       agendaPublicaId: profesional?.active && profesional.horarioLaboral?.configurado &&
         profesional.horarioCitas?.configurado && profesional.horarioCitas?.publicado ? String(paciente.nutritionist) : null,

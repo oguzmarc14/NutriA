@@ -30,6 +30,7 @@ import TerminosPage from "./pages/TerminosPage";
 import CommunityPage from "./pages/CommunityPage";
 import CitasPage from "./pages/CitasPage";
 import CitasCrearPage from "./pages/CitasCrearPage";
+import PagarCitaPage from "./pages/PagarCitaPage";
 import AgendaPublicaPage from "./pages/AgendaPublicaPage";
 import EditarPerfilPage from "./pages/EditarPerfilPage";
 import CommunityModeracionPage from "./pages/CommunityModeracionPage";
@@ -48,6 +49,7 @@ function App() {
       <Route path="/privacidad" element={<PrivacidadPage />} />
 
       <Route path="/terminos" element={<TerminosPage />} />
+      <Route path="/pagar-cita" element={<PagarCitaPage />} />
       <Route path="/agenda/:nutritionistId" element={<AgendaPublicaPage />} />
 
       {/* RUTAS PROTEGIDAS */}

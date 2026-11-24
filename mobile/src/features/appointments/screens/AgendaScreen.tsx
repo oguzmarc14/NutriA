@@ -1,3 +1,4 @@
+import { PaidAppointments } from '../PaidAppointments'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useMemo, useState } from 'react'
 import { router } from 'expo-router'
@@ -151,6 +152,7 @@ export default function Appointments() {
       </Pressable>
     </View>
 
+    <PaidAppointments />
     <Pressable accessibilityRole="button" onPress={goNew}
       style={({ pressed }) => [s.hero, pressed && styles.pressed]}>
       <View style={s.heroIcon}><Ionicons name="calendar-number-outline" size={27} color="#fff" /></View>

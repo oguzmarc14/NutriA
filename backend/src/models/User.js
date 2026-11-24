@@ -74,7 +74,10 @@ const userSchema = new mongoose.Schema(
       logo: { type: String, default: '' },
     },
 
+    revisionAgenda: { type: Number, default: 0, select: false },
     cobrosAgenda: {
+      primeraCentavos: { type: Number, min: 0, max: 10000000, default: 0 },
+      seguimientoCentavos: { type: Number, min: 0, max: 10000000, default: 0 },
       whatsapp: { type: String, default: '', maxlength: 15 },
       enlaceMercadoPago: { type: String, default: '', maxlength: 500 },
     },

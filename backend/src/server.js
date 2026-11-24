@@ -15,6 +15,10 @@ async function startServer() {
   const {processReceipts}=require('./services/push.service')
   void processReceipts()
   const receipts=setInterval(()=>void processReceipts(),60000);receipts.unref()
+  const { reconcile } = require('./services/agendaCheckout.service')
+  const checkPayments = () => void reconcile().catch(() => console.error('No se pudo reconciliar pagos de agenda.'))
+  checkPayments()
+  const payments = setInterval(checkPayments, 60000); payments.unref()
   app.listen(port, () => {
     console.log(`NutriA API disponible en http://localhost:${port}`)
   })

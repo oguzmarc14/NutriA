@@ -1,3 +1,4 @@
+import CitasPagadas from '../components/citas/CitasPagadas'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Plus, RefreshCw, X, Trash2, Ban, CheckCircle2 } from 'lucide-react'
 import client from '../api/client'
@@ -520,6 +521,7 @@ export default function CitasPage() {
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_15rem] 2xl:grid-cols-[minmax(0,1fr)_17rem]">
         <section aria-label="Calendario de citas" aria-busy={loading} className={`${PANEL} min-w-0`}>
+      <CitasPagadas />
           <div className="space-y-4 px-4 pt-5 pb-4 sm:px-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>

@@ -34,9 +34,13 @@ router.get('/:nutritionistId', async (req,res,next) => {
     const upper=new Date(endDate.getTime()+2*86400000)
     const booked=await Cita.find({nutritionist:user._id,estado:{$ne:'cancelada'},
       inicio:{$lt:upper},fin:{$gt:lower}}).select('inicio fin -_id').lean()
+    const checkout = req.app?.locals?.checkoutAgenda
+    const apartadas = checkout && req.app.locals.mercadoPagoHabilitado?.()
+      ? await checkout.visibleHolds(user._id, lower, upper) : []
+    const ocupados = [...booked, ...apartadas]
     const fechas=Array.from({length:dias},(_,i)=>{
       const fecha=sumarDias(desde,i)
-      return {fecha,espacios:construirDisponibilidad(fecha,user.horarioCitas,user.horarioLaboral,booked)}
+      return {fecha,espacios:construirDisponibilidad(fecha,user.horarioCitas,user.horarioLaboral,ocupados)}
     })
     res.json({
       clinica:user.clinica?.nombre || 'Consultorio nutricional',
@@ -44,6 +48,7 @@ router.get('/:nutritionistId', async (req,res,next) => {
       zonaHoraria:zona,
       duracionMinutos:60,
       cobros: cobrosPublicos(user.cobrosAgenda),
+      pagoEnLinea: checkout ? await checkout.publicCheckoutEnabled(user) : false,
       desde,
       dias:fechas,
       aviso:'Los horarios pueden cambiar. Elegir uno no representa una reserva confirmada.',

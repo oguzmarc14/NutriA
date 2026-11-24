@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 
 const modelos = [
   'Patient', 'ExpedienteClinico', 'Medicion', 'CalculoNutricional', 'PlanAlimenticio',
-  'SeguimientoComida', 'Cita', 'Pago',
+  'SeguimientoComida', 'Cita', 'Pago', 'AgendaCheckout',
 ]
 const marcaColeccion = '_nutria_migraciones'
 const marcaId = 'separacion-pacientes-v1'
