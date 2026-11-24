@@ -1,7 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/auth'
 
-function ProtectedRoute({ roles }) {
+function ProtectedRoute({ roles, homeForGuests }) {
   const { loading, user } = useAuth()
   const location = useLocation()
 
@@ -14,6 +14,7 @@ function ProtectedRoute({ roles }) {
   }
 
   if (!user) {
+    if (location.pathname === "/" && homeForGuests) return homeForGuests
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 

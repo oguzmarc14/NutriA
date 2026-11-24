@@ -127,7 +127,17 @@ export default function PagarCitaPage() {
         <p className="text-sm">{new Intl.DateTimeFormat('es-MX', { dateStyle: 'long', timeStyle: 'short', timeZone: booking.zonaHoraria }).format(new Date(booking.inicio))}</p>
       </>}
       {publicKey && <p className="text-xs">Tu tarjeta se procesa de forma segura con Mercado Pago.</p>}
-      {publicKey && <div id={container} />}
+      {publicKey && <>
+        <details className="rounded-xl border border-[#c8ded3] p-3 text-xs leading-relaxed">
+          <summary className="cursor-pointer font-bold">Condiciones de pago y privacidad</summary>
+          <p className="mt-2">Mercado Pago procesa tu tarjeta. NutriA usa el estado y la referencia del pago para registrar la cita. Para cambios, cancelaciones o reembolsos, contacta a tu consultorio. Si ya ves un cargo, consulta el estado antes de volver a pagar.</p>
+          {!embedded && <div className="mt-2 flex gap-4">
+            <Link to="/terminos#pagos" className="underline">Términos de pago</Link>
+            <Link to="/privacidad#pagos" className="underline">Aviso de privacidad</Link>
+          </div>}
+        </details>
+        <div id={container} />
+      </>}
       {challenge && booking?.status === 'processing' && <BankChallenge challenge={challenge} />}
       {sending && <p role="status">Enviando el pago…</p>}
       {!booking && valid && !error && <p role="status">Cargando tu reserva…</p>}

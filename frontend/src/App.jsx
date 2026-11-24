@@ -35,11 +35,16 @@ import AgendaPublicaPage from "./pages/AgendaPublicaPage";
 import EditarPerfilPage from "./pages/EditarPerfilPage";
 import CommunityModeracionPage from "./pages/CommunityModeracionPage";
 
+import LandingPage from "./pages/LandingPage";
+import FuentesNutricionalesPage from "./pages/FuentesNutricionalesPage";
+
 function App() {
   return (
     <Routes>
       {/* LOGIN */}
 
+      <Route path="/portada" element={<LandingPage />} />
+      <Route path="/fuentes-nutricionales" element={<FuentesNutricionalesPage />} />
       <Route path="/login" element={<LoginPage />} />
 
       <Route path="/activar-cuenta" element={<ActivarCuentaPage />} />
@@ -54,7 +59,7 @@ function App() {
 
       {/* RUTAS PROTEGIDAS */}
 
-      <Route element={<ProtectedRoute />}>
+      <Route element={<ProtectedRoute homeForGuests={<LandingPage />} />}>
         <Route
           element={
             <PacienteTrabajoProvider>

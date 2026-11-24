@@ -684,6 +684,11 @@ function LoginPage() {
                 NutriA · Plataforma de seguimiento
                 nutricional
               </p>
+              <nav aria-label="Información legal" className="flex flex-wrap justify-center gap-x-4 gap-y-2 pb-2 text-xs font-bold text-[#246b55]">
+                <Link to="/privacidad" className="hover:underline">Privacidad</Link>
+                <Link to="/terminos" className="hover:underline">Términos de uso</Link>
+                <Link to="/fuentes-nutricionales" className="hover:underline">Fuentes nutricionales</Link>
+              </nav>
             </div>
           </section>
         </div>

@@ -1,0 +1,117 @@
+.nutria-landing,.nutria-legal{color:#123c31;background:#fff;font-family:Inter,system-ui,sans-serif;color-scheme:light}
+.nutria-landing *, .nutria-legal *{box-sizing:border-box}
+.nutria-landing a,.nutria-legal a{color:inherit}
+.nutria-landing section[id],.nutria-legal section[id]{scroll-margin-top:24px}
+.nutria-wrap{width:min(1140px,calc(100% - 48px));margin:auto}
+.nutria-header{background:#fbf9f1;border-bottom:1px solid #dce7df}
+.nutria-nav{min-height:76px;display:flex;align-items:center;gap:24px}
+.nutria-nav img{width:66px;height:66px;object-fit:contain}
+.nutria-nav nav{margin-left:auto;display:flex;gap:25px;font-size:.83rem;font-weight:750;color:#426353}
+.nutria-landing .nutria-primary,.nutria-landing .nutria-secondary{display:inline-flex;gap:10px;align-items:center;justify-content:center;min-height:46px;padding:0 19px;border-radius:11px;font-size:.83rem;font-weight:800;text-decoration:none;white-space:nowrap}
+.nutria-landing .nutria-primary{background:#146950;color:#fff;box-shadow:0 9px 22px #14473522}
+.nutria-landing .nutria-secondary{background:#fcfefa;color:#134838;border:1px solid #accdba}
+.nutria-landing a:hover{text-decoration:underline}
+.nutria-landing svg{width:19px;height:19px;flex:none}
+.nutria-menu{display:none}
+.nutria-hero{overflow:hidden;background:radial-gradient(ellipse at 87% 40%,#cce6d7,transparent 57%),linear-gradient(120deg,#fbf9f2,#eaf4e9);padding:clamp(55px,8vw,114px) 0}
+.nutria-split,.nutria-story{display:grid;grid-template-columns:1fr 1fr;gap:clamp(30px,5vw,82px);align-items:center}
+.nutria-landing h1,.nutria-landing h2,.nutria-landing h3,.nutria-legal h1{font-weight:850;letter-spacing:-.055em;line-height:1.06;margin:14px 0 18px}
+.nutria-landing h1{font-size:clamp(2.7rem,5.5vw,5rem);line-height:.99}
+.nutria-landing h2,.nutria-legal h1{font-size:clamp(2.1rem,4.2vw,3.75rem)}
+.nutria-landing h3{font-size:1.28rem;letter-spacing:-.035em;margin:15px 0 8px}
+.nutria-landing em{font:italic 1.04em/.98 Georgia,serif;letter-spacing:-.065em;color:#318269}
+.nutria-hero h1 em{display:block;margin-top:8px}
+.nutria-landing p,.nutria-legal p{color:#4e6f61;line-height:1.7;margin:0 0 14px}
+.nutria-actions,.nutria-meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+.nutria-meta{font-size:.75rem;font-weight:700;color:#4e6f61}
+.nutria-meta span,.nutria-strip span{display:flex;align-items:center;gap:7px}
+.nutria-pill,.nutria-kicker{font-size:.69rem;text-transform:uppercase;font-weight:850;color:#176b52}
+.nutria-kicker{letter-spacing:.16em}
+.nutria-pill{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:50px;background:#e3efe5}
+.nutria-hero-art{position:relative;isolation:isolate;aspect-ratio:1.13;min-width:0;container-type:inline-size}
+.nutria-hero-art::before{content:'';position:absolute;inset:9% -16% 0 0;border-radius:50%;background:#a6d8bf55;box-shadow:0 0 0 48px #c5e4d333}
+.nutria-phone{display:flex;flex-direction:column;gap:.35em;background:#dcebe3;border:.38em solid #162923;border-radius:1.55em;padding:.7em .43em;box-shadow:0 14px 35px #173f3a39;overflow:hidden;font-size:clamp(8px,2.65cqw,14px);color:#173f34}
+.nutria-phone small{background:#f7fbf8;padding:.45em;font-weight:800}
+.nutria-phone-profile{background:#fff;padding:.85em;border-radius:.6em;display:grid;gap:.65em}
+.nutria-phone-profile span{font-size:.75em;color:#526f62}
+.nutria-phone-row{display:flex;gap:.55em;align-items:center;background:#fff;border-radius:.5em;padding:.6em .45em;font-weight:750}
+.nutria-phone-row span:last-child{margin-left:auto}
+.nutria-phone-row:nth-last-child(2){background:#176348;color:white}
+.nutria-hero-art .nutria-phone{position:absolute;width:44%;height:78%;left:10%;top:15%;transform:rotate(-10deg)}
+.nutria-hero-art .nutria-phone:nth-child(2){left:49%;top:7%;transform:rotate(7deg)}
+.nutria-hero-art aside{position:absolute;display:grid;gap:.4em;background:#fff;border-radius:1.2em;width:40%;padding:1em;box-shadow:0 15px 25px #173f3a23;left:3%;top:2%;transform:rotate(6deg);font-size:clamp(9px,3cqw,16px)}
+.nutria-hero-art aside:last-child{left:auto;right:0;top:auto;bottom:2%;transform:rotate(-4deg)}
+.nutria-hero-art aside small{color:#4e6f61}
+.nutria-strip{background:#0a4638;color:#e2f1e7;padding:22px 0;font-size:.79rem;font-weight:750}
+.nutria-strip .nutria-wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.nutria-strip svg{color:#a2d8c1}
+.nutria-section{padding:clamp(54px,8vw,112px) 0}
+.nutria-center{text-align:center;margin:0 auto 42px;max-width:770px}
+.nutria-features,.nutria-pair{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.nutria-pair{grid-template-columns:repeat(2,1fr);margin-top:30px}
+.nutria-card{border:1px solid #e0ebe2;background:linear-gradient(#fff,#f7faf6);border-radius:22px;padding:clamp(18px,2.5vw,30px);overflow:hidden;color:#123c31}
+.nutria-card p{font-size:.92rem}
+.nutria-landing .nutria-icon{background:#e5f1e8;color:#228469;border-radius:14px;width:48px;height:48px;padding:13px}
+.nutria-dark{background:radial-gradient(ellipse at 95% 90%,#145441,transparent 48%),#082e25;color:white}
+.nutria-dark p,.nutria-dark .nutria-kicker,.nutria-dark em{color:#b2d8c8}
+.nutria-steps{display:grid;gap:14px;padding:0;list-style:none;margin:24px 0}
+.nutria-steps li{display:flex;gap:13px;align-items:flex-start}
+.nutria-steps li span{background:#215b48;color:#d3f2df;padding:7px;border-radius:8px;font-size:.72rem;font-weight:800}
+.nutria-steps p{margin:2px 0 0;font-size:.84rem}
+.nutria-payment{background:#154c3e;border:1px solid #327a62;border-radius:26px;padding:19px}
+.nutria-payment p{color:#4e6f61}
+.nutria-price{font-size:2.6rem;letter-spacing:-.07em}
+.nutria-price small{font-size:.78rem;letter-spacing:0}
+.nutria-landing ul{display:grid;gap:12px;padding-left:20px;margin:16px 0 24px;color:#4e6f61;list-style:disc}
+.nutria-tint{background:#eff6ef}
+.nutria-platform{height:230px;overflow:hidden;background:linear-gradient(#e4f2e8,#cde5d5);border-radius:16px;margin-top:24px;display:grid;justify-items:center;align-items:start;padding:24px 16px 0}
+.nutria-platform .nutria-phone{width:min(175px,100%);font-size:10px}
+.nutria-fake-web{background:white;width:100%;border-radius:12px;padding:22px 16px;box-shadow:0 10px 35px #173f3a22}
+.nutria-fake-web div{display:flex;gap:6px;margin:14px 0}
+.nutria-fake-web span{background:#e3efe5;padding:8px;flex:1;border-radius:7px;font-size:.68rem}
+.nutria-fake-web b{display:block;font-size:1.2rem}
+.nutria-fake-web hr{width:80%;border:3px solid #e3efe5;border-radius:8px;margin:6px 0}
+.nutria-compare article:last-child{background:#e7f4e9;border-color:#bfdfcc}
+.nutria-story{grid-template-columns:2fr 3fr}
+.nutria-story-logo{background:#d4e8d8;border-radius:24px;padding:11%;display:grid;place-items:center}
+.nutria-story-logo img{width:100%;max-width:290px;mix-blend-mode:multiply}
+.nutria-faq{grid-template-columns:2fr 3fr;align-items:start}
+.nutria-faq details{border-top:1px solid #dce8df;padding:18px 0}
+.nutria-faq details:last-child{border-bottom:1px solid #dce8df}
+.nutria-faq summary,.nutria-menu summary{cursor:pointer;list-style:none}
+.nutria-faq summary{font-weight:800;display:flex;justify-content:space-between;gap:16px}
+.nutria-faq summary::after{content:'+';color:#197452}
+.nutria-faq details[open] summary::after{content:'−'}
+.nutria-faq p{margin:10px 0 0}
+.nutria-contact{background:linear-gradient(120deg,#0b4437,#0d624b)}
+.nutria-contact .nutria-split{grid-template-columns:3fr 1fr}
+.nutria-contact .nutria-primary{background:#fff;color:#146950}
+.nutria-footer{background:#082e25;color:#c7e3d5;padding:26px 0;font-size:.75rem}
+.nutria-footer .nutria-wrap,.nutria-footer nav{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between}
+.nutria-legal{min-height:100dvh;background:#edf5ee;padding:32px 18px 60px}
+.nutria-legal article{max-width:840px;margin:auto;background:white;border:1px solid #dce8df;border-radius:23px;padding:clamp(20px,5vw,55px)}
+.nutria-legal nav{display:flex;gap:12px 22px;flex-wrap:wrap;margin:20px 0}
+.nutria-legal a{text-decoration:underline;text-underline-offset:3px;color:#146950}
+.nutria-legal h2{font-size:1.23rem;font-weight:800;margin:24px 0 6px}
+.nutria-landing :focus-visible,.nutria-legal :focus-visible{outline:3px solid #5ca487;outline-offset:4px}
+@media(max-width:850px){
+ .nutria-nav{gap:12px;position:relative}
+ .nutria-nav>a.nutria-primary{margin-left:auto}
+ .nutria-nav>nav{display:none}
+ .nutria-menu{display:block}
+ .nutria-menu summary{display:grid;place-items:center;width:44px;height:44px;border:1px solid #dce8df;border-radius:10px;background:white}
+ .nutria-menu nav{position:absolute;z-index:2;right:0;top:100%;display:grid;gap:0;background:#fff;border:1px solid #dce8df;border-radius:12px;box-shadow:0 10px 25px #173f3a22}
+ .nutria-menu nav a{padding:12px 18px}
+}
+@media(max-width:660px){
+ .nutria-wrap{width:calc(100% - 36px)}
+ .nutria-nav{min-height:64px}
+ .nutria-nav img{width:51px;height:51px}
+ .nutria-split,.nutria-story,.nutria-faq,.nutria-contact .nutria-split,.nutria-features,.nutria-pair{grid-template-columns:1fr}
+ .nutria-strip .nutria-wrap{grid-template-columns:1fr 1fr}
+ .nutria-hero{padding:38px 0 44px}
+ .nutria-hero-art{margin:auto;width:min(100%,420px)}
+ .nutria-center{margin-bottom:26px}
+ .nutria-story-logo{padding:7%}
+ .nutria-story-logo img{max-width:230px}
+}
