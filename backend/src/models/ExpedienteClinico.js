@@ -1,3 +1,4 @@
+const { modeloPaciente } = require('../config/datosPacientes')
 const mongoose = require('mongoose')
 
 const expedienteClinicoSchema =
@@ -323,7 +324,7 @@ const expedienteClinicoSchema =
     },
   )
 
-module.exports = mongoose.model(
+module.exports = modeloPaciente(
   'ExpedienteClinico',
   expedienteClinicoSchema,
 )

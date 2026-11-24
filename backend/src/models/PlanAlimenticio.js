@@ -1,3 +1,4 @@
+const { modeloPaciente } = require('../config/datosPacientes')
 const mongoose = require('mongoose')
 
 const nutrimentosSchema =
@@ -288,7 +289,7 @@ const planAlimenticioSchema =
   )
 
 module.exports =
-  mongoose.model(
+  modeloPaciente(
     'PlanAlimenticio',
     planAlimenticioSchema,
   )

@@ -1,3 +1,4 @@
+const { modeloPaciente } = require('../config/datosPacientes')
 const mongoose = require('mongoose')
 const schema = new mongoose.Schema({
   paciente: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true, index: true },
@@ -30,4 +31,4 @@ const schema = new mongoose.Schema({
   versionMotor: { type: String, default: '1.0.0' },
 }, { timestamps: true })
 schema.index({ paciente: 1, nutritionist: 1, createdAt: -1 })
-module.exports = mongoose.model('CalculoNutricional', schema)
+module.exports = modeloPaciente('CalculoNutricional', schema)

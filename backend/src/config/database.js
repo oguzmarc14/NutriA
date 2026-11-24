@@ -1,3 +1,4 @@
+const { verificarSeparacion } = require('./datosPacientes')
 const mongoose = require('mongoose')
 
 async function connectDatabase() {
@@ -8,6 +9,7 @@ async function connectDatabase() {
   }
 
   await mongoose.connect(MONGODB_URI)
+  await verificarSeparacion()
   console.log('MongoDB Atlas conectado')
 }
 

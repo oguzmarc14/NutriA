@@ -1,3 +1,4 @@
+const { modeloPaciente } = require('../config/datosPacientes')
 const mongoose=require('mongoose')
 
 // HU-23/24: registro DECLARADO de pagos externos a NutriA.
@@ -16,4 +17,4 @@ const pagoSchema=new mongoose.Schema({
 }, {timestamps:true})
 pagoSchema.index({paciente:1,createdAt:-1})
 pagoSchema.index({nutritionist:1,paciente:1,createdAt:-1})
-module.exports=mongoose.model('Pago',pagoSchema)
+module.exports=modeloPaciente('Pago',pagoSchema)

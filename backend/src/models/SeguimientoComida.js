@@ -1,3 +1,4 @@
+const { modeloPaciente } = require('../config/datosPacientes')
 const mongoose = require('mongoose')
 
 const seguimientoComidaSchema = new mongoose.Schema(
@@ -65,4 +66,4 @@ seguimientoComidaSchema.index(
   { unique: true },
 )
 
-module.exports = mongoose.model('SeguimientoComida', seguimientoComidaSchema)
+module.exports = modeloPaciente('SeguimientoComida', seguimientoComidaSchema)

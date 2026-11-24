@@ -26,7 +26,7 @@ async function obtenerMiPerfil(req, res, next) {
       _id: pacienteId,
       active: true,
     })
-      .populate('nutritionist', 'name email')
+      .populate({ path: 'nutritionist', select: 'name email', model: User })
       .lean()
 
     if (!paciente) {
