@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { Pressable, Text, View } from 'react-native'
+import { Linking, Pressable, Share, Text, View } from 'react-native'
 import { request } from '@/core/api/client'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useResource } from '@/shared/hooks/useResource'
@@ -10,6 +10,7 @@ import { FormField } from '@/shared/ui/FormField'
 import { DateField, TimeField } from '@/shared/ui/DateTimeField'
 import { ClosedDaysCalendar } from './ClosedDaysCalendar'
 import { AppDialog } from '@/shared/ui/AppDialog'
+import { AgendaPaymentSettings } from './AgendaPaymentSettings'
 import { ListState } from '@/shared/ui/ListState'
 type Slot = {dia:number;inicio:string;fin:string}
 type DateBlock = {fecha:string;inicio:string;fin:string}
@@ -74,6 +75,16 @@ export default function ScheduleScreen() {
     catch(cause){setError(cause instanceof Error?cause.message:'No se pudo guardar el horario.')}
     finally{lock.current=false;setBusy(false)}
   }
+  const published = Boolean(baseline.booking && (JSON.parse(baseline.booking) as Booking).publicado)
+  const agendaUrl = session ? 'https://nutri-a-six.vercel.app/agenda/' + encodeURIComponent(session.user.id) : ''
+  async function openSharedAgenda(share: boolean) {
+    if (!published || !agendaUrl) return
+    try {
+      if (share) await Share.share({ message: 'Consulta los horarios de mi consultorio en NutriA: ' + agendaUrl })
+      else await Linking.openURL(agendaUrl)
+    } catch { setError('No se pudo abrir el enlace de la agenda.') }
+  }
+
   function slotEditor(rows:Slot[],field:'franjas'|'bloqueos') {
     return <>{rows.map((slot,index)=><View key={index} style={styles.card}><View style={styles.row}>{days.map((label,dia)=>work.dias.includes(dia) && <Button key={dia} label={label} selected={slot.dia===dia} disabled={busy} onPress={()=>setBooking({...booking,[field]:rows.map((row,i)=>i===index?{...row,dia}:row)})}/>)}</View>
       <TimeField halfHour label="Inicio del bloque" value={slot.inicio} disabled={busy} onChange={inicio=>setBooking({...booking,[field]:rows.map((row,i)=>i===index?{...row,inicio}:row)})}/><TimeField halfHour label="Fin del bloque" value={slot.fin} disabled={busy} onChange={fin=>setBooking({...booking,[field]:rows.map((row,i)=>i===index?{...row,fin}:row)})}/><Button label="Quitar bloque" selected={false} disabled={busy} onPress={()=>setBooking({...booking,[field]:rows.filter((_,i)=>i!==index)})}/>
@@ -121,7 +132,17 @@ export default function ScheduleScreen() {
       <Text style={styles.cardTitle}>Bloqueos por fecha</Text>{(booking.bloqueosPorFecha||[]).map((block,index)=><View key={index} style={{gap:8}}><DateField label="Fecha del bloqueo" value={block.fecha} disabled={busy} onChange={fecha=>setBooking({...booking,bloqueosPorFecha:booking.bloqueosPorFecha!.map((b,i)=>i===index?{...b,fecha}:b)})}/><TimeField halfHour label="Inicio del bloqueo" value={block.inicio} disabled={busy} onChange={inicio=>setBooking({...booking,bloqueosPorFecha:booking.bloqueosPorFecha!.map((b,i)=>i===index?{...b,inicio}:b)})}/><TimeField halfHour label="Fin del bloqueo" value={block.fin} disabled={busy} onChange={fin=>setBooking({...booking,bloqueosPorFecha:booking.bloqueosPorFecha!.map((b,i)=>i===index?{...b,fin}:b)})}/><Button label="Quitar bloqueo por fecha" selected={false} disabled={busy} onPress={()=>setBooking({...booking,bloqueosPorFecha:booking.bloqueosPorFecha!.filter((_,i)=>i!==index)})}/></View>)}
       <Button label="Agregar bloqueo por fecha" selected={false} disabled={busy||(booking.bloqueosPorFecha?.length||0)>=100} onPress={()=>setBooking({...booking,bloqueosPorFecha:[...booking.bloqueosPorFecha||[],{fecha:'',inicio:work.inicio,fin:work.fin}]})}/>
       <FormField label="Anticipación mínima (horas, 0 a 72)" numeric value={String(booking.anticipacionHoras)} disabled={busy} onChange={value=>setBooking({...booking,anticipacionHoras:Number(value)})}/><Button label={booking.publicado?'Agenda pública: activada':'Agenda pública: desactivada'} selected={booking.publicado} disabled={busy} onPress={()=>setBooking({...booking,publicado:!booking.publicado})}/><Text style={styles.body}>La agenda pública solo cambia al guardar esta configuración.</Text><Button label={busy?'Guardando…':'Guardar bloques de citas'} disabled={busy||JSON.stringify(booking)===baseline.booking} onPress={()=>void save('booking')}/>
-    </View>}</>}
+    </View>}
+    {section === 'booking' && <>
+      {published && <View style={styles.card}>
+        <Text accessibilityRole="header" style={styles.cardTitle}>Agenda para pacientes</Text>
+        <Text style={styles.body}>Comparte tus horarios disponibles por WhatsApp, correo u otra aplicación.</Text>
+        <Button label="Compartir agenda" onPress={() => void openSharedAgenda(true)} />
+        <Button label="Ver agenda pública" selected={false} onPress={() => void openSharedAgenda(false)} />
+      </View>}
+      <AgendaPaymentSettings />
+    </>}
+    </>}
     <AppDialog visible={!!error} title="Revisa los horarios" message={error} onClose={()=>setError('')}/><AppDialog visible={!!message} success title="Horario guardado" message={message} onClose={()=>setMessage('')}/>
   </Page>
 }

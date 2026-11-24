@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { PeriodCalendar } from '../PeriodCalendar'
 import { localToday } from '@/features/clinic/workCalendar'
 import { dateInZone } from '../models'
-import { ActivityIndicator, Alert, Text, View } from 'react-native'
+import { ActivityIndicator, Alert, Linking, Text, View } from 'react-native'
 import { request } from '@/core/api/client'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useResource } from '@/shared/hooks/useResource'
@@ -18,7 +18,7 @@ type Appointment = {
   estado: string
   tipo: string
 }
-type Appointments = { citas: Appointment[]; zonaHoraria: string; profesional: string; hoy?: string }
+type Appointments = { citas: Appointment[]; zonaHoraria: string; profesional: string; hoy?: string; agendaPublicaId?: string | null }
 const labels: Record<string, string> = {
   programada: 'Pendiente de confirmar', confirmada: 'Confirmada',
   cancelada: 'Cancelada', completada: 'Completada',
@@ -104,6 +104,12 @@ export default function MyAppointments() {
   return <Page>
     <Text accessibilityRole="header" style={styles.title}>Mis citas</Text>
     {data && <Text style={styles.body}>Consultas con {data.profesional}</Text>}
+    {data?.agendaPublicaId && <Button label="Solicitar cita y consultar opciones de pago" selected={false}
+      onPress={() => {
+        setActionError('')
+        void Linking.openURL('https://nutri-a-six.vercel.app/agenda/' + encodeURIComponent(data.agendaPublicaId!))
+          .catch(() => setActionError('No se pudo abrir la agenda del consultorio.'))
+      }} />}
     {loading && <ActivityIndicator accessibilityLabel="Cargando citas" />}
     {!!(error || actionError) && <Text accessibilityRole="alert" style={styles.error}>{actionError || error}</Text>}
     {data && <>

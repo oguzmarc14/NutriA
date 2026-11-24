@@ -1,3 +1,4 @@
+const { cobrosPublicos } = require('../utils/cobrosAgenda')
 const express = require('express')
 const mongoose = require('mongoose')
 const User = require('../models/User')
@@ -13,7 +14,7 @@ router.get('/:nutritionistId', async (req,res,next) => {
     const id = req.params.nutritionistId
     if(!mongoose.isValidObjectId(id))return res.status(404).json({message:'Calendario no disponible'})
     const user = await User.findOne({_id:id,role:'nutritionist',active:true})
-      .select('name clinica horarioCitas horarioLaboral').lean()
+      .select('name clinica horarioCitas horarioLaboral cobrosAgenda').lean()
     if(!user?.horarioLaboral?.configurado || !user?.horarioCitas?.configurado ||
        !user.horarioCitas.publicado)
       return res.status(404).json({message:'Calendario no disponible'})
@@ -42,6 +43,7 @@ router.get('/:nutritionistId', async (req,res,next) => {
       profesional:user.clinica?.nombreProfesional || user.name,
       zonaHoraria:zona,
       duracionMinutos:60,
+      cobros: cobrosPublicos(user.cobrosAgenda),
       desde,
       dias:fechas,
       aviso:'Los horarios pueden cambiar. Elegir uno no representa una reserva confirmada.',

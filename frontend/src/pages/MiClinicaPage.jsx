@@ -1,3 +1,4 @@
+import CobrosAgendaForm from '../components/citas/CobrosAgendaForm'
 import { useEffect, useState } from 'react'
 import { Building2, Camera, Save, ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -62,5 +63,6 @@ export default function MiClinicaPage() {
       {mensaje && <p role="status" className="rounded-xl bg-[#e4f2e9] p-3 text-sm text-[#246b55]">{mensaje}</p>}
       <button type="submit" disabled={guardando || cargando} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#246b55] px-5 py-3 text-sm font-bold text-white disabled:opacity-50"><Save size={17}/>{guardando?'Guardando...':'Guardar cambios'}</button>
     </form>
+    <CobrosAgendaForm />
   </section>
 }

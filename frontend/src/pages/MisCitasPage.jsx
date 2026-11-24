@@ -122,6 +122,10 @@ export default function MisCitasPage(){
         <p className="text-xs font-extrabold uppercase tracking-wide opacity-70">Mis consultas</p>
         <h1 className="mt-1 text-2xl font-black sm:text-3xl">Mis citas</h1>
         <p className="mt-2 text-sm opacity-75">Consulta tus citas con {datos?.profesional || 'tu nutriólogo'}.</p>
+        {datos?.agendaPublicaId && <a href={'/agenda/' + encodeURIComponent(datos.agendaPublicaId)}
+          className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl border border-current/25 px-3 text-sm font-bold">
+          <CalendarPlus size={17} aria-hidden="true" /> Solicitar cita y consultar opciones de pago
+        </a>}
       </div>
       <button type="button" onClick={actualizar} aria-label="Actualizar mis citas"
         className="nutria-mis-citas-accion inline-flex min-h-11 w-full max-w-48 items-center justify-center gap-2 justify-self-center rounded-xl border px-4 text-xs font-bold sm:w-auto sm:justify-self-end">

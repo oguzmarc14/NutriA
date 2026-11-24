@@ -92,13 +92,15 @@ async function obtenerMisCitas(req,res,next) {
         .select('_id inicio fin zonaHoraria tipo estado')
         .sort({inicio:-1}).limit(200).lean(),
       User.findById(paciente.nutritionist)
-        .select('name clinica recordatoriosSeguimiento horarioLaboral').lean(),
+        .select('name active clinica recordatoriosSeguimiento horarioLaboral horarioCitas').lean(),
     ])
     const zona=profesional?.horarioLaboral?.zonaHoraria || 'America/Mexico_City'
     const resumen=resumenCitasPaciente(citas,profesional?.recordatoriosSeguimiento,zona)
     res.json({
       citas,proxima:resumen.proxima,ultima:resumen.ultima,
       avisos:resumen.avisos,hoy:resumen.hoy,zonaHoraria:resumen.zonaHoraria,
+      agendaPublicaId: profesional?.active && profesional.horarioLaboral?.configurado &&
+        profesional.horarioCitas?.configurado && profesional.horarioCitas?.publicado ? String(paciente.nutritionist) : null,
       profesional:profesional?.clinica?.nombreProfesional || profesional?.name || 'Tu nutriólogo',
     })
   } catch(error) { next(error) }

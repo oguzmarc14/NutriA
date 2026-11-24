@@ -1,3 +1,4 @@
+const { cobrosSchema, cobrosPublicos } = require('../utils/cobrosAgenda')
 const Patient = require('../models/Pacientes')
 const Medicion = require('../models/Medicion')
 const { clinicSummary } = require('../utils/clinicSummary')
@@ -16,7 +17,19 @@ router.get('/resumen', async (req, res, next) => {
     return res.json({ resumen: clinicSummary(patients, measurements) })
   } catch (error) { return next(error) }
 })
-router.get('/', (req, res) => res.json({ clinica: req.user.clinica || {} }))
+router.get('/cobros', (req, res) => res.json({ cobros: cobrosPublicos(req.user.cobrosAgenda) }))
+router.put('/cobros', async (req, res, next) => {
+  try {
+    const parsed = cobrosSchema.safeParse(req.body)
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.issues[0].message })
+    if (parsed.data.enlaceMercadoPago && !parsed.data.whatsapp)
+      return res.status(400).json({ message: 'Agrega el WhatsApp del consultorio para confirmar el horario antes de cobrar.' })
+    req.user.cobrosAgenda = parsed.data
+    await req.user.save()
+    return res.json({ cobros: cobrosPublicos(req.user.cobrosAgenda) })
+  } catch (error) { next(error) }
+})
+router.get('/',  (req, res) => res.json({ clinica: req.user.clinica || {} }))
 router.put('/', async (req, res, next) => {
   try {
     const { nombre, nombreProfesional, logo } = req.body || {}

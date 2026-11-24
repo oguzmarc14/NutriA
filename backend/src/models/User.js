@@ -74,6 +74,11 @@ const userSchema = new mongoose.Schema(
       logo: { type: String, default: '' },
     },
 
+    cobrosAgenda: {
+      whatsapp: { type: String, default: '', maxlength: 15 },
+      enlaceMercadoPago: { type: String, default: '', maxlength: 500 },
+    },
+
     horarioLaboral: {
       configurado: { type: Boolean, default: false },
       dias: { type: [Number], default: [1, 2, 3, 4, 5] },

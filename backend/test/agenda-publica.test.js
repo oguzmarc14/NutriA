@@ -43,17 +43,18 @@ test('UTC local inexistente en cambio de horario de verano no se ofrece',()=>{
 
 const source = fs.readFileSync(path.join(__dirname,'../src/routes/agendaPublica.routes.js'),'utf8')
 const ID='507f1f77bcf86cd799439011'
-function publicApi({publicado=true,booked=[]}={}) {
+function publicApi({publicado=true,booked=[],cobrosAgenda}={}) {
   const handlers=new Map()
   const user={_id:ID,name:'Nutriólogo Demo',role:'nutritionist',active:true,
     email:'privado@ejemplo.invalid',clinica:{nombre:'Consultorio NutriA',nombreProfesional:'Profesional Demo'},
-    horarioLaboral:JORNADA,horarioCitas:{...CONFIG,publicado}}
+    cobrosAgenda,horarioLaboral:JORNADA,horarioCitas:{...CONFIG,publicado}}
   const requireFake=(spec)=>{
     if(spec==='express')return {Router:()=>({get:(p,fn)=>handlers.set('GET '+p,fn)})}
     if(spec==='mongoose')return {isValidObjectId:()=>true}
     if(spec==='../models/User')return {findOne:()=>({select:()=>({lean:async()=>user})})}
     if(spec==='../models/Cita')return {find:()=>({select:()=>({lean:async()=>booked})})}
     if(spec==='../utils/agenda-publica.utils')return utils
+    if(spec==='../utils/cobrosAgenda')return require('../src/utils/cobrosAgenda')
     throw Error('unexpected import '+spec)
   }
   const env={require:requireFake,module:{exports:{}},Date,Number,String,Intl}
@@ -104,4 +105,19 @@ test('festivos y vacaciones excluyen todos los horarios públicos de esa fecha',
     new Date('2026-11-10T12:00:00Z')),[])
   assert.equal(utils.construirDisponibilidad('2026-11-12',CONFIG,JORNADA,[],
     new Date('2026-11-10T12:00:00Z')).length,6)
+})
+
+test('la agenda solo publica contacto y enlaces de pago válidos del consultorio', async () => {
+  const whatsapp = '525512345678'
+  const enlaceMercadoPago = 'https://mpago.la/cobro123'
+  const config = { whatsapp, enlaceMercadoPago, token: 'privado' }
+  const visible = await publicApi({ cobrosAgenda: config })()
+  assert.deepEqual(visible.body.cobros, { whatsapp, enlaceMercadoPago })
+  const oculto = await publicApi({ publicado: false, cobrosAgenda: config })()
+  assert.equal(oculto.body.cobros, undefined)
+  const { cobrosSchema } = require('../src/utils/cobrosAgenda')
+  for (const enlace of ['javascript:alert(1)', 'http://mpago.la/cobro123', 'https://mpago.la.ejemplo.com/a', 'https://mpago.la@ejemplo.com/a']) {
+    assert.equal(cobrosSchema.safeParse({ whatsapp, enlaceMercadoPago: enlace }).success, false)
+  }
+  assert.equal(cobrosSchema.safeParse({ whatsapp: 'hola', enlaceMercadoPago }).success, false)
 })

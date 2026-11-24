@@ -11,6 +11,8 @@ export default function AgendaPublicaPage() {
   const [loading,setLoading]=useState(true)
   const [error,setError]=useState('')
   const [seleccion,setSeleccion]=useState(null)
+  const [enLinea, setEnLinea] = useState(false)
+  const [confirmado, setConfirmado] = useState(false)
   const [copiado,setCopiado]=useState(false)
   useEffect(()=>{
     const controller=new AbortController()
@@ -25,6 +27,13 @@ export default function AgendaPublicaPage() {
       .finally(()=>{if(!controller.signal.aborted)setLoading(false)})
     return ()=>controller.abort()
   },[nutritionistId])
+
+  const cobros = datos?.cobros
+  const seleccionCobro = seleccion && cobros?.whatsapp
+  const wa = seleccionCobro ? 'https://wa.me/' + cobros.whatsapp + '?text=' + encodeURIComponent(
+    'Hola, ¿pueden confirmar una consulta el ' + seleccion.fecha + ' a las ' + seleccion.hora +
+    ' (' + datos.zonaHoraria + ')? Quisiera pagar ' + (enLinea ? 'en línea.' : 'en efectivo.'),
+  ) : null
 
   async function copiar() {
     if(!seleccion)return
@@ -54,10 +63,28 @@ export default function AgendaPublicaPage() {
              <h2 className="text-lg font-extrabold">Próximos 21 días</h2>
              <span className="nutria-agenda-pill rounded-full px-3 py-1 text-xs font-bold">60 minutos por consulta</span>
            </div>
-           <SelectorDisponibilidad dias={datos.dias} seleccion={seleccion} onSelect={s=>{setSeleccion(s);setCopiado(false)}} zonaHoraria={datos.zonaHoraria}/>
+           <SelectorDisponibilidad dias={datos.dias} seleccion={seleccion} onSelect={s=>{setSeleccion(s);setCopiado(false);setConfirmado(false);setEnLinea(false)}} zonaHoraria={datos.zonaHoraria}/>
            {seleccion && <div className="nutria-agenda-day rounded-2xl border p-5">
              <h3 className="flex items-center gap-2 text-base font-extrabold"><CalendarCheck size={19}/>Horario seleccionado</h3>
              <p className="mt-2 text-sm">Fecha: <strong>{seleccion.fecha}</strong> · Hora: <strong>{seleccion.hora}</strong></p>
+             {wa && <div className="mt-4 space-y-3">
+               <fieldset className="flex flex-wrap gap-4">
+                 <legend className="mb-2 text-sm font-bold">Forma de pago</legend>
+                 <label className="flex min-h-10 items-center gap-2"><input type="radio" name="pago" checked={!enLinea}
+                   onChange={() => { setEnLinea(false); setConfirmado(false) }} /> Efectivo</label>
+                 {cobros.enlaceMercadoPago && <label className="flex min-h-10 items-center gap-2"><input type="radio" name="pago" checked={enLinea}
+                   onChange={() => setEnLinea(true)} /> En línea</label>}
+               </fieldset>
+               <a href={wa} target="_blank" rel="noopener noreferrer" className="nutria-agenda-primary inline-flex min-h-11 items-center rounded-xl px-4 text-sm font-bold">
+                 {enLinea ? 'Confirmar horario por WhatsApp' : 'Acordar pago en efectivo por WhatsApp'}
+               </a>
+               {enLinea && cobros.enlaceMercadoPago && <div className="space-y-2 rounded-xl border border-current/20 p-3 text-sm">
+                 <label className="flex min-h-11 items-center gap-2"><input type="checkbox" checked={confirmado}
+                   onChange={event => setConfirmado(event.target.checked)} /> El consultorio ya confirmó mi horario y el importe.</label>
+                 {confirmado && <a href={cobros.enlaceMercadoPago} target="_blank" rel="noopener noreferrer"
+                   className="nutria-agenda-primary inline-flex min-h-11 items-center rounded-xl px-4 text-sm font-bold">Pagar con Mercado Pago</a>}
+               </div>}
+             </div>}
              <button type="button" onClick={copiar} className="nutria-agenda-primary mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-5 text-sm font-extrabold sm:w-auto">
                {copiado?<Check size={18}/>:<Copy size={18}/>}
                {copiado?'Mensaje copiado':'Copiar mensaje para solicitar cita'}

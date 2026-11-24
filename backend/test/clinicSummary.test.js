@@ -24,6 +24,7 @@ test('summary endpoint scopes both patient and measurement queries to the authen
     express: { Router: () => ({ use: (...args) => guards.push(...args), get: (url, handler) => routes[url] = handler, put() {} }) },
     '../middleware/auth.middleware': { requireAuth: 'auth', allowRoles: (...roles) => roles.join(',') },
     '../utils/clinicSummary': require('../src/utils/clinicSummary'),
+    '../utils/cobrosAgenda': require('../src/utils/cobrosAgenda'),
     '../models/Pacientes': { find: query => {
       assert.equal(query.nutritionist, owner); assert.equal(query.active, true)
       return { select: () => ({ lean: async () => [{ _id: id, createdAt: new Date() }] }) }
