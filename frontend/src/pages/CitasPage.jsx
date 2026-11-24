@@ -635,7 +635,7 @@ export default function CitasPage() {
             ))}</div>
             {!upcoming.length && <p className="rounded-xl bg-[#eaf2e8] p-3 text-xs text-[#416458]">{loading ? 'Cargando…' : 'Sin próximas citas en esta vista.'}</p>}
           </section>
-          <section className={`${PANEL} min-w-0 p-4`}>
+          <section id="google-calendar" className={`${PANEL} min-w-0 scroll-mt-20 p-4`}>
             <h2 className="flex items-center gap-2 text-sm font-extrabold"><CalendarDays size={17} aria-hidden="true" /> Google Calendar</h2>
             <p className="mt-1 text-xs font-medium text-[#526d5d]">{connected ? 'Cuenta conectada' : 'Cuenta sin conectar'}</p>
             <button type="button" disabled={calendarBusy} onClick={connected ? disconnect : connect} className={`${CONTROL} mt-3 w-full`}>

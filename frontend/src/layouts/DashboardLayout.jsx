@@ -17,8 +17,8 @@ import {
   TrendingUp,
   UserCog,
   UserRound,
-  Settings,
-  UserPen,
+  Bell,
+  ChevronRight,
   Users,
   Building2,
   ClipboardPlus,
@@ -33,6 +33,7 @@ import {
 } from 'lucide-react'
 
 import {
+  Link,
   Outlet,
   useLocation,
   useNavigate,
@@ -45,11 +46,13 @@ import CentroAvisosNutriologo from '../components/avisos/CentroAvisosNutriologo'
 import CentroAvisosPaciente from '../components/avisos/CentroAvisosPaciente'
 import MenuMovil from '../components/navigation/MenuMovil'
 import NavigationGroups from '../components/navigation/NavigationGroups'
-import ActualizacionPWA from '../components/pwa/ActualizacionPWA'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 
-function PerfilMenu({ user, roleLabel, cerrarSesion, irAMiClinica, irAEditarPerfil }) {
+const accountRow = "flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-semibold [&>svg]:shrink-0 text-[#246b55] hover:bg-[#eef5f1] dark:text-[#cde8d7] dark:hover:bg-[#294338]"
+
+function PerfilMenu({ user, roleLabel, cerrarSesion, abrirNotificaciones }) {
   const menuRef = useRef(null)
+  const closeMenu = () => { if (menuRef.current) menuRef.current.open = false }
 
   useEffect(() => {
     function cerrarAlTocarFuera(event) {
@@ -64,21 +67,34 @@ function PerfilMenu({ user, roleLabel, cerrarSesion, irAMiClinica, irAEditarPerf
   }, [])
 
   return (
-    <details ref={menuRef} className="group relative">
-      <summary aria-label="Abrir menú de perfil" className="flex size-11 shrink-0 cursor-pointer list-none items-center justify-center rounded-xl border border-[#bcd8c7] bg-[#e3f0e7] text-[#246b55] shadow-sm transition hover:bg-[#d5e8db] [&::-webkit-details-marker]:hidden">
+    <details ref={menuRef} className="group relative" onKeyDown={event => {
+      if (event.key === 'Escape' && menuRef.current?.open) {
+        event.stopPropagation()
+        closeMenu()
+        menuRef.current.querySelector('summary')?.focus()
+      }
+    }}>
+      <summary aria-label="Mi cuenta" className="flex size-11 shrink-0 cursor-pointer list-none items-center justify-center rounded-xl border border-[#bcd8c7] bg-[#e3f0e7] text-[#246b55] shadow-sm transition hover:bg-[#d5e8db] [&::-webkit-details-marker]:hidden">
         <UserRound size={20}/>
       </summary>
-      <div className="absolute right-0 top-12 z-50 w-64 rounded-2xl border border-[#d5e3d9] bg-white p-2 shadow-[0_16px_40px_rgba(24,73,53,.18)]">
-        <div className="border-b border-[#e7eee8] px-3 py-3">
+      <div className="absolute right-0 top-12 z-50 max-h-[calc(100dvh-5rem)] w-[22rem] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-[#d5e3d9] bg-white p-2 shadow-[0_16px_40px_rgba(24,73,53,.18)]">
+        <div className="border-b border-[#e7eee8] px-3 py-4 text-center">
+          <span className="mx-auto mb-2 grid size-11 place-items-center rounded-2xl bg-[#e3f0e7] text-[#246b55]"><UserRound size={22} aria-hidden="true"/></span>
           <p className="break-words text-sm font-extrabold text-[#173f34]">{user.name}</p>
           <p className="text-xs text-[#74897d]">{roleLabel}</p>
           {user.email && <p className="mt-1 break-all text-[11px] text-[#82928a]">{user.email}</p>}
         </div>
-        {user.role === 'nutritionist' && <button type="button" onClick={irAMiClinica} className="my-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#246b55] hover:bg-[#eef5f1]"><Building2 size={16}/>Mi clínica</button>}
-        {user.role === 'nutritionist' && <button type="button" onClick={irAEditarPerfil} className="my-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-[#246b55] hover:bg-[#eef5f1]"><UserPen size={16}/>Editar perfil y horario</button>}
-        <div className="my-1 flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-[#8b9b92]" title="Próximamente: configuración">
-          <Settings size={16}/> Configuración · Próximamente
-        </div>
+        {user.role === 'nutritionist' && <div className="my-2 px-1">
+          <p className="px-2 pb-1 text-xs font-bold text-[#526d5d] dark:text-[#b9d0c0]">Configuración del consultorio</p>
+          <Link to="/mi-clinica" onClick={closeMenu} className={accountRow}><Building2 size={17} aria-hidden="true"/> <span>Mi clínica<small className="block font-normal">Datos e identidad del consultorio</small></span> <ChevronRight size={14} className="ml-auto" aria-hidden="true"/></Link>
+          <Link to="/editar-perfil" onClick={closeMenu} className={accountRow}><CalendarClock size={17} aria-hidden="true"/> <span>Horarios y disponibilidad<small className="block font-normal">Jornada, bloqueos y agenda</small></span> <ChevronRight size={14} className="ml-auto" aria-hidden="true"/></Link>
+          <Link to="/mi-clinica#cobros-agenda" onClick={closeMenu} className={accountRow}><Wallet size={17} aria-hidden="true"/> <span>Pagos<small className="block font-normal">Mercado Pago y efectivo por WhatsApp</small></span> <ChevronRight size={14} className="ml-auto" aria-hidden="true"/></Link>
+        </div>}
+        {user.role !== 'admin' && <div className="my-2 px-1">
+          <p className="px-2 pb-1 text-xs font-bold text-[#526d5d] dark:text-[#b9d0c0]">Preferencias</p>
+          <button type="button" onClick={() => { closeMenu(); abrirNotificaciones() }} className={accountRow}><Bell size={17} aria-hidden="true"/> <span>Notificaciones<small className="block font-normal">Dietas, citas y avisos</small></span> <ChevronRight size={14} className="ml-auto" aria-hidden="true"/></button>
+          <Link to={user.role === 'nutritionist' ? '/citas#google-calendar' : '/mis-citas#mi-calendario-de-citas'} onClick={closeMenu} className={accountRow}><CalendarDays size={17} aria-hidden="true"/> <span>Calendarios<small className="block font-normal">Agenda y sincronización</small></span> <ChevronRight size={14} className="ml-auto" aria-hidden="true"/></Link>
+        </div>}
         <ThemeSelector />
         <div className="my-2 border-t border-[#e7eee8]"/>
         <button type="button" onClick={cerrarSesion} className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-[#b94d4d] transition hover:bg-red-50">
@@ -94,6 +110,19 @@ function DashboardLayout() {
   const { pacienteTrabajo, cerrarTrabajo } = usePacienteTrabajo()
 
   const location = useLocation()
+  const avisosMovil = useRef(null)
+  const avisosEscritorio = useRef(null)
+
+  useEffect(() => {
+    const section = location.hash.slice(1)
+    if (!['cobros-agenda', 'google-calendar', 'mi-calendario-de-citas'].includes(section)) return
+    document.getElementById(section)?.scrollIntoView({ block: 'start' })
+  }, [location.key, location.hash])
+
+  function abrirNotificaciones(trigger) {
+    trigger.current?.focus()
+    trigger.current?.click()
+  }
   const navigate = useNavigate()
   const enEditorPlanes = user.role === 'nutritionist' && location.pathname === '/planes'
   const [sidebarPlanesVisible, setSidebarPlanesVisible] = useState(false)
@@ -412,10 +441,10 @@ function DashboardLayout() {
             {user.role === 'nutritionist' && <p className="max-w-[48vw] truncate text-[10px] font-semibold text-[#246b55]">{pacienteTrabajo ? `● ${pacienteTrabajo.name}` : 'Sin paciente activo'}</p>}
           </div>
           <div className="ml-auto flex items-center gap-2">
-            {user.role === 'nutritionist' && <CentroAvisosNutriologo modo="movil" />}
-             {user.role === 'patient' && <CentroAvisosPaciente modo="movil" />}
+            {user.role === 'nutritionist' && <CentroAvisosNutriologo modo="movil" triggerRef={avisosMovil} />}
+             {user.role === 'patient' && <CentroAvisosPaciente triggerRef={avisosMovil} />}
             <BotonInstalarApp />
-            <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} irAMiClinica={() => navigate('/mi-clinica')} irAEditarPerfil={() => navigate('/editar-perfil')}/>
+            <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} abrirNotificaciones={() => abrirNotificaciones(avisosMovil)}/>
           </div>
         </header>
         <div className="sticky top-0 z-40 hidden h-[52px] items-center justify-between gap-3 border-b border-[#c8dbd0] bg-[#eaf0e9]/95 px-5 text-[#173f34] backdrop-blur-md md:flex">
@@ -446,10 +475,10 @@ function DashboardLayout() {
             </div>
           ) : <span className="text-xs font-semibold text-[#648073]">NutriA</span>}
           <div className="flex shrink-0 items-center gap-2">
-            {user.role === 'nutritionist' && <CentroAvisosNutriologo modo="escritorio" />}
-             {user.role === 'patient' && <CentroAvisosPaciente modo="escritorio" />}
+            {user.role === 'nutritionist' && <CentroAvisosNutriologo modo="escritorio" triggerRef={avisosEscritorio} />}
+             {user.role === 'patient' && <CentroAvisosPaciente triggerRef={avisosEscritorio} />}
             <BotonInstalarApp />
-            <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} irAMiClinica={() => navigate('/mi-clinica')} irAEditarPerfil={() => navigate('/editar-perfil')}/>
+            <PerfilMenu user={user} roleLabel={roleLabel} cerrarSesion={cerrarSesion} abrirNotificaciones={() => abrirNotificaciones(avisosEscritorio)}/>
           </div>
         </div>
 
@@ -479,7 +508,6 @@ function DashboardLayout() {
       {configurarHorario && <div className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto bg-[#102d26]/70 p-3 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Configuración inicial del horario"><div className="my-auto w-full max-w-2xl"><HorarioLaboral primerIngreso onSaved={()=>setConfigurarHorario(false)}/></div></div>}
       <MenuMovil sections={sections} rol={user.role} pacienteTrabajo={pacienteTrabajo}
         abierto={menuMovilAbierto} setAbierto={setMenuMovilAbierto} />
-      <ActualizacionPWA />
     </div>
   )
 }

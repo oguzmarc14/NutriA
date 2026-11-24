@@ -34,7 +34,7 @@ export default function CobrosAgendaForm() {
     }
   }
 
-  return <><form onSubmit={guardar} className="mt-6 space-y-4 rounded-3xl border border-[#d4e5d9] bg-white p-5">
+  return <><form id="cobros-agenda" onSubmit={guardar} className="mt-6 scroll-mt-20 space-y-4 rounded-3xl border border-[#d4e5d9] bg-white p-5">
     <h2 className="text-lg font-extrabold text-[#173f34]">Cobros de la agenda</h2>
     <p className="text-sm text-[#526d5d]">El WhatsApp del consultorio se muestra en tu agenda pública para acordar citas y pagos en efectivo.</p>
     {form && <fieldset disabled={busy} className="grid gap-3 sm:grid-cols-2">
