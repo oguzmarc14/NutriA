@@ -38,6 +38,8 @@ import CommunityModeracionPage from "./pages/CommunityModeracionPage";
 import LandingPage from "./pages/LandingPage";
 import FuentesNutricionalesPage from "./pages/FuentesNutricionalesPage";
 
+import MiCaminoPage from "./pages/MiCaminoPage";
+
 function App() {
   return (
     <Routes>
@@ -113,6 +115,7 @@ function App() {
 
             <Route path="mi-plan" element={<MiPlanPage />} />
 
+            <Route path="mi-camino" element={<MiCaminoPage />} />
             <Route path="mi-progreso" element={<MiProgresoPage />} />
           </Route>
 

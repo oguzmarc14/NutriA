@@ -1,6 +1,7 @@
+import { showNotice } from '@/shared/ui/NoticeDialog'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useState } from 'react'
-import { Alert, Share, Text, View } from 'react-native'
+import { Share, Text, View } from 'react-native'
 import { router } from 'expo-router'
 import { request } from '@/core/api/client'
 import { useAuth } from '@/features/auth/AuthProvider'
@@ -32,6 +33,8 @@ export function GamificationPanel() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const data = resource.data
+  const days = data?.resumen?.diasConRegistro ?? 0
+  const next = [1, 3, 7].find(goal => goal > days)
   async function toggle() {
     if (!session || !data?.preferencias.permitidaPorNutriologo || saving) return
     const participa = !data.preferencias.participa
@@ -48,7 +51,7 @@ export function GamificationPanel() {
   function confirmToggle() {
     if (!data) return
     if (!data.preferencias.participa) {
-      Alert.alert('Participar es opcional',
+      showNotice('Participar es opcional',
         'Se reconocerán tus registros de seguimiento, no tu peso, tus calorías ni qué tanto comiste. Puedes pausarlo cuando quieras.', [
           { text: 'Ahora no', style: 'cancel' },
           { text: 'Activar', onPress: () => void toggle() },
@@ -77,6 +80,26 @@ export function GamificationPanel() {
         <Button disabled={saving} label={saving ? 'Guardando…' :
           data.preferencias.participa ? 'Pausar reconocimientos' : 'Activar reconocimientos'} onPress={confirmToggle} />
         {data.preferencias.activa && data.resumen && <>
+          <View style={[styles.card, { backgroundColor: '#143f34', gap: 12 }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Ionicons name="flame" size={36} color="#f5d6a6" />
+              <View style={{ flex: 1 }}><Text style={{ color: '#deeee4', fontWeight: '700' }}>Racha actual</Text>
+                <Text style={{ color: '#fff', fontSize: 30, fontWeight: '800' }}>{data.resumen.rachas?.actual ?? 0} días</Text></View>
+            </View>
+            <Text style={{ color: '#deeee4', lineHeight: 21 }}>Registra al menos una comida cada día. Completa, parcial u omitida: las tres cuentan. Varias comidas registradas en el mismo día suman un solo día.</Text>
+            <Button label="Registrar en mi plan" selected={false} onPress={() => router.navigate('/mi-plan')} />
+          </View>
+          {!!next && <View style={styles.card}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Ionicons name="ribbon-outline" color={colors.green} size={23} />
+              <Text style={[styles.cardTitle, { flex: 1 }]}>Próxima insignia por días registrados</Text>
+            </View>
+            <Text style={styles.body}>{days} de {next} {next === 1 ? 'día' : 'días'} con registro</Text>
+            <View accessible accessibilityRole="progressbar" accessibilityLabel="Días con registro" accessibilityValue={{ min: 0, max: next, now: days }}
+              style={{ height: 9, borderRadius: 9, backgroundColor: '#e2eee6', overflow: 'hidden' }}>
+              <View style={{ width: `${days / next * 100}%`, height: 9, backgroundColor: colors.green }} />
+            </View>
+          </View>}
           <Text style={[styles.body, { fontSize: 14 }]}>{data.resumen.mensaje}</Text>
           <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
             <View style={[styles.card, { flex: 1, minWidth: 118, backgroundColor: '#ffffffc9' }]}>
@@ -109,11 +132,12 @@ export function GamificationPanel() {
               <Text style={styles.cardTitle}>Rachas de seguimiento</Text>
             </View>
             <Text style={[styles.body, { fontSize: 13 }]}>
-              Cuentan los días seguidos con alguna experiencia registrada, sin valorar el contenido de la comida.
+              Si registraste ayer, aún puedes continuar hoy. Si haces una pausa, puedes iniciar otra racha y tu mejor marca se conserva.
             </Text>
             <Text style={styles.body}>Actual: {data.resumen.rachas.actual} días · Mejor: {data.resumen.rachas.maxima} días</Text>
           </View>}
           <Text accessibilityRole="header" style={styles.cardTitle}>Momentos reconocidos</Text>
+          <Text style={[styles.body, { fontSize: 13 }]}>Desbloquea insignias con tu primer registro, al registrar en 3 o 7 días, al escribir una reflexión o al retomar después de una pausa. También hay insignias por rachas de 3 y 7 días consecutivos.</Text>
           {!data.resumen.reconocimientos.length &&
             <Text style={styles.body}>Tu primer reconocimiento aparecerá cuando registres una experiencia.</Text>}
           {data.resumen.reconocimientos.map(item => <View key={item.id}

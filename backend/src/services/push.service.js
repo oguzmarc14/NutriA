@@ -68,6 +68,7 @@ async function notificarDietaAceptada(nutritionist, planId) {
     const recipients = await User.find({ _id:nutritionist,active:true,role:'nutritionist' }).select('_id').lean()
     await notifyUsers(recipients.map(u => u._id), {
       kind:'nutria-diet-accepted',route:'/planes',channelId:'nutrition-updates-v1',
+      title:'Dieta recibida por el paciente',
       body:'Un paciente confirmó que recibió su dieta. Abre Planes alimenticios para consultar el registro.',
     })
   } catch (error) { console.error('No se pudo notificar la aceptación de dieta:', error.message) }

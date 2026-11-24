@@ -1,9 +1,10 @@
+import { showNotice } from '@/shared/ui/NoticeDialog'
 import { DateField } from '@/shared/ui/DateTimeField'
 import { MeasurementChart } from '@/features/progress/MeasurementChart'
 import { MeasurementComparison } from '@/features/progress/MeasurementComparison'
 import { useState } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
-import { Alert, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { request } from '@/core/api/client'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useResource } from '@/shared/hooks/useResource'
@@ -49,7 +50,7 @@ export default function Measurements() {
         token: session.token, method: editing ? 'PUT' : 'POST', body: { ...values, fecha },
       })
       reset(); resource.reload()
-      Alert.alert('Medición guardada', 'Los datos se guardaron correctamente.', [{ text: 'Aceptar' }])
+      showNotice('Medición guardada', 'Los datos se guardaron correctamente.', [{ text: 'Aceptar' }])
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo guardar la medición.') }
     finally { setBusy(false) }
   }

@@ -1,6 +1,7 @@
+import { showNotice } from '@/shared/ui/NoticeDialog'
 import { useRef } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
-import { Alert, Pressable } from 'react-native'
+import { Pressable } from 'react-native'
 import { usePatientWork } from '@/features/patients/PatientWorkProvider'
 import { FormField } from '@/shared/ui/FormField'
 import { AppDialog } from '@/shared/ui/AppDialog'
@@ -95,7 +96,7 @@ export default function Community() {
   }
   function useDiet(item: SavedDiet) {
     if (!active) {
-      Alert.alert('Elige un paciente', 'Selecciona primero un paciente para reutilizar la dieta.', [
+      showNotice('Elige un paciente', 'Selecciona primero un paciente para reutilizar la dieta.', [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Ir a pacientes', onPress: () => router.push('/pacientes') },
       ])
@@ -132,7 +133,7 @@ export default function Community() {
           <Button label={openingDiet ? 'Cargando dieta…' : 'Ver dieta'} selected={false}
             disabled={openingDiet} onPress={() => void openDiet(item)} />
           <Button label="Usar con paciente" onPress={() => useDiet(item)} />
-          <Pressable accessibilityRole="button" onPress={() => Alert.alert('Eliminar dieta guardada',
+          <Pressable accessibilityRole="button" onPress={() => showNotice('Eliminar dieta guardada',
             'Se eliminará solo la copia privada «' + item.nombre + '», no el plan de ningún paciente.', [
               { text: 'Cancelar', style: 'cancel' },
               { text: 'Eliminar copia', style: 'destructive', onPress: () => void deleteDiet(item) },

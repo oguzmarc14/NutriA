@@ -15,7 +15,9 @@ export default function NotificationNavigation() {
   currentUser=session?.user.id
   useEffect(()=>{
     if(!session)return
+    let active = true
     function open(response:Notifications.NotificationResponse){
+      if (!active || currentUser !== session!.user.id) return
       const data=response.notification.request.content.data
       if(data.recipientUser&&data.recipientUser!==session!.user.id){void Notifications.clearLastNotificationResponseAsync();return}
       if(data.kind==='nutria-appointment') {
@@ -33,7 +35,7 @@ export default function NotificationNavigation() {
     }
     const subscription=Notifications.addNotificationResponseReceivedListener(open)
     void Notifications.getLastNotificationResponseAsync().then(response=>{if(response)open(response)}).catch(()=>{})
-    return ()=>subscription.remove()
+    return () => { active = false; subscription.remove() }
   },[session?.user.id,session?.user.role])
   return null
 }

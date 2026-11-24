@@ -1,3 +1,4 @@
+import { showNotice } from '@/shared/ui/NoticeDialog'
 import { router } from 'expo-router'
 import { refreshAppointments } from '@/features/notifications/reminderSync'
 import { exportAppointment } from '../calendarExport'
@@ -5,7 +6,7 @@ import { useState } from 'react'
 import { PeriodCalendar } from '../PeriodCalendar'
 import { localToday } from '@/features/clinic/workCalendar'
 import { dateInZone } from '../models'
-import { ActivityIndicator, Alert, Linking, Text, View } from 'react-native'
+import { ActivityIndicator, Linking, Text, View } from 'react-native'
 import { request } from '@/core/api/client'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useResource } from '@/shared/hooks/useResource'
@@ -41,7 +42,7 @@ export default function MyAppointments() {
         token: session.token, method: 'PATCH',
       })
       reload(); refreshAppointments()
-      Alert.alert(action === 'confirmar' ? 'Cita confirmada' : 'Cita cancelada',
+      showNotice(action === 'confirmar' ? 'Cita confirmada' : 'Cita cancelada',
         action === 'confirmar' ? 'Tu asistencia quedó confirmada.' : 'La cita se canceló correctamente.',
         [{ text: 'Aceptar' }])
     } catch (cause) {
@@ -86,7 +87,7 @@ export default function MyAppointments() {
       <Text style={styles.body}>{date}</Text>
       <Text style={styles.body}>{labels[item.estado] || item.estado}{duration > 0 ? ' · ' + duration + ' min' : ''}</Text>
       {canExport && <Button label="Agregar al calendario" selected={false} onPress={() =>
-        Alert.alert('Agregar consulta', 'Elige dónde guardar la cita.', [
+        showNotice('Agregar consulta', 'Elige dónde guardar la cita.', [
           { text: 'Calendario del teléfono', onPress: () => addToCalendar(false) },
           { text: 'Google Calendar', onPress: () => addToCalendar(true) },
           { text: 'Cerrar', style: 'cancel' },
@@ -94,7 +95,7 @@ export default function MyAppointments() {
       {future && item.estado === 'programada' && <Button label={busy === item._id ? 'Procesando…' : 'Confirmar cita'}
         disabled={!!busy} onPress={() => void update(item, 'confirmar')} />}
       {future && ['programada', 'confirmada'].includes(item.estado) && <Button label="Cancelar cita"
-        selected={false} disabled={!!busy} onPress={() => Alert.alert('¿Cancelar esta cita?',
+        selected={false} disabled={!!busy} onPress={() => showNotice('¿Cancelar esta cita?',
           'Se conservará en tu historial.', [
             { text: 'Conservar cita', style: 'cancel' },
             { text: 'Sí, cancelar', style: 'destructive', onPress: () => void update(item, 'cancelar') },
@@ -105,19 +106,24 @@ export default function MyAppointments() {
   return <Page>
     <Text accessibilityRole="header" style={styles.title}>Mis citas</Text>
     {data && <Text style={styles.body}>Consultas con {data.profesional}</Text>}
-    {data?.pagoEnLinea && data.agendaPublicaId && <Button label="Reservar y pagar con tarjeta"
+    {data?.agendaPublicaId && <View style={styles.card}>
+      <Text accessibilityRole="header" style={styles.cardTitle}>Agenda una consulta</Text>
+      <Text style={styles.body}>Consulta los horarios libres en la agenda de reservas.</Text>
+      {data.pagoEnLinea && <Button label="Reservar y pagar con tarjeta"
       onPress={() => router.push({ pathname: '/reservar-cita', params: { clinic: data.agendaPublicaId! } })} />}
-    {data?.agendaPublicaId && <Button label="Ver agenda y solicitar cita por WhatsApp" selected={false}
+    <Button label="Solicitar cita por WhatsApp" selected={false}
       onPress={() => {
         setActionError('')
         void Linking.openURL('https://nutri-a-six.vercel.app/agenda/' + encodeURIComponent(data.agendaPublicaId!))
           .catch(() => setActionError('No se pudo abrir la agenda del consultorio.'))
-      }} />}
+      }} />
+    </View>}
     {loading && <ActivityIndicator accessibilityLabel="Cargando citas" />}
     {!!(error || actionError) && <Text accessibilityRole="alert" style={styles.error}>{actionError || error}</Text>}
     {data && <>
       <View style={styles.card}>
-        <PeriodCalendar title="Calendario de citas" today={today} focus={selectedDate} selected={selectedDate} view="Mes"
+        <Text style={styles.body}>Aquí aparecen tus citas registradas, anteriores y próximas.</Text>
+        <PeriodCalendar title="Calendario de mis citas" today={today} focus={selectedDate} selected={selectedDate} view="Mes"
           onFocus={setPicked} onSelect={setPicked} mark={day => {
             const count = (appointmentsByDay.get(day) || []).filter(item => item.estado !== 'cancelada').length
             return count ? {label: count + (count === 1 ? ' cita' : ' citas')} : undefined

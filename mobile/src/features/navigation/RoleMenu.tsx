@@ -8,6 +8,7 @@ export function RoleMenu({ close }: { close?: () => void }) {
     { title: 'Resumen', path: '/', icon: 'grid-outline' },
     { title: 'Mis citas', path: '/mis-citas', icon: 'calendar-outline' },
     { title: 'Mi plan', path: '/mi-plan', icon: 'nutrition-outline' },
+    { title: 'Mi camino', path: '/mi-camino', icon: 'flame-outline' },
     { title: 'Mi progreso', path: '/progreso', icon: 'stats-chart-outline' },
     { title: 'Mi expediente', path: '/mi-expediente', icon: 'clipboard-outline' },
     { title: 'Mis pagos', path: '/mis-pagos', icon: 'wallet-outline' },

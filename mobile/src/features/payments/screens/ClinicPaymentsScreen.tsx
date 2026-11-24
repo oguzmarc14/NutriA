@@ -1,6 +1,7 @@
+import { showNotice } from '@/shared/ui/NoticeDialog'
 import { useRef, useState } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
-import { Alert, Text } from 'react-native'
+import { Text } from 'react-native'
 import { ApiError, request } from '@/core/api/client'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useResource } from '@/shared/hooks/useResource'
@@ -25,7 +26,7 @@ export default function ClinicPaymentsScreen() {
     try {
       await request('/pagos/consultorio/' + payment._id + '/estado', { token: session.token, method: 'PATCH', body: { estado: status } })
       resource.reload()
-      Alert.alert('Reporte revisado', status === 'confirmado' ? 'Se confirmó la recepción del pago.' : 'El reporte quedó rechazado.', [{ text: 'Aceptar' }])
+      showNotice('Reporte revisado', status === 'confirmado' ? 'Se confirmó la recepción del pago.' : 'El reporte quedó rechazado.', [{ text: 'Aceptar' }])
     } catch (cause) {
       if (cause instanceof ApiError && cause.status === 409) resource.reload()
       setError(cause instanceof Error ? cause.message : 'No se pudo actualizar el reporte. Revisa su estado antes de intentarlo otra vez.')
@@ -33,7 +34,7 @@ export default function ClinicPaymentsScreen() {
   }
   function confirm(payment: Payment, status: 'confirmado' | 'rechazado') {
     if (submitting.current) return
-    Alert.alert(status === 'confirmado' ? 'Confirmar recepción del pago' : 'Rechazar reporte',
+    showNotice(status === 'confirmado' ? 'Confirmar recepción del pago' : 'Rechazar reporte',
       `${resource.data?.paciente?.name || 'Paciente'} · ${money(payment.montoCentavos)} MXN\n${payment.concepto}\nFecha: ${payment.fechaPago.slice(0, 10)}\n${status === 'confirmado' ? 'Confirma únicamente si verificaste que recibiste el pago.' : 'El paciente verá este reporte como rechazado.'} Esta revisión no podrá cambiarse desde la app.`, [
         { text: 'Cancelar', style: 'cancel' },
         { text: status === 'confirmado' ? 'Confirmar recepción' : 'Rechazar reporte', style: status === 'confirmado' ? 'default' : 'destructive', onPress: () => void review(payment, status) },

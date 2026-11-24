@@ -1,6 +1,7 @@
+import { showNotice } from '@/shared/ui/NoticeDialog'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { router } from 'expo-router'
-import { Alert, Pressable, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { clinicMenuSections, patientDestinations } from './menu'
 import { colors, styles } from '@/shared/ui/primitives'
 import { usePatientWork } from '@/features/patients/PatientWorkProvider'
@@ -20,7 +21,7 @@ export function ClinicMenu({ close }: { close?: () => void }) {
       <Pressable accessibilityRole="button" accessibilityLabel="Dejar de trabajar con paciente"
         onPress={() => {
           close?.()
-          Alert.alert('¿Dejar de trabajar?', '¿Confirmas que deseas dejar de trabajar con ' + active.name + '?', [
+          showNotice('¿Dejar de trabajar?', '¿Confirmas que deseas dejar de trabajar con ' + active.name + '?', [
             { text: 'Cancelar', style: 'cancel' },
             { text: 'Dejar de trabajar', style: 'destructive', onPress: stop },
           ])

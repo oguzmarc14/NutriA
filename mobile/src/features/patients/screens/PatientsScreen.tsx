@@ -1,3 +1,4 @@
+import { showNotice } from '@/shared/ui/NoticeDialog'
 import { PatientCardActions } from '../PatientCardActions'
 import { patientNotices, weightChange } from '../patientNotices'
 import Ionicons from '@expo/vector-icons/Ionicons'
@@ -114,7 +115,7 @@ function PatientCard({ patient, selectMode, onSelect, onOpen, onResend, resendin
     try {
       await Linking.openURL('https://wa.me/' + whatsapp)
     } catch {
-      Alert.alert('WhatsApp no disponible', 'No fue posible abrir el enlace en este dispositivo.')
+      showNotice('WhatsApp no disponible', 'No fue posible abrir el enlace en este dispositivo.')
     }
   }
 
@@ -214,7 +215,7 @@ export default function Patients() {
   }
 
   function confirmResend(patient: PatientSummary) {
-    Alert.alert('Reenviar invitación', '¿Deseas enviar otra invitación a ' + patient.name + '?', [
+    showNotice('Reenviar invitación', '¿Deseas enviar otra invitación a ' + patient.name + '?', [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Reenviar', onPress: () => void resend(patient) },
     ])
@@ -225,9 +226,9 @@ export default function Patients() {
     setResendingId(patient._id)
     try {
       await request('/pacientes/' + patient._id + '/reenviar-invitacion', { token: session.token, method: 'POST' })
-      Alert.alert('Invitación enviada', 'Se envió nuevamente la invitación al correo del paciente.')
+      showNotice('Invitación enviada', 'Se envió nuevamente la invitación al correo del paciente.')
     } catch (error) {
-      Alert.alert('No se pudo reenviar', error instanceof Error ? error.message : 'Inténtalo nuevamente.')
+      showNotice('No se pudo reenviar', error instanceof Error ? error.message : 'Inténtalo nuevamente.')
     } finally {
       setResendingId(null)
     }
@@ -266,7 +267,7 @@ export default function Patients() {
       setEmail('')
       setPhone('')
       list.reload()
-      Alert.alert('Paciente registrado', 'Se creó el paciente y se envió su invitación por correo.')
+      showNotice('Paciente registrado', 'Se creó el paciente y se envió su invitación por correo.')
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'No pudimos registrar al paciente.')
     } finally {

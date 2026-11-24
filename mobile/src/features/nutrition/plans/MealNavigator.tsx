@@ -1,6 +1,7 @@
+import { showNotice } from '@/shared/ui/NoticeDialog'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useRef, useState, type ReactNode } from 'react'
-import { Alert, Animated, Pressable, ScrollView, Text, View, type GestureResponderEvent } from 'react-native'
+import { Animated, Pressable, ScrollView, Text, View, type GestureResponderEvent } from 'react-native'
 import { dietColors as c, dietStyles as s, DietAction, DietIconButton } from './dietUI'
 import { planTotals, type DraftMeal } from './models'
 export function mealIcon(name: string): keyof typeof Ionicons.glyphMap {
@@ -80,7 +81,7 @@ export function MealNavigator({ meals, active, disabled, onSelect, onAdd, onReor
           onSelect={() => onSelect(meal.key)} onDragging={setDragging}
           onDrop={slots => onReorder(index, Math.max(0, Math.min(meals.length - 1, index + slots)))}
           remove={<DietIconButton icon="trash-outline" label={'Eliminar ' + (meal.nombre || 'comida')} disabled={disabled} danger
-            onPress={() => Alert.alert('Eliminar comida',
+            onPress={() => showNotice('Eliminar comida',
               meal._id ? 'Al guardar se eliminará esta comida y sus posibles registros de seguimiento.' : '¿Eliminar esta comida del borrador?', [
                 { text: 'Cancelar', style: 'cancel' },
                 { text: 'Eliminar', style: 'destructive', onPress: () => onRemove(meal.key) },

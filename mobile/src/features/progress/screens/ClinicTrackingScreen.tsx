@@ -1,3 +1,4 @@
+import { NutritionistGamificationControl } from '@/features/gamification/NutritionistGamificationControl'
 import { MeasurementChart } from '../MeasurementChart'
 import type { ChartMeasurement } from '../chartModel'
 import { useLocalSearchParams } from 'expo-router'
@@ -14,6 +15,6 @@ export default function ClinicTrackingScreen() {
   return <Page bottomInset>
     <ListState loading={resource.loading} error={resource.error} reload={resource.reload} />
     {!valid && <Text style={styles.error}>Selecciona un paciente desde su ficha.</Text>}
-    {resource.data && <><Text style={styles.title}>{resource.data.paciente.name}</Text><MeasurementChart measurements={resource.data.mediciones || []} /><MealHistory data={resource.data} /></>}
+    {resource.data && <><Text style={styles.title}>{resource.data.paciente.name}</Text><MealHistory data={resource.data} /><MeasurementChart measurements={resource.data.mediciones || []} />{patient && <NutritionistGamificationControl key={patient} patientId={patient} />}</>}
   </Page>
 }

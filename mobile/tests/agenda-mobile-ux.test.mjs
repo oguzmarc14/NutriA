@@ -20,7 +20,7 @@ test('appointment form uses actual backend availability and validates before sav
   assert.match(create, /day\.espacios\.filter\(space =>/)
   assert.match(create, /parseDay\(value\)/)
   assert.match(create, /calendarValid/)
-  assert.match(create, /Alert\.alert\(existing \? 'Reprogramar cita' : 'Confirmar cita'/)
+  assert.match(create, /showNotice\(existing \? 'Reprogramar cita' : 'Confirmar cita'/)
   assert.match(create, /availability\.reload\(\)/)
 })
 test('new appointment can inherit selected patient and agenda date', () => {

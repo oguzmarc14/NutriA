@@ -1,3 +1,4 @@
+import { showNotice } from '@/shared/ui/NoticeDialog'
 import { MealContent } from '../plans/MealContent'
 import type { Meal as PlanMeal } from '../plans/models'
 import { PeriodCalendar } from '@/features/appointments/PeriodCalendar'
@@ -5,7 +6,7 @@ import { localToday, type CalendarView } from '@/features/clinic/workCalendar'
 import { exportPlan, loadClinicBrand } from '../plans/exportPlan'
 import { router } from 'expo-router'
 import { useState } from 'react'
-import { ActivityIndicator, Alert, Text, TextInput, View } from 'react-native'
+import { ActivityIndicator, Text, TextInput, View } from 'react-native'
 import { request } from '@/core/api/client'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { Button, Page, styles } from '@/shared/ui/primitives'
@@ -56,7 +57,7 @@ export default function PatientPlanScreen() {
       await request('/mi-perfil/planes/' + plan._id + '/aceptar',
         { token: session.token, method: 'PATCH' })
       reload()
-      Alert.alert('Dieta recibida', 'Confirmaste que recibiste tu dieta. Tu nutriólogo recibirá una notificación.')
+      showNotice('Dieta recibida', 'Confirmaste que recibiste tu dieta. Tu nutriólogo recibirá una notificación.')
     } catch (cause) {
       setAcceptError(cause instanceof Error ? cause.message : 'No se pudo confirmar la dieta.')
     } finally { setAccepting(false) }
@@ -91,7 +92,7 @@ export default function PatientPlanScreen() {
           <View style={{gap:8}}>
             <Text style={[styles.body,{fontSize:13}]}>Confirma únicamente que recibiste y revisaste esta dieta. No significa que hayas cumplido todas las comidas.</Text>
             <Button disabled={accepting} label={accepting?'Confirmando…':'Confirmar que recibí la dieta'} onPress={() =>
-              Alert.alert('Confirmar recepción de dieta',
+              showNotice('Confirmar recepción de dieta',
                 'Tu nutriólogo sabrá que recibiste este plan. ¿Deseas confirmarlo?',[
                   {text:'Cancelar',style:'cancel'},
                   {text:'Confirmar',onPress:()=>void acceptDiet()},

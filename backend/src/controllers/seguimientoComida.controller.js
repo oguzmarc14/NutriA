@@ -1,6 +1,8 @@
 const { z } = require('zod')
 const { fechaValida, finExclusivoDia, comidasProgramadas, planVigente } = require('../utils/seguimiento-diario.utils')
 
+const User = require('../models/User')
+const { fechaLocalAhora } = require('../utils/agenda-publica.utils')
 const Medicion = require('../models/Medicion')
 const Paciente = require('../models/Pacientes')
 const PlanAlimenticio = require('../models/PlanAlimenticio')
@@ -201,6 +203,12 @@ async function guardarMiSeguimiento(
         message:
           'Paciente no encontrado',
       })
+    }
+
+    const profesional = await User.findById(paciente.nutritionist).select('horarioLaboral.zonaHoraria').lean()
+    const hoy = fechaLocalAhora(profesional?.horarioLaboral?.zonaHoraria || 'America/Mexico_City')
+    if (parsed.data.fecha > hoy) {
+      return res.status(400).json({ message: 'Puedes registrar comidas de hoy o de días anteriores.' })
     }
 
     const plan =

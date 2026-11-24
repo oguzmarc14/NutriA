@@ -1,6 +1,7 @@
+import { showNotice } from '@/shared/ui/NoticeDialog'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useState } from 'react'
-import { Alert, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { request } from '@/core/api/client'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useResource } from '@/shared/hooks/useResource'
@@ -17,7 +18,7 @@ export function NutritionistGamificationControl({ patientId }: { patientId: stri
   const prefs = resource.data?.preferencias
   function confirm() {
     if (!prefs || busy) return
-    Alert.alert(prefs.permitidaPorNutriologo ? 'Pausar reconocimientos' : 'Permitir reconocimientos',
+    showNotice(prefs.permitidaPorNutriologo ? 'Pausar reconocimientos' : 'Permitir reconocimientos',
       'Solo cambia la disponibilidad de la gamificación. El paciente conserva sus registros y decide si participa.', [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Confirmar', onPress: () => void save(!prefs.permitidaPorNutriologo) },

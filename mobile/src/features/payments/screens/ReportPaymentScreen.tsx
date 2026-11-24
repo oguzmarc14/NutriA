@@ -1,7 +1,8 @@
+import { showNotice } from '@/shared/ui/NoticeDialog'
 import { DateField } from '@/shared/ui/DateTimeField'
 import { useRef, useState } from 'react'
 import { router } from 'expo-router'
-import { Alert, Text } from 'react-native'
+import { Text } from 'react-native'
 import { request } from '@/core/api/client'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useUnsavedChanges } from '@/shared/hooks/useUnsavedChanges'
@@ -26,7 +27,7 @@ export default function ReportPaymentScreen() {
     try {
       await request('/pagos/mios', { token: session.token, body })
       setSent(true); setDirty(false)
-      Alert.alert('Pago reportado', 'Tu reporte quedó pendiente de revisión por tu nutrióloga.', [{ text: 'Aceptar' }])
+      showNotice('Pago reportado', 'Tu reporte quedó pendiente de revisión por tu nutrióloga.', [{ text: 'Aceptar' }])
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo confirmar el reporte. Consulta tu historial antes de volver a enviarlo.') }
     finally { submitting.current = false; setBusy(false) }
   }
@@ -34,7 +35,7 @@ export default function ReportPaymentScreen() {
     if (busy || sent) return
     try {
       const body = paymentPayload(form, todayLocal())
-      Alert.alert('Confirmar reporte', `${money(Math.round(body.monto * 100))} MXN · ${methods[body.metodo as keyof typeof methods]}\nFecha: ${body.fechaPago}\n${body.concepto}\n¿Reportar este pago?`, [
+      showNotice('Confirmar reporte', `${money(Math.round(body.monto * 100))} MXN · ${methods[body.metodo as keyof typeof methods]}\nFecha: ${body.fechaPago}\n${body.concepto}\n¿Reportar este pago?`, [
         { text: 'Revisar datos', style: 'cancel' }, { text: 'Reportar', onPress: () => void submit(body) },
       ])
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Revisa los datos del pago.') }

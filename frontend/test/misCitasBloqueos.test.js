@@ -43,10 +43,10 @@ test('mis citas pertenece sólo al rol paciente, incluye próxima e historial',(
   assert.match(back,/router\.get\('\/citas', obtenerMisCitas\)/)
 })
 test('notificaciones a paciente y dashboard reflejan el estado real',()=>{
-  assert.match(layout,/CentroAvisosPaciente modo="movil"/)
-  assert.match(layout,/CentroAvisosPaciente modo="escritorio"/)
+  assert.match(layout,/CentroAvisosPaciente triggerRef=\{avisosMovil\}/)
+  assert.match(layout,/CentroAvisosPaciente triggerRef=\{avisosEscritorio\}/)
   assert.match(bell,/nutria-avisos-paciente-v1-/)
-  assert.match(bell,/Marcar como vistos/)
+  assert.match(bell,/Marcar como leídos/)
   assert.match(bell,/window\.localStorage\.setItem/)
   assert.match(dashboard,/citasPaciente\?\.proxima\?\.estado==='confirmada'/)
   assert.match(dashboard,/navigate\('\/mis-citas'\)/)

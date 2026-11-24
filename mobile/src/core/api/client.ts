@@ -1,3 +1,4 @@
+import { reportConnection } from './connection'
 import type { Role } from '@/features/auth/access'
 
 export type User = {
@@ -16,13 +17,25 @@ export class ApiError extends Error {
   }
 }
 
+const apiBase = (process.env.EXPO_PUBLIC_API_URL || 'https://nutria-utdh.onrender.com/api').trim().replace(/\/+$/, '')
+
+export async function checkConnection(signal: AbortSignal) {
+  if (!apiBase.startsWith('https://')) return
+  try {
+    await fetch(apiBase + '/health', { signal, headers: { 'Cache-Control': 'no-cache' } })
+    reportConnection(false)
+  } catch {
+    if (!signal.aborted) reportConnection(true)
+  }
+}
+
 export async function request<T>(path: string, options: {
   token?: string
   body?: object
   method?: 'POST' | 'PATCH' | 'PUT' | 'DELETE'
   signal?: AbortSignal
 } = {}): Promise<T> {
-  const base = (process.env.EXPO_PUBLIC_API_URL || 'https://nutria-utdh.onrender.com/api').trim().replace(/\/+$/, '')
+  const base = apiBase
   if (!base?.startsWith('https://')) {
     throw new Error('Configura la URL HTTPS de la API en EXPO_PUBLIC_API_URL.')
   }
@@ -42,7 +55,12 @@ export async function request<T>(path: string, options: {
       body: options.body ? JSON.stringify(options.body) : undefined,
       headers, signal: controller.signal,
     })
+    reportConnection(false)
     data = await response.json().catch(() => null)
+  } catch (cause) {
+    if (options.signal?.aborted) throw cause
+    reportConnection(true)
+    throw new Error('No hay conexión con NutriA. Revisa internet y vuelve a intentar.')
   } finally {
     clearTimeout(timer); options.signal?.removeEventListener('abort', abort)
   }

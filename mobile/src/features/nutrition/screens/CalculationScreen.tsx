@@ -1,7 +1,8 @@
+import { showNotice } from '@/shared/ui/NoticeDialog'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useEffect, useRef, useState } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { request } from '@/core/api/client'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useResource } from '@/shared/hooks/useResource'
@@ -91,7 +92,7 @@ export default function CalculationScreen() {
         },
       })
       resource.reload()
-      Alert.alert('Cálculo guardado', 'Se guardó el cálculo con la medición seleccionada y su fecha.')
+      showNotice('Cálculo guardado', 'Se guardó el cálculo con la medición seleccionada y su fecha.')
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'No se pudo guardar el cálculo.')
     } finally { setBusy(false) }

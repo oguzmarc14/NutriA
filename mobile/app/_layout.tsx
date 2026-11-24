@@ -2,7 +2,9 @@ import { NotificationSync } from '@/features/notifications/NotificationSync'
 import NotificationNavigation from '@/features/notifications/NotificationNavigation'
 import { StatusBar } from 'expo-status-bar'
 import { router, Stack } from 'expo-router'
-import { ActivityIndicator, Text } from 'react-native'
+import { ConnectionBanner } from '@/shared/ui/ConnectionBanner'
+import { NoticeDialog } from '@/shared/ui/NoticeDialog'
+import { ActivityIndicator, Text, View } from 'react-native'
 import { AuthProvider, useAuth } from '@/features/auth/AuthProvider'
 import { PatientWorkProvider } from '@/features/patients/PatientWorkProvider'
 import { BackButton, Button, colors, Page, styles } from '@/shared/ui/primitives'
@@ -36,8 +38,9 @@ function Navigation() {
     )
   }
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack initialRouteName={session ? "(tabs)" : "portada"} screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={!session}>
+        <Stack.Screen name="portada" />
         <Stack.Screen name="login" />
       </Stack.Protected>
       <Stack.Protected guard={!!session}>
@@ -52,6 +55,7 @@ function Navigation() {
         <Stack.Screen name="mis-pagos" options={{ ...clinicHeader, title: 'Mis pagos' }} />
         <Stack.Screen name="reportar-pago" options={{ ...clinicHeader, title: 'Reportar pago' }} />
         <Stack.Screen name="reservar-cita" options={{ ...clinicHeader, title: 'Reservar y pagar' }} />
+        <Stack.Screen name="mi-camino" options={{ ...clinicHeader, title: 'Mi camino' }} />
         <Stack.Screen name="registrar-comida" options={{ ...clinicHeader, title: 'Registrar comida' }} />
       </Stack.Protected>
       <Stack.Protected guard={session?.user.role === 'admin'}>
@@ -88,7 +92,11 @@ export default function RootLayout() {
     <AuthProvider>
       <PatientWorkProvider>
         <StatusBar style="dark" />
-        <Navigation />
+        <View style={{ flex: 1 }}>
+          <Navigation />
+          <ConnectionBanner />
+        </View>
+        <NoticeDialog />
         <NotificationNavigation />
         <NotificationSync />
       </PatientWorkProvider>

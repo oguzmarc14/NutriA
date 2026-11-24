@@ -1,6 +1,7 @@
+import { showNotice } from '@/shared/ui/NoticeDialog'
 import { router, useLocalSearchParams } from 'expo-router'
 import { NutritionistGamificationControl } from '@/features/gamification/NutritionistGamificationControl'
-import { Alert, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { dateTime, type Appointment, type Patient } from '@/features/appointments/models'
 import { Shortcut } from '@/shared/ui/Shortcut'
 import { ListState } from '@/shared/ui/ListState'
@@ -37,11 +38,11 @@ export default function PatientDetail() {
               selected={working ? false : undefined} onPress={() => {
                 const selected = patient.data?.paciente
                 if (!selected) return
-                if (working) Alert.alert('¿Dejar de trabajar?', '¿Confirmas que deseas dejar de trabajar con ' + selected.name + '?', [
+                if (working) showNotice('¿Dejar de trabajar?', '¿Confirmas que deseas dejar de trabajar con ' + selected.name + '?', [
                   { text: 'Cancelar', style: 'cancel' },
                   { text: 'Dejar de trabajar', style: 'destructive', onPress: stop },
                 ])
-                else Alert.alert(active ? '¿Cambiar de paciente?' : '¿Trabajar con este paciente?',
+                else showNotice(active ? '¿Cambiar de paciente?' : '¿Trabajar con este paciente?',
                   '¿Confirmas que deseas trabajar con ' + selected.name + '?', [
                     { text: 'Cancelar', style: 'cancel' },
                     { text: 'Aceptar', onPress: () => start(selected) },

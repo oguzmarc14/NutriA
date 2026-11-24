@@ -1,3 +1,4 @@
+import { showNotice } from '@/shared/ui/NoticeDialog'
 import { loadDraft, saveDraft, removeDraft, restoreDraftIds } from '../plans/draftStore'
 import { reorderMeals } from '../plans/reorderMeals'
 import { PlanTracker } from '../plans/PlanTracker'
@@ -7,7 +8,7 @@ import { AppDialog } from '@/shared/ui/AppDialog'
 import { DateField } from '@/shared/ui/DateTimeField'
 import { useEffect, useRef, useState } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
-import { Alert, Pressable, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { ApiError, request } from '@/core/api/client'
 import { useAuth } from '@/features/auth/AuthProvider'
@@ -145,7 +146,7 @@ function Editor({ patient, patientName, initial, templatePlan, requirements, ref
   }
   function begin(next: DraftPlan) {
     const apply = () => { change({ ...next, name: draft.name, meals: balanceMealDistribution(next.meals) }); setActiveMeal(next.meals[0]?.key || ''); setModeOpen(false) }
-    if (dirty) Alert.alert('Reemplazar borrador', 'Se reemplazarán las comidas actuales. ¿Continuar?', [{ text: 'Cancelar', style: 'cancel' }, { text: 'Aceptar', onPress: apply }])
+    if (dirty) showNotice('Reemplazar borrador', 'Se reemplazarán las comidas actuales. ¿Continuar?', [{ text: 'Cancelar', style: 'cancel' }, { text: 'Aceptar', onPress: apply }])
     else apply()
   }
   return <View style={{ flex: 1 }}><Page contentStyle={{ width: '100%', maxWidth: 720, alignSelf: 'center' }}>

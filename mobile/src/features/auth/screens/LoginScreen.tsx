@@ -138,6 +138,7 @@ export default function Login() {
             <View style={s.legal}>
               <Pressable accessibilityRole="link" style={s.legalLink} onPress={() => open('privacidad')}><Text style={s.link}>Privacidad</Text></Pressable>
               <Pressable accessibilityRole="link" style={s.legalLink} onPress={() => open('terminos')}><Text style={s.link}>Términos de uso</Text></Pressable>
+              <Pressable accessibilityRole="link" style={s.legalLink} onPress={() => open('fuentes-nutricionales')}><Text style={s.link}>Fuentes nutricionales</Text></Pressable>
             </View>
             {error?.target === 'links' && <Text accessibilityRole="alert" style={s.error}>{error.message}</Text>}
           </View>

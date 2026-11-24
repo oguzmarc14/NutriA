@@ -8,7 +8,10 @@ const {
 } = require('../controllers/gamificacion.controller')
 
 const router = express.Router()
-router.use(requireAuth)
+router.use(requireAuth, (_req, res, next) => {
+  res.set('Cache-Control', 'no-store')
+  next()
+})
 
 // Nadie puede activar la participación del paciente en su nombre.
 router.get('/mi-resumen', allowRoles('patient'), obtenerMiResumen)

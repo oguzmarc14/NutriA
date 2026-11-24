@@ -53,9 +53,12 @@ function ModalSeguimientoComida({ comida, fecha, onCerrar, onGuardado, plan, reg
         comentario: comentario.trim(),
       })
       onGuardado(data.registro)
+      window.dispatchEvent(new Event('nutria-comida-guardada'))
       setConfirmado(true)
     } catch (err) {
-      setError(err.response?.data?.message || 'No fue posible guardar el seguimiento')
+      setError(err.response?.data?.message || (!navigator.onLine
+        ? 'Sin conexión. Tus cambios siguen aquí. Vuelve a intentar al reconectarte.'
+        : 'No se recibió confirmación. Revisa la conexión y vuelve a intentar para guardar este mismo registro.'))
     } finally {
       enviando.current = false
       setGuardando(false)

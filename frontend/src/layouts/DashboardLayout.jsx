@@ -3,6 +3,7 @@ import client from '../api/client'
 import HorarioLaboral from '../components/HorarioLaboral'
 import {
   Apple,
+  Flame,
   FileText,
   CalendarDays,
   CalendarPlus,
@@ -220,7 +221,7 @@ function DashboardLayout() {
           },
           {
             icon: TrendingUp,
-            label: 'Progreso',
+            label: 'Seguimiento del paciente',
             shortLabel: 'Progreso',
             to: '/progreso',
           },
@@ -282,6 +283,7 @@ function DashboardLayout() {
             shortLabel: 'Progreso',
             to: '/mi-progreso',
           },
+          { icon: Flame, label: 'Mi camino', shortLabel: 'Mi camino', to: '/mi-camino' },
         ]
       : []),
   ]
@@ -292,7 +294,7 @@ function DashboardLayout() {
       ...(pacienteTrabajo ? [`/pacientes/${pacienteTrabajo.id}/expediente`] : []),
       '/mediciones', '/calculo-nutricional', '/progreso', '/mi-expediente', '/mis-mediciones', '/mi-progreso',
     ] },
-    { label: 'Dietas', routes: ['/planes', '/dietas', '/community?tab=dietas', '/mi-plan'] },
+    { label: 'Dietas', routes: ['/planes', '/dietas', '/community?tab=dietas', '/mi-plan', '/mi-camino'] },
     { label: 'Citas', routes: ['/citas', '/citas/nueva', '/mis-citas'] },
     { label: 'Configuración de la clínica', routes: ['/mi-clinica', '/editar-perfil', '/pagos'] },
     { label: 'Comunidad', routes: ['/community', '/community/moderacion'] },

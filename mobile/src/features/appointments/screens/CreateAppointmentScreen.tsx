@@ -1,7 +1,8 @@
+import { showNotice } from '@/shared/ui/NoticeDialog'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { useEffect, useRef, useState } from 'react'
 import { router, Stack, useLocalSearchParams } from 'expo-router'
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { DateField } from '@/shared/ui/DateTimeField'
 import { clockLabel, dayValue, parseDay } from '@/shared/ui/dateTimeModel'
 import { PeriodCalendar } from '../PeriodCalendar'
@@ -325,7 +326,7 @@ function AppointmentForm({ initialPatient, initialDate, existing }: {
       disabled={saving || !selectedPatient || !selected || !calendarValid}
       onPress={() => {
         if (!selectedPatient || !selected || !day) return
-        Alert.alert(existing ? 'Reprogramar cita' : 'Confirmar cita',
+        showNotice(existing ? 'Reprogramar cita' : 'Confirmar cita',
           selectedPatient.name + ' · ' + dayLabel(day.fecha) + ' · ' + clockLabel(selected.hora), [
             { text: 'Volver', style: 'cancel' },
             { text: existing ? 'Reprogramar' : 'Agendar', onPress: () => void save() },

@@ -1,3 +1,4 @@
+import { showNotice } from '@/shared/ui/NoticeDialog'
 import {useState} from 'react'
 import {router,useLocalSearchParams} from 'expo-router'
 import {Alert,Text,View} from 'react-native'
@@ -67,7 +68,7 @@ function RecordForm({patient,initial,profile,measurement}:{patient:string;initia
       setForm(clinicalForm(result.expediente))
       setActive(clinicalActive(result.expediente))
       setDirty(false)
-      Alert.alert('Expediente guardado','Los datos clínicos se guardaron correctamente.')
+      showNotice('Expediente guardado','Los datos clínicos se guardaron correctamente.')
     }catch(cause){setError(cause instanceof Error?cause.message:'No se pudo guardar el expediente.')}
     finally{setBusy(false)}
   }

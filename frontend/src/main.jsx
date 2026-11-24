@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext'
 import './index.css'
 import './theme/dark.css'
 import { ThemeProvider } from './theme/ThemeProvider'
+import ConnectionBanner from './components/ConnectionBanner'
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(
@@ -12,6 +13,7 @@ createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
+          <ConnectionBanner />
           <App />
         </AuthProvider>
       </ThemeProvider>

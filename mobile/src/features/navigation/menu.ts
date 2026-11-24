@@ -15,7 +15,7 @@ export const clinicMenuSections = [
     { label: 'Expediente clínico', icon: 'clipboard-outline', intent: 'record' },
     { label: 'Mediciones', icon: 'fitness-outline', intent: 'measurements' },
     { label: 'Cálculo nutricional', icon: 'calculator-outline', intent: 'calculation' },
-    { label: 'Progreso', icon: 'trending-up-outline', intent: 'progress' },
+    { label: 'Seguimiento del paciente', icon: 'trending-up-outline', intent: 'progress' },
   ] },
   { label: 'Dietas', items: [
     { label: 'Crear dieta', icon: 'nutrition-outline', intent: 'create-plan' },

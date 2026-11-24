@@ -1,6 +1,7 @@
+import { showNotice } from '@/shared/ui/NoticeDialog'
 import { useRef, useState } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
-import { Alert, Text, TextInput, View } from 'react-native'
+import { Text, TextInput, View } from 'react-native'
 import { request } from '@/core/api/client'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useResource } from '@/shared/hooks/useResource'
@@ -33,8 +34,8 @@ function TrackingForm({ plan, meal, date, record }: { plan: PatientPlan; meal: M
       const result = await request<{ registro: TrackingRecord }>('/seguimiento-comidas/mi-registro', { token: session.token, body })
       setState(result.registro.estado); setRating(result.registro.agrado); setComment(result.registro.comentario || '')
       setSaved(`${result.registro.estado}|${result.registro.agrado}|${result.registro.comentario || ''}`)
-      Alert.alert('Seguimiento guardado', 'Tu registro quedó guardado para el día ' + date + '.', [{ text: 'Aceptar' }])
-    } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo guardar. Tus cambios siguen en esta pantalla.') }
+      showNotice('Seguimiento guardado', 'Tu registro quedó guardado para el día ' + date + '.', [{ text: 'Aceptar' }])
+    } catch (cause) { setError((cause instanceof Error ? cause.message : 'No se pudo guardar.') + ' Tus cambios siguen en esta pantalla.') }
     finally { submitting.current = false; setBusy(false) }
   }
   return <>

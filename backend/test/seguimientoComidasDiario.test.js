@@ -11,6 +11,11 @@ function fixture({ owned = true, current = true } = {}) {
   const plan = { _id: PLAN, fechaInicio: new Date('2026-11-01T00:00:00Z'), comidas: { id: value => value === MEAL ? { _id: MEAL, nombre: 'Desayuno' } : null } }
   const deps = {
     zod: { z }, '../utils/seguimiento-diario.utils': utils, '../models/Medicion': {},
+    '../models/User': { findById: () => ({ select: () => ({ lean: async () => ({ horarioLaboral: { zonaHoraria: 'America/Mexico_City' } }) }) }) },
+    '../utils/agenda-publica.utils': { fechaLocalAhora: zona => {
+      assert.equal(zona, 'America/Mexico_City')
+      return '2026-11-24'
+    } },
     '../models/Pacientes': { findOne: async query => { calls.push(query); return owned ? { _id: PID, nutritionist: 'staff' } : null } },
     '../models/PlanAlimenticio': {
       findOne: async query => query._id === PLAN ? plan : null,
@@ -52,6 +57,7 @@ test('dates before the plan, impossible dates, and another effective plan cannot
   const f = fixture()
   assert.equal((await f.save({ fecha: '2026-10-31' })).statusCode, 400)
   assert.equal((await f.save({ fecha: '2026-02-30' })).statusCode, 400)
+  assert.equal((await f.save({ fecha: '2026-11-25' })).statusCode, 400)
   assert.equal(f.records.size, 0)
   const newer = fixture({ current: false })
   assert.equal((await newer.save()).statusCode, 409)

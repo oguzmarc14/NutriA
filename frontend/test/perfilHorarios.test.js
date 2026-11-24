@@ -32,8 +32,9 @@ test('Editar perfil centraliza jornada, días no laborables y horarios de consul
   assert.match(configCitas,/Guardar horarios de citas/)
 })
 test('acceso al perfil está conectado desde menú de usuario móvil y escritorio', () => {
-  const count=(layout.match(/irAEditarPerfil=\{\(\) => navigate\('\/editar-perfil'\)\}/g)||[]).length
-  assert.equal(count,2)
+  const count = (layout.match(/<PerfilMenu user=/g) || []).length
+  assert.equal(count, 2)
+  assert.match(layout, /<Link to="\/editar-perfil" onClick=\{closeMenu\}/)
   assert.match(layout,/label: 'Horarios y días no laborables', to: '\/editar-perfil'/)
   assert.match(menu,/<NavigationGroups sections=\{sections\}/)
   assert.doesNotMatch(menu,/to:'\/citas', state:\{abrirConfiguracion:true\}/)

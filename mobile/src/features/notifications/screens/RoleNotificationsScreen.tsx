@@ -8,7 +8,7 @@ import { ListState } from '@/shared/ui/ListState'
 import { noticeDestination } from '../noticeModel'
 import { useNotices } from '../useNotices'
 
-const filters = ['Todos', 'Dietas', 'Citas'] as const
+const filters = ['Todos', 'Dietas', 'Citas', 'Comunidad'] as const
 const noticeDate = new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeStyle: 'short' })
 
 export default function RoleNotifications() {
@@ -35,7 +35,7 @@ export default function RoleNotifications() {
           onPress={() => void inbox.markSeen()} />}
       </View>
     </View>
-    {role !== 'admin' && <View style={styles.row}>{filters.map(option =>
+    {role !== 'admin' && <View style={[styles.row, { flexWrap: 'wrap' }]}>{filters.filter(option => option !== 'Comunidad' || role === 'nutritionist').map(option =>
       <Button key={option} expand label={option} selected={filter === option} onPress={() => setFilter(option)} />
     )}</View>}
     <ListState {...inbox} empty={!notices.length ? 'No hay avisos en esta sección.' : undefined} />
@@ -58,7 +58,7 @@ export default function RoleNotifications() {
         {Number.isFinite(timestamp) && <Text style={[styles.body, { fontSize: 12 }]}>{noticeDate.format(timestamp)}</Text>}
         {item.destination && <Pressable accessibilityRole="button" onPress={() => router.push(item.destination!)}
           style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Text style={{ color: colors.green, fontWeight: '800' }}>Ver {item.category === 'Dietas' ? 'planes' : item.category === 'Citas' ? 'citas' : 'publicaciones'}</Text>
+          <Text style={{ color: colors.green, fontWeight: '800' }}>Ver {item.category === 'Dietas' ? patient ? 'mi plan' : 'planes' : item.category === 'Citas' ? 'citas' : 'publicaciones'}</Text>
           <Ionicons name="arrow-forward" color={colors.green} size={16} />
         </Pressable>}
       </View>

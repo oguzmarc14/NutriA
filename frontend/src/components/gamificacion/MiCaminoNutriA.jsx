@@ -29,6 +29,7 @@ export default function MiCaminoNutriA() {
       try {
         const { data } = await client.get('/gamificacion/mi-resumen')
         if (!activo) return
+        setError('')
         setPreferencias(data.preferencias)
         setResumen(data.resumen)
       } catch (err) {
@@ -38,7 +39,13 @@ export default function MiCaminoNutriA() {
       }
     }
     cargar()
-    return () => { activo = false }
+    window.addEventListener('nutria-comida-guardada', cargar)
+    window.addEventListener('online', cargar)
+    return () => {
+      activo = false
+      window.removeEventListener('nutria-comida-guardada', cargar)
+      window.removeEventListener('online', cargar)
+    }
   }, [])
 
   async function cambiarParticipacion() {
@@ -62,6 +69,9 @@ export default function MiCaminoNutriA() {
       setGuardando(false)
     }
   }
+
+  const dias = resumen?.diasConRegistro ?? 0
+  const siguiente = [1, 3, 7].find(meta => meta > dias)
 
   return (
     <section className="mt-6 overflow-hidden rounded-3xl border border-[#c6dcd0] bg-gradient-to-br from-[#e3f1e8] via-[#eff5e9] to-[#f8efe3] p-5 shadow-[0_12px_32px_rgba(36,107,85,0.07)] sm:p-6" aria-labelledby="mi-camino-titulo">
@@ -100,6 +110,24 @@ export default function MiCaminoNutriA() {
           )}
           {preferencias.activa && resumen && (
             <div className="mt-5">
+              <div className="relative mb-4 overflow-hidden rounded-3xl bg-[#143f34] p-5 text-white sm:p-7">
+                <Flame size={100} aria-hidden="true" className="pointer-events-none absolute -bottom-4 right-2 text-white/10" />
+                <div className="flex items-center gap-3">
+                  <span className="grid size-11 place-items-center rounded-2xl bg-[#f5d6a6] text-[#844b15]"><Flame size={24} aria-hidden="true"/></span>
+                  <div><p className="text-sm font-bold text-[#deeee4]">Racha actual</p><p className="text-3xl font-black">{resumen.rachas?.actual ?? 0} días</p></div>
+                </div>
+                <p className="relative mt-4 max-w-lg text-sm leading-6 text-[#deeee4]">
+                  Registra al menos una comida cada día. Completa, parcial u omitida: las tres cuentan. Varios registros en un día suman un solo día a tu racha.
+                </p>
+                <Link to="/mi-plan" className="relative mt-4 inline-flex min-h-11 items-center rounded-xl bg-white px-4 text-sm font-extrabold text-[#174333]">Registrar en mi plan</Link>
+              </div>
+              {siguiente && <div className="mb-4 rounded-2xl border border-[#c7dfce] bg-white/85 p-4 text-[#173f34]">
+                <div className="flex items-center gap-2 font-extrabold"><Award size={20} aria-hidden="true"/> Próxima insignia por días registrados</div>
+                <label className="mt-2 block text-sm font-semibold">
+                  {dias} de {siguiente} {siguiente === 1 ? 'día' : 'días'} con registro
+                  <progress className="mt-2 block h-2.5 w-full accent-[#246b55]" value={dias} max={siguiente}/>
+                </label>
+              </div>}
               <p className="rounded-2xl bg-[#d6ebdd]/75 p-4 text-sm font-semibold leading-6 text-[#315d4b]">{resumen.mensaje}</p>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <article className="rounded-2xl bg-white/75 p-4">
@@ -137,7 +165,7 @@ export default function MiCaminoNutriA() {
                     <h3 className="text-sm font-black text-[#173f34] dark:text-[#e5f7eb]">Rachas de seguimiento</h3>
                   </div>
                   <p className="mt-2 text-xs leading-5 text-[#587261] dark:text-[#bfdac7]">
-                    Días seguidos en que registraste alguna experiencia. Son opcionales: no miden cuánto comiste ni califican tu salud.
+                    Si tu último registro fue ayer, aún puedes continuar hoy. Después de una pausa puedes iniciar otra racha y tu mejor marca se conserva.
                   </p>
                   <div className="mt-3 grid grid-cols-2 gap-3">
                     <div className="rounded-xl bg-white/85 p-3 dark:bg-[#365845]">
@@ -156,6 +184,10 @@ export default function MiCaminoNutriA() {
                   </p>
                 </div>
               )}
+              <details className="mt-4 rounded-2xl bg-white/85 p-4 text-sm text-[#315d4b]">
+                <summary className="cursor-pointer font-extrabold">Cómo desbloquear reconocimientos</summary>
+                <p className="mt-2 leading-6">Hay reconocimientos por tu primer registro, por registrar en 3 o 7 días distintos, por una reflexión y por volver después de una pausa. Las rachas de 3 y 7 días consecutivos también tienen su propio reconocimiento.</p>
+              </details>
               <div className="mt-6 flex items-center gap-2"><Award className="text-[#246b55]" size={21} /><h3 className="text-lg font-black text-[#173f34]">Momentos reconocidos</h3></div>
               {resumen.reconocimientos.length ? (
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
