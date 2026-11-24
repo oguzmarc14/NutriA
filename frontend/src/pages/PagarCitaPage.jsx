@@ -16,6 +16,16 @@ function sdk() {
   return sdkPromise
 }
 
+const brickMessages = {
+  get_card_bin_payment_methods_failed: 'Mercado Pago no pudo identificar el medio de pago de esta tarjeta.',
+  get_payment_methods_failed: 'Mercado Pago no pudo consultar los medios de pago del consultorio.',
+  get_card_issuers_failed: 'Mercado Pago no pudo consultar el banco emisor.',
+  get_payment_installments_failed: 'Mercado Pago no pudo consultar las opciones de pago para este importe.',
+  fields_setup_failed: 'No se pudieron iniciar los campos seguros de la tarjeta.',
+  card_token_creation_failed: 'Mercado Pago no pudo preparar esta tarjeta para el pago.',
+  missing_payment_information: 'Revisa los datos solicitados en el formulario.',
+}
+
 const statusLabel = {
   processing: 'Estamos verificando el pago. Puedes volver a consultar el estado.',
   confirmed: 'Tu pago fue aprobado. La cita está confirmada.',
@@ -55,6 +65,8 @@ export default function PagarCitaPage() {
   const [challenge, setChallenge] = useState(null)
   const [error, setError] = useState('')
   const [reload, setReload] = useState(0)
+  const [formRevision, setFormRevision] = useState(0)
+  const [brickError, setBrickError] = useState(null)
   const [sending, setSending] = useState(false)
   const lock = useRef(false)
   const publicKey = booking?.status === 'reserved' ? booking.publicKey : undefined
@@ -84,6 +96,7 @@ export default function PagarCitaPage() {
     if (!publicKey || !amount) return
     let active = true
     let widget
+    setBrickError(null)
     sdk().then(async MercadoPago => {
       if (!active) return
       const mp = new MercadoPago(publicKey, { locale: 'es-MX' })
@@ -92,9 +105,15 @@ export default function PagarCitaPage() {
         customization: { paymentMethods: { maxInstallments: 1 } },
         callbacks: {
           onReady: () => { if (active) setError('') },
-          onError: () => { if (active) setError('No se pudo mostrar el formulario de tarjeta.') },
+          onError: failure => {
+            if (!active) return
+            const code = [failure?.cause, failure?.code, failure?.type]
+              .find(value => typeof value === 'string' && Object.hasOwn(brickMessages, value))
+            setBrickError({ code, message: brickMessages[code] || 'Mercado Pago reportó un problema con el formulario.' })
+          },
           onSubmit: async (data, card) => {
-            if (lock.current) return
+            if (!active || lock.current) return
+            setBrickError(null)
             lock.current = true
             setSending(true)
             setError('')
@@ -115,9 +134,9 @@ export default function PagarCitaPage() {
         },
       })
       if (!active) widget.unmount()
-    }).catch(() => { if (active) setError('No se pudo abrir el formulario de Mercado Pago.') })
+    }).catch(() => { if (active) setBrickError({ message: 'No se pudo abrir el formulario de Mercado Pago.' }) })
     return () => { active = false; widget?.unmount() }
-  }, [publicKey, amount, id, container])
+  }, [publicKey, amount, id, container, formRevision])
 
   return <main className="min-h-dvh bg-[#edf5ee] p-4 sm:p-8">
     <section className="mx-auto max-w-xl space-y-4 rounded-3xl border border-[#c8ded3] bg-white p-5 text-[#173f34] sm:p-7">
@@ -137,6 +156,14 @@ export default function PagarCitaPage() {
           </div>}
         </details>
         <div id={container} />
+        {brickError && !sending && <div role="alert" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-950">
+          <p>{brickError.message}</p>
+          {brickError.code && <p className="mt-1 break-all text-xs">Código de Mercado Pago · {brickError.code}</p>}
+          <button type="button" className="mt-2 min-h-11 rounded-xl bg-white px-3 font-bold" onClick={() => {
+            setBrickError(null)
+            setFormRevision(value => value + 1)
+          }}>Recargar formulario de tarjeta</button>
+        </div>}
       </>}
       {challenge && booking?.status === 'processing' && <BankChallenge challenge={challenge} />}
       {sending && <p role="status">Enviando el pago…</p>}

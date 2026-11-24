@@ -91,7 +91,9 @@ router.get('/reserva', async (req, res) => {
   const booking = await loadBooking(req)
   const seller = booking.status === 'reserved' && +booking.expiresAt > Date.now()
     ? await Seller.findOne({ nutritionist: booking.nutritionist, merchant: booking.merchant }).lean() : null
-  res.json({ ...summary(booking), publicKey: seller?.publicKey })
+  // La clave pública inicializa el checkout de NutriA. El cobro usa el token OAuth del vendedor.
+  const integratorKey = process.env.MP_PUBLIC_KEY?.trim()
+  res.json({ ...summary(booking), publicKey: seller ? integratorKey || seller.publicKey : undefined })
 })
 router.post('/pagar', async (req, res) => {
   const data = validated(card, req.body)
