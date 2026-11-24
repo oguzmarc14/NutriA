@@ -43,7 +43,8 @@ function Navigation() {
       <Stack.Protected guard={!!session}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="notificaciones" options={{ ...clinicHeader, title: 'Notificaciones' }} />
-        <Stack.Screen name="preferencias" options={{ ...clinicHeader, title: 'Configuración' }} />
+        <Stack.Screen name="preferencias" options={{ ...clinicHeader, title: 'Notificaciones' }} />
+        <Stack.Screen name="calendarios" options={{ ...clinicHeader, title: 'Calendarios' }} />
         <Stack.Screen name="cuenta" options={{ ...clinicHeader, title: 'Mi cuenta' }} />
       </Stack.Protected>
       <Stack.Protected guard={session?.user.role === 'patient'}>
@@ -60,6 +61,7 @@ function Navigation() {
         <Stack.Screen name="comunidad" options={{ ...clinicHeader, title: 'NutriA Community' }} />
       </Stack.Protected>
       <Stack.Protected guard={session?.user.role === 'nutritionist'}>
+        <Stack.Screen name="configurar-pagos" options={{ ...clinicHeader, title: 'Pagos' }} />
         <Stack.Screen name="horarios" options={{ ...clinicHeader, title: 'Horarios y disponibilidad' }} />
         <Stack.Screen name="mi-clinica" options={{ ...clinicHeader, title: 'Mi clínica' }} />
       </Stack.Protected>

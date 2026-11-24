@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { router } from 'expo-router'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Linking, Pressable, Share, Text, View } from 'react-native'
 import { request } from '@/core/api/client'
@@ -10,7 +11,6 @@ import { FormField } from '@/shared/ui/FormField'
 import { DateField, TimeField } from '@/shared/ui/DateTimeField'
 import { ClosedDaysCalendar } from './ClosedDaysCalendar'
 import { AppDialog } from '@/shared/ui/AppDialog'
-import { AgendaPaymentSettings } from './AgendaPaymentSettings'
 import { ListState } from '@/shared/ui/ListState'
 type Slot = {dia:number;inicio:string;fin:string}
 type DateBlock = {fecha:string;inicio:string;fin:string}
@@ -140,7 +140,7 @@ export default function ScheduleScreen() {
         <Button label="Compartir agenda" onPress={() => void openSharedAgenda(true)} />
         <Button label="Ver agenda pública" selected={false} onPress={() => void openSharedAgenda(false)} />
       </View>}
-      <AgendaPaymentSettings />
+      <Button label="Configurar pagos de la agenda" selected={false} onPress={() => router.push('/configurar-pagos')} />
     </>}
     </>}
     <AppDialog visible={!!error} title="Revisa los horarios" message={error} onClose={()=>setError('')}/><AppDialog visible={!!message} success title="Horario guardado" message={message} onClose={()=>setMessage('')}/>
