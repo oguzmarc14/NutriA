@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { BookOpen, Plus, Search, Send, ShieldCheck, X } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import client from '../api/client'
+import EquivalenciasPanel from '../components/community/EquivalenciasPanel'
 import MisDietasPanel from '../components/community/MisDietasPanel'
 
 const empty = { titulo: '', descripcion: '', porciones: 1, ingredientes: [{ nombre: '', cantidad: 1, unidad: 'g' }], instrucciones: [''] }
@@ -10,7 +11,8 @@ const message = error => error.response?.data?.message || 'No fue posible comple
 export default function CommunityPage() {
   const [params, setParams] = useSearchParams()
   const selectedTab = params.get('tab')
-  const tab = selectedTab === 'dietas' || selectedTab === 'mias' ? selectedTab : 'explorar'
+  const tab = ['dietas', 'mias', 'equivalencias'].includes(selectedTab) ? selectedTab : 'explorar'
+  const muestraRecetas = tab === 'explorar' || tab === 'mias'
   function setTab(next) {
     const updated = new URLSearchParams(params)
     if (next === 'explorar') updated.delete('tab')
@@ -73,11 +75,11 @@ export default function CommunityPage() {
     <header className="rounded-3xl bg-gradient-to-br from-emerald-800 to-teal-600 p-6 text-white">
       <div className="flex items-center gap-3"><BookOpen /><h1 className="text-2xl font-extrabold">NutriA Community</h1></div>
       <p className="mt-2 text-sm text-emerald-50">Recetas compartidas por profesionales de nutrición. Adáptalas a cada paciente.</p>
-      {tab !== 'dietas' && <button type="button" onClick={() => setCrear(!crear)} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-bold text-emerald-800"><Plus size={17}/> Crear receta</button>}
+      {muestraRecetas && <button type="button" onClick={() => setCrear(!crear)} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-bold text-emerald-800"><Plus size={17}/> Crear receta</button>}
     </header>
     {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
     {aviso && <p role="status" className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">{aviso}</p>}
-    {crear && tab !== 'dietas' && <form onSubmit={guardar} className="space-y-4 rounded-2xl bg-white p-5 shadow-sm">
+    {crear && muestraRecetas && <form onSubmit={guardar} className="space-y-4 rounded-2xl bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between"><h2 className="font-bold text-emerald-900">Nueva receta privada</h2><button type="button" aria-label="Cerrar" onClick={() => setCrear(false)}><X/></button></div>
       <input className={field} required minLength={3} maxLength={120} placeholder="Nombre de la receta" value={form.titulo} onChange={e => setForm(f => ({ ...f, titulo: e.target.value }))}/>
       <textarea className={field} maxLength={1200} placeholder="Descripción (opcional)" value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}/>
@@ -98,11 +100,13 @@ export default function CommunityPage() {
       <button type="button" onClick={() => setTab('explorar')} className={'rounded-xl px-4 py-2 text-sm font-bold ' + (tab === 'explorar' ? 'bg-emerald-700 text-white' : 'bg-white text-emerald-800')}>Comunidad</button>
       <button type="button" onClick={() => setTab('mias')} className={'rounded-xl px-4 py-2 text-sm font-bold ' + (tab === 'mias' ? 'bg-emerald-700 text-white' : 'bg-white text-emerald-800')}>Mis recetas</button>
       <button type="button" onClick={() => setTab('dietas')} className={'rounded-xl px-4 py-2 text-sm font-bold ' + (tab === 'dietas' ? 'bg-emerald-700 text-white' : 'bg-white text-emerald-800')}>Mis dietas</button>
-      {tab !== 'dietas' && <label className="flex min-w-48 flex-1 items-center gap-2 rounded-xl bg-white px-3"><Search size={17}/><input className="w-full py-3 text-sm outline-none" placeholder="Buscar recetas" value={busqueda} onChange={e => setBusqueda(e.target.value)}/></label>}
+      <button type="button" aria-pressed={tab === 'equivalencias'} onClick={() => setTab('equivalencias')} className={'rounded-xl px-4 py-2 text-sm font-bold ' + (tab === 'equivalencias' ? 'bg-emerald-700 text-white' : 'bg-white text-emerald-800')}>Equivalentes y alimentos</button>
+      {muestraRecetas && <label className="flex min-w-48 flex-1 items-center gap-2 rounded-xl bg-white px-3"><Search size={17}/><input className="w-full py-3 text-sm outline-none" placeholder="Buscar recetas" value={busqueda} onChange={e => setBusqueda(e.target.value)}/></label>}
     </div>
     {tab === 'dietas' && <MisDietasPanel />}
-    {tab !== 'dietas' && cargando && <p className="text-sm text-slate-500">Cargando recetas...</p>}
-    {tab !== 'dietas' && <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    {tab === 'equivalencias' && <EquivalenciasPanel />}
+    {muestraRecetas && cargando && <p className="text-sm text-slate-500">Cargando recetas...</p>}
+    {muestraRecetas && <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {recetas.map(r => <article key={r._id} className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
         <div className="mb-2 flex items-center justify-between gap-2"><span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">{r.estado === 'publicada' ? 'Publicada' : r.estado === 'pendiente' ? 'En revisión' : r.estado === 'rechazada' ? 'Rechazada' : 'Privada'}</span>{r.origen === 'oficial' && <ShieldCheck className="text-emerald-600" size={18}/>}</div>
         <h2 className="text-lg font-bold text-emerald-950">{r.titulo}</h2>
@@ -112,7 +116,7 @@ export default function CommunityPage() {
         {tab === 'mias' && ['privada','rechazada'].includes(r.estado) && <button type="button" className="inline-flex items-center gap-1 rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white" onClick={() => publicar(r._id)}><Send size={14}/> Compartir</button>}</div>
       </article>)}
     </div>}
-    {tab !== 'dietas' && !cargando && !recetas.length && <p className="rounded-2xl bg-white p-6 text-center text-sm text-slate-500">Todavía no hay recetas en esta sección.</p>}
+    {muestraRecetas && !cargando && !recetas.length && <p className="rounded-2xl bg-white p-6 text-center text-sm text-slate-500">Todavía no hay recetas en esta sección.</p>}
     {seleccionada && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => setSeleccionada(null)}>
       <div role="dialog" aria-modal="true" aria-label="Detalle de receta" className="max-h-[85vh] w-full max-w-xl overflow-auto rounded-2xl bg-white p-6" onClick={e => e.stopPropagation()}>
         <div className="flex justify-between"><h2 className="text-xl font-bold">{seleccionada.titulo}</h2><button type="button" aria-label="Cerrar" onClick={() => setSeleccionada(null)}><X/></button></div>
