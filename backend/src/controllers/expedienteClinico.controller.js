@@ -29,7 +29,7 @@ const numeroOpcional = z.preprocess(
 
     return Number(valor)
   },
-  z.number().optional(),
+  z.number().int().min(0).max(6, 'El expediente permite hasta 6 comidas al día.').optional(),
 )
 
 /*
@@ -279,7 +279,9 @@ async function guardarExpediente(
         .status(400)
         .json({
           message:
-            'Datos del expediente inválidos',
+            parsed.error.issues.find(issue => issue.path.join('.') === 'nutricion.numeroComidasDia')
+              ? 'Ingresa un número entero de hasta 6 comidas al día en el expediente.'
+              : 'Datos del expediente inválidos',
 
           errors:
             parsed.error.flatten(),

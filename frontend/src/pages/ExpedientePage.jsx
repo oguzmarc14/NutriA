@@ -1099,9 +1099,10 @@ function ExpedientePage() {
               />
 
               <CampoInput
-                label="Número de comidas al día"
+                label="Número de comidas al día (máximo 6)"
                 type="number"
                 min="0"
+                max="6"
                 value={
                   expediente.nutricion.numeroComidasDia
                 }

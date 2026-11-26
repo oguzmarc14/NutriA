@@ -197,6 +197,8 @@ const expedienteClinicoSchema =
         numeroComidasDia: {
           type: Number,
           min: 0,
+          max: 6,
+          validate: valor => valor == null || Number.isInteger(valor),
           default: null,
         },
 

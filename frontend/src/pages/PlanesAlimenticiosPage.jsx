@@ -1438,27 +1438,31 @@ function PlanesAlimenticiosPage() {
     const nutricion = referenciaNutricional?.expediente?.nutricion || {}
     const objetivos = Array.isArray(nutricion.objetivos) ? nutricion.objetivos : []
     const cantidadComidas = Number(nutricion.numeroComidasDia)
-    const nombres = cantidadComidas === 4
-      ? ['Desayuno', 'Colación', 'Comida', 'Cena']
-      : cantidadComidas >= 5
-        ? ['Desayuno', 'Colación matutina', 'Comida', 'Colación vespertina', 'Cena']
-        : ['Desayuno', 'Comida', 'Cena']
-    const horasPredeterminadas = nombres.length === 3 ? ['08:00', '14:30', '20:30'] :
-      nombres.length === 4 ? ['08:00', '11:30', '14:30', '20:30'] :
-      ['08:00', '11:30', '14:30', '17:30', '20:30']
-    // El expediente registra primera y última comida, no el horario de cada una.
-    // Respetamos los extremos y distribuimos los tiempos intermedios de forma editable.
+    const plantillas = {
+      1: { nombres: ['Comida'], horas: ['14:30'], porcentajes: [100] },
+      2: { nombres: ['Desayuno', 'Cena'], horas: ['08:00', '20:30'], porcentajes: [50, 50] },
+      3: { nombres: ['Desayuno', 'Comida', 'Cena'], horas: ['08:00', '14:30', '20:30'], porcentajes: [25, 40, 35] },
+      4: { nombres: ['Desayuno', 'Colación', 'Comida', 'Cena'], horas: ['08:00', '11:30', '14:30', '20:30'], porcentajes: [25, 10, 40, 25] },
+      5: { nombres: ['Desayuno', 'Colación matutina', 'Comida', 'Colación vespertina', 'Cena'], horas: ['08:00', '11:30', '14:30', '17:30', '20:30'], porcentajes: [20, 10, 35, 10, 25] },
+      6: { nombres: ['Desayuno', 'Colación matutina', 'Comida', 'Colación vespertina', 'Cena', 'Colación nocturna'], horas: ['08:00', '10:30', '13:30', '16:00', '19:00', '21:00'], porcentajes: [20, 10, 30, 10, 20, 10] },
+    }
+    const { nombres, horas: horasPredeterminadas, porcentajes } = plantillas[cantidadComidas] || plantillas[3]
     const convertirMinutos = valor => {
-      if (!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(valor || '')) return null
+      if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(valor || '')) return null
       const [h, m] = valor.split(':').map(Number)
       return h * 60 + m
     }
     const inicio = convertirMinutos(nutricion.primeraComida)
     const fin = convertirMinutos(nutricion.ultimaComida)
     const minutosHora = minutos => String(Math.floor(minutos / 60)).padStart(2, '0') + ':' + String(minutos % 60).padStart(2, '0')
-    const horas = inicio !== null && fin !== null && fin > inicio
-      ? nombres.map((_, i) => minutosHora(Math.round((inicio + (fin - inicio) * i / (nombres.length - 1)) / 5) * 5))
-      : horasPredeterminadas.map((hora, i) => i === 0 && inicio !== null ? minutosHora(inicio) : i === nombres.length - 1 && fin !== null ? minutosHora(fin) : hora)
+    const horas = horasPredeterminadas.map((hora, i) => {
+      if (i === 0 && inicio !== null) return minutosHora(inicio)
+      if (i === nombres.length - 1 && fin !== null) return minutosHora(fin)
+      if (inicio !== null && fin !== null && fin > inicio) {
+        return minutosHora(Math.round(inicio + (fin - inicio) * i / (nombres.length - 1)))
+      }
+      return hora
+    })
     const nuevas = nombres.map((n, i) => crearComidaInicial(n, horas[i]))
     setComidas(nuevas)
     setComidaActivaId(nuevas[0].id)
@@ -1470,8 +1474,7 @@ function PlanesAlimenticiosPage() {
       salud: 'Mejorar la salud', rendimiento_deportivo: 'Rendimiento deportivo',
       control_enfermedades: 'Control de enfermedades',
     }[v] || v)).join(', '))
-    setDistribucion(nombres.length === 3 ? [25, 40, 35] :
-      nombres.length === 4 ? [25, 10, 40, 25] : [20, 10, 35, 10, 25])
+    setDistribucion(porcentajes)
     setModoAsistido(true)
     setMostrarEleccion(false)
     setError('')

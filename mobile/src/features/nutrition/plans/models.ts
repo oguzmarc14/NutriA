@@ -170,15 +170,22 @@ export function duplicatePlan(plan: Plan): DraftPlan {
 }
 export function assistedPlan(nutrition: { numeroComidasDia?: number | string; primeraComida?: string; ultimaComida?: string; objetivos?: string[] }, kcal: number): DraftPlan {
   const count = Number(nutrition.numeroComidasDia)
-  const names = count === 4 ? ['Desayuno', 'Colación', 'Comida', 'Cena'] : count >= 5 ? ['Desayuno', 'Colación matutina', 'Comida', 'Colación vespertina', 'Cena'] : ['Desayuno', 'Comida', 'Cena']
-  const hours = names.length === 3 ? ['08:00', '14:30', '20:30'] : names.length === 4 ? ['08:00', '11:30', '14:30', '20:30'] : ['08:00', '11:30', '14:30', '17:30', '20:30']
-  const percentages = names.length === 3 ? [25, 40, 35] : names.length === 4 ? [25, 10, 40, 25] : [20, 10, 35, 10, 25]
+  const templates: Record<number, [string[], string[], number[]]> = {
+    1: [['Comida'], ['14:30'], [100]],
+    2: [['Desayuno', 'Cena'], ['08:00', '20:30'], [50, 50]],
+    3: [['Desayuno', 'Comida', 'Cena'], ['08:00', '14:30', '20:30'], [25, 40, 35]],
+    4: [['Desayuno', 'Colación', 'Comida', 'Cena'], ['08:00', '11:30', '14:30', '20:30'], [25, 10, 40, 25]],
+    5: [['Desayuno', 'Colación matutina', 'Comida', 'Colación vespertina', 'Cena'], ['08:00', '11:30', '14:30', '17:30', '20:30'], [20, 10, 35, 10, 25]],
+    6: [['Desayuno', 'Colación matutina', 'Comida', 'Colación vespertina', 'Cena', 'Colación nocturna'], ['08:00', '10:30', '13:30', '16:00', '19:00', '21:00'], [20, 10, 30, 10, 20, 10]],
+  }
+  const [names, hours, percentages] = templates[count] || templates[3]
   const minutes = (v?: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(v || '') ? Number(v!.slice(0, 2)) * 60 + Number(v!.slice(3)) : null
   const first = minutes(nutrition.primeraComida), last = minutes(nutrition.ultimaComida)
   const hhmm = (n: number) => String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0')
   const labels: Record<string, string> = { perdida_peso: 'Pérdida de peso', incremento_masa: 'Incremento de masa muscular', salud: 'Mejorar la salud', rendimiento_deportivo: 'Rendimiento deportivo', control_enfermedades: 'Control de enfermedades' }
   return { name: 'Plan nutricional - ' + localDate(), date: localDate(), energy: String(kcal), goal: (nutrition.objetivos || []).map(x => labels[x] || x).join(', '),
-    meals: names.map((name, i) => ({ ...newMeal(name), percentage: String(percentages[i]), hora: first !== null && last !== null && last > first
-      ? hhmm(Math.round((first + (last - first) * i / (names.length - 1)) / 5) * 5)
-      : i === 0 && first !== null ? hhmm(first) : i === names.length - 1 && last !== null ? hhmm(last) : hours[i] })) }
+    meals: names.map((name, i) => ({ ...newMeal(name), percentage: String(percentages[i]), hora: i === 0 && first !== null ? hhmm(first)
+      : i === names.length - 1 && last !== null ? hhmm(last)
+      : first !== null && last !== null && last > first
+        ? hhmm(Math.round(first + (last - first) * i / (names.length - 1))) : hours[i] })) }
 }

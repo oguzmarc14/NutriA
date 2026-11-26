@@ -19,7 +19,7 @@ export const recordSections: { label: string; fields: RecordField[] }[] = [
   ] },
   { label: 'Nutrición y objetivos', fields: [
     {path:'nutricion.primeraComida',label:'Primera comida',type:'time'}, {path:'nutricion.ultimaComida',label:'Última comida',type:'time'},
-    {path:'nutricion.numeroComidasDia',label:'Comidas al día',type:'number'}, {path:'nutricion.comidaFavorita',label:'Comida favorita'}, {path:'nutricion.comidaDisgusta',label:'Comidas que no le gustan'},
+    {path:'nutricion.numeroComidasDia',label:'Comidas al día (máximo 6)',type:'number'}, {path:'nutricion.comidaFavorita',label:'Comida favorita'}, {path:'nutricion.comidaDisgusta',label:'Comidas que no le gustan'},
     {path:'nutricion.cafePorDia',label:'Café por día'}, {path:'nutricion.bebidasEnergeticasSemana',label:'Bebidas energéticas por semana'},
     {path:'nutricion.bebidasAzucaradasSemana',label:'Bebidas azucaradas por semana'}, {path:'nutricion.intoleranciasAlimentarias',label:'Intolerancias alimentarias'},
     {path:'nutricion.objetivoPrincipal',label:'Objetivo principal',type:'options',options:objectives}, {path:'nutricion.objetivos',label:'Objetivos de la dieta',type:'multiple',options:objectives}, {path:'nutricion.objetivoOtro',label:'Describe otro objetivo'},
@@ -48,6 +48,7 @@ export function detailedUpdate(base: Record<string, unknown> | null, form: Recor
     if (!update[section]) update[section] = { ...(typeof base?.[section] === 'object' ? base[section] as Record<string,unknown> : {}) }
     let next: unknown = value
     if (field.type === 'boolean') next = value === '' ? undefined : value === 'true'
+    if (field.path === 'nutricion.numeroComidasDia' && Number(value) > 6) throw new Error('El expediente permite hasta 6 comidas al día.')
     if (field.type === 'number') { next = value === '' ? undefined : Number(value.replace(',','.')); if (next !== undefined && (!Number.isFinite(next) || Number(next) < 0 || !Number.isInteger(next) || field.path === 'deporte.diasPorSemana' && Number(next) > 7)) throw new Error('Revisa ' + field.label.toLowerCase()) }
     if (field.type === 'multiple') next = value ? value.split(',') : []
     if (field.type === 'time' && value && !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) throw new Error('Revisa el horario de ' + field.label.toLowerCase())
