@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Activity, Calculator, Check, ChevronRight, ClipboardList, Save, UserRound, AlertCircle } from 'lucide-react'
+import { Activity, Calculator, Check, ClipboardList, Save, UserRound, AlertCircle } from 'lucide-react'
 import client from '../api/client'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 import ReferenciaCalculo, { fechaDeCalculo, fechaDeMedicion } from '../components/calculo/ReferenciaCalculo'
 import ModalRequisitosPlan from '../components/planes/ModalRequisitosPlan'
+import useModalAccesible from '../hooks/useModalAccesible'
 import { evaluarRequisitosPlan } from '../utils/requisitosPlan.js'
 
 const factores = [
@@ -34,7 +35,9 @@ export default function CalculoNutricionalPage() {
   const [cargando, setCargando] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
-  const [exito, setExito] = useState('')
+  const [borradorGuardado, setBorradorGuardado] = useState(null)
+  const cerrarAviso = () => setBorradorGuardado(null)
+  const { modalRef, volverRef } = useModalAccesible({ abierto: Boolean(borradorGuardado), onVolver: cerrarAviso })
   const selectorMedicionRef = useRef(null)
   const [medicionId, setMedicionId] = useState('')
   const [sexo, setSexo] = useState('')
@@ -50,7 +53,7 @@ export default function CalculoNutricionalPage() {
   useEffect(() => {
     if (!pacienteTrabajo?.id) { setDatos(null); setMedicionId(''); setAlertaRequisitos(null); return }
     let activo = true
-    setCargando(true); setError(''); setExito(''); setDatos(null); setMedicionId(''); setSexo(''); setAlertaRequisitos(null)
+    setCargando(true); setError(''); setBorradorGuardado(null); setDatos(null); setMedicionId(''); setSexo(''); setAlertaRequisitos(null)
     client.get('/calculo-nutricional/' + pacienteTrabajo.id)
       .then(({ data }) => {
         if (!activo) return
@@ -115,7 +118,7 @@ export default function CalculoNutricionalPage() {
   async function guardar(e) {
     e.preventDefault()
     if (!valido || !pacienteTrabajo?.id || !medicionId) return
-    setGuardando(true); setError(''); setExito('')
+    setGuardando(true); setError(''); setBorradorGuardado(null)
     try {
       const { data } = await client.post('/calculo-nutricional/' + pacienteTrabajo.id, {
         medicionId, sexoCalculo: sexo, factorActividad: pediatrico ? 1 : Number(factor), ajusteKcal: pediatrico ? 0 : Number(ajuste),
@@ -124,13 +127,26 @@ export default function CalculoNutricionalPage() {
         observaciones,
       })
       setDatos(actual => ({ ...actual, calculos: [data.calculo, ...(actual?.calculos || [])] }))
-      if (volverAlPlan) { navigate('/planes', { replace: true }); return }
-      setExito('Cálculo guardado como borrador. Aún no es una prescripción ni se ha asignado un plan.')
+      setBorradorGuardado(data.calculo)
     } catch (err) { setError(err.response?.data?.message || 'No fue posible guardar el cálculo') }
     finally { setGuardando(false) }
   }
 
   return <section className="mx-auto w-full max-w-[1480px] space-y-5 px-4 py-7 sm:px-5 md:px-8 md:py-9">
+    {borradorGuardado && <div className="fixed inset-0 z-[100] grid place-items-center overflow-y-auto bg-[#173f34]/45 p-4">
+      <div ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="borrador-titulo" aria-describedby="borrador-pregunta"
+        className="w-full max-w-md rounded-3xl bg-white p-5 shadow-xl sm:p-6">
+        <span className="inline-flex rounded-xl bg-[#e6f2eb] p-2 text-[#246b55]" aria-hidden="true"><Check size={22}/></span>
+        <h2 id="borrador-titulo" className="mt-3 text-xl font-extrabold text-[#173f34]">Borrador guardado</h2>
+        <p className="mt-1 text-sm text-[#52716a]">Objetivo energético de <strong>{formato(borradorGuardado.resultado?.objetivoKcal)} kcal/día</strong></p>
+        <p id="borrador-pregunta" className="mt-4 text-sm text-[#173f34]">¿Quieres crear un plan alimenticio con este cálculo?</p>
+        <div className="mt-5 grid gap-2 sm:grid-cols-2">
+          <button type="button" ref={volverRef} onClick={cerrarAviso} className="min-h-11 rounded-xl border border-[#c8ddd2] px-3 text-sm font-bold text-[#246b55] hover:bg-[#eef5f1]">Ahora no</button>
+          <button type="button" onClick={() => navigate('/planes', { replace: volverAlPlan })}
+            className="min-h-11 rounded-xl bg-[#246b55] px-3 text-sm font-bold text-white hover:bg-[#173f34]">Crear plan alimenticio</button>
+        </div>
+      </div>
+    </div>}
     <ModalRequisitosPlan
       contexto="calculo"
       tipo={!pacienteTrabajo?.id ? 'paciente' : alertaRequisitos?.pacienteId === pacienteTrabajo.id ? alertaRequisitos.tipo : null}
@@ -195,7 +211,7 @@ export default function CalculoNutricionalPage() {
       </div>}
       {cargando && <p className="text-sm text-[#648073]">Cargando mediciones y cálculos...</p>}
       {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-      {exito && <p role="status" className="rounded-xl border border-[#b8dcc4] bg-[#ecf7ee] p-3 text-sm text-[#246b55]">{exito}</p>}
+
       {datos && !datos.mediciones?.length && <div className={tarjeta}>
         <h2 className="font-bold text-[#173f34]">Falta una medición</h2>
         <p className="mt-2 text-sm text-[#648073]">Registra peso, estatura, edad y actividad física antes de calcular.</p>
@@ -294,18 +310,33 @@ export default function CalculoNutricionalPage() {
       {datos && <div className={tarjeta}>
         <h2 className="mb-3 font-extrabold text-[#173f34]">Historial de cálculos</h2>
         {!datos.calculos?.length ? <p className="text-sm text-[#648073]">Aún no hay cálculos guardados.</p> :
-          <div className="space-y-2">{datos.calculos.map(c => <div key={c._id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e0eae3] bg-[#f7faf7] px-4 py-3">
-            <div><p className="text-sm font-bold text-[#173f34]">{formato(c.resultado?.objetivoKcal)} kcal/día · Borrador</p><p className="text-xs text-[#648073]">Guardado: {fechaDeCalculo(c.createdAt)} · {c.formula === 'eer-dri-2023' ? 'EER pediátrica · DRI 2023' : 'Mifflin-St Jeor'}</p><p className="text-xs text-[#648073]">Medición: {fechaDeMedicion(c.fechaMedicion)} · {c.peso} kg</p>
-              {c.detalleFormula?.ecuacion && <div className="mt-2 space-y-1 text-xs text-[#315d4b]">
-                <p className="font-semibold">{c.detalleFormula.ecuacion}</p>
-                <p>{c.detalleFormula.rangoEdad} · {c.sexoCalculo === 'female' ? 'Femenino' : 'Masculino'} · {actividadesPediatricas[c.actividadPediatrica]?.[0] || 'Actividad según edad'}</p>
-                <p>Edad usada {Number(c.detalleFormula.edadAnios.toFixed(4))} años ({c.detalleFormula.fuenteEdad}) · Talla {formato(c.estaturaCm)} cm</p>
-              </div>}
+          <div className="space-y-3">{datos.calculos.map(c => <article key={c._id} className="rounded-2xl border border-[#dce8e0] bg-[#f7faf7] p-4">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <p className="text-xs font-semibold text-[#52716a]">Objetivo energético</p>
+                <p className="mt-1 text-2xl font-extrabold text-[#173f34]">{formato(c.resultado?.objetivoKcal)} <span className="text-sm font-semibold">kcal/día</span></p>
+              </div>
+              <span className="rounded-full bg-[#e6f2eb] px-3 py-1 text-xs font-bold text-[#246b55]">Borrador</span>
             </div>
-            <span className="text-xs text-[#648073]">C {c.porcentajes?.carbohidratos}% · P {c.porcentajes?.proteinas}% · G {c.porcentajes?.grasas}%</span>
-          </div>)}</div>}
-        <button type="button" onClick={() => navigate('/planes')} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#246b55] hover:underline">Ir a planes alimenticios <ChevronRight size={16}/></button>
-        <p className="mt-2 text-xs text-[#648073]">La integración automática con equivalentes y planes alimenticios se desarrollará en la siguiente etapa.</p>
+            <p className="mt-2 text-xs font-bold text-[#315d4b]">{c.formula === 'eer-dri-2023' ? 'EER pediátrica · DRI 2023' : 'Mifflin-St Jeor'}</p>
+            <p className="mt-1 text-xs text-[#52716a]">Guardado {fechaDeCalculo(c.createdAt)} · Medición {fechaDeMedicion(c.fechaMedicion)} · {c.peso} kg</p>
+            <dl className="mt-3 grid gap-2 sm:grid-cols-3">
+              {[
+                ['Carbohidratos', 'carbohidratos', 'carbohidratosGramos'],
+                ['Proteínas', 'proteinas', 'proteinasGramos'],
+                ['Grasas', 'grasas', 'grasasGramos'],
+              ].map(([nombre, porcentaje, gramos]) => <div key={nombre} className="rounded-xl border border-[#e0eae3] bg-white p-2.5">
+                <dt className="text-xs text-[#52716a]">{nombre}</dt>
+                <dd className="font-bold text-[#173f34]">{formato(c.resultado?.[gramos])} g <span className="text-xs font-medium text-[#52716a]">· {formato(c.porcentajes?.[porcentaje])}%</span></dd>
+              </div>)}
+            </dl>
+            {c.detalleFormula?.ecuacion && <details className="mt-3 rounded-xl bg-[#ecf4ee] px-3 py-2 text-xs text-[#315d4b]">
+              <summary className="cursor-pointer font-bold">Ver ecuación y datos utilizados</summary>
+              <p className="mt-2 break-words font-semibold">{c.detalleFormula.ecuacion}</p>
+              <p className="mt-1">{c.detalleFormula.rangoEdad} · {c.sexoCalculo === 'female' ? 'Femenino' : 'Masculino'} · {actividadesPediatricas[c.actividadPediatrica]?.[0] || 'Actividad según edad'}</p>
+              <p className="mt-1">Edad usada {Number(c.detalleFormula.edadAnios.toFixed(4))} años ({c.detalleFormula.fuenteEdad}) · Talla {formato(c.estaturaCm)} cm</p>
+            </details>}
+          </article>)}</div>}
       </div>}
     </>}
   </section>
