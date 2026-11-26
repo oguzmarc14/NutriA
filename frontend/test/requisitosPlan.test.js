@@ -63,7 +63,7 @@ test('alerta ofrece las rutas reales y Cancelar, con accesibilidad de teclado',(
 })
 test('círculos y botones del selector de modalidad se centran',()=>{
   const seccion = page.slice(page.indexOf('id="modal-modalidad-plan"'))
-  assert.equal((seccion.match(/w-full items-center gap-3 rounded-2xl border-2/g)||[]).length,3)
+  assert.equal((seccion.match(/w-full items-center gap-3 rounded-2xl border-2/g)||[]).length,4)
   assert.equal((seccion.match(/size=\{21\} className="shrink-0 self-center/g)||[]).length,6)
   assert.match(seccion,/className="mt-5 flex flex-wrap items-center justify-center gap-3"/)
   assert.match(seccion,/min-h-11 min-w-\[125px\]/)

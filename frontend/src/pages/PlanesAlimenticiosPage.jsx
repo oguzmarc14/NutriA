@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   Circle,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   ChartNoAxesColumnIncreasing,
   Target,
@@ -2209,11 +2210,6 @@ function PlanesAlimenticiosPage() {
                 <ChevronDown size={17}/>
               </button>}
 
-              {!planEditandoId && <button type="button" onClick={() => setBibliotecaPaciente(pacienteId)}
-                className="mb-5 flex min-h-11 w-full items-center gap-2 rounded-xl border border-[#c9dfd0] bg-white px-4 py-2 text-left text-sm font-bold text-[#246b55] hover:bg-[#edf5f0]">
-                <Search size={17}/> Usar una de mis dietas guardadas
-              </button>}
-
               {modoAsistido && <div className="mb-6 overflow-hidden rounded-2xl border border-[#c9dfd0] bg-white">
                 <button type="button" aria-expanded={mostrarEquivalentes} onClick={() => setMostrarEquivalentes(v => !v)}
                   className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-extrabold text-[#173f34]">
@@ -3003,7 +2999,7 @@ function PlanesAlimenticiosPage() {
         )}
       </div>
       {bibliotecaPaciente && bibliotecaPaciente === pacienteId && <BibliotecaDietas
-        onCerrar={() => setBibliotecaPaciente(null)}
+        onCerrar={() => { setBibliotecaPaciente(null); setMostrarEleccion(true) }}
         onUsar={async dieta => {
           if (await duplicarPlan(dieta.plan)) setBibliotecaPaciente(null)
         }} suspendida={Boolean(confirmacion)} />}
@@ -3033,10 +3029,6 @@ function PlanesAlimenticiosPage() {
               className="mt-1 h-4 w-4 accent-[#246b55]" />
             <span><strong>Iniciar siempre con plan asistido</strong><span className="block text-xs text-[#52716a]">Se aplica cuando el paciente tiene un cálculo guardado. Puedes cambiar de modalidad en cada dieta.</span></span>
           </label>
-          <button type="button" onClick={() => { setMostrarEleccion(false); setBibliotecaPaciente(pacienteId) }}
-            className="mt-3 flex min-h-11 w-full items-center gap-2 rounded-xl border border-[#c9dfd0] px-3 text-left text-sm font-bold text-[#246b55] hover:bg-[#edf5f0]">
-            <Search size={17}/> Usar una de mis dietas guardadas
-          </button>
           <div className="mt-5 space-y-2">
             <button type="button" disabled={!objetivosReferencia} onClick={() => setModalidadSeleccionada('asistido')}
               aria-pressed={modalidadSeleccionada === 'asistido'}
@@ -3058,6 +3050,15 @@ function PlanesAlimenticiosPage() {
               className={`flex w-full items-center gap-3 rounded-2xl border-2 p-4 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#246b55] disabled:cursor-not-allowed disabled:opacity-50 ${modalidadSeleccionada === 'libre' ? 'border-[#246b55] bg-[#e1f1e7] shadow-[0_0_0_2px_rgba(36,107,85,0.12)]' : 'border-[#d2e3d8] bg-white hover:border-[#9bc8ab] hover:bg-[#f4faf6]'}`}>
               <Apple size={20} className="shrink-0 self-center text-[#246b55]"/><span className="min-w-0 flex-1"><strong className="block text-sm text-[#173f34]">Desde cero</strong><span className="mt-1 block text-xs text-[#52716a]">Editor libre, sin modificar tu información clínica.</span></span>
               {modalidadSeleccionada === 'libre' ? <CheckCircle2 size={21} className="shrink-0 self-center text-[#246b55]"/> : <Circle size={21} className="shrink-0 self-center text-[#b7cfc0]"/>}
+            </button>
+            <button type="button" onClick={() => { setMostrarEleccion(false); setBibliotecaPaciente(pacienteId) }}
+              className="flex w-full items-center gap-3 rounded-2xl border-2 border-[#d2e3d8] bg-white p-4 text-left transition hover:border-[#9bc8ab] hover:bg-[#f4faf6] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#246b55]">
+              <Search size={20} className="shrink-0 text-[#246b55]"/>
+              <span className="min-w-0 flex-1">
+                <strong className="block text-sm text-[#173f34]">Usar una de mis dietas guardadas</strong>
+                <span className="mt-1 block text-xs text-[#52716a]">Busca y revisa una dieta privada para copiarla a este plan.</span>
+              </span>
+              <ChevronRight size={18} className="shrink-0 text-[#246b55]" aria-hidden="true"/>
             </button>
           </div>
           {modalidadSeleccionada && <div className="mt-4 rounded-xl border border-[#c8ddd2] bg-[#f1f7f3] p-3">
