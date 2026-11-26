@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Activity, Calculator, ChevronRight, ClipboardList, Save, UserRound, AlertCircle } from 'lucide-react'
+import { Activity, Calculator, Check, ChevronRight, ClipboardList, Save, UserRound, AlertCircle } from 'lucide-react'
 import client from '../api/client'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
 import ReferenciaCalculo, { fechaDeCalculo, fechaDeMedicion } from '../components/calculo/ReferenciaCalculo'
@@ -15,7 +15,12 @@ const factores = [
   { value: '1.9', label: '1.90 · Actividad muy alta' },
 ]
 const factorPorNivel = { 1: '1.2', 2: '1.375', 3: '1.55', 4: '1.725', 5: '1.9' }
-const actividadesPediatricas = [['inactiva', 'Inactiva'], ['ligera', 'Ligeramente activa'], ['activa', 'Activa'], ['muy-activa', 'Muy activa']]
+const actividadesPediatricas = {
+  inactiva: ['Inactiva', 'Principalmente actividades cotidianas.'],
+  ligera: ['Poco activa', 'Rutina con algo de movimiento adicional.'],
+  activa: ['Activa', 'Rutina con actividad física regular.'],
+  'muy-activa': ['Muy activa', 'Rutina con un volumen alto de actividad física.'],
+}
 const formato = valor => Number.isFinite(valor) ? Math.round(valor * 10) / 10 : '—'
 const campo = 'w-full rounded-xl border border-[#c8ddd2] bg-white px-3 py-2.5 text-sm text-[#173f34] outline-none focus:border-[#4d816f] focus:ring-2 focus:ring-[#d7e8dc]'
 const tarjeta = 'rounded-2xl border border-[#d2e3d8] bg-white/90 p-5 shadow-[0_8px_24px_rgba(31,72,57,.04)]'
@@ -222,12 +227,28 @@ export default function CalculoNutricionalPage() {
                   <option value="">Seleccionar</option><option value="female">Femenino</option><option value="male">Masculino</option>
                 </select>
               </label>
-              {pediatrico && medicion.edad >= 3 && <label className="text-xs font-bold text-[#52716a]">Categoría pediátrica de actividad
-                <select required className={campo + ' mt-2'} value={actividadPediatrica} onChange={e => setActividadPediatrica(e.target.value)}>
-                  <option value="">Seleccionar</option>
-                  {actividadesPediatricas.map(([valor, texto]) => <option key={valor} value={valor}>{texto}</option>)}
-                </select>
-              </label>}
+              {pediatrico && medicion.edad >= 3 && <fieldset className="min-w-0 sm:col-span-2" aria-describedby="actividad-ayuda" disabled={guardando}>
+                <legend className="text-sm font-bold text-[#173f34]">Nivel de actividad física</legend>
+                <p id="actividad-ayuda" className="mt-1 text-xs text-[#52716a]">Elige la categoría DRI 2023 que mejor describa la actividad habitual según tu valoración.</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {Object.entries(actividadesPediatricas).map(([valor, [nombre, descripcion]], nivel) => (
+                    <label key={valor} className="relative block cursor-pointer">
+                      <input type="radio" name="actividadPediatrica" value={valor} required checked={actividadPediatrica === valor}
+                        onChange={() => setActividadPediatrica(valor)} className="peer sr-only" />
+                      <span className="flex h-full min-h-20 items-start gap-3 rounded-xl border border-[#c8ddd2] bg-white p-3 hover:border-[#4d816f] peer-checked:border-[#216955] peer-checked:bg-[#e6f2eb] peer-focus-visible:ring-2 peer-focus-visible:ring-[#216955] peer-focus-visible:ring-offset-2 peer-disabled:opacity-60">
+                        <span className="shrink-0 rounded-lg bg-[#eff6f1] p-2 text-[#246b55]" aria-hidden="true">
+                          {actividadPediatrica === valor ? <Check size={18} /> : <Activity size={18} />}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-xs font-semibold text-[#52716a]">Nivel {nivel + 1}</span>
+                          <span className="block text-sm font-bold text-[#173f34]">{nombre}</span>
+                          <span className="block text-xs leading-relaxed text-[#52716a]">{descripcion}</span>
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>}
               {!pediatrico && <><label className="text-xs font-bold text-[#52716a]">Factor de actividad · sugerido según la medición
                 <select className={campo + ' mt-2'} value={factor} onChange={e => setFactor(e.target.value)}>
                   {factores.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
@@ -277,7 +298,7 @@ export default function CalculoNutricionalPage() {
             <div><p className="text-sm font-bold text-[#173f34]">{formato(c.resultado?.objetivoKcal)} kcal/día · Borrador</p><p className="text-xs text-[#648073]">Guardado: {fechaDeCalculo(c.createdAt)} · {c.formula === 'eer-dri-2023' ? 'EER pediátrica · DRI 2023' : 'Mifflin-St Jeor'}</p><p className="text-xs text-[#648073]">Medición: {fechaDeMedicion(c.fechaMedicion)} · {c.peso} kg</p>
               {c.detalleFormula?.ecuacion && <div className="mt-2 space-y-1 text-xs text-[#315d4b]">
                 <p className="font-semibold">{c.detalleFormula.ecuacion}</p>
-                <p>{c.detalleFormula.rangoEdad} · {c.sexoCalculo === 'female' ? 'Femenino' : 'Masculino'} · {({ inactiva: 'Inactiva', ligera: 'Poco activa', activa: 'Activa', 'muy-activa': 'Muy activa' })[c.actividadPediatrica] || 'Actividad según edad'}</p>
+                <p>{c.detalleFormula.rangoEdad} · {c.sexoCalculo === 'female' ? 'Femenino' : 'Masculino'} · {actividadesPediatricas[c.actividadPediatrica]?.[0] || 'Actividad según edad'}</p>
                 <p>Edad usada {Number(c.detalleFormula.edadAnios.toFixed(4))} años ({c.detalleFormula.fuenteEdad}) · Talla {formato(c.estaturaCm)} cm</p>
               </div>}
             </div>
