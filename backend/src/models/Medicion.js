@@ -22,7 +22,7 @@ const medicionSchema = new mongoose.Schema(
     edad: {
       type: Number,
       required: [true, 'La edad es obligatoria'],
-      min: [1, 'La edad no es válida'],
+      min: [0, 'La edad no es válida'],
       max: [120, 'La edad no es válida'],
     },
 
@@ -77,7 +77,7 @@ const medicionSchema = new mongoose.Schema(
     estatura: {
       type: Number,
       required: [true, 'La estatura es obligatoria'],
-      min: [0.5, 'La estatura no es válida'],
+      min: [0.3, 'La estatura no es válida'],
       max: [3, 'La estatura no es válida'],
     },
 

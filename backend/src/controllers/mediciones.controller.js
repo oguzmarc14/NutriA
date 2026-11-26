@@ -2,15 +2,21 @@ const { z } = require("zod");
 
 const Medicion = require("../models/Medicion");
 const Pacientes = require("../models/Pacientes");
+const { evaluarImcParaEdad } = require("../utils/imcEdadOms");
+
+function presentarMedicion(documento, paciente) {
+  const medicion = documento.toObject();
+  return { ...medicion, crecimiento: evaluarImcParaEdad(medicion, paciente) };
+}
 
 const medicionSchema = z.object({
-  edad: z.coerce.number().int().min(1).max(120),
+  edad: z.union([z.number(), z.string().trim().min(1)]).pipe(z.coerce.number().int().min(0).max(120)),
 
   nivelActividadFisica: z.coerce.number().int().min(1).max(5),
 
   peso: z.coerce.number().positive(),
 
-  estatura: z.coerce.number().min(0.5).max(3),
+  estatura: z.coerce.number().min(0.3).max(3),
 
   /*
    * MEDIDAS ANTROPOMÉTRICAS
@@ -156,7 +162,7 @@ async function registrarMedicion(req, res, next) {
         ? "Primera medición registrada correctamente"
         : "Medición registrada correctamente",
 
-      medicion,
+      medicion: presentarMedicion(medicion, paciente),
     });
   } catch (error) {
     return next(error);
@@ -218,7 +224,7 @@ async function actualizarMedicion(req, res, next) {
 
     return res.json({
       message: "Medición actualizada correctamente",
-      medicion,
+      medicion: presentarMedicion(medicion, paciente),
     });
   } catch (error) {
     return next(error);
@@ -253,7 +259,7 @@ async function obtenerHistorialMediciones(req, res, next) {
 
     return res.json({
       paciente,
-      mediciones,
+      mediciones: mediciones.map(medicion => presentarMedicion(medicion, paciente)),
 
       /*
        * Esto también nos servirá en frontend

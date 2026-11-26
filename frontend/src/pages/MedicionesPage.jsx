@@ -478,7 +478,7 @@ function MedicionesPage() {
     }))
   }
 
-  function calcularEdad(fechaNacimiento) {
+  function calcularEdad(fechaNacimiento, fecha = null) {
     if (!fechaNacimiento) {
       return null
     }
@@ -486,21 +486,22 @@ function MedicionesPage() {
     const nacimiento =
       new Date(fechaNacimiento)
 
-    const hoy = new Date()
+    const hoy = fecha ? new Date(fecha + 'T12:00:00Z') : new Date()
+    if (!Number.isFinite(+nacimiento) || !Number.isFinite(+hoy) || hoy < nacimiento) return null
 
     let edadCalculada =
-      hoy.getFullYear() -
-      nacimiento.getFullYear()
+      hoy.getUTCFullYear() -
+      nacimiento.getUTCFullYear()
 
     const diferenciaMes =
-      hoy.getMonth() -
-      nacimiento.getMonth()
+      hoy.getUTCMonth() -
+      nacimiento.getUTCMonth()
 
     if (
       diferenciaMes < 0 ||
       (diferenciaMes === 0 &&
-        hoy.getDate() <
-          nacimiento.getDate())
+        hoy.getUTCDate() <
+          nacimiento.getUTCDate())
     ) {
       edadCalculada -= 1
     }
@@ -837,7 +838,7 @@ function MedicionesPage() {
                         <div className="relative">
                           <input
                             type="number"
-                            min="1"
+                            min="0"
                             max="120"
                             value={edad}
                             onChange={(event) =>
@@ -1042,7 +1043,7 @@ function MedicionesPage() {
                           <input
                             type="number"
                             step="0.01"
-                            min="0.5"
+                            min="0.3"
                             max="3"
                             value={estatura}
                             onChange={(event) =>
@@ -1082,9 +1083,11 @@ function MedicionesPage() {
                               </p>
 
                               <p className="text-sm font-semibold text-[#9a7446]">
-                                {clasificarIMC(
-                                  imcPreview,
-                                )}
+                                {
+                                  (calcularEdad(pacienteSeleccionado?.birthDate, fechaRegistro) ?? -1) >= 18
+                                    ? clasificarIMC(imcPreview)
+                                    : 'Guarda la medición para consultar la referencia por edad en el historial.'
+                                }
                               </p>
                             </>
                           ) : (

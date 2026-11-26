@@ -2,6 +2,15 @@ import { X } from 'lucide-react'
 import { fechaMedicion, formatearNumero } from '../../utils/mediciones'
 import useModalAccesible from '../../hooks/useModalAccesible'
 
+const avisosCrecimiento = {
+  'faltan-fechas': 'Registra la fecha de nacimiento y la fecha de la medición.',
+  'fechas-invalidas': 'La medición es anterior a la fecha de nacimiento.',
+  'falta-sexo': 'Completa el sexo de referencia en el perfil del paciente.',
+  'requiere-peso-longitud': 'Antes de los 2 años se evalúa peso para la longitud medida acostado.',
+  'medicion-invalida': 'Revisa el peso, la estatura y la fecha.',
+  'revisar-medicion': 'Verifica el peso y la estatura. El resultado excede el rango de plausibilidad.',
+}
+
 const campos = [
   ['Edad', 'edad', ' años'], ['Nivel de actividad', 'nivelActividadFisica', ''], ['Peso', 'peso', ' kg'],
   ['Estatura', 'estatura', ' m'], ['IMC', 'imc', ''], ['Grasa corporal', 'grasaCorporal', '%'],
@@ -16,6 +25,7 @@ function ModalDetalleMedicion({ medicion, onCerrar }) {
   })
   if (!medicion) return null
   const fecha = fechaMedicion(medicion)
+  const crecimiento = medicion.crecimiento
 
   return (
     <div ref={modalRef} className="fixed inset-0 z-50 grid place-items-center bg-[#102d25]/45 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Detalle de medicion">
@@ -25,6 +35,12 @@ function ModalDetalleMedicion({ medicion, onCerrar }) {
           <button ref={volverRef} type="button" onClick={onCerrar} className="rounded-xl bg-white p-2 text-slate-500" aria-label="Volver a mediciones"><X size={20} /></button>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
+          {crecimiento && <section className="rounded-2xl border border-[#c8ddd2] bg-white p-4 sm:col-span-2">
+            <h3 className="font-bold text-[#173f34]">IMC para la edad</h3>
+            <p className="mt-1 text-sm text-[#52716a]">{crecimiento.estado === 'disponible'
+              ? `Percentil ${crecimiento.percentil} · Z ${crecimiento.z} · ${crecimiento.referencia}`
+              : avisosCrecimiento[crecimiento.estado]}</p>
+          </section>}
           {campos.map(([label, campo, unidad]) => (
             <div key={campo} className="min-w-0 rounded-2xl border border-[#dce8e2] bg-white p-4"><p className="break-words text-xs font-semibold text-slate-400">{label}</p><p className="mt-1 break-words text-lg font-extrabold text-[#173f34]">{campo === 'nivelActividadFisica' && medicion[campo] != null ? `Nivel ${medicion[campo]}` : `${formatearNumero(medicion[campo])}${medicion[campo] == null ? '' : unidad}`}</p></div>
           ))}

@@ -6,6 +6,7 @@ const Medicion = require('../models/Medicion')
 const ExpedienteClinico = require('../models/ExpedienteClinico')
 const Calculo = require('../models/CalculoNutricional')
 const { requireAuth, allowRoles } = require('../middleware/auth.middleware')
+const { calcularEnergiaPediatrica, edadEnMedicion } = require('../utils/energiaPediatrica')
 const router = express.Router()
 router.use(requireAuth, allowRoles('nutritionist'))
 
@@ -13,6 +14,7 @@ const schema = z.object({
   medicionId: z.string(),
   sexoCalculo: z.enum(['male', 'female']),
   factorActividad: z.number().min(1.0).max(2.5),
+  actividadPediatrica: z.enum(['inactiva', 'ligera', 'activa', 'muy-activa']).optional(),
   ajusteKcal: z.number().min(-1000).max(1000),
   porcentajes: z.object({
     carbohidratos: z.number().min(0).max(100),
@@ -57,7 +59,12 @@ router.get('/:pacienteId', async (req, res, next) => {
         ...calculo, fechaMedicion: medicion.fecha, fechaRegistroMedicion: medicion.createdAt,
       }
     })
-    return res.json({ paciente, mediciones, calculos: historial, expediente })
+    const medidasParaCalculo = mediciones.map(medicion => {
+      const edadReal = edadEnMedicion(medicion.edad, paciente.birthDate, medicion.fecha)
+      return { ...medicion, edad: edadReal ? Math.floor(edadReal.meses / 12) : medicion.edad,
+        edadCalculoValida: Boolean(edadReal), fuenteEdadCalculo: edadReal?.fuente }
+    })
+    return res.json({ paciente, mediciones: medidasParaCalculo, calculos: historial, expediente })
   } catch (error) { next(error) }
 })
 
@@ -73,21 +80,34 @@ router.post('/:pacienteId', async (req, res, next) => {
     if (Math.abs(suma - 100) > 0.001) return res.status(400).json({ message: 'Los macronutrientes deben sumar 100%' })
     const medicion = await Medicion.findOne({ _id: d.medicionId, paciente: paciente._id, nutritionist: req.user.id })
     if (!medicion) return res.status(404).json({ message: 'Medición no encontrada' })
-    if (medicion.edad < 18) return res.status(400).json({ message: 'Esta primera versión solo admite cálculos para adultos (18+)' })
     const estaturaCm = medicion.estatura * 100
-    const basal = 10 * medicion.peso + 6.25 * estaturaCm - 5 * medicion.edad + (d.sexoCalculo === 'male' ? 5 : -161)
-    const gastoTotal = basal * d.factorActividad
-    const objetivo = gastoTotal + d.ajusteKcal
+    const edadReal = edadEnMedicion(medicion.edad, paciente.birthDate, medicion.fecha)
+    if (!edadReal) return res.status(400).json({ message: 'Revisa la fecha de nacimiento y la fecha de medición para calcular la edad.' })
+    const edad = Math.floor(edadReal.meses / 12)
+    const pediatrico = edad < 19
+    const basal = pediatrico ? null : 10 * medicion.peso + 6.25 * estaturaCm - 5 * edad + (d.sexoCalculo === 'male' ? 5 : -161)
+    const estimacion = pediatrico ? calcularEnergiaPediatrica({
+      edad, peso: medicion.peso, estaturaCm, sexo: d.sexoCalculo,
+      actividad: d.actividadPediatrica, nacimiento: paciente.birthDate, fechaMedicion: medicion.fecha,
+    }) : null
+    const gastoTotal = pediatrico ? (estimacion?.kcal ?? null) : basal * d.factorActividad
+    if (pediatrico && gastoTotal === null) return res.status(400).json({
+      message: 'Revisa la edad, la fecha de nacimiento y la fecha de medición. Desde los 3 años debes seleccionar una categoría pediátrica de actividad.',
+    })
+    const objetivo = gastoTotal + (pediatrico ? 0 : d.ajusteKcal)
     if (objetivo <= 0 || !Number.isFinite(objetivo)) return res.status(400).json({ message: 'Objetivo energético inválido' })
     const redondear = n => Math.round(n * 10) / 10
     const calculo = await Calculo.create({
       paciente: paciente._id, nutritionist: req.user.id, medicion: medicion._id,
       fechaMedicion: medicion.fecha, fechaRegistroMedicion: medicion.createdAt,
-      formula: 'mifflin', sexoCalculo: d.sexoCalculo, edad: medicion.edad,
-      peso: medicion.peso, estaturaCm, factorActividad: d.factorActividad,
-      ajusteKcal: d.ajusteKcal, porcentajes: d.porcentajes, observaciones: d.observaciones,
+      formula: pediatrico ? 'eer-dri-2023' : 'mifflin',
+      ...(pediatrico && { versionMotor: '2.1.0', detalleFormula: estimacion.detalle }),
+      ...(pediatrico && edad >= 3 && { actividadPediatrica: d.actividadPediatrica }),
+      sexoCalculo: d.sexoCalculo, edad,
+      peso: medicion.peso, estaturaCm, factorActividad: pediatrico ? 1 : d.factorActividad,
+      ajusteKcal: pediatrico ? 0 : d.ajusteKcal, porcentajes: d.porcentajes, observaciones: d.observaciones,
       resultado: {
-        metabolismoBasal: redondear(basal), gastoTotal: redondear(gastoTotal),
+        ...(!pediatrico && { metabolismoBasal: redondear(basal) }), gastoTotal: redondear(gastoTotal),
         objetivoKcal: redondear(objetivo),
         carbohidratosGramos: redondear(objetivo * d.porcentajes.carbohidratos / 100 / 4),
         proteinasGramos: redondear(objetivo * d.porcentajes.proteinas / 100 / 4),

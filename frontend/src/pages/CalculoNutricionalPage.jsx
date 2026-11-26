@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Activity, Calculator, ChevronRight, ClipboardList, Save, UserRound, AlertCircle } from 'lucide-react'
 import client from '../api/client'
 import { usePacienteTrabajo } from '../context/pacienteTrabajo'
@@ -15,6 +15,7 @@ const factores = [
   { value: '1.9', label: '1.90 · Actividad muy alta' },
 ]
 const factorPorNivel = { 1: '1.2', 2: '1.375', 3: '1.55', 4: '1.725', 5: '1.9' }
+const actividadesPediatricas = [['inactiva', 'Inactiva'], ['ligera', 'Ligeramente activa'], ['activa', 'Activa'], ['muy-activa', 'Muy activa']]
 const formato = valor => Number.isFinite(valor) ? Math.round(valor * 10) / 10 : '—'
 const campo = 'w-full rounded-xl border border-[#c8ddd2] bg-white px-3 py-2.5 text-sm text-[#173f34] outline-none focus:border-[#4d816f] focus:ring-2 focus:ring-[#d7e8dc]'
 const tarjeta = 'rounded-2xl border border-[#d2e3d8] bg-white/90 p-5 shadow-[0_8px_24px_rgba(31,72,57,.04)]'
@@ -22,6 +23,8 @@ const tarjeta = 'rounded-2xl border border-[#d2e3d8] bg-white/90 p-5 shadow-[0_8
 export default function CalculoNutricionalPage() {
   const { pacienteTrabajo } = usePacienteTrabajo()
   const navigate = useNavigate()
+  const location = useLocation()
+  const volverAlPlan = Boolean(pacienteTrabajo?.id && location.state?.volverAlPlanPaciente === pacienteTrabajo.id)
   const [datos, setDatos] = useState(null)
   const [cargando, setCargando] = useState(false)
   const [guardando, setGuardando] = useState(false)
@@ -31,6 +34,7 @@ export default function CalculoNutricionalPage() {
   const [medicionId, setMedicionId] = useState('')
   const [sexo, setSexo] = useState('')
   const [factor, setFactor] = useState('1.2')
+  const [actividadPediatrica, setActividadPediatrica] = useState('')
   const [ajuste, setAjuste] = useState('0')
   const [carbohidratos, setCarbohidratos] = useState('50')
   const [proteinas, setProteinas] = useState('20')
@@ -77,8 +81,15 @@ export default function CalculoNutricionalPage() {
   }
 
   const medicion = datos?.mediciones?.find(item => item._id === medicionId)
+  const pediatrico = Boolean(medicion && medicion.edad < 19)
+  useEffect(() => {
+    setActividadPediatrica('')
+    setCarbohidratos(pediatrico ? '' : '50')
+    setProteinas(pediatrico ? '' : '20')
+    setGrasas(pediatrico ? '' : '30')
+  }, [pediatrico, pacienteTrabajo?.id])
   const resultado = useMemo(() => {
-    if (!medicion || !sexo || medicion.edad < 18) return null
+    if (!medicion || !sexo || medicion.edad < 19) return null
     const basal = 10 * medicion.peso + 6.25 * medicion.estatura * 100 - 5 * medicion.edad + (sexo === 'male' ? 5 : -161)
     const gasto = basal * Number(factor)
     const objetivo = gasto + Number(ajuste)
@@ -92,7 +103,9 @@ export default function CalculoNutricionalPage() {
   }, [medicion, sexo, factor, ajuste, carbohidratos, proteinas, grasas])
 
   const porcentajesValidos = [carbohidratos, proteinas, grasas].every(v => v !== '' && Number.isFinite(Number(v)) && Number(v) >= 0 && Number(v) <= 100) && Math.abs(Number(carbohidratos) + Number(proteinas) + Number(grasas) - 100) < 0.001
-  const valido = resultado && porcentajesValidos && Number(ajuste) >= -1000 && Number(ajuste) <= 1000
+  const valido = medicion?.edadCalculoValida !== false && porcentajesValidos && (pediatrico
+    ? sexo && (medicion.edad < 3 || actividadPediatrica) && (medicion.edad > 0 || datos?.paciente?.birthDate)
+    : resultado && Number(ajuste) >= -1000 && Number(ajuste) <= 1000)
 
   async function guardar(e) {
     e.preventDefault()
@@ -100,11 +113,13 @@ export default function CalculoNutricionalPage() {
     setGuardando(true); setError(''); setExito('')
     try {
       const { data } = await client.post('/calculo-nutricional/' + pacienteTrabajo.id, {
-        medicionId, sexoCalculo: sexo, factorActividad: Number(factor), ajusteKcal: Number(ajuste),
+        medicionId, sexoCalculo: sexo, factorActividad: pediatrico ? 1 : Number(factor), ajusteKcal: pediatrico ? 0 : Number(ajuste),
+        ...(pediatrico && medicion.edad >= 3 && { actividadPediatrica }),
         porcentajes: { carbohidratos: Number(carbohidratos), proteinas: Number(proteinas), grasas: Number(grasas) },
         observaciones,
       })
       setDatos(actual => ({ ...actual, calculos: [data.calculo, ...(actual?.calculos || [])] }))
+      if (volverAlPlan) { navigate('/planes', { replace: true }); return }
       setExito('Cálculo guardado como borrador. Aún no es una prescripción ni se ha asignado un plan.')
     } catch (err) { setError(err.response?.data?.message || 'No fue posible guardar el cálculo') }
     finally { setGuardando(false) }
@@ -134,7 +149,7 @@ export default function CalculoNutricionalPage() {
       <div className={tarjeta + ' flex flex-wrap items-center justify-between gap-3'}>
         <div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-xl bg-[#e1f0e7] text-[#246b55]"><UserRound/></div>
           <div><p className="text-xs text-[#648073]">Paciente activo</p><h2 className="font-bold text-[#173f34]">{pacienteTrabajo.name}</h2></div></div>
-        <span className="rounded-full bg-[#f0f5ef] px-3 py-1 text-xs font-semibold text-[#4d816f]">Fórmula Mifflin-St Jeor · Adultos</span>
+        <span className="rounded-full bg-[#f0f5ef] px-3 py-1 text-xs font-semibold text-[#4d816f]">{pediatrico ? 'EER pediátrica · DRI 2023' : 'Mifflin-St Jeor · Adultos'}</span>
       </div>
       <ReferenciaCalculo calculo={calculoReciente} medicionReciente={medicionReciente}
         onRecalcular={recalcularConMedicionReciente}/>
@@ -194,18 +209,26 @@ export default function CalculoNutricionalPage() {
               {[['Peso', medicion.peso + ' kg'], ['Estatura', formato(medicion.estatura * 100) + ' cm'], ['Edad', medicion.edad + ' años'], ['Actividad registrada', 'Nivel ' + medicion.nivelActividadFisica]].map(([label, value]) =>
                 <div key={label} className="rounded-xl bg-[#f1f6f2] p-3"><p className="text-xs text-[#648073]">{label}</p><p className="mt-1 font-bold text-[#173f34]">{value}</p></div>)}
             </div>}
-            {medicion?.edad < 18 && <p className="flex gap-2 text-sm text-amber-800"><AlertCircle size={18}/>Esta versión no calcula requerimientos para menores de edad.</p>}
+            {medicion?.edadCalculoValida === false && <p role="alert" className="text-sm text-red-700">Revisa las fechas de nacimiento y medición para calcular la edad.</p>}
+            {medicion?.fuenteEdadCalculo === 'edad registrada' && <p className="text-sm text-amber-800">Se usará la edad registrada porque faltan fechas para calcularla.</p>}
+            {medicion?.edad < 19 && <p className="flex gap-2 text-sm text-amber-800"><AlertCircle size={18}/>Se usará EER · DRI 2023 según la edad al tomar la medición.</p>}
           </div>
           <div className={tarjeta + ' space-y-4'}>
             <div className="flex items-center gap-2"><Calculator size={19} className="text-[#246b55]"/><h2 className="font-extrabold text-[#173f34]">Parámetros del cálculo</h2></div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="text-xs font-bold text-[#52716a]">Ecuación <input className={campo + ' mt-2 bg-[#f1f6f2]'} value="Mifflin-St Jeor" disabled readOnly /></label>
+              <label className="text-xs font-bold text-[#52716a]">Ecuación <input className={campo + ' mt-2 bg-[#f1f6f2]'} value={pediatrico ? 'EER pediátrica · DRI 2023' : 'Mifflin-St Jeor'} disabled readOnly /></label>
               <label className="text-xs font-bold text-[#52716a]">Sexo utilizado en la ecuación
                 <select required className={campo + ' mt-2'} value={sexo} onChange={e => setSexo(e.target.value)}>
                   <option value="">Seleccionar</option><option value="female">Femenino</option><option value="male">Masculino</option>
                 </select>
               </label>
-              <label className="text-xs font-bold text-[#52716a]">Factor de actividad · sugerido según la medición
+              {pediatrico && medicion.edad >= 3 && <label className="text-xs font-bold text-[#52716a]">Categoría pediátrica de actividad
+                <select required className={campo + ' mt-2'} value={actividadPediatrica} onChange={e => setActividadPediatrica(e.target.value)}>
+                  <option value="">Seleccionar</option>
+                  {actividadesPediatricas.map(([valor, texto]) => <option key={valor} value={valor}>{texto}</option>)}
+                </select>
+              </label>}
+              {!pediatrico && <><label className="text-xs font-bold text-[#52716a]">Factor de actividad · sugerido según la medición
                 <select className={campo + ' mt-2'} value={factor} onChange={e => setFactor(e.target.value)}>
                   {factores.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
                 </select>
@@ -213,8 +236,11 @@ export default function CalculoNutricionalPage() {
               <label className="text-xs font-bold text-[#52716a]">Ajuste energético (kcal/día)
                 <input type="number" required min="-1000" max="1000" step="25" className={campo + ' mt-2'} value={ajuste} onChange={e => setAjuste(e.target.value)}/>
               </label>
+              </>}
             </div>
-            <p className="text-xs leading-relaxed text-[#648073]">Confirma el factor de actividad y el sexo de la ecuación. El ajuste es manual y requiere criterio clínico. Este módulo no sustituye una evaluación profesional.</p>
+            <p className="text-xs leading-relaxed text-[#648073]">{pediatrico
+              ? 'Selecciona la distribución de macronutrientes según la edad y la valoración clínica. Para menores de un año, registra la fecha de nacimiento para usar la edad en meses.'
+              : 'Confirma el factor de actividad y el sexo de la ecuación. El ajuste es manual y requiere criterio clínico.'}</p>
             <h3 className="font-bold text-[#173f34]">Distribución de macronutrientes</h3>
             <div className="grid gap-3 sm:grid-cols-3">
               {[[ 'Carbohidratos', carbohidratos, setCarbohidratos ],[ 'Proteínas', proteinas, setProteinas ],[ 'Grasas', grasas, setGrasas ]].map(([label, value, set]) =>
@@ -231,7 +257,7 @@ export default function CalculoNutricionalPage() {
         <div className="space-y-5">
           <div className={tarjeta + ' space-y-4 xl:sticky xl:top-20'}>
             <div className="flex items-center gap-2"><Activity size={19} className="text-[#246b55]"/><h2 className="font-extrabold text-[#173f34]">Resultados estimados</h2></div>
-            {resultado ? <>
+            {pediatrico ? <p className="text-sm text-[#648073]">Al guardar el borrador, NutriA calculará la estimación pediátrica. Puedes revisar el resultado en el historial.</p> : resultado ? <>
               <div className="grid grid-cols-2 gap-3">
                 {[[ 'Metabolismo basal', resultado.basal ],[ 'Gasto total', resultado.gasto ],[ 'Objetivo energético', resultado.objetivo ]].map(([label, valor]) =>
                   <div key={label} className="rounded-xl bg-[#f1f6f2] p-3"><p className="text-xs text-[#648073]">{label}</p><p className="mt-1 text-xl font-extrabold text-[#173f34]">{formato(valor)} <span className="text-xs font-medium">kcal</span></p></div>)}
@@ -248,7 +274,13 @@ export default function CalculoNutricionalPage() {
         <h2 className="mb-3 font-extrabold text-[#173f34]">Historial de cálculos</h2>
         {!datos.calculos?.length ? <p className="text-sm text-[#648073]">Aún no hay cálculos guardados.</p> :
           <div className="space-y-2">{datos.calculos.map(c => <div key={c._id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e0eae3] bg-[#f7faf7] px-4 py-3">
-            <div><p className="text-sm font-bold text-[#173f34]">{formato(c.resultado?.objetivoKcal)} kcal/día · Borrador</p><p className="text-xs text-[#648073]">Guardado: {fechaDeCalculo(c.createdAt)} · Mifflin-St Jeor</p><p className="text-xs text-[#648073]">Medición: {fechaDeMedicion(c.fechaMedicion)} · {c.peso} kg</p></div>
+            <div><p className="text-sm font-bold text-[#173f34]">{formato(c.resultado?.objetivoKcal)} kcal/día · Borrador</p><p className="text-xs text-[#648073]">Guardado: {fechaDeCalculo(c.createdAt)} · {c.formula === 'eer-dri-2023' ? 'EER pediátrica · DRI 2023' : 'Mifflin-St Jeor'}</p><p className="text-xs text-[#648073]">Medición: {fechaDeMedicion(c.fechaMedicion)} · {c.peso} kg</p>
+              {c.detalleFormula?.ecuacion && <div className="mt-2 space-y-1 text-xs text-[#315d4b]">
+                <p className="font-semibold">{c.detalleFormula.ecuacion}</p>
+                <p>{c.detalleFormula.rangoEdad} · {c.sexoCalculo === 'female' ? 'Femenino' : 'Masculino'} · {({ inactiva: 'Inactiva', ligera: 'Poco activa', activa: 'Activa', 'muy-activa': 'Muy activa' })[c.actividadPediatrica] || 'Actividad según edad'}</p>
+                <p>Edad usada {Number(c.detalleFormula.edadAnios.toFixed(4))} años ({c.detalleFormula.fuenteEdad}) · Talla {formato(c.estaturaCm)} cm</p>
+              </div>}
+            </div>
             <span className="text-xs text-[#648073]">C {c.porcentajes?.carbohidratos}% · P {c.porcentajes?.proteinas}% · G {c.porcentajes?.grasas}%</span>
           </div>)}</div>}
         <button type="button" onClick={() => navigate('/planes')} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#246b55] hover:underline">Ir a planes alimenticios <ChevronRight size={16}/></button>
