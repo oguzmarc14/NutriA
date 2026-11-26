@@ -1,3 +1,4 @@
+import { buscarAvisosAlimento, criteriosAlimentarios } from '../utils/avisosAlimentos'
 import { repartirDistribucion } from '../utils/repartirDistribucion'
 import {
   useEffect,
@@ -1386,6 +1387,12 @@ function PlanesAlimenticiosPage() {
       )
     }, [comidas])
 
+  const expedientePlan = referenciaNutricional?.expediente
+  const comidasEnExpediente = Number(expedientePlan?.nutricion?.numeroComidasDia)
+  const criterios = criteriosAlimentarios(expedientePlan)
+  const avisosActivos = comidaActiva?.alimentos.flatMap(alimento =>
+    buscarAvisosAlimento(alimento.nombre, criterios).map(aviso => ({ ...aviso, nombre: alimento.nombre, id: alimento.id })),
+  ) || []
   const calculoReferencia = referenciaNutricional?.calculo
   const objetivosReferencia = calculoReferencia?.resultado
   const metaEnergiaPersonalizada = metaEnergiaIngresada.trim()
@@ -1580,7 +1587,14 @@ function PlanesAlimenticiosPage() {
     const avisoOmitidas = omitidas
       ? ' Las comidas incompletas se omitirán.' + (mostrarDistribucion ? ' Sus porcentajes se repartirán entre las comidas guardadas.' : '')
       : ''
-    if (!(await pedirConfirmacion(confirmacion + avisoOmitidas, planEditandoId ? 'Guardar cambios' : 'Guardar plan'))) return
+    const avisoCantidad = comidasEnExpediente > 0 && comidasValidas.length !== comidasEnExpediente
+      ? ` El expediente indica ${comidasEnExpediente} comidas al día y se guardarán ${comidasValidas.length}.` : ''
+    const contieneCoincidencias = comidasValidas.some(comida =>
+      comida.alimentos.some(alimento => buscarAvisosAlimento(alimento.nombre, criterios).length),
+    )
+    const avisoIngredientes = contieneCoincidencias
+      ? ' Revisa los ingredientes que coinciden con alergias o disgustos del expediente.' : ''
+    if (!(await pedirConfirmacion(confirmacion + avisoOmitidas + avisoCantidad + avisoIngredientes, planEditandoId ? 'Guardar cambios' : 'Guardar plan'))) return
 
     try {
       const tipoGuardado = planEditandoId ? 'editado' : 'creado'
@@ -2202,6 +2216,13 @@ function PlanesAlimenticiosPage() {
 
                 </div>
 
+                {comidasEnExpediente > 0 && comidas.length !== comidasEnExpediente && (
+                  <div role="status" className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e8d8b4] bg-[#fff8e9] p-3 text-sm text-[#684a19]">
+                    <p>El expediente indica <strong>{comidasEnExpediente} comidas al día</strong>. Este plan tiene <strong>{comidas.length}</strong>.</p>
+                    {comidas.length < comidasEnExpediente && <button type="button" onClick={() => agregarComida()}
+                      className="min-h-11 rounded-lg border border-[#decba4] bg-white px-3 font-bold">Agregar una comida</button>}
+                  </div>
+                )}
                 <div className="relative mb-4">
                   <div className="flex snap-x gap-2 overflow-x-auto pb-2 [scrollbar-width:thin]">
                     {comidas.map((comida, indiceComida) => {
@@ -2687,6 +2708,7 @@ function PlanesAlimenticiosPage() {
                                     </div>
                                     {alimentosPreparacion.length ? <div className="space-y-3">{alimentosPreparacion.map(alimento => (
                                       <AlimentoAgregado
+                                        avisos={avisosActivos.filter(aviso => aviso.id === alimento.id)}
                                         key={
                                           alimento.id
                                         }
@@ -3086,6 +3108,7 @@ function ResultadoAlimento({
 
 function AlimentoAgregado({
   alimento,
+  avisos,
   numero,
   onCantidad,
   onNotas,
@@ -3236,6 +3259,13 @@ function AlimentoAgregado({
         onPointerUp={terminarArrastre}
         onPointerCancel={terminarArrastre}
       >
+      {avisos.length > 0 && <div role="alert" className="mb-3 space-y-2">
+        {avisos.map(({ tipo, coincidencia }) => <p key={tipo}
+          className={`rounded-lg border px-3 py-2 text-xs ${tipo === 'Posible alergia' ? 'border-[#efc4be] bg-[#fff0ed] text-[#8a3226]' : 'border-[#e8d8b4] bg-[#fff8e9] text-[#684a19]'}`}>
+          <strong>{tipo}</strong> · {alimento.nombre} coincide con «{coincidencia}» del expediente.
+          {tipo === 'Posible alergia' && ' Verifica el ingrediente antes de guardar.'}
+        </p>)}
+      </div>}
       <div className="mb-2 flex justify-end gap-1.5">
         <button type="button" aria-label={`Mantener y arrastrar ${alimento.nombre} para reordenar`} title="Arrastrar para ordenar" onPointerDown={iniciarOrden} onPointerMove={moverOrden} onPointerUp={terminarOrden} onPointerCancel={terminarOrden} onContextMenu={e => e.preventDefault()} style={{touchAction:"none"}} className={`mr-auto flex cursor-grab items-center gap-1 rounded-lg border border-[#d6e5da] px-2 py-1.5 text-xs text-[#246b55] ${arrastrandoOrden ? "bg-[#d8eddf] cursor-grabbing" : "bg-white"}`}><GripVertical size={16}/><span>Arrastrar</span></button>
         <button type="button" onClick={onSubir} disabled={!puedeSubir} aria-label={`Subir ${alimento.nombre}`} title="Mover arriba" className="rounded-lg border border-[#d6e5da] bg-white p-1.5 text-[#246b55] disabled:cursor-not-allowed disabled:opacity-30"><ArrowUp size={16}/></button>
