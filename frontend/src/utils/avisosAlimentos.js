@@ -8,8 +8,12 @@ function tokens(texto) {
 
 function terminos(texto) {
   if (typeof texto !== 'string') return []
-  return texto.split(/[,;\/\n]+|\s+(?:y|e)\s+/iu).map(valor =>
-    valor.trim().replace(/^(?:posible\s+)?(?:al[eé]rgi[ac][oa]?\s+(?:a la|a las|a los|al|a)|no le gusta[n]?)\s+/iu, '').replace(/^(?:el|la|los|las)\s+/iu, '').trim(),
+  return texto.split(/[,;\/\n•]+|\s+(?:y|e)\s+/iu).map(valor =>
+    valor.trim()
+      .replace(/^(?:posible\s+)?(?:al[eé]rgi(?:as?|c[oa]s?)(?:\s+alimentarias?)?|intolerancias?|disgustos?|alimentos que no le gustan|no le gusta[n]?)(?:\s+(?:a las?|a los|al|a))?\s*[:=\-]?\s*/iu, '')
+      .replace(/\s+como al[eé]rgi(?:a|c[oa])\.?$/iu, '')
+      .replace(/\s*\(al[eé]rgi(?:a|c[oa])\)\s*$/iu, '')
+      .replace(/^(?:el|la|los|las)\s+/iu, '').trim(),
   ).filter(valor => {
     const clave = normalizar(valor)
     return clave && !/^(?:no|ningun[oa]s?|no aplica|sin alergias|sin alergias conocidas|no refiere|sin registrar)$/.test(clave)
@@ -27,6 +31,7 @@ export function buscarAvisosAlimento(nombre, criterios) {
 export function criteriosAlimentarios(expediente) {
   return [
     { tipo: 'Posible alergia', terminos: terminos(expediente?.alergias) },
+    { tipo: 'Posible intolerancia', terminos: terminos(expediente?.nutricion?.intoleranciasAlimentarias) },
     { tipo: 'Disgusto registrado', terminos: terminos(expediente?.nutricion?.comidaDisgusta) },
   ]
 }

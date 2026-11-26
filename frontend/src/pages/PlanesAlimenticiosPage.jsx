@@ -356,6 +356,7 @@ function PlanesAlimenticiosPage() {
   const [mensaje, setMensaje] =
     useState('')
 
+  const [avisoIngrediente, setAvisoIngrediente] = useState(null)
   const [avisoPlanGuardado, setAvisoPlanGuardado] =
     useState(null)
 
@@ -836,10 +837,16 @@ function PlanesAlimenticiosPage() {
    * ----------------------------------------------------
    */
 
+  function avisarAlAgregar(nombre) {
+    const avisos = buscarAvisosAlimento(nombre, criterios)
+    setAvisoIngrediente(avisos.length ? { pacienteId, nombre, avisos } : null)
+  }
+
   function agregarAlimentoCatalogo(
     comidaId,
     alimento,
   ) {
+    avisarAlAgregar(alimento.nombre)
     setComidas(
       (actuales) =>
         actuales.map(
@@ -1236,6 +1243,7 @@ function PlanesAlimenticiosPage() {
       notas: '',
     }
 
+    avisarAlAgregar(nuevo.nombre)
     setComidas(
       (actuales) =>
         actuales.map(
@@ -1390,9 +1398,6 @@ function PlanesAlimenticiosPage() {
   const expedientePlan = referenciaNutricional?.expediente
   const comidasEnExpediente = Number(expedientePlan?.nutricion?.numeroComidasDia)
   const criterios = criteriosAlimentarios(expedientePlan)
-  const avisosActivos = comidaActiva?.alimentos.flatMap(alimento =>
-    buscarAvisosAlimento(alimento.nombre, criterios).map(aviso => ({ ...aviso, nombre: alimento.nombre, id: alimento.id })),
-  ) || []
   const calculoReferencia = referenciaNutricional?.calculo
   const objetivosReferencia = calculoReferencia?.resultado
   const metaEnergiaPersonalizada = metaEnergiaIngresada.trim()
@@ -1593,7 +1598,7 @@ function PlanesAlimenticiosPage() {
       comida.alimentos.some(alimento => buscarAvisosAlimento(alimento.nombre, criterios).length),
     )
     const avisoIngredientes = contieneCoincidencias
-      ? ' Revisa los ingredientes que coinciden con alergias o disgustos del expediente.' : ''
+      ? ' Revisa los ingredientes que coinciden con alergias, intolerancias o disgustos del expediente.' : ''
     if (!(await pedirConfirmacion(confirmacion + avisoOmitidas + avisoCantidad + avisoIngredientes, planEditandoId ? 'Guardar cambios' : 'Guardar plan'))) return
 
     try {
@@ -1737,6 +1742,7 @@ function PlanesAlimenticiosPage() {
         {},
       )
 
+      setAvisoIngrediente(null)
       setAvisoPlanGuardado({
         plan: data.plan,
         paciente: pacientes.find((item) => item._id === pacienteId),
@@ -1921,6 +1927,21 @@ function PlanesAlimenticiosPage() {
         onReintentar={() => {setAlertaRequisitos(null);setRevisionRequisitos(valor => valor + 1)}}
         onCancelar={pacienteId ? regresarPacientes : () => navigate('/')}
       />
+      {avisoIngrediente && avisoIngrediente.pacienteId === pacienteId && (
+        <div role="alert" className="fixed inset-x-4 bottom-24 z-[115] max-h-[50vh] overflow-y-auto rounded-2xl border border-[#e8d8b4] bg-[#fff8e9] p-4 text-sm text-[#684a19] shadow-lg sm:left-auto sm:right-6 sm:w-96">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="break-words font-extrabold">{avisoIngrediente.nombre}</p>
+              {avisoIngrediente.avisos.map(({ tipo, coincidencia }) => (
+                <p key={tipo} className="mt-1 break-words"><strong>{tipo}</strong> · «{coincidencia}» en el expediente.</p>
+              ))}
+              <p className="mt-2 text-xs">Coincidencia por nombre. Revisa los ingredientes antes de guardar.</p>
+            </div>
+            <button type="button" aria-label="Cerrar advertencia" onClick={() => setAvisoIngrediente(null)}
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-lg hover:bg-[#f6ead1]"><X size={18}/></button>
+          </div>
+        </div>
+      )}
       {avisoPlanGuardado && (
         <ModalPlanGuardado
           tipo={avisoPlanGuardado.tipo}
@@ -2708,7 +2729,7 @@ function PlanesAlimenticiosPage() {
                                     </div>
                                     {alimentosPreparacion.length ? <div className="space-y-3">{alimentosPreparacion.map(alimento => (
                                       <AlimentoAgregado
-                                        avisos={avisosActivos.filter(aviso => aviso.id === alimento.id)}
+                                        avisos={buscarAvisosAlimento(alimento.nombre, criterios)}
                                         key={
                                           alimento.id
                                         }
