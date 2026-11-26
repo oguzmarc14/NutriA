@@ -1416,11 +1416,20 @@ function PlanesAlimenticiosPage() {
   const metaEnergiaPlan = metaEnergiaPersonalizada && metaEnergiaValida
     ? valorMetaEnergia
     : Number(objetivosReferencia?.objetivoKcal) || 0
+  const gramosMeta = (macro, campo, kcalPorGramo) => {
+    const porcentaje = calculoReferencia?.porcentajes?.[macro]
+    if (Number.isFinite(porcentaje)) return metaEnergiaPlan * porcentaje / 100 / kcalPorGramo
+    const energiaReferencia = Number(objetivosReferencia?.objetivoKcal)
+    const gramosReferencia = Number(objetivosReferencia?.[campo])
+    return energiaReferencia > 0 && Number.isFinite(gramosReferencia)
+      ? gramosReferencia * metaEnergiaPlan / energiaReferencia
+      : 0
+  }
   const metas = [
     ['Energía', 'kcal', 'kcal', metaEnergiaPlan],
-    ['Proteína', 'proteina', 'g', objetivosReferencia?.proteinasGramos],
-    ['Carbohidratos', 'carbohidratos', 'g', objetivosReferencia?.carbohidratosGramos],
-    ['Grasas', 'grasas', 'g', objetivosReferencia?.grasasGramos],
+    ['Proteína', 'proteina', 'g', gramosMeta('proteinas', 'proteinasGramos', 4)],
+    ['Carbohidratos', 'carbohidratos', 'g', gramosMeta('carbohidratos', 'carbohidratosGramos', 4)],
+    ['Grasas', 'grasas', 'g', gramosMeta('grasas', 'grasasGramos', 9)],
   ]
   const mostrarDistribucion = metaEnergiaPlan > 0 && comidas.length > 0
   const totalDistribucion = Math.round(comidas.reduce((total, _, indice) => total + (Number(distribucion[indice]) || 0), 0) * 100) / 100
