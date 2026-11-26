@@ -1,3 +1,6 @@
+import MisDietasPanel from '../components/community/MisDietasPanel'
+import { useAuth } from '../context/auth'
+import useModalAccesible from '../hooks/useModalAccesible'
 import { buscarAvisosAlimento, criteriosAlimentarios } from '../utils/avisosAlimentos'
 import { repartirDistribucion } from '../utils/repartirDistribucion'
 import {
@@ -182,6 +185,21 @@ const coloresPaciente = [
  */
 
 function PlanesAlimenticiosPage() {
+  const { user } = useAuth()
+  const claveAsistido = user?.id ? 'nutria_plan_asistido_' + user.id : null
+  const [preferenciaAsistido, setPreferenciaAsistido] = useState(false)
+  const [bibliotecaPaciente, setBibliotecaPaciente] = useState(null)
+  useEffect(() => {
+    try { setPreferenciaAsistido(Boolean(claveAsistido && localStorage.getItem(claveAsistido) === '1')) }
+    catch { setPreferenciaAsistido(false) }
+  }, [claveAsistido])
+
+  function cambiarPreferenciaAsistido(valor) {
+    setPreferenciaAsistido(valor)
+    try { if (claveAsistido) localStorage.setItem(claveAsistido, valor ? '1' : '0') }
+    catch { /* La preferencia sigue disponible durante esta sesión. */ }
+  }
+
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const [referenciaNutricional, setReferenciaNutricional] = useState(null)
@@ -530,12 +548,17 @@ function PlanesAlimenticiosPage() {
 
   useEffect(() => {
     if (!pacienteId || !referenciaNutricional || requisitosPlan.estado !== 'listo' ||
-        planEditandoId || planSolicitado) return
+        planEditandoId || planSolicitado || plantillaSolicitada) return
     if (eleccionMostrada.current === pacienteId) return
     eleccionMostrada.current = pacienteId
+    if (preferenciaAsistido && referenciaNutricional.calculo?.resultado && !modoAsistido &&
+        !nombre.trim() && !objetivo.trim() && !metaEnergiaIngresada.trim() && !comidas.some(comida => comida.alimentos.length)) {
+      void prepararPlanAsistido()
+      return
+    }
     setModalidadSeleccionada(null)
     setMostrarEleccion(true)
-  }, [pacienteId, referenciaNutricional, requisitosPlan.estado, planEditandoId, planSolicitado])
+  }, [pacienteId, referenciaNutricional, requisitosPlan.estado, planEditandoId, planSolicitado, plantillaSolicitada, preferenciaAsistido])
 
   /*
    * ----------------------------------------------------
@@ -1440,13 +1463,13 @@ function PlanesAlimenticiosPage() {
     }
     setModalidadSeleccionada(null)
   }
-  async function prepararPlanAsistido() {
+  async function prepararPlanAsistido({ nuevoTrasGuardar = false } = {}) {
     if (!objetivosReferencia) {
       setError('Para preparar un plan asistido, guarda primero un cálculo nutricional.')
       return false
     }
-    if (planEditandoId && !(await pedirConfirmacion('¿Reemplazar las comidas de la edición actual por una estructura vacía?', 'Reemplazar comidas', true))) return false
-    if (comidas.some(comida => comida.alimentos.length > 0) && !(await pedirConfirmacion('¿Reemplazar las comidas actuales? Se perderán los alimentos aún no guardados.', 'Reemplazar comidas', true))) return false
+    if (!nuevoTrasGuardar && planEditandoId && !(await pedirConfirmacion('¿Reemplazar las comidas de la edición actual por una estructura vacía?', 'Reemplazar comidas', true))) return false
+    if (!nuevoTrasGuardar && comidas.some(comida => comida.alimentos.length > 0) && !(await pedirConfirmacion('¿Reemplazar las comidas actuales? Se perderán los alimentos aún no guardados.', 'Reemplazar comidas', true))) return false
     const nutricion = referenciaNutricional?.expediente?.nutricion || {}
     const objetivos = Array.isArray(nutricion.objetivos) ? nutricion.objetivos : []
     const cantidadComidas = Number(nutricion.numeroComidasDia)
@@ -1718,9 +1741,15 @@ function PlanesAlimenticiosPage() {
       setFechaPlan(obtenerFechaActual())
       setPlanEditandoId('')
 
-      const comidasNuevas = crearComidasIniciales()
-      setComidas(comidasNuevas)
-      setComidaActivaId(comidasNuevas[0].id)
+      if (preferenciaAsistido && objetivosReferencia && requisitosPlan.estado === 'listo') {
+        await prepararPlanAsistido({ nuevoTrasGuardar: true })
+      } else {
+        const comidasNuevas = crearComidasIniciales()
+        setComidas(comidasNuevas)
+        setComidaActivaId(comidasNuevas[0].id)
+        setDistribucion([25, 40, 35])
+        setModoAsistido(false)
+      }
 
       setBusquedasAlimentos(
         {},
@@ -2178,6 +2207,11 @@ function PlanesAlimenticiosPage() {
                 className="mb-5 flex w-full items-center justify-between gap-3 rounded-xl border border-[#c9dfd0] bg-white px-4 py-3 text-left text-sm font-bold text-[#246b55] hover:bg-[#edf5f0]">
                 <span className="flex items-center gap-2"><Sparkles size={17}/> {modoAsistido ? 'Plan asistido activo · Cambiar modalidad' : 'Elegir modalidad de creación del plan'}</span>
                 <ChevronDown size={17}/>
+              </button>}
+
+              {!planEditandoId && <button type="button" onClick={() => setBibliotecaPaciente(pacienteId)}
+                className="mb-5 flex min-h-11 w-full items-center gap-2 rounded-xl border border-[#c9dfd0] bg-white px-4 py-2 text-left text-sm font-bold text-[#246b55] hover:bg-[#edf5f0]">
+                <Search size={17}/> Usar una de mis dietas guardadas
               </button>}
 
               {modoAsistido && <div className="mb-6 overflow-hidden rounded-2xl border border-[#c9dfd0] bg-white">
@@ -2968,6 +3002,11 @@ function PlanesAlimenticiosPage() {
           </>
         )}
       </div>
+      {bibliotecaPaciente && bibliotecaPaciente === pacienteId && <BibliotecaDietas
+        onCerrar={() => setBibliotecaPaciente(null)}
+        onUsar={async dieta => {
+          if (await duplicarPlan(dieta.plan)) setBibliotecaPaciente(null)
+        }} suspendida={Boolean(confirmacion)} />}
       {confirmacion && <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#173f34]/55 p-4" onMouseDown={event => { if (event.target === event.currentTarget) resolverConfirmacion(false) }}>
         <div role="alertdialog" aria-modal="true" aria-labelledby="titulo-confirmacion-plan" aria-describedby="mensaje-confirmacion-plan" className="w-full max-w-md rounded-3xl border border-[#d5e5da] bg-white p-5 shadow-2xl sm:p-7">
           <div className="mb-4 flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#e1f0e7] text-[#246b55]">{confirmacion.peligro ? <Trash2 size={20}/> : <Save size={20}/>}</span><h2 id="titulo-confirmacion-plan" className="text-lg font-extrabold text-[#173f34]">{confirmacion.titulo}</h2></div>
@@ -2986,6 +3025,18 @@ function PlanesAlimenticiosPage() {
           </div>
           <h2 id="modal-modalidad-plan" className="mt-4 text-xl font-extrabold text-[#173f34]">¿Cómo quieres crear este plan?</h2>
           <p className="mt-1 text-sm text-[#648073]">Elige cómo comenzar. Puedes cambiar de modalidad antes de guardar.</p>
+          <label className="mt-4 flex items-start gap-3 rounded-xl border border-[#c8ddd2] bg-[#f1f7f3] p-3 text-sm text-[#173f34]">
+            <input type="checkbox" checked={preferenciaAsistido} onChange={e => {
+              cambiarPreferenciaAsistido(e.target.checked)
+              if (e.target.checked && objetivosReferencia) setModalidadSeleccionada('asistido')
+            }}
+              className="mt-1 h-4 w-4 accent-[#246b55]" />
+            <span><strong>Iniciar siempre con plan asistido</strong><span className="block text-xs text-[#52716a]">Se aplica cuando el paciente tiene un cálculo guardado. Puedes cambiar de modalidad en cada dieta.</span></span>
+          </label>
+          <button type="button" onClick={() => { setMostrarEleccion(false); setBibliotecaPaciente(pacienteId) }}
+            className="mt-3 flex min-h-11 w-full items-center gap-2 rounded-xl border border-[#c9dfd0] px-3 text-left text-sm font-bold text-[#246b55] hover:bg-[#edf5f0]">
+            <Search size={17}/> Usar una de mis dietas guardadas
+          </button>
           <div className="mt-5 space-y-2">
             <button type="button" disabled={!objetivosReferencia} onClick={() => setModalidadSeleccionada('asistido')}
               aria-pressed={modalidadSeleccionada === 'asistido'}
@@ -3033,6 +3084,24 @@ function PlanesAlimenticiosPage() {
  * RESULTADO DEL BUSCADOR
  * ----------------------------------------------------
  */
+
+function BibliotecaDietas({ onCerrar, onUsar, suspendida }) {
+  const { modalRef, volverRef } = useModalAccesible({ abierto: !suspendida, onVolver: onCerrar })
+  return <div className="fixed inset-0 z-[110] grid place-items-center bg-[#173f34]/55 p-4">
+    <section ref={modalRef} role="dialog" aria-modal={!suspendida} aria-labelledby="biblioteca-dietas"
+      className="max-h-[90dvh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white p-5 shadow-xl sm:p-6">
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <h2 id="biblioteca-dietas" className="text-xl font-extrabold text-[#173f34]">Mis dietas guardadas</h2>
+          <p className="text-sm text-[#52716a]">Busca y revisa una dieta privada de NutriA Community antes de copiarla al plan.</p>
+        </div>
+        <button ref={volverRef} type="button" onClick={onCerrar} aria-label="Cerrar Mis dietas"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[#d2e3d8]"><X size={19}/></button>
+      </div>
+      <MisDietasPanel onUsar={onUsar} />
+    </section>
+  </div>
+}
 
 function ResultadoAlimento({
   alimento,

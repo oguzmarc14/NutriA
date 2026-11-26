@@ -10,7 +10,7 @@ const fmt = date => date && !Number.isNaN(Date.parse(date))
   ? new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium' }).format(new Date(date))
   : 'Sin fecha'
 
-export default function MisDietasPanel() {
+export default function MisDietasPanel({ onUsar } = {}) {
   const navigate = useNavigate()
   const [rows, setRows] = useState([])
   const [search, setSearch] = useState('')
@@ -54,14 +54,22 @@ export default function MisDietasPanel() {
     } catch (cause) { setError(errorMessage(cause)) }
     finally { setBusy(false) }
   }
-  function reuse(item) {
+  async function reuse(item) {
+    if (onUsar) {
+      setBusy(true)
+      setError('')
+      try { await onUsar(item) }
+      catch (cause) { setError(errorMessage(cause)) }
+      finally { setBusy(false) }
+      return
+    }
     // El editor exige elegir un paciente y completar sus requisitos clínicos.
     // No se edita el plan original: se precarga una copia privada.
     navigate('/planes?plantilla=' + encodeURIComponent(item._id))
   }
 
-  return <section aria-labelledby="mis-dietas-title" className="space-y-4">
-    <div className="rounded-2xl border border-[#cde0d2] bg-[#f0f7f0] p-4">
+  return <section aria-labelledby={onUsar ? undefined : "mis-dietas-title"} className="space-y-4">
+    {!onUsar && <div className="rounded-2xl border border-[#cde0d2] bg-[#f0f7f0] p-4">
       <h2 id="mis-dietas-title" className="flex items-center gap-2 text-xl font-extrabold text-[#173f34]">
         <BookOpen size={23}/> Mis dietas
       </h2>
@@ -69,20 +77,20 @@ export default function MisDietasPanel() {
         Plantillas privadas guardadas con nombre y fecha. Puedes reutilizarlas con otros pacientes
         sin modificar el plan original. Revisa las notas para no incluir datos personales.
       </p>
-    </div>
-    <label className="block text-sm font-semibold text-[#315c49]">
+    </div>}
+    {(!onUsar || !opened) && <label className="block text-sm font-semibold text-[#315c49]">
       Buscar en Mis dietas
       <input type="search" value={search} onChange={event => setSearch(event.target.value)}
         className="mt-2 min-h-11 w-full rounded-xl border border-[#cedfd2] bg-white px-4 outline-none focus:border-emerald-600"
         placeholder="Nombre de dieta…" />
-    </label>
+    </label>}
     {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
     {loading && <p className="text-sm text-[#52715e]">Cargando tus dietas privadas…</p>}
-    {!loading && !filtered.length && <p className="rounded-xl bg-white p-5 text-sm text-[#52715e]">
+    {!loading && (!onUsar || !opened) && !filtered.length && <p className="rounded-xl bg-white p-5 text-sm text-[#52715e]">
       {rows.length ? 'No hay dietas que coincidan con la búsqueda.' :
         'Todavía no tienes dietas guardadas. Guarda una copia después de crear un plan alimenticio.'}
     </p>}
-    <div className="grid gap-3 md:grid-cols-2">
+    {(!onUsar || !opened) && <div className="grid gap-3 md:grid-cols-2">
       {filtered.map(item => <article key={item._id}
         className="rounded-2xl border border-[#d3e4d9] bg-white p-5 shadow-sm">
         <h3 className="break-words text-lg font-extrabold text-[#173f34]">{item.nombre}</h3>
@@ -93,31 +101,32 @@ export default function MisDietasPanel() {
           {item.metaEnergiaKcal != null ? ' · ' + item.metaEnergiaKcal + ' kcal objetivo' : ''}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <button type="button" disabled={busy} onClick={() => reuse(item)}
+          {!onUsar && <button type="button" disabled={busy} onClick={() => reuse(item)}
             className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#246b55] px-4 py-2 text-sm font-bold text-white disabled:opacity-50">
             <Copy size={16}/> Usar con paciente
-          </button>
+          </button>}
           <button type="button" disabled={busy} onClick={() => openDiet(item)}
             className="min-h-11 rounded-xl border border-emerald-200 px-4 text-sm font-bold text-emerald-800">
             Ver dieta
           </button>
-          <button type="button" disabled={busy} onClick={() => setToDelete(item)}
+          {!onUsar && <button type="button" disabled={busy} onClick={() => setToDelete(item)}
             className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-red-200 px-3 text-sm font-bold text-red-700">
             <Trash2 size={16}/> Eliminar copia
-          </button>
+          </button>}
         </div>
       </article>)}
-    </div>
-    {opened && <div role="presentation" className="fixed inset-0 z-[100] grid place-items-center bg-black/60 p-4"
+    </div>}
+    {opened && <div role="presentation" className={onUsar ? undefined : "fixed inset-0 z-[100] grid place-items-center bg-black/60 p-4"}
       onClick={() => setOpened(null)}>
-      <div role="dialog" aria-modal="true" aria-label="Dieta guardada"
-        className="max-h-[85vh] w-full max-w-xl space-y-4 overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl"
+      <div role={onUsar ? undefined : "dialog"} aria-modal={onUsar ? undefined : true} aria-label="Dieta guardada"
+        className={onUsar ? "space-y-4" : "max-h-[85vh] w-full max-w-xl space-y-4 overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl"}
         onClick={event => event.stopPropagation()}>
         <div className="flex items-start justify-between">
           <div><h3 className="text-xl font-extrabold text-[#173f34]">{opened.nombre}</h3>
             <p className="text-xs text-[#52715e]">Guardada {fmt(opened.fechaGuardado)}</p></div>
-          <button type="button" aria-label="Cerrar" onClick={() => setOpened(null)}><X /></button>
+          <button type="button" aria-label={onUsar ? "Volver a la lista" : "Cerrar"} onClick={() => setOpened(null)}>{onUsar ? "Volver a la lista" : <X />}</button>
         </div>
+        {opened.plan?.objetivo && <p className="whitespace-pre-wrap text-sm text-[#52715e]">{opened.plan.objetivo}</p>}
         {!opened.plan?.comidas?.length && <p className="text-sm text-[#52715e]">Esta dieta no tiene comidas registradas.</p>}
         {(opened.plan?.comidas || []).map((meal, index) => <div key={index} className="rounded-xl bg-[#f0f7f0] p-4">
           <h4 className="font-bold text-[#173f34]">{meal.nombre} {meal.hora ? '· ' + meal.hora : ''}</h4>
@@ -134,15 +143,15 @@ export default function MisDietasPanel() {
           </div>)}
         </div>)}
         {exportError && <p role="alert" className="text-sm text-red-700">{exportError}</p>}
-        {!!opened.plan?.comidas?.length && <button type="button" onClick={async () => {
+        {!onUsar && !!opened.plan?.comidas?.length && <button type="button" onClick={async () => {
           setExportError('')
           try { await exportarPlanPDF({ ...opened.plan, nombre: opened.nombre }, null, { plantilla: true, cargarClinica: async () => (await client.get('/clinica', { timeout: 5000 })).data.clinica }) }
           catch (cause) { setExportError(cause.message) }
         }} className="w-full rounded-xl border border-emerald-200 px-4 py-3 text-sm font-bold text-emerald-800">
           Exportar PDF
         </button>}
-        <button type="button" onClick={() => reuse(opened)}
-          className="w-full rounded-xl bg-[#246b55] px-4 py-3 text-sm font-bold text-white">Usar esta dieta con paciente</button>
+        <button type="button" disabled={busy || !opened.plan?.comidas?.length} onClick={() => reuse(opened)}
+          className="w-full rounded-xl bg-[#246b55] px-4 py-3 text-sm font-bold text-white">{onUsar ? "Copiar a este plan" : "Usar esta dieta con paciente"}</button>
       </div>
     </div>}
     {toDelete && <div role="presentation" className="fixed inset-0 z-[110] grid place-items-center bg-black/60 p-4">

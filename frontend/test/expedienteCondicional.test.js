@@ -43,7 +43,7 @@ test('Sí permanece guardado aunque no se escriba todavía una descripción',()=
 
 test('las horas y número de comidas no reciben la pregunta No/Sí',()=>{
   for(const label of ['Hora de primera comida','Hora de última comida',
-    'Número de comidas al día','Días de entrenamiento por semana']) {
+    'Número de comidas al día (máximo 6)','Días de entrenamiento por semana']) {
     const idx=page.indexOf('label="'+label+'"')
     assert.ok(idx>0, 'Falta '+label)
     assert.doesNotMatch(page.slice(idx,idx+110),/activo=\{camposConDetalle/)
