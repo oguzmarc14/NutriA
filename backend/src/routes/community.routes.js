@@ -42,11 +42,24 @@ const plantillaInput = z.object({
   nombre: z.string().trim().min(3).max(100),
 }).strict()
 
+function totalesDietaGuardada(comidas) {
+  const alimentos = (comidas || []).flatMap(comida => comida.alimentos || [])
+  return Object.fromEntries(['kcal', 'proteina', 'carbohidratos', 'grasas'].map(clave => {
+    const aportes = alimentos.map(alimento => {
+      const cantidad = Number(alimento.cantidad ?? 1)
+      const valor = alimento.nutrimentos?.[clave]
+      return valor == null || !Number.isFinite(cantidad) || cantidad <= 0 ? NaN : Number(valor) * cantidad
+    })
+    return [clave, aportes.length && aportes.every(Number.isFinite) ? aportes.reduce((a, b) => a + b, 0) : null]
+  }))
+}
+
 router.get('/mis-dietas', allowRoles('nutritionist'), async (req, res, next) => {
   try {
     const list = await DietaGuardada.find({ autor: req.user._id })
-      .select('-plan').sort({ fechaGuardado: -1 }).limit(100).lean()
-    res.json(list)
+      .select('nombre fechaGuardado comidasCount metaEnergiaKcal plan.comidas.alimentos.cantidad plan.comidas.alimentos.nutrimentos')
+      .sort({ fechaGuardado: -1 }).limit(100).lean()
+    res.json(list.map(({ plan, ...dieta }) => ({ ...dieta, totales: totalesDietaGuardada(plan?.comidas) })))
   } catch (error) { next(error) }
 })
 router.post('/mis-dietas', allowRoles('nutritionist'), async (req, res, next) => {

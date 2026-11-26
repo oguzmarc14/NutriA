@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BookOpen, CalendarDays, Copy, Trash2, X } from 'lucide-react'
+import { BookOpen, CalendarDays, Copy, Eye, Flame, Trash2, Utensils, X } from 'lucide-react'
 import client from '../../api/client'
 import { agruparPreparaciones } from '../../utils/agruparPreparaciones'
 import { exportarPlanPDF } from '../../utils/exportarPlanPDF'
 
 const errorMessage = error => error.response?.data?.message || 'No se pudo completar la operación.'
+const cantidad = new Intl.NumberFormat('es-MX', { maximumFractionDigits: 1 })
+const valor = numero => Number.isFinite(numero) ? cantidad.format(numero) : '—'
 const fmt = date => date && !Number.isNaN(Date.parse(date))
   ? new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium' }).format(new Date(date))
   : 'Sin fecha'
@@ -55,11 +57,16 @@ export default function MisDietasPanel({ onUsar } = {}) {
     finally { setBusy(false) }
   }
   async function reuse(item) {
+    if (busy) return
     if (onUsar) {
       setBusy(true)
       setError('')
-      try { await onUsar(item) }
-      catch (cause) { setError(errorMessage(cause)) }
+      try {
+        const dieta = item.plan ? item : (await client.get('/community/mis-dietas/' + item._id)).data
+        if (!dieta?.plan?.comidas?.length) throw new Error('Esta dieta no tiene comidas para copiar.')
+        await onUsar(dieta)
+      }
+      catch (cause) { setError(cause.response?.data?.message || cause.message || errorMessage(cause)) }
       finally { setBusy(false) }
       return
     }
@@ -92,25 +99,41 @@ export default function MisDietasPanel({ onUsar } = {}) {
     </p>}
     {(!onUsar || !opened) && <div className="grid gap-3 md:grid-cols-2">
       {filtered.map(item => <article key={item._id}
-        className="rounded-2xl border border-[#d3e4d9] bg-white p-5 shadow-sm">
-        <h3 className="break-words text-lg font-extrabold text-[#173f34]">{item.nombre}</h3>
-        <p className="mt-2 flex items-center gap-2 text-sm text-[#587662]">
-          <CalendarDays size={15} /> Guardada {fmt(item.fechaGuardado)}
+        className="flex min-w-0 flex-col rounded-2xl border border-[#d3e4d9] bg-gradient-to-b from-[#f5faf6] to-white p-4 shadow-sm sm:p-5">
+        <h3 className="break-words text-lg font-extrabold leading-snug text-[#173f34]">{item.nombre}</h3>
+        <p className="mt-2 flex items-center gap-2 text-xs text-[#52715e]">
+          <CalendarDays size={15} aria-hidden="true"/> Guardada {fmt(item.fechaGuardado)}
         </p>
-        <p className="mt-1 text-sm text-[#587662]">{item.comidasCount} comidas
-          {item.metaEnergiaKcal != null ? ' · ' + item.metaEnergiaKcal + ' kcal objetivo' : ''}
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {!onUsar && <button type="button" disabled={busy} onClick={() => reuse(item)}
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#246b55] px-4 py-2 text-sm font-bold text-white disabled:opacity-50">
-            <Copy size={16}/> Usar con paciente
-          </button>}
+        <dl className="mt-4 grid grid-cols-2 gap-2">
+          <div className="rounded-xl border border-[#d8e8dc] bg-white p-3">
+            <dt className="flex items-center gap-1 text-xs font-semibold text-[#52715e]"><Utensils size={14} aria-hidden="true"/> Comidas</dt>
+            <dd className="mt-1 text-xl font-extrabold text-[#173f34]">{valor(item.comidasCount)}</dd>
+          </div>
+          <div className="rounded-xl bg-[#e5f2e9] p-3">
+            <dt className="flex items-center gap-1 text-xs font-semibold text-[#52715e]"><Flame size={14} aria-hidden="true"/> Energía total</dt>
+            <dd className="mt-1 text-xl font-extrabold text-[#173f34]">{valor(item.totales?.kcal)} <span className="text-xs">kcal</span></dd>
+          </div>
+        </dl>
+        {item.metaEnergiaKcal != null && <p className="mt-2 text-xs text-[#52715e]">Meta del plan {valor(item.metaEnergiaKcal)} kcal</p>}
+        <dl className="mb-4 mt-3 grid grid-cols-3 gap-1 rounded-xl border border-[#e0ebe2] bg-white p-2">
+          {[['Proteína', 'proteina'], ['Carbohidratos', 'carbohidratos'], ['Grasas', 'grasas']].map(([nombre, clave]) => (
+            <div key={clave} className="min-w-0 px-1">
+              <dt className="break-words text-[11px] font-semibold text-[#52715e]">{nombre}</dt>
+              <dd className="mt-1 text-sm font-bold text-[#173f34]">{valor(item.totales?.[clave])} g</dd>
+            </div>
+          ))}
+        </dl>
+        <div className="mt-auto grid grid-cols-2 gap-2">
           <button type="button" disabled={busy} onClick={() => openDiet(item)}
-            className="min-h-11 rounded-xl border border-emerald-200 px-4 text-sm font-bold text-emerald-800">
-            Ver dieta
+            className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-[#cde0d2] bg-white px-2 text-sm font-bold text-[#246b55] hover:bg-[#edf6ef] disabled:opacity-50">
+            <Eye size={16} aria-hidden="true"/> Ver dieta
+          </button>
+          <button type="button" disabled={busy} onClick={() => reuse(item)}
+            className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-[#246b55] px-2 text-sm font-bold text-white hover:bg-[#173f34] disabled:opacity-50">
+            <Copy size={16} aria-hidden="true"/> Usar dieta
           </button>
           {!onUsar && <button type="button" disabled={busy} onClick={() => setToDelete(item)}
-            className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-red-200 px-3 text-sm font-bold text-red-700">
+            className="col-span-2 inline-flex min-h-11 items-center justify-center gap-1 rounded-xl px-3 text-sm font-semibold text-red-700 hover:bg-red-50">
             <Trash2 size={16}/> Eliminar copia
           </button>}
         </div>
