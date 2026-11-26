@@ -541,6 +541,13 @@ function ExpedientePage() {
    * ----------------------------------------------------
    */
 
+  const comidasAlDia = Number(expediente.nutricion.numeroComidasDia)
+  const datosDietaPendientes = [
+    !expediente.nutricion.primeraComida && 'Hora de primera comida',
+    !expediente.nutricion.ultimaComida && 'Hora de última comida',
+    (!Number.isInteger(comidasAlDia) || comidasAlDia < 1 || comidasAlDia > 6) && 'Número de comidas al día (de 1 a 6)',
+  ].filter(Boolean)
+
   return (
     <section className="min-h-screen bg-transparent px-5 py-7 md:px-8 md:py-9">
       <div className="mx-auto max-w-[1480px]">
@@ -1033,6 +1040,20 @@ function ExpedientePage() {
               color="dorado"
             />
 
+            <div role="status" aria-live="polite">
+              {datosDietaPendientes.length > 0 && (
+                <aside className="mb-5 flex items-start gap-3 rounded-2xl border border-[#e2cea3] bg-[#fff8e8] p-4 text-[#62471e]">
+                  <ShieldAlert size={20} className="mt-0.5 shrink-0" aria-hidden="true" />
+                  <div>
+                    <h3 className="text-sm font-extrabold">Información importante para la dieta</h3>
+                    <p className="mt-1 text-sm">Completa estos datos para que el plan asistido proponga la cantidad de comidas y sus horarios según el expediente.</p>
+                    <ul className="mt-2 list-inside list-disc text-sm font-semibold">
+                      {datosDietaPendientes.map(dato => <li key={dato}>{dato}</li>)}
+                    </ul>
+                  </div>
+                </aside>
+              )}
+            </div>
             <div className="grid gap-5 md:grid-cols-2">
               <CampoInput
                 label="Hora de primera comida"
